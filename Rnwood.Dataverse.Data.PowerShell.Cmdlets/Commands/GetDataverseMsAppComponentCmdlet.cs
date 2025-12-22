@@ -1,6 +1,7 @@
 using ICSharpCode.SharpZipLib.Zip;
 using System;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -15,9 +16,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the path to the .msapp file.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "Path to the .msapp file")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromPath", HelpMessage = "Path to the .msapp file")]
         [ValidateNotNullOrEmpty]
         public string MsAppPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Canvas app PSObject returned by Get-DataverseCanvasApp with -IncludeDocument.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromObject", ValueFromPipeline = true, HelpMessage = "Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument")]
+        [ValidateNotNull]
+        public PSObject CanvasApp { get; set; }
 
         /// <summary>
         /// Gets or sets the name pattern of components to retrieve. Supports wildcards (* and ?).
@@ -30,18 +38,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            var filePath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
-            if (!File.Exists(filePath))
+            byte[] msappBytes;
+
+            if (ParameterSetName == "FromObject")
             {
-                ThrowTerminatingError(new ErrorRecord(
-                    new FileNotFoundException($"MsApp file not found: {filePath}"),
-                    "FileNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    filePath));
-                return;
+                // Get .msapp from the PSObject's document property
+                var documentProp = CanvasApp.Properties["document"];
+                if (documentProp == null || documentProp.Value == null)
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException("CanvasApp object does not have a 'document' property. Use Get-DataverseCanvasApp with -IncludeDocument."),
+                        "DocumentPropertyMissing",
+                        ErrorCategory.InvalidArgument,
+                        CanvasApp));
+                    return;
+                }
+
+                string base64Document = documentProp.Value.ToString();
+                msappBytes = Convert.FromBase64String(base64Document);
+            }
+            else
+            {
+                var filePath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
+                if (!File.Exists(filePath))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new FileNotFoundException($"MsApp file not found: {filePath}"),
+                        "FileNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        filePath));
+                    return;
+                }
+
+                msappBytes = File.ReadAllBytes(filePath);
             }
 
-            byte[] msappBytes = File.ReadAllBytes(filePath);
             ExtractComponents(msappBytes);
         }
 
@@ -73,11 +104,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
                         string yamlContent = System.Text.Encoding.UTF8.GetString(entryBytes);
 
+                        // Strip the component header and unindent the content
+                        string processedYaml = StripComponentHeader(yamlContent, componentName);
+
                         // Create PSObject
                         var psObject = new PSObject();
                         psObject.Properties.Add(new PSNoteProperty("ComponentName", componentName));
                         psObject.Properties.Add(new PSNoteProperty("FilePath", entry.Name));
-                        psObject.Properties.Add(new PSNoteProperty("YamlContent", yamlContent));
+                        psObject.Properties.Add(new PSNoteProperty("YamlContent", processedYaml));
                         psObject.Properties.Add(new PSNoteProperty("Size", entryBytes.Length));
 
                         WriteObject(psObject);
@@ -107,11 +141,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 continue;
                             }
 
+                            // Strip the component header and unindent the content
+                            string processedYaml = StripComponentHeader(yamlContent, componentName);
+
                             // Create PSObject
                             var psObject = new PSObject();
                             psObject.Properties.Add(new PSNoteProperty("ComponentName", componentName));
                             psObject.Properties.Add(new PSNoteProperty("FilePath", entry.Name));
-                            psObject.Properties.Add(new PSNoteProperty("YamlContent", yamlContent));
+                            psObject.Properties.Add(new PSNoteProperty("YamlContent", processedYaml));
                             psObject.Properties.Add(new PSNoteProperty("Size", entryBytes.Length));
 
                             WriteObject(psObject);
@@ -149,6 +186,42 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             return System.Text.RegularExpressions.Regex.IsMatch(value, regexPattern, 
                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+
+        /// <summary>
+        /// Strips the component header (e.g., "Components:\n  ComponentName:") and unindents the content.
+        /// </summary>
+        private string StripComponentHeader(string yamlContent, string componentName)
+        {
+            // Expected format:
+            // Components:
+            //   ComponentName:
+            //     Property: Value
+            //     ...
+            
+            // We need to remove "Components:" and "  ComponentName:" lines and unindent by 4 spaces
+            var lines = yamlContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            
+            if (lines.Length < 2)
+            {
+                return yamlContent; // Not enough lines, return as-is
+            }
+
+            // Skip first two lines (Components: and   ComponentName:) and unindent the rest
+            var contentLines = lines.Skip(2).ToList();
+            
+            // Unindent by removing leading spaces (typically 4 spaces for component content)
+            var result = string.Join(Environment.NewLine, contentLines.Select(line =>
+            {
+                // Remove up to 4 leading spaces
+                if (line.StartsWith("    "))
+                {
+                    return line.Substring(4);
+                }
+                return line;
+            }));
+
+            return result;
         }
     }
 }
