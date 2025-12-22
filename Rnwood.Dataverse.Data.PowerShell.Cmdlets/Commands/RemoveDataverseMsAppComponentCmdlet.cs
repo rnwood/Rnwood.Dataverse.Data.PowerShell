@@ -14,9 +14,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the path to the .msapp file.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 0, HelpMessage = "Path to the .msapp file")]
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromPath", HelpMessage = "Path to the .msapp file")]
         [ValidateNotNullOrEmpty]
         public string MsAppPath { get; set; }
+
+        /// <summary>
+        /// Gets or sets the Canvas app PSObject returned by Get-DataverseCanvasApp with -IncludeDocument.
+        /// The document property will be updated with the modified .msapp.
+        /// </summary>
+        [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromObject", ValueFromPipeline = true, HelpMessage = "Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument")]
+        [ValidateNotNull]
+        public PSObject CanvasApp { get; set; }
 
         /// <summary>
         /// Gets or sets the component name to remove.
@@ -36,28 +44,66 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            var filePath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
-            if (!File.Exists(filePath))
+            bool isFromObject = ParameterSetName == "FromObject";
+            byte[] msappBytes;
+            string targetPath = null;
+
+            if (isFromObject)
             {
-                ThrowTerminatingError(new ErrorRecord(
-                    new FileNotFoundException($"MsApp file not found: {filePath}"),
-                    "FileNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    filePath));
-                return;
+                // Get .msapp from the PSObject's document property
+                var documentProp = CanvasApp.Properties["document"];
+                if (documentProp == null || documentProp.Value == null)
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new InvalidOperationException("CanvasApp object does not have a 'document' property. Use Get-DataverseCanvasApp with -IncludeDocument."),
+                        "DocumentPropertyMissing",
+                        ErrorCategory.InvalidArgument,
+                        CanvasApp));
+                    return;
+                }
+
+                string base64Document = documentProp.Value.ToString();
+                msappBytes = Convert.FromBase64String(base64Document);
+            }
+            else
+            {
+                targetPath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
+                if (!File.Exists(targetPath))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new FileNotFoundException($"MsApp file not found: {targetPath}"),
+                        "FileNotFound",
+                        ErrorCategory.ObjectNotFound,
+                        targetPath));
+                    return;
+                }
+
+                msappBytes = File.ReadAllBytes(targetPath);
             }
 
-            string action = $"Remove component '{ComponentName}' from .msapp file '{filePath}'";
+            string action = isFromObject
+                ? $"Remove component '{ComponentName}' from Canvas app"
+                : $"Remove component '{ComponentName}' from .msapp file '{targetPath}'";
+            
             if (!ShouldProcess(action, action, "Remove Component"))
             {
                 return;
             }
 
-            byte[] msappBytes = File.ReadAllBytes(filePath);
             byte[] modifiedBytes = RemoveMsAppComponent(msappBytes);
-            File.WriteAllBytes(filePath, modifiedBytes);
-
-            WriteVerbose($"Component '{ComponentName}' removed successfully from .msapp file");
+            
+            if (isFromObject)
+            {
+                // Update the document property in the PSObject
+                string base64 = Convert.ToBase64String(modifiedBytes);
+                CanvasApp.Properties["document"].Value = base64;
+                WriteVerbose($"Component '{ComponentName}' removed successfully from Canvas app object");
+            }
+            else
+            {
+                File.WriteAllBytes(targetPath, modifiedBytes);
+                WriteVerbose($"Component '{ComponentName}' removed successfully from .msapp file");
+            }
         }
 
         private byte[] RemoveMsAppComponent(byte[] originalBytes)
