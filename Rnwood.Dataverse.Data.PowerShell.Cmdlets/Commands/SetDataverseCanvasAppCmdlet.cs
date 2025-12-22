@@ -218,7 +218,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 string solutionUniqueName = $"TempSolution_{canvasAppName}_{Guid.NewGuid().ToString("N").Substring(0, 8)}";
 
                 // Create solution.xml
-                string solutionXml = CreateSolutionXml(solutionUniqueName, displayName ?? canvasAppName);
+                string solutionXml = CreateSolutionXml(solutionUniqueName, canvasAppName, displayName ?? canvasAppName);
                 AddZipEntry(zipOutputStream, "solution.xml", solutionXml);
 
                 // Create customizations.xml with Canvas app metadata
@@ -238,7 +238,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private string CreateSolutionXml(string solutionUniqueName, string displayName)
+        private string CreateSolutionXml(string solutionUniqueName, string canvasAppName, string displayName)
         {
             XNamespace ns = "http://www.w3.org/2001/XMLSchema-instance";
             var doc = new XDocument(
@@ -274,7 +274,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             new XElement("CustomizationOptionValuePrefix", "10000"),
                             new XElement("Addresses")
                         ),
-                        new XElement("RootComponents"),
+                        new XElement("RootComponents",
+                            new XElement("RootComponent",
+                                new XAttribute("type", "300"),  // Canvas App component type
+                                new XAttribute("schemaName", canvasAppName),
+                                new XAttribute("behavior", "0")
+                            )
+                        ),
                         new XElement("MissingDependencies")
                     )
                 )
