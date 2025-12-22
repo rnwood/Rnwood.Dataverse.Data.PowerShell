@@ -1,7 +1,11 @@
+using ICSharpCode.SharpZipLib.Zip;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.IO;
+using System.Linq;
 using System.Management.Automation;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -42,8 +46,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Gets or sets a value indicating whether to include the document content (.msapp file) in the results.
+        /// This will export the Canvas app via solution export to retrieve the .msapp file.
         /// </summary>
-        [Parameter(HelpMessage = "If set, includes the document content (.msapp file bytes) in the results")]
+        [Parameter(HelpMessage = "If set, includes the document content (.msapp file bytes) in the results via solution export")]
         public SwitchParameter IncludeDocument { get; set; }
 
         /// <inheritdoc />
@@ -66,44 +71,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 query = new QueryExpression("canvasapp");
 
-                // Include all columns or exclude document by default
-                if (IncludeDocument)
-                {
-                    query.ColumnSet = new ColumnSet(true);
-                }
-                else
-                {
-                    // Get all columns except document-related ones
-                    query.ColumnSet = new ColumnSet(
-                        "canvasappid",
-                        "name",
-                        "displayname",
-                        "description",
-                        "commitmessage",
-                        "publisher",
-                        "authorizationreferences",
-                        "connectionreferences",
-                        "databasereferences",
-                        "appcomponents",
-                        "appcomponentdependencies",
-                        "status",
-                        "tags",
-                        "createdtime",
-                        "lastmodifiedtime",
-                        "iscustomizable",
-                        "canvasapptype",
-                        "bypassconsent",
-                        "admincontrolbypassconsent",
-                        "canconsumeapppass",
-                        "iscdsupgraded",
-                        "isfeaturedapp",
-                        "isheroapp",
-                        "cdsdependencies",
-                        "minclientversion",
-                        "createdbyclientversion",
-                        "appversion"
-                    );
-                }
+                // Get all columns except we'll fetch document separately if needed
+                query.ColumnSet = new ColumnSet(
+                    "canvasappid",
+                    "name",
+                    "displayname",
+                    "description",
+                    "commitmessage",
+                    "publisher",
+                    "authorizationreferences",
+                    "connectionreferences",
+                    "databasereferences",
+                    "appcomponents",
+                    "appcomponentdependencies",
+                    "status",
+                    "tags",
+                    "createdtime",
+                    "lastmodifiedtime",
+                    "iscustomizable",
+                    "canvasapptype",
+                    "bypassconsent",
+                    "admincontrolbypassconsent",
+                    "canconsumeapppass",
+                    "iscdsupgraded",
+                    "isfeaturedapp",
+                    "isheroapp",
+                    "cdsdependencies",
+                    "minclientversion",
+                    "createdbyclientversion",
+                    "appversion"
+                );
 
                 query.Criteria = new FilterExpression();
 
@@ -156,8 +153,163 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             foreach (var entity in results.Entities)
             {
                 var psObject = converter.ConvertToPSObject(entity, query.ColumnSet, _ => ValueType.Display);
+
+                // If IncludeDocument is specified, export via solution to get .msapp
+                if (IncludeDocument.IsPresent)
+                {
+                    string appName = entity.GetAttributeValue<string>("name");
+                    Guid appId = entity.Id;
+
+                    WriteVerbose($"Exporting Canvas app '{appName}' to retrieve .msapp file...");
+                    byte[] msappBytes = ExportCanvasAppDocument(appId, appName);
+
+                    if (msappBytes != null)
+                    {
+                        // Add document as base64 string to match expected format
+                        psObject.Properties.Add(new PSNoteProperty("document", Convert.ToBase64String(msappBytes)));
+                        WriteVerbose($"Retrieved .msapp file ({msappBytes.Length} bytes)");
+                    }
+                    else
+                    {
+                        WriteWarning($"Could not retrieve .msapp file for Canvas app '{appName}'");
+                    }
+                }
+
                 WriteObject(psObject);
             }
+        }
+
+        private byte[] ExportCanvasAppDocument(Guid canvasAppId, string canvasAppName)
+        {
+            try
+            {
+                // Create a temporary solution containing just this Canvas app
+                string tempSolutionName = $"TempExport_{canvasAppName}_{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+
+                // Check if a solution already exists with this Canvas app
+                // For simplicity, we'll create a temp solution, add the app, export, then delete
+                WriteVerbose($"Creating temporary solution '{tempSolutionName}' for export...");
+
+                // Create temporary solution
+                var solution = new Entity("solution")
+                {
+                    ["uniquename"] = tempSolutionName,
+                    ["friendlyname"] = "Temporary Export Solution",
+                    ["version"] = "1.0.0.0",
+                    ["publisherid"] = GetDefaultPublisher()
+                };
+                var solutionId = Connection.Create(solution);
+                WriteVerbose($"Created temporary solution with ID: {solutionId}");
+
+                try
+                {
+                    // Add Canvas app to solution
+                    var addRequest = new AddSolutionComponentRequest
+                    {
+                        ComponentType = 300, // Canvas App component type
+                        ComponentId = canvasAppId,
+                        SolutionUniqueName = tempSolutionName
+                    };
+                    Connection.Execute(addRequest);
+                    WriteVerbose("Added Canvas app to solution");
+
+                    // Export solution
+                    var exportRequest = new ExportSolutionRequest
+                    {
+                        SolutionName = tempSolutionName,
+                        Managed = false
+                    };
+                    var exportResponse = (ExportSolutionResponse)Connection.Execute(exportRequest);
+                    byte[] solutionBytes = exportResponse.ExportSolutionFile;
+                    WriteVerbose($"Exported solution ({solutionBytes.Length} bytes)");
+
+                    // Extract .msapp from the solution zip
+                    byte[] msappBytes = ExtractMsAppFromSolution(solutionBytes, canvasAppName);
+
+                    return msappBytes;
+                }
+                finally
+                {
+                    // Delete temporary solution
+                    try
+                    {
+                        Connection.Delete("solution", solutionId);
+                        WriteVerbose("Deleted temporary solution");
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteWarning($"Failed to delete temporary solution: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Failed to export Canvas app document: {ex.Message}");
+                return null;
+            }
+        }
+
+        private byte[] ExtractMsAppFromSolution(byte[] solutionBytes, string canvasAppName)
+        {
+            using (var memoryStream = new MemoryStream(solutionBytes))
+            using (var zipInputStream = new ZipInputStream(memoryStream))
+            {
+                ZipEntry entry;
+                while ((entry = zipInputStream.GetNextEntry()) != null)
+                {
+                    // Look for the .msapp file in the CanvasApps folder
+                    if (entry.Name.StartsWith("CanvasApps/") && entry.Name.EndsWith(".msapp"))
+                    {
+                        WriteVerbose($"Found .msapp file: {entry.Name}");
+
+                        using (var msappStream = new MemoryStream())
+                        {
+                            byte[] buffer = new byte[4096];
+                            int count;
+                            while ((count = zipInputStream.Read(buffer, 0, buffer.Length)) > 0)
+                            {
+                                msappStream.Write(buffer, 0, count);
+                            }
+                            return msappStream.ToArray();
+                        }
+                    }
+                }
+            }
+
+            WriteWarning($"No .msapp file found in solution for Canvas app '{canvasAppName}'");
+            return null;
+        }
+
+        private EntityReference GetDefaultPublisher()
+        {
+            // Get the default publisher for the organization
+            var query = new QueryExpression("publisher")
+            {
+                ColumnSet = new ColumnSet("publisherid"),
+                Criteria = new FilterExpression()
+            };
+            query.Criteria.AddCondition("isreadonly", ConditionOperator.Equal, false);
+            query.TopCount = 1;
+
+            var results = Connection.RetrieveMultiple(query);
+            if (results.Entities.Count > 0)
+            {
+                return results.Entities[0].ToEntityReference();
+            }
+
+            // Fallback: query for any publisher
+            query = new QueryExpression("publisher")
+            {
+                ColumnSet = new ColumnSet("publisherid"),
+                TopCount = 1
+            };
+            results = Connection.RetrieveMultiple(query);
+            if (results.Entities.Count > 0)
+            {
+                return results.Entities[0].ToEntityReference();
+            }
+
+            throw new Exception("No publisher found in the organization");
         }
     }
 }
