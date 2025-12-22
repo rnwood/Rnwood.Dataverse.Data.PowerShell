@@ -51,6 +51,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "If set, includes the document content (.msapp file bytes) in the results via solution export")]
         public SwitchParameter IncludeDocument { get; set; }
 
+        /// <summary>
+        /// Gets or sets the path to save the .msapp document file to. When specified, the .msapp file will be exported and saved.
+        /// </summary>
+        [Parameter(HelpMessage = "Path to save the .msapp document file to. Implies -IncludeDocument.")]
+        public string DocumentPath { get; set; }
+
         /// <inheritdoc />
         protected override void ProcessRecord()
         {
@@ -154,8 +160,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var psObject = converter.ConvertToPSObject(entity, query.ColumnSet, _ => ValueType.Display);
 
-                // If IncludeDocument is specified, export via solution to get .msapp
-                if (IncludeDocument.IsPresent)
+                // If IncludeDocument or DocumentPath is specified, export via solution to get .msapp
+                if (IncludeDocument.IsPresent || !string.IsNullOrEmpty(DocumentPath))
                 {
                     string appName = entity.GetAttributeValue<string>("name");
                     Guid appId = entity.Id;
@@ -165,6 +171,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (msappBytes != null)
                     {
+                        // Save to file if DocumentPath is specified
+                        if (!string.IsNullOrEmpty(DocumentPath))
+                        {
+                            string filePath = GetUnresolvedProviderPathFromPSPath(DocumentPath);
+                            File.WriteAllBytes(filePath, msappBytes);
+                            WriteVerbose($"Saved .msapp file to: {filePath}");
+                        }
+
                         // Add document as base64 string to match expected format
                         psObject.Properties.Add(new PSNoteProperty("document", Convert.ToBase64String(msappBytes)));
                         WriteVerbose($"Retrieved .msapp file ({msappBytes.Length} bytes)");

@@ -14,14 +14,15 @@ Retrieves Canvas apps from a Dataverse environment.
 
 ### Id
 ```
-Get-DataverseCanvasApp -Id <Guid> [-IncludeDocument] [-Connection <ServiceClient>]
+Get-DataverseCanvasApp -Id <Guid> [-IncludeDocument] [-DocumentPath <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Query
 ```
 Get-DataverseCanvasApp [[-Name] <String>] [-DisplayName <String>] [-Unmanaged] [-IncludeDocument]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DocumentPath <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -58,6 +59,13 @@ PS C:\> $app.document  # Contains base64-encoded .msapp file bytes
 
 Retrieves a Canvas app and includes the document content (.msapp file).
 
+### Example 5: Save Canvas app document to file
+```powershell
+PS C:\> Get-DataverseCanvasApp -Name "MyApp" -DocumentPath "MyApp.msapp"
+```
+
+Retrieves a Canvas app and saves the .msapp file to the specified path.
+
 ## PARAMETERS
 
 ### -Connection
@@ -84,6 +92,21 @@ Supports wildcards (* and ?)
 ```yaml
 Type: String
 Parameter Sets: Query
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DocumentPath
+Path to save the .msapp document file to. Implies -IncludeDocument.
+
+```yaml
+Type: String
+Parameter Sets: (All)
 Aliases:
 
 Required: False
