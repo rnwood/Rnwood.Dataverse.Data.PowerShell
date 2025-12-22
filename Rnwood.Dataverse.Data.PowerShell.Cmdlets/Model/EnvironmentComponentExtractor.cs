@@ -93,10 +93,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
 
             // Use REST API to query msdyn_solutioncomponentsummary (virtual table)
             var filter = $"msdyn_solutionid eq {_solutionId:D}";
-            if (IsManagedSolution.HasValue && IsManagedSolution.Value)
-            {
-                filter += " and msdyn_ismanaged eq 'True'";
-            }
             var select = "msdyn_objectid,msdyn_componenttype,msdyn_uniquename,msdyn_primaryentityname,msdyn_componenttypename,msdyn_name,msdyn_schemaname,msdyn_isdefault,msdyn_iscustom,msdyn_hasactivecustomization,msdyn_ismanaged";
             var queryString = $"$filter={Uri.EscapeDataString(filter)}&$select={select}";
 
@@ -245,14 +241,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
         /// </summary>
         public List<SolutionComponent> GetSubcomponents(SolutionComponent parentComponent)
         {
-            return GetSubcomponentsFromEnvironment(parentComponent);
-        }
-
-        /// <summary>
-        /// Retrieves subcomponents from the Dataverse environment.
-        /// </summary>
-        private List<SolutionComponent> GetSubcomponentsFromEnvironment(SolutionComponent parentComponent)
-        {
             var subcomponents = new List<SolutionComponent>();
 
             var subcomponentTypes = new[] { 2, 10, 14, 22, 26, 59, 60, 29 };
@@ -261,10 +249,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             {
                 // Use REST API to query msdyn_solutioncomponentsummary for child components
                 var filter = $"msdyn_primaryentityname eq '{parentComponent.UniqueName}' and msdyn_componenttype eq {componentTypeFilter}";
-                if (IsManagedSolution.HasValue && IsManagedSolution.Value)
-                {
-                    filter += " and msdyn_ismanaged eq 'True'";
-                }
                 if (_solutionId != Guid.Empty)
                 {
                     filter += $" and msdyn_solutionid eq {_solutionId:B}";

@@ -25,7 +25,7 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
 
 ### FromFolder
 ```
-Import-DataverseSolution [-InFolder] <String> [-PackageType <ImportSolutionPackageType>]
+Import-DataverseSolution -InFolder <String> [-PackageType <ImportSolutionPackageType>]
  [-OverwriteUnmanagedCustomizations] [-PublishWorkflows] [-SkipProductUpdateDependencies] [-Mode <ImportMode>]
  [-ConnectionReferences <Hashtable>] [-EnvironmentVariables <Hashtable>] [-ConvertToManaged]
  [-SkipQueueRibbonJob] [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
@@ -294,7 +294,7 @@ Parameter Sets: FromFolder
 Aliases:
 
 Required: True
-Position: 0
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -353,7 +353,6 @@ Package type: 'Unmanaged' (default) or 'Managed'.
 Type: ImportSolutionPackageType
 Parameter Sets: FromFolder
 Aliases:
-Accepted values: Unmanaged, Managed
 
 Required: False
 Position: Named

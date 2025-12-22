@@ -216,31 +216,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("ComponentType", componentType));
             result.Properties.Add(new PSNoteProperty("ComponentTypeName", ComponentTypeResolver.GetComponentTypeName(Connection, dummyComponent)));
 
+            if ((sourceComponent?.IsSubcomponent ?? targetComponent?.IsSubcomponent ?? false))
+            {
+                int? parentComponentType = sourceComponent?.ParentComponentType ?? targetComponent?.ParentComponentType;
+                result.Properties.Add(new PSNoteProperty("ParentComponentType", parentComponentType.GetValueOrDefault()));
+                result.Properties.Add(new PSNoteProperty("ParentComponentTypeName", parentComponentType.HasValue ? ComponentTypeResolver.GetComponentTypeName(Connection, new SolutionComponent { ComponentType = parentComponentType.Value }) : null));
+                result.Properties.Add(new PSNoteProperty("ParentTableName", sourceComponent?.ParentTableName ?? targetComponent?.ParentTableName));
+            }
+            else
+            {
+                result.Properties.Add(new PSNoteProperty("ParentComponentType", null));
+                result.Properties.Add(new PSNoteProperty("ParentComponentTypeName", null));
+                result.Properties.Add(new PSNoteProperty("ParentTableName", null));
+            }
 
-            // Add source and target ObjectIds
             result.Properties.Add(new PSNoteProperty("SourceObjectId", (object)sourceComponent?.ObjectId));
             result.Properties.Add(new PSNoteProperty("TargetObjectId", (object)targetComponent?.ObjectId));
             result.Properties.Add(new PSNoteProperty("SourceUniqueName", (object)sourceComponent?.UniqueName));
             result.Properties.Add(new PSNoteProperty("TargetUniqueName", (object)targetComponent?.UniqueName));
 
             result.Properties.Add(new PSNoteProperty("Status", status.ToString()));
-            
+
             var sourceBehaviorEnum = RootComponentBehaviorExtensions.FromInt(sourceComponent?.RootComponentBehavior);
             var targetBehaviorEnum = RootComponentBehaviorExtensions.FromInt(targetComponent?.RootComponentBehavior);
-            
+
             result.Properties.Add(new PSNoteProperty("SourceBehavior", sourceBehaviorEnum));
             result.Properties.Add(new PSNoteProperty("TargetBehavior", targetBehaviorEnum));
-            
-            result.Properties.Add(new PSNoteProperty("IsSubcomponent", sourceComponent?.IsSubcomponent ?? targetComponent?.IsSubcomponent ?? false));
 
-            if ((sourceComponent?.IsSubcomponent ?? targetComponent?.IsSubcomponent ?? false) &&
-                (sourceComponent?.ParentComponentType.HasValue ?? targetComponent?.ParentComponentType.HasValue ?? false))
-            {
-                int? parentComponentType = sourceComponent?.ParentComponentType ?? targetComponent?.ParentComponentType;
-                result.Properties.Add(new PSNoteProperty("ParentComponentType", parentComponentType.Value));
-                result.Properties.Add(new PSNoteProperty("ParentComponentTypeName", ComponentTypeResolver.GetComponentTypeName(Connection, new SolutionComponent { ComponentType = parentComponentType.Value })));
-                result.Properties.Add(new PSNoteProperty("ParentTableName", sourceComponent?.ParentTableName ?? targetComponent?.ParentTableName));
-            }
+            result.Properties.Add(new PSNoteProperty("IsSubcomponent", sourceComponent?.IsSubcomponent ?? targetComponent?.IsSubcomponent ?? false));
+            result.Properties.Add(new PSNoteProperty("IsCustom", sourceComponent?.IsCustom ?? targetComponent?.IsCustom));
+            result.Properties.Add(new PSNoteProperty("IsCustomized", sourceComponent?.IsCustomized ?? targetComponent?.IsCustomized));
+
 
             WriteObject(result);
         }
@@ -334,7 +340,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 int componentType = result.SourceComponent?.ComponentType ?? result.TargetComponent?.ComponentType ?? 0;
                 var sourceBehavior = RootComponentBehaviorExtensions.FromInt(result.SourceComponent?.RootComponentBehavior);
                 var targetBehavior = RootComponentBehaviorExtensions.FromInt(result.TargetComponent?.RootComponentBehavior);
-                
+
                 WriteVerbose($"  Component: Type {componentType} '{componentName}' - Status: {result.Status}, SourceBehavior: {sourceBehavior}, TargetBehavior: {targetBehavior}");
             }
 

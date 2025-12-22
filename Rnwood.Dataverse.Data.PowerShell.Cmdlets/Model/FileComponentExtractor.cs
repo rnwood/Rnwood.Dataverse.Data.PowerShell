@@ -370,23 +370,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             var relationships = xdoc.Root.Element("EntityRelationships")?.Elements("EntityRelationship") ?? Enumerable.Empty<XElement>();
             foreach (var rel in relationships)
             {
-                var referencingEntity = rel.Element("ReferencingEntityName")?.Value;
-                if (referencingEntity?.Equals(entityName, StringComparison.OrdinalIgnoreCase) == true)
-                {
-                    var name = rel.Attribute("Name")?.Value;
-                    subcomponents.Add(new SolutionComponent
-                    {
-                        ComponentType = 10, // EntityRelationship
-                        UniqueName = name,
-                        RootComponentBehavior = 0,
-                        IsSubcomponent = true,
-                        ParentComponentType = 1,
-                        ParentTableName = entityName
-                    });
-                }
-
-                var referencedEntity = rel.Element("ReferencedEntityName")?.Value;
-                if (referencedEntity != referencingEntity && referencedEntity?.Equals(entityName, StringComparison.OrdinalIgnoreCase) == true)
+                var referencingEntity = rel.Element("ReferencingEntityName").Value;
+                var referencedEntity = rel.Element("ReferencedEntityName").Value;
+                if (referencingEntity.Equals(entityName, StringComparison.OrdinalIgnoreCase) ||referencedEntity.Equals(entityName, StringComparison.OrdinalIgnoreCase))
                 {
                     var name = rel.Attribute("Name")?.Value;
                     subcomponents.Add(new SolutionComponent
