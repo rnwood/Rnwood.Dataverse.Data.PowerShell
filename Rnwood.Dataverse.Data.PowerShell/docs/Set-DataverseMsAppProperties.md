@@ -5,61 +5,48 @@ online version:
 schema: 2.0.0
 ---
 
-# Set-DataverseMsAppScreen
+# Set-DataverseMsAppProperties
 
 ## SYNOPSIS
-Adds or updates a screen in a .msapp file.
+{{ Fill in the Synopsis }}
 
 ## SYNTAX
 
 ### YamlContent-FromPath
 ```
-Set-DataverseMsAppScreen [-MsAppPath] <String> [-ScreenName] <String> [-YamlContent] <String>
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseMsAppProperties [-MsAppPath] <String> [-YamlContent] <String> [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### YamlFile-FromPath
 ```
-Set-DataverseMsAppScreen [-MsAppPath] <String> [-ScreenName] <String> -YamlFilePath <String>
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseMsAppProperties [-MsAppPath] <String> -YamlFilePath <String> [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### YamlContent-FromObject
 ```
-Set-DataverseMsAppScreen [-CanvasApp] <PSObject> [-ScreenName] <String> [-YamlContent] <String>
+Set-DataverseMsAppProperties [-CanvasApp] <PSObject> [-YamlContent] <String>
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### YamlFile-FromObject
 ```
-Set-DataverseMsAppScreen [-CanvasApp] <PSObject> [-ScreenName] <String> -YamlFilePath <String>
+Set-DataverseMsAppProperties [-CanvasApp] <PSObject> -YamlFilePath <String>
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Adds or updates a screen in a Canvas app .msapp file. The screen is defined using Power Apps YAML format. The .msapp file is modified in place.
+{{ Fill in the Description }}
 
 ## EXAMPLES
 
-### Example 1: Add a new screen
+### Example 1
 ```powershell
-PS C:\> $yaml = @"
-Screens:
-  NewScreen:
-    Properties:
-      LoadingSpinnerColor: =RGBA(56, 96, 178, 1)
-"@
-PS C:\> Set-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "NewScreen" -YamlContent $yaml
+PS C:\> {{ Add example code here }}
 ```
 
-Adds a new screen to the .msapp file.
-
-### Example 2: Update from YAML file
-```powershell
-PS C:\> Set-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "MainScreen" -YamlFilePath "MainScreen.pa.yaml"
-```
-
-Updates a screen using YAML content from a file.
+{{ Add example description here }}
 
 ## PARAMETERS
 
@@ -108,12 +95,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ScreenName
-Name of the screen
+### -YamlContent
+YAML content for the app properties (without 'App:' header)
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: YamlContent-FromPath, YamlContent-FromObject
 Aliases:
 
 Required: True
@@ -123,23 +110,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -YamlContent
-YAML content for the screen
-
-```yaml
-Type: String
-Parameter Sets: YamlContent-FromPath, YamlContent-FromObject
-Aliases:
-
-Required: True
-Position: 2
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -YamlFilePath
-Path to a YAML file containing the screen definition
+Path to a YAML file containing the app properties definition (without 'App:' header)
 
 ```yaml
 Type: String
