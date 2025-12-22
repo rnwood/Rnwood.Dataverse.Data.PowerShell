@@ -5,44 +5,34 @@ online version:
 schema: 2.0.0
 ---
 
-# Get-DataverseMsAppScreen
+# Get-DataverseMsAppProperties
 
 ## SYNOPSIS
-Retrieves screens from a .msapp file.
+{{ Fill in the Synopsis }}
 
 ## SYNTAX
 
 ### FromPath
 ```
-Get-DataverseMsAppScreen [-MsAppPath] <String> [-ScreenName <String>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseMsAppProperties [-MsAppPath] <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### FromObject
 ```
-Get-DataverseMsAppScreen [-CanvasApp] <PSObject> [-ScreenName <String>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseMsAppProperties [-CanvasApp] <PSObject> [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Retrieves screens from a Canvas app .msapp file. Screens are returned as PowerShell objects containing the screen name, file path, and YAML content.
+{{ Fill in the Description }}
 
 ## EXAMPLES
 
-### Example 1: Get all screens from a .msapp file
+### Example 1
 ```powershell
-PS C:\> $screens = Get-DataverseMsAppScreen -MsAppPath "C:\apps\myapp.msapp"
-PS C:\> $screens | Format-Table ScreenName, Size
+PS C:\> {{ Add example code here }}
 ```
 
-Retrieves all screens from a .msapp file.
-
-### Example 2: Filter screens by name pattern
-```powershell
-PS C:\> Get-DataverseMsAppScreen -MsAppPath "myapp.msapp" -ScreenName "Main*"
-```
-
-Retrieves only screens whose names start with "Main".
+{{ Add example description here }}
 
 ## PARAMETERS
 
@@ -83,22 +73,6 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ScreenName
-Name pattern of screens to retrieve.
-Supports wildcards (* and ?)
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
 
 Required: False
 Position: Named

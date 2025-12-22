@@ -8,10 +8,10 @@ using System.Text;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Adds or updates a screen in a .msapp file.
+    /// Sets the App properties in a .msapp file (App.pa.yaml).
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseMsAppScreen", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
-    public class SetDataverseMsAppScreenCmdlet : PSCmdlet
+    [Cmdlet(VerbsCommon.Set, "DataverseMsAppProperties", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    public class SetDataverseMsAppPropertiesCmdlet : PSCmdlet
     {
         /// <summary>
         /// Gets or sets the path to the .msapp file.
@@ -31,25 +31,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public PSObject CanvasApp { get; set; }
 
         /// <summary>
-        /// Gets or sets the screen name.
+        /// Gets or sets the YAML content for the app properties (without "App:" header - will be added automatically).
         /// </summary>
-        [Parameter(Mandatory = true, Position = 1, HelpMessage = "Name of the screen")]
-        [ValidateNotNullOrEmpty]
-        public string ScreenName { get; set; }
-
-        /// <summary>
-        /// Gets or sets the YAML content for the screen (without header - will be added automatically).
-        /// </summary>
-        [Parameter(Mandatory = true, Position = 2, ParameterSetName = "YamlContent-FromPath", HelpMessage = "YAML content for the screen (without header)")]
-        [Parameter(Mandatory = true, Position = 2, ParameterSetName = "YamlContent-FromObject", HelpMessage = "YAML content for the screen (without header)")]
+        [Parameter(Mandatory = true, Position = 1, ParameterSetName = "YamlContent-FromPath", HelpMessage = "YAML content for the app properties (without 'App:' header)")]
+        [Parameter(Mandatory = true, Position = 1, ParameterSetName = "YamlContent-FromObject", HelpMessage = "YAML content for the app properties (without 'App:' header)")]
         [ValidateNotNullOrEmpty]
         public string YamlContent { get; set; }
 
         /// <summary>
-        /// Gets or sets the path to a YAML file containing the screen definition (without header).
+        /// Gets or sets the path to a YAML file containing the app properties definition (without "App:" header).
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "YamlFile-FromPath", HelpMessage = "Path to a YAML file containing the screen definition (without header)")]
-        [Parameter(Mandatory = true, ParameterSetName = "YamlFile-FromObject", HelpMessage = "Path to a YAML file containing the screen definition (without header)")]
+        [Parameter(Mandatory = true, ParameterSetName = "YamlFile-FromPath", HelpMessage = "Path to a YAML file containing the app properties definition (without 'App:' header)")]
+        [Parameter(Mandatory = true, ParameterSetName = "YamlFile-FromObject", HelpMessage = "Path to a YAML file containing the app properties definition (without 'App:' header)")]
         [ValidateNotNullOrEmpty]
         public string YamlFilePath { get; set; }
 
@@ -117,53 +110,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             string action = isFromObject 
-                ? $"Set screen '{ScreenName}' in Canvas app" 
-                : $"Set screen '{ScreenName}' in .msapp file '{targetPath}'";
+                ? "Set app properties in Canvas app" 
+                : $"Set app properties in .msapp file '{targetPath}'";
             
-            if (!ShouldProcess(action, action, "Set Screen"))
+            if (!ShouldProcess(action, action, "Set App Properties"))
             {
                 return;
             }
 
             // Add header and indent the YAML content
-            string fullYaml = AddScreenHeader(yaml, ScreenName);
+            string fullYaml = AddAppHeader(yaml);
 
-            byte[] modifiedBytes = ModifyMsAppScreen(msappBytes, fullYaml);
+            byte[] modifiedBytes = ModifyMsAppProperties(msappBytes, fullYaml);
             
             if (isFromObject)
             {
                 // Update the document property in the PSObject
                 string base64 = Convert.ToBase64String(modifiedBytes);
                 CanvasApp.Properties["document"].Value = base64;
-                WriteVerbose($"Screen '{ScreenName}' set successfully in Canvas app object");
+                WriteVerbose("App properties set successfully in Canvas app object");
             }
             else
             {
                 File.WriteAllBytes(targetPath, modifiedBytes);
-                WriteVerbose($"Screen '{ScreenName}' set successfully in .msapp file");
+                WriteVerbose("App properties set successfully in .msapp file");
             }
         }
 
-        private byte[] ModifyMsAppScreen(byte[] originalBytes, string yaml)
+        private byte[] ModifyMsAppProperties(byte[] originalBytes, string yaml)
         {
             using (var memoryStream = new MemoryStream(originalBytes))
             using (var resultStream = new MemoryStream())
             {
-                bool screenExists = false;
-                string screenFileName = $"Src/{ScreenName}.pa.yaml";
-
                 using (var zipInputStream = new ZipInputStream(memoryStream))
                 using (var zipOutputStream = new ZipOutputStream(resultStream))
                 {
                     zipOutputStream.SetLevel(6);
 
                     ZipEntry entry;
+                    bool appPropertiesFound = false;
+
                     while ((entry = zipInputStream.GetNextEntry()) != null)
                     {
-                        if (entry.Name == screenFileName)
+                        if (entry.Name == "Src/App.pa.yaml")
                         {
-                            screenExists = true;
-                            WriteVerbose($"Updating existing screen '{ScreenName}'");
+                            appPropertiesFound = true;
+                            WriteVerbose("Updating App.pa.yaml");
                             AddZipEntry(zipOutputStream, entry.Name, yaml);
                         }
                         else
@@ -174,11 +166,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     }
 
-                    // Add new screen if it doesn't exist
-                    if (!screenExists)
+                    if (!appPropertiesFound)
                     {
-                        WriteVerbose($"Creating new screen '{ScreenName}'");
-                        AddZipEntry(zipOutputStream, screenFileName, yaml);
+                        WriteWarning("App.pa.yaml not found in .msapp file - creating it");
+                        AddZipEntry(zipOutputStream, "Src/App.pa.yaml", yaml);
                     }
 
                     zipOutputStream.Finish();
@@ -221,12 +212,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Adds the screen header and indents the content.
-        /// Transforms: "Fill: =Value" -> "Screens:\n  ScreenName:\n    Fill: =Value"
+        /// Adds the "App:" header and indents the content.
+        /// Transforms: "Properties:\n  Theme: =Value" -> "App:\n  Properties:\n    Theme: =Value"
         /// </summary>
-        private string AddScreenHeader(string yamlContent, string screenName)
+        private string AddAppHeader(string yamlContent)
         {
-            // Add proper indentation (4 spaces) to each line
+            // Add proper indentation (2 spaces) to each line
             var lines = yamlContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             var indentedLines = lines.Select(line => 
             {
@@ -235,13 +226,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     return line;
                 }
-                return "    " + line;
+                return "  " + line;
             });
 
             // Build the full YAML with header
             var result = new StringBuilder();
-            result.AppendLine("Screens:");
-            result.AppendLine($"  {screenName}:");
+            result.AppendLine("App:");
             result.Append(string.Join(Environment.NewLine, indentedLines));
 
             return result.ToString();

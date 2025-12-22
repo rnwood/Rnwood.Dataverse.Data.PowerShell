@@ -3,16 +3,15 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
-using System.Text.RegularExpressions;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Retrieves screens from a .msapp file.
+    /// Retrieves the App properties from a .msapp file (App.pa.yaml).
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataverseMsAppScreen")]
+    [Cmdlet(VerbsCommon.Get, "DataverseMsAppProperties")]
     [OutputType(typeof(PSObject))]
-    public class GetDataverseMsAppScreenCmdlet : PSCmdlet
+    public class GetDataverseMsAppPropertiesCmdlet : PSCmdlet
     {
         /// <summary>
         /// Gets or sets the path to the .msapp file.
@@ -27,12 +26,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = true, Position = 0, ParameterSetName = "FromObject", ValueFromPipeline = true, HelpMessage = "Canvas app PSObject from Get-DataverseCanvasApp -IncludeDocument")]
         [ValidateNotNull]
         public PSObject CanvasApp { get; set; }
-
-        /// <summary>
-        /// Gets or sets the name pattern of screens to retrieve. Supports wildcards (* and ?).
-        /// </summary>
-        [Parameter(HelpMessage = "Name pattern of screens to retrieve. Supports wildcards (* and ?)")]
-        public string ScreenName { get; set; }
 
         /// <inheritdoc />
         protected override void ProcessRecord()
@@ -74,10 +67,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 msappBytes = File.ReadAllBytes(filePath);
             }
 
-            ExtractScreens(msappBytes);
+            ExtractAppProperties(msappBytes);
         }
 
-        private void ExtractScreens(byte[] msappBytes)
+        private void ExtractAppProperties(byte[] msappBytes)
         {
             using (var memoryStream = new MemoryStream(msappBytes))
             using (var zipInputStream = new ZipInputStream(memoryStream))
@@ -85,42 +78,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ZipEntry entry;
                 while ((entry = zipInputStream.GetNextEntry()) != null)
                 {
-                    // Screen YAML files are in the Src/ folder and end with .pa.yaml
-                    // Skip App.pa.yaml and _EditorState.pa.yaml
-                    if (entry.Name.StartsWith("Src/") && 
-                        entry.Name.EndsWith(".pa.yaml") && 
-                        !entry.Name.EndsWith("/App.pa.yaml") &&
-                        !entry.Name.EndsWith("/_EditorState.pa.yaml"))
+                    // Look for Src/App.pa.yaml
+                    if (entry.Name == "Src/App.pa.yaml")
                     {
-                        string screenName = Path.GetFileNameWithoutExtension(entry.Name);
-
-                        // Apply name filter if specified
-                        if (!string.IsNullOrEmpty(ScreenName))
-                        {
-                            if (!MatchesPattern(screenName, ScreenName))
-                            {
-                                continue;
-                            }
-                        }
-
                         // Read YAML content
                         byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
                         string yamlContent = System.Text.Encoding.UTF8.GetString(entryBytes);
 
-                        // Strip the screen header and unindent the content
-                        string processedYaml = StripScreenHeader(yamlContent, screenName);
+                        // Strip the "App:" header and unindent the content
+                        string processedYaml = StripAppHeader(yamlContent);
 
-                        // Create PSObject with screen information
+                        // Create PSObject with app properties information
                         var psObject = new PSObject();
-                        psObject.Properties.Add(new PSNoteProperty("ScreenName", screenName));
                         psObject.Properties.Add(new PSNoteProperty("FilePath", entry.Name));
                         psObject.Properties.Add(new PSNoteProperty("YamlContent", processedYaml));
                         psObject.Properties.Add(new PSNoteProperty("Size", entryBytes.Length));
 
                         WriteObject(psObject);
+                        return;
                     }
                 }
             }
+
+            WriteWarning("App.pa.yaml not found in .msapp file");
         }
 
         private byte[] ReadZipEntryBytes(ZipInputStream zipInputStream)
@@ -137,51 +117,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private bool MatchesPattern(string value, string pattern)
-        {
-            if (string.IsNullOrEmpty(pattern))
-            {
-                return true;
-            }
-
-            // Convert wildcard pattern to regex pattern
-            string regexPattern = "^" + System.Text.RegularExpressions.Regex.Escape(pattern)
-                .Replace("\\*", ".*")
-                .Replace("\\?", ".") + "$";
-
-            return System.Text.RegularExpressions.Regex.IsMatch(value, regexPattern, 
-                System.Text.RegularExpressions.RegexOptions.IgnoreCase);
-        }
-
         /// <summary>
-        /// Strips the screen header (e.g., "Screens:\n  ScreenName:") and unindents the content.
+        /// Strips the "App:" header and unindents the content.
         /// </summary>
-        private string StripScreenHeader(string yamlContent, string screenName)
+        private string StripAppHeader(string yamlContent)
         {
             // Expected format:
-            // Screens:
-            //   ScreenName:
-            //     Property: Value
+            // App:
+            //   Properties:
             //     ...
             
-            // We need to remove "Screens:" and "  ScreenName:" lines and unindent by 4 spaces
+            // We need to remove "App:" line and unindent by 2 spaces
             var lines = yamlContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             
-            if (lines.Length < 2)
+            if (lines.Length < 1)
             {
                 return yamlContent; // Not enough lines, return as-is
             }
 
-            // Skip first two lines (Screens: and   ScreenName:) and unindent the rest
-            var contentLines = lines.Skip(2).ToList();
+            // Skip first line (App:) and unindent the rest
+            var contentLines = lines.Skip(1).ToList();
             
-            // Unindent by removing leading spaces (typically 4 spaces for screen content)
+            // Unindent by removing leading spaces (typically 2 spaces for app content)
             var result = string.Join(Environment.NewLine, contentLines.Select(line =>
             {
-                // Remove up to 4 leading spaces
-                if (line.StartsWith("    "))
+                // Remove up to 2 leading spaces
+                if (line.StartsWith("  "))
                 {
-                    return line.Substring(4);
+                    return line.Substring(2);
                 }
                 return line;
             }));
