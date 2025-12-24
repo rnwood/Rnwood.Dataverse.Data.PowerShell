@@ -61,11 +61,35 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string OutputProjectPath { get; set; }
 
         /// <summary>
+        /// Initializes the cmdlet processing. Skips connection validation for parameter sets that don't need a connection.
+        /// </summary>
+        protected override void BeginProcessing()
+        {
+            // Only call base (which validates connection) for parameter sets that need it
+            if (ParameterSetName == "ById" || ParameterSetName == "VSProjectById" ||
+                ParameterSetName == "ByName" || ParameterSetName == "VSProjectByName")
+            {
+                base.BeginProcessing();
+            }
+            else
+            {
+                // For Bytes and FilePath parameter sets, skip connection validation
+                // Just call PSCmdlet.BeginProcessing() directly
+                // We can't call it directly, so we do nothing here - connection won't be needed
+            }
+        }
+
+        /// <summary>
         /// Process the cmdlet.
         /// </summary>
         protected override void ProcessRecord()
         {
-            base.ProcessRecord();
+            // Only call base.ProcessRecord() for parameter sets that need connection
+            if (ParameterSetName == "ById" || ParameterSetName == "VSProjectById" ||
+                ParameterSetName == "ByName" || ParameterSetName == "VSProjectByName")
+            {
+                base.ProcessRecord();
+            }
 
             try
             {
