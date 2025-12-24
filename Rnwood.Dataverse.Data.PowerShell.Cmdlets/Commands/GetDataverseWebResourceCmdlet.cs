@@ -81,6 +81,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            // Create metadata factory and converter once for all records
+            var metadataFactory = new EntityMetadataFactory(Connection);
+            var converter = new DataverseEntityConverter(Connection, metadataFactory);
+
             QueryExpression query = new QueryExpression("webresource");
             
             // Exclude content by default unless IncludeContent or DecodeContent is specified
@@ -225,7 +229,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         entity["content"] = response.Entity.GetAttributeValue<string>("content");
                     }
                     
-                    var psObject = ConvertEntityToPSObject(entity, includeContent);
+                    var psObject = ConvertEntityToPSObject(entity, includeContent, converter);
 
                     // Save to file if Path is specified and we have exactly one result
                     if (!string.IsNullOrEmpty(Path))
@@ -246,11 +250,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private PSObject ConvertEntityToPSObject(Entity entity, bool includeContent)
+        private PSObject ConvertEntityToPSObject(Entity entity, bool includeContent, DataverseEntityConverter converter)
         {
-            var metadataFactory = new EntityMetadataFactory(Connection);
-            var converter = new DataverseEntityConverter(Connection, metadataFactory);
-            
             // Determine which columns to include in the PSObject
             ColumnSet columnSet;
             if (includeContent)
