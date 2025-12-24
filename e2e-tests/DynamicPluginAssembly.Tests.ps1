@@ -247,8 +247,8 @@ namespace TestDynamicPlugins
             
             Write-Host "✓ Plugin V2 executed successfully! new_description = $($record2.new_description)"
             
-            # Step 12: Extract source from assembly to verify metadata
-            Write-Host "Step 12: Extracting source from updated assembly..."
+            # Step 12: Extract source from assembly to verify metadata (old approach)
+            Write-Host "Step 12: Extracting source from updated assembly (legacy bytes approach)..."
             $retrievedAssembly = Get-DataversePluginAssembly -Connection $connection -Name $assemblyName
             $assemblyBytes = [Convert]::FromBase64String($retrievedAssembly.content)
             $metadata = Get-DataverseDynamicPluginAssembly -AssemblyBytes $assemblyBytes
@@ -257,13 +257,112 @@ namespace TestDynamicPlugins
                 throw "Extracted source does not contain V2 marker"
             }
             
-            Write-Host "✓ Successfully extracted source code with V2 marker"
+            Write-Host "✓ Successfully extracted source code with V2 marker (legacy approach)"
             Write-Host "  Assembly Name: $($metadata.AssemblyName)"
             Write-Host "  Version: $($metadata.Version)"
             Write-Host "  Public Key Token: $($metadata.PublicKeyToken)"
             
+            # Step 13: Test new connection-based retrieval by name
+            Write-Host "Step 13: Testing connection-based retrieval by name..."
+            $metadataByName = Get-DataverseDynamicPluginAssembly -Connection $connection -Name $assemblyName
+            
+            if (-not $metadataByName) {
+                throw "Failed to retrieve metadata by name"
+            }
+            
+            if (-not $metadataByName.SourceCode.Contains($markerValue2)) {
+                throw "Retrieved metadata by name does not contain V2 marker"
+            }
+            
+            if ($metadataByName.AssemblyName -ne $assemblyName) {
+                throw "Assembly name mismatch. Expected '$assemblyName', got '$($metadataByName.AssemblyName)'"
+            }
+            
+            Write-Host "✓ Successfully retrieved metadata by name"
+            Write-Host "  Assembly Name: $($metadataByName.AssemblyName)"
+            Write-Host "  Version: $($metadataByName.Version)"
+            
+            # Step 14: Test connection-based retrieval by ID
+            Write-Host "Step 14: Testing connection-based retrieval by ID..."
+            $metadataById = Get-DataverseDynamicPluginAssembly -Connection $connection -Id $assemblyId
+            
+            if (-not $metadataById) {
+                throw "Failed to retrieve metadata by ID"
+            }
+            
+            if (-not $metadataById.SourceCode.Contains($markerValue2)) {
+                throw "Retrieved metadata by ID does not contain V2 marker"
+            }
+            
+            if ($metadataById.AssemblyName -ne $assemblyName) {
+                throw "Assembly name mismatch. Expected '$assemblyName', got '$($metadataById.AssemblyName)'"
+            }
+            
+            Write-Host "✓ Successfully retrieved metadata by ID"
+            
+            # Step 15: Test VS project export by name
+            Write-Host "Step 15: Testing VS project export by name..."
+            $projectPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), "E2E_VSProject_$testRunId")
+            
+            if (Test-Path $projectPath) {
+                Remove-Item $projectPath -Recurse -Force
+            }
+            
+            Get-DataverseDynamicPluginAssembly -Connection $connection -Name $assemblyName -OutputProjectPath $projectPath
+            
+            # Verify files were created
+            $csprojPath = Join-Path $projectPath "$assemblyName.csproj"
+            $csPath = Join-Path $projectPath "$assemblyName.cs"
+            $snkPath = Join-Path $projectPath "$assemblyName.snk"
+            
+            if (-not (Test-Path $csprojPath)) {
+                throw "Project file not created: $csprojPath"
+            }
+            
+            if (-not (Test-Path $csPath)) {
+                throw "Source file not created: $csPath"
+            }
+            
+            if (-not (Test-Path $snkPath)) {
+                throw "Key file not created: $snkPath"
+            }
+            
+            # Verify source code content
+            $sourceContent = Get-Content $csPath -Raw
+            if (-not $sourceContent.Contains($markerValue2)) {
+                throw "Exported source code does not contain V2 marker"
+            }
+            
+            Write-Host "✓ Successfully exported VS project by name"
+            Write-Host "  Project: $csprojPath"
+            Write-Host "  Source: $csPath"
+            Write-Host "  Key: $snkPath"
+            
+            # Step 16: Test default connection (set as default and use without -Connection)
+            Write-Host "Step 16: Testing default connection usage..."
+            Set-DataverseConnectionAsDefault -Connection $connection
+            
+            # Retrieve without -Connection parameter
+            $metadataDefault = Get-DataverseDynamicPluginAssembly -Name $assemblyName
+            
+            if (-not $metadataDefault) {
+                throw "Failed to retrieve metadata using default connection"
+            }
+            
+            if ($metadataDefault.AssemblyName -ne $assemblyName) {
+                throw "Assembly name mismatch with default connection"
+            }
+            
+            Write-Host "✓ Successfully used default connection (no -Connection parameter)"
+            
+            # Cleanup project directory
+            if (Test-Path $projectPath) {
+                Remove-Item $projectPath -Recurse -Force
+                Write-Host "✓ Cleaned up VS project directory"
+            }
+            
             # Cleanup
-            Write-Host "Step 13: Cleaning up..."
+            Write-Host "Step 17: Cleaning up..."
             try {
                 Remove-DataversePluginStep -Connection $connection -Id $stepId -Confirm:$false
                 Write-Host "✓ Removed plugin step"
@@ -301,7 +400,11 @@ namespace TestDynamicPlugins
             Write-Host "✓ Plugin V1 executed via real trigger"
             Write-Host "✓ Plugin assembly updated with new source code"
             Write-Host "✓ Plugin V2 executed with new behavior"
-            Write-Host "✓ Source code successfully extracted from assembly"
+            Write-Host "✓ Source code successfully extracted from assembly (legacy approach)"
+            Write-Host "✓ Connection-based retrieval by name works"
+            Write-Host "✓ Connection-based retrieval by ID works"
+            Write-Host "✓ VS project export by name works"
+            Write-Host "✓ Default connection usage works (no -Connection parameter)"
             
         } catch {
             Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
