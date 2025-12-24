@@ -24,6 +24,18 @@ Get-DataverseDynamicPluginAssembly -FilePath <String> [-OutputSourceFile <String
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### VSProjectFromBytes
+```
+Get-DataverseDynamicPluginAssembly [-OutputSourceFile <String>] -OutputProjectPath <String>
+ -VSProjectAssemblyBytes <Byte[]> [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### VSProjectFromFile
+```
+Get-DataverseDynamicPluginAssembly [-OutputSourceFile <String>] -OutputProjectPath <String>
+ -VSProjectFilePath <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 This cmdlet extracts embedded metadata from plugin assemblies created with `Set-DataverseDynamicPluginAssembly`. The metadata includes the original C# source code, framework and package references, version information, culture, and the strong name key used for signing.
 
@@ -113,6 +125,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -OutputProjectPath
+Output directory for Visual Studio project
+
+```yaml
+Type: String
+Parameter Sets: VSProjectFromBytes, VSProjectFromFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -OutputSourceFile
 Output path for extracted source code
 
@@ -137,6 +164,36 @@ Parameter Sets: (All)
 Aliases: proga
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -VSProjectAssemblyBytes
+Assembly bytes
+
+```yaml
+Type: Byte[]
+Parameter Sets: VSProjectFromBytes
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -VSProjectFilePath
+Path to assembly file
+
+```yaml
+Type: String
+Parameter Sets: VSProjectFromFile
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
