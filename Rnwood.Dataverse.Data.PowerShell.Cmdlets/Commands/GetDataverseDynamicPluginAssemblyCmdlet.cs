@@ -248,11 +248,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             
             // Always add Microsoft.CrmSdk.CoreAssemblies as it's required for plugins
-            bool hasCrmSdk = metadata.PackageReferences?.Any(p => p.StartsWith("Microsoft.CrmSdk.CoreAssemblies", StringComparison.OrdinalIgnoreCase)) ?? false;
+            const string CrmSdkPackageName = "Microsoft.CrmSdk.CoreAssemblies";
+            bool hasCrmSdk = metadata.PackageReferences?.Any(p => p.StartsWith(CrmSdkPackageName, StringComparison.OrdinalIgnoreCase)) ?? false;
             if (!hasCrmSdk)
             {
                 csproj.AppendLine("  <ItemGroup>");
-                csproj.AppendLine("    <PackageReference Include=\"Microsoft.CrmSdk.CoreAssemblies\" Version=\"9.*\" />");
+                csproj.AppendLine($"    <PackageReference Include=\"{CrmSdkPackageName}\" Version=\"9.*\" />");
                 csproj.AppendLine("  </ItemGroup>");
                 csproj.AppendLine();
             }
@@ -264,9 +265,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 foreach (string frameworkRef in metadata.FrameworkReferences)
                 {
                     // Remove .dll extension if present
-                    string refName = frameworkRef.EndsWith(".dll", StringComparison.OrdinalIgnoreCase) 
-                        ? frameworkRef.Substring(0, frameworkRef.Length - 4) 
-                        : frameworkRef;
+                    string refName = Path.GetFileNameWithoutExtension(frameworkRef);
                     csproj.AppendLine($"    <Reference Include=\"{refName}\" />");
                 }
                 csproj.AppendLine("  </ItemGroup>");
