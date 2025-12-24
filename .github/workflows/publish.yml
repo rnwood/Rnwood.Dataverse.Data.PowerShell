@@ -37,10 +37,6 @@ jobs:
         uses: PSModule/install-powershell@v1
         with:
           Version: ${{ matrix.powershell_version }}
-      - name: Build Sql4CDS
-        shell: pwsh
-        run: |
-          ./scripts/Build-Sql4Cds.ps1
       - name: Build
         shell: pwsh
         run: |       

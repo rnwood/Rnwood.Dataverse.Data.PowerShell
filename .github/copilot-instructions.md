@@ -9,41 +9,15 @@ Cross-platform PowerShell module (~206MB, 1339 files) for Microsoft Dataverse da
 - .NET SDK 8.0+ (tested with 9.0.305)
 - PowerShell 5.1+ or PowerShell 7+
 - Pester module for testing
-- Git submodules initialized (for Sql4Cds dependency)
 
 ### Complete Build Sequence (Total time: ~30-60 seconds from clean)
-
-**IMPORTANT: Sql4Cds Submodule Dependency**
-
-This project depends on a local build of the Sql4Cds submodule. The build process has been automated:
-
-1. **Automatic Build (Recommended)**: The Sql4Cds submodule is automatically built during the first build via an MSBuild pre-build target. Simply run:
-   ```bash
-   dotnet build
-   ```
-   The build system will:
-   - Initialize the Sql4Cds git submodule if needed
-   - Build MarkMpn.Sql4Cds.Engine project
-   - Create a NuGet package in `local-packages/`
-   - Use this local package for the main build
-
-2. **Manual Build (If Needed)**: If you need to rebuild Sql4Cds manually or in advance:
-   ```bash
-   # Run the build script
-   pwsh -File Build-Sql4Cds.ps1
-   
-   # Or with options
-   pwsh -File Build-Sql4Cds.ps1 -Configuration Debug -Force
-   ```
-
-3. **Visual Studio**: The pre-build target works automatically in Visual Studio. Just open the solution and build.
 
 **Standard Build Sequence:**
 ```bash
 # 1. Clean (takes 1-3 seconds)
 dotnet clean
 
-# 2. Build (takes 30-60 seconds - includes Sql4Cds build and restore on first build)
+# 2. Build (takes 30-60 seconds)
 dotnet build 
 
 
@@ -174,16 +148,12 @@ $config.Filter.FullName = '*Get-DataverseRecord - Basic*' # Basic Get tests
 - `.gitignore` - Standard .NET/VS ignore patterns
 - `.github/workflows/publish.yml` - CI/CD: builds on Windows+Ubuntu × PS 5/7.4.11/latest, runs tests, publishes to Gallery on release
 - `renovate.json` - Automated dependency updates
-- **`Build-Sql4Cds.ps1`** - PowerShell script to build Sql4Cds submodule and create local NuGet package
-- **`Sql4Cds/`** - Git submodule containing the Sql4Cds source code (used to build local MarkMpn.Sql4Cds.Engine.1.0.0.nupkg)
-- **`local-packages/`** - Local NuGet feed containing the built Sql4Cds package (created by Build-Sql4Cds.ps1)
-- `NuGet.Config` - Configures both nuget.org and ./local-packages as package sources
+- `NuGet.Config` - Configures nuget.org as package source
 
 ### Project 1: Rnwood.Dataverse.Data.PowerShell.Cmdlets/
 **Purpose:** C# cmdlet implementations (multi-targeting net8.0;net462)  
 **Key Files:**
 - `Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj` - Multi-target project, CopyLocalLockFileAssemblies=true
-  - **BuildSql4Cds target**: Pre-build target that automatically builds Sql4Cds submodule if local package doesn't exist
   - Runs Build-Sql4Cds.ps1 before package restore to ensure MarkMpn.Sql4Cds.Engine.1.0.0.nupkg is available
 - `Commands/GetDataverseConnectionCmdlet.cs` - Creates ServiceClient with 5 auth modes: Interactive, UsernamePassword, ClientSecret, DeviceCode, Mock
 - `Commands/GetDataverseRecordCmdlet.cs` - Queries with QueryExpression/FetchXML, automatic paging, outputs PSObjects
@@ -201,7 +171,7 @@ $config.Filter.FullName = '*Get-DataverseRecord - Basic*' # Basic Get tests
 
 **Dependencies (from .csproj):**
 - Microsoft.PowerPlatform.Dataverse.Client 1.2.3
-- **MarkMpn.Sql4Cds.Engine 1.0.0** (built locally from Sql4Cds submodule, package in local-packages/)
+- **MarkMpn.Sql4Cds.Engine 10.2.0**
 - PowerShellStandard.Library 5.1.1
 - System.ServiceModel.Primitives/Http 4.10.3
 - FakeXrmEasy.v9 3.7.0 (net8.0) or 2.8.0 (net462)

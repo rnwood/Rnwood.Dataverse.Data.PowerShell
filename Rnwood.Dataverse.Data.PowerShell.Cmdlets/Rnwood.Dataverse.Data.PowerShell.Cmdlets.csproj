@@ -37,7 +37,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
-    <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="1.0.0" />
+    <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="10.2.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.11.0" />
     <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.56">
       <PrivateAssets>all</PrivateAssets>
@@ -69,19 +69,6 @@
       <Version>2.8.0</Version>
     </PackageReference>
   </ItemGroup>
-
-  <!-- Build Sql4Cds submodule before restoring packages -->
-  <Target Name="BuildSql4Cds" BeforeTargets="BeforeBuild;Restore">
-    <PropertyGroup>
-      <Sql4CdsPackage>$(MSBuildThisFileDirectory)..\local-packages\MarkMpn.Sql4Cds.Engine.1.0.0.nupkg</Sql4CdsPackage>
-      <BuildSql4CdsScript>$(MSBuildThisFileDirectory)..\Build-Sql4Cds.ps1</BuildSql4CdsScript>
-    </PropertyGroup>
-    
-    <Message Text="Checking if Sql4Cds package exists at: $(Sql4CdsPackage)" Importance="high" />
-    
-    <!-- Only build if package doesn't exist -->
-    <Exec Command="pwsh -File &quot;$(BuildSql4CdsScript)&quot;" Condition="!Exists('$(Sql4CdsPackage)')" />
-  </Target>
 
   <!-- Copy XML documentation files from referenced Dataverse/SDK packages into the output folder so tools and generators can read official XML help. -->
   <Target Name="CopyDataversePackageXmlDocs" AfterTargets="Build">
