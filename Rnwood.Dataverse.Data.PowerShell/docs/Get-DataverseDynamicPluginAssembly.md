@@ -18,22 +18,22 @@ Get-DataverseDynamicPluginAssembly -AssemblyBytes <Byte[]> [-OutputSourceFile <S
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### VSProjectFromBytes
+```
+Get-DataverseDynamicPluginAssembly -AssemblyBytes <Byte[]> [-OutputSourceFile <String>]
+ -OutputProjectPath <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ### FilePath
 ```
 Get-DataverseDynamicPluginAssembly -FilePath <String> [-OutputSourceFile <String>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
-### VSProjectFromBytes
-```
-Get-DataverseDynamicPluginAssembly [-OutputSourceFile <String>] -OutputProjectPath <String>
- -VSProjectAssemblyBytes <Byte[]> [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
 ### VSProjectFromFile
 ```
-Get-DataverseDynamicPluginAssembly [-OutputSourceFile <String>] -OutputProjectPath <String>
- -VSProjectFilePath <String> [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseDynamicPluginAssembly -FilePath <String> [-OutputSourceFile <String>] -OutputProjectPath <String>
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -93,6 +93,27 @@ Set-DataverseDynamicPluginAssembly -SourceCode $modifiedSource -Name "MyPlugin"
 
 Retrieves the current metadata from an existing assembly to verify settings before updating it.
 
+### Example 4: Export to complete Visual Studio project
+```powershell
+# Download assembly from Dataverse
+$assembly = Get-DataverseRecord -TableName pluginassembly -FilterValues @{ name = "MyDynamicPlugin" } -Columns content
+
+# Decode and export to VS project
+$assemblyBytes = [Convert]::FromBase64String($assembly.content)
+Get-DataverseDynamicPluginAssembly -AssemblyBytes $assemblyBytes -OutputProjectPath "C:\Dev\MyPluginProject"
+
+# The output directory will contain:
+#   - MyDynamicPlugin.cs (source code)
+#   - MyDynamicPlugin.csproj (project file targeting .NET Framework 4.6.2)
+#   - MyDynamicPlugin.snk (strong name key for signing)
+
+# Open in Visual Studio or build from command line
+cd C:\Dev\MyPluginProject
+dotnet build
+```
+
+Exports a complete Visual Studio project that can be opened, modified, and rebuilt. The generated project includes all necessary files and configurations to build a plugin assembly identical to the original, including the strong name key for maintaining the same PublicKeyToken.
+
 ## PARAMETERS
 
 ### -AssemblyBytes
@@ -100,7 +121,7 @@ Assembly bytes
 
 ```yaml
 Type: Byte[]
-Parameter Sets: Bytes
+Parameter Sets: Bytes, VSProjectFromBytes
 Aliases:
 
 Required: True
@@ -115,7 +136,7 @@ Path to assembly file
 
 ```yaml
 Type: String
-Parameter Sets: FilePath
+Parameter Sets: FilePath, VSProjectFromFile
 Aliases:
 
 Required: True
@@ -170,36 +191,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -VSProjectAssemblyBytes
-Assembly bytes
-
-```yaml
-Type: Byte[]
-Parameter Sets: VSProjectFromBytes
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -VSProjectFilePath
-Path to assembly file
-
-```yaml
-Type: String
-Parameter Sets: VSProjectFromFile
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -228,6 +219,15 @@ The metadata is embedded at the end of the assembly file with a marker "DPLM" (D
 - Extract build settings to replicate the configuration
 - Audit framework and package dependencies
 - Retrieve the strong name key for manual builds
+- Export to a complete Visual Studio project for editing and rebuilding
+
+**Visual Studio Project Export:**
+When using the `-OutputProjectPath` parameter, the cmdlet generates a complete Visual Studio project in the specified directory containing:
+- **{AssemblyName}.cs**: The original C# source code
+- **{AssemblyName}.csproj**: A .NET Framework 4.6.2 project file with all package and framework references configured
+- **{AssemblyName}.snk**: The strong name key file used for assembly signing
+
+The generated project can be opened in Visual Studio or built using `dotnet build`. The resulting assembly will have the same strong name and PublicKeyToken as the original, ensuring compatibility when updating plugins in Dataverse.
 
 ## RELATED LINKS
 
