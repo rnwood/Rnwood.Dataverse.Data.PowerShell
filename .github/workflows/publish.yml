@@ -531,6 +531,7 @@ jobs:
               Write-Error "No .nupkg file was created in out/nuget/"
               exit 1
           }
+<<<<<<< HEAD
       
       # Publish xUnit test results to GitHub
       - name: Publish Infrastructure Test Results
@@ -551,6 +552,129 @@ jobs:
           path: TestResults/E2E/*.trx
           reporter: dotnet-trx
           fail-on-error: false
+=======
+      - if: ${{ matrix.powershell_version != '5' }}
+        name: Test - pwsh (Standard + E2E in parallel)
+        id: test-pwsh
+        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
+        shell: pwsh
+        env:
+          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
+          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
+          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
+        run: |
+          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"    
+          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+
+          Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
+          
+          # Run standard tests
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'tests'
+          $config.Run.ExcludePath = 'tests/Performance-Investigation.Tests.ps1'
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.Should.ErrorAction = 'Continue'
+          
+          $standardResults = Invoke-Pester -Configuration $config
+          
+          # Run E2E tests
+          $config = New-PesterConfiguration
+          $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
+          $config.Run.PassThru = $true
+          $config.Output.Verbosity = 'Detailed'
+          $config.Filter.ExcludeTag = 'LongRunning'
+          
+          $e2eModuleResult = Invoke-Pester -Configuration $config
+          
+          # Check if we should also run metadata tests (Windows Latest only)
+          $shouldRunMetadataTests = ("${{ matrix.os }}" -eq 'windows-latest' -and "${{ matrix.powershell_version }}" -eq 'latest')
+          $metadataResult = $null
+          
+          if ($shouldRunMetadataTests) {
+              $metadataConfig = New-PesterConfiguration
+              $metadataConfig.Run.Path = @(
+                  'e2e-tests/DynamicPluginAssembly.Tests.ps1'
+                  # Opt in per branch by uncommenting
+                  # 'e2e-tests/EntityKeyMetadata.Tests.ps1'
+                  # 'e2e-tests/EntityMetadata.Tests.ps1',
+                  # 'e2e-tests/AttributeMetadata.Tests.ps1', 
+                  # 'e2e-tests/RelationshipMetadata.Tests.ps1',
+                  # 'e2e-tests/OptionSetMetadata.Tests.ps1'
+              )
+              $metadataConfig.Run.PassThru = $true
+              $metadataConfig.Output.Verbosity = 'Detailed'
+              $metadataConfig.Filter.ExcludeTag = 'LongRunning'
+              
+              $metadataResult = Invoke-Pester -Configuration $metadataConfig
+          }
+          
+          # Check for failures
+          $hasFailures = $false
+          
+          if ($standardResults.FailedCount -gt 0) {
+              $hasFailures = $true
+          }
+          
+          if ($e2eModuleResult.FailedCount -gt 0) {
+              $hasFailures = $true
+          }
+          
+          if ($metadataResult -and $metadataResult.FailedCount -gt 0) {
+              $hasFailures = $true
+          }
+          
+          if ($hasFailures) {
+              exit 1
+          }
+      - if:  ${{ matrix.powershell_version == '5' }}
+        name: Test - powershell (Standard + E2E in parallel)
+        id: test-powershell
+        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
+        shell: powershell
+        env:
+          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
+          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
+          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
+        run: |  
+            $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+  
+            Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
+            
+            # Run standard tests
+            $config = New-PesterConfiguration
+            $config.Run.Path = 'tests'
+            $config.Run.ExcludePath = 'tests/Performance-Investigation.Tests.ps1'
+            $config.Run.PassThru = $true
+            $config.Output.Verbosity = 'Detailed'
+            $config.Should.ErrorAction = 'Continue'
+            
+            $standardResults = Invoke-Pester -Configuration $config
+            
+            # Run E2E tests
+            $config = New-PesterConfiguration
+            $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
+            $config.Run.PassThru = $true
+            $config.Output.Verbosity = 'Detailed'
+            $config.Filter.ExcludeTag = 'LongRunning'
+            
+            $e2eResult = Invoke-Pester -Configuration $config
+            
+            # Check for failures
+            $hasFailures = $false
+            
+            if ($standardResults.FailedCount -gt 0) {
+                $hasFailures = $true
+            }
+            
+            if ($e2eResult.FailedCount -gt 0) {
+                $hasFailures = $true
+            }
+            
+            if ($hasFailures) {
+                exit 1
+            }
+>>>>>>> 8f1602a0 (Update metadata tests path in publish.yml)
       
       # Upload artifacts needed for publishing
       - name: Upload build artifacts
