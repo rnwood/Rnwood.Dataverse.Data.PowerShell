@@ -28,6 +28,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 			AssemblyLoadContext.Default.Resolving += (s, args) =>
 			{
 				AssemblyName assemblyName = new AssemblyName(args.Name);
+				
+				// Don't try to resolve satellite assemblies (culture-specific resource assemblies)
+				// These are for localization and should be allowed to fail gracefully
+				if (assemblyName.CultureName != null && !string.IsNullOrEmpty(assemblyName.CultureName) && assemblyName.CultureName != "neutral")
+				{
+					return null;
+				}
+				
 				if (assemblyName.Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets" || assemblyName.Name == "Microsoft.ApplicationInsights" || assemblyName.Name.StartsWith("Microsoft.CodeAnalysis"))
 				{
 					return alc.LoadFromAssemblyName(assemblyName);
