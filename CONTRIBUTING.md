@@ -157,38 +157,15 @@ This PR adds support for batch operations and fixes a connection timeout issue.
 - .NET SDK 8.0+
 - PowerShell 7+ or PowerShell 5.1+
 - Pester 5.x
-- Git (for submodule management)
 
 ### Build
-
-**Important: Sql4Cds Dependency**
-
-This project depends on a local build of the Sql4Cds submodule. The build process has been automated to handle this dependency:
 
 ```bash
 # Clean
 dotnet clean
 
-# Build (automatically builds Sql4Cds submodule on first build)
+# Build
 dotnet build
-```
-
-The build system will automatically:
-1. Initialize the Sql4Cds git submodule if needed
-2. Build the MarkMpn.Sql4Cds.Engine project
-3. Create a NuGet package in `local-packages/`
-4. Use this local package for the main build
-
-**Manual Sql4Cds Build (Optional)**
-
-If you need to rebuild Sql4Cds manually:
-
-```bash
-# Build Sql4Cds and create NuGet package
-pwsh -File Build-Sql4Cds.ps1
-
-# Or with options
-pwsh -File Build-Sql4Cds.ps1 -Configuration Debug -Force
 ```
 
 ### Test
