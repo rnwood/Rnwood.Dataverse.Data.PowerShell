@@ -31,6 +31,10 @@ namespace TestPluginProject
 }
 "@
         
+        # Create a valid base64-encoded mock key (160 bytes for testing)
+        $mockKeyBytes = [byte[]](1..160)
+        $mockKeyBase64 = [Convert]::ToBase64String($mockKeyBytes)
+        
         # Create metadata object as JSON
         $metadata = @{
             AssemblyName = "TestVSProjectPlugin"
@@ -40,7 +44,7 @@ namespace TestPluginProject
             SourceCode = $pluginSource
             FrameworkReferences = @("System.Runtime.Serialization.dll")
             PackageReferences = @()
-            StrongNameKey = "MIICXQIBAAKBgQC1..."  # Mock key (base64)
+            StrongNameKey = $mockKeyBase64
         } | ConvertTo-Json
         
         # Create a mock assembly with embedded metadata
@@ -105,6 +109,10 @@ namespace CustomPackagePlugin
 }
 "@
         
+        # Create a valid base64-encoded mock key
+        $mockKeyBytes = [byte[]](1..160)
+        $mockKeyBase64 = [Convert]::ToBase64String($mockKeyBytes)
+        
         $metadata = @{
             AssemblyName = "CustomPackagePlugin"
             Version = "2.0.0.0"
@@ -113,7 +121,7 @@ namespace CustomPackagePlugin
             SourceCode = $pluginSource
             FrameworkReferences = @()
             PackageReferences = @("Newtonsoft.Json@13.0.1", "Microsoft.CrmSdk.CoreAssemblies@9.0.0")
-            StrongNameKey = "MIICXQIBAAKBgQC2..."
+            StrongNameKey = $mockKeyBase64
         } | ConvertTo-Json
         
         $fakeAssemblyBytes = [System.Text.Encoding]::UTF8.GetBytes("FakeAssemblyContent2")
@@ -155,6 +163,10 @@ namespace FilePathPlugin
 }
 "@
         
+        # Create a valid base64-encoded mock key
+        $mockKeyBytes = [byte[]](1..160)
+        $mockKeyBase64 = [Convert]::ToBase64String($mockKeyBytes)
+        
         $metadata = @{
             AssemblyName = "FilePathTestPlugin"
             Version = "3.0.0.0"
@@ -163,7 +175,7 @@ namespace FilePathPlugin
             SourceCode = $pluginSource
             FrameworkReferences = @()
             PackageReferences = @()
-            StrongNameKey = "MIICXQIBAAKBgQC3..."
+            StrongNameKey = $mockKeyBase64
         } | ConvertTo-Json
         
         $fakeAssemblyBytes = [System.Text.Encoding]::UTF8.GetBytes("FakeAssemblyContent3")
