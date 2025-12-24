@@ -1,3 +1,5 @@
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using Rnwood.Dataverse.Data.PowerShell.Model;
 using System;
 using System.IO;
@@ -9,12 +11,26 @@ using System.Text.Json;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Extracts source code and build metadata from a plugin assembly created by New-DataversePluginAssembly.
+    /// Extracts source code and build metadata from a plugin assembly created by Set-DataverseDynamicPluginAssembly.
     /// </summary>
-    [Cmdlet(VerbsCommon.Get, "DataverseDynamicPluginAssembly")]
+    [Cmdlet(VerbsCommon.Get, "DataverseDynamicPluginAssembly", DefaultParameterSetName = "ById")]
     [OutputType(typeof(PSObject))]
-    public class GetDataverseDynamicPluginAssemblyCmdlet : PSCmdlet
+    public class GetDataverseDynamicPluginAssemblyCmdlet : OrganizationServiceCmdlet
     {
+        /// <summary>
+        /// Gets or sets the ID of the plugin assembly to retrieve from Dataverse.
+        /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = "ById", ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the plugin assembly")]
+        [Parameter(Mandatory = true, ParameterSetName = "VSProjectById", ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the plugin assembly")]
+        public Guid Id { get; set; }
+
+        /// <summary>
+        /// Gets or sets the name of the plugin assembly to retrieve from Dataverse.
+        /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = "ByName", HelpMessage = "Name of the plugin assembly")]
+        [Parameter(Mandatory = true, ParameterSetName = "VSProjectByName", HelpMessage = "Name of the plugin assembly")]
+        public string Name { get; set; }
+
         /// <summary>
         /// Gets or sets the assembly bytes to extract from.
         /// </summary>
@@ -38,6 +54,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the output directory for a complete Visual Studio project.
         /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = "VSProjectById", HelpMessage = "Output directory for Visual Studio project")]
+        [Parameter(Mandatory = true, ParameterSetName = "VSProjectByName", HelpMessage = "Output directory for Visual Studio project")]
         [Parameter(Mandatory = true, ParameterSetName = "VSProjectFromBytes", HelpMessage = "Output directory for Visual Studio project")]
         [Parameter(Mandatory = true, ParameterSetName = "VSProjectFromFile", HelpMessage = "Output directory for Visual Studio project")]
         public string OutputProjectPath { get; set; }
@@ -53,11 +71,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 byte[] assemblyBytes = null;
                 
-                // Determine which parameter set and load assembly bytes
-                if (ParameterSetName == "Bytes" || ParameterSetName == "VSProjectFromBytes")
+                // Retrieve from Dataverse if using connection-based parameter sets
+                if (ParameterSetName == "ById" || ParameterSetName == "VSProjectById" ||
+                    ParameterSetName == "ByName" || ParameterSetName == "VSProjectByName")
+                {
+                    Entity pluginAssembly = RetrievePluginAssembly();
+                    
+                    if (pluginAssembly == null)
+                    {
+                        string identifier = ParameterSetName.Contains("ById") ? Id.ToString() : Name;
+                        WriteWarning($"Plugin assembly not found: {identifier}");
+                        return;
+                    }
+                    
+                    if (!pluginAssembly.Contains("content"))
+                    {
+                        WriteWarning("Plugin assembly does not contain content. The assembly may not be stored in the database.");
+                        return;
+                    }
+                    
+                    string base64Content = pluginAssembly.GetAttributeValue<string>("content");
+                    assemblyBytes = Convert.FromBase64String(base64Content);
+                    
+                    WriteVerbose($"Retrieved plugin assembly from Dataverse: {pluginAssembly.GetAttributeValue<string>("name")}");
+                }
+                // Load from bytes parameter
+                else if (ParameterSetName == "Bytes" || ParameterSetName == "VSProjectFromBytes")
                 {
                     assemblyBytes = AssemblyBytes;
                 }
+                // Load from file parameter
                 else if (ParameterSetName == "FilePath" || ParameterSetName == "VSProjectFromFile")
                 {
                     if (!File.Exists(FilePath))
@@ -73,14 +116,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (metadata == null)
                 {
-                    WriteWarning("No embedded metadata found in assembly. This assembly was not created with New-DataversePluginAssembly or metadata is missing.");
+                    WriteWarning("No embedded metadata found in assembly. This assembly was not created with Set-DataverseDynamicPluginAssembly or metadata is missing.");
                     return;
                 }
 
                 WriteVerbose($"Extracted metadata for assembly: {metadata.AssemblyName}");
 
                 // Handle VS Project generation
-                if (ParameterSetName == "VSProjectFromBytes" || ParameterSetName == "VSProjectFromFile")
+                if (ParameterSetName == "VSProjectById" || ParameterSetName == "VSProjectByName" ||
+                    ParameterSetName == "VSProjectFromBytes" || ParameterSetName == "VSProjectFromFile")
                 {
                     GenerateVSProject(metadata, OutputProjectPath);
                     return;
@@ -114,6 +158,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteError(new ErrorRecord(ex, "ExtractionError", ErrorCategory.InvalidOperation, null));
             }
+        }
+
+        private Entity RetrievePluginAssembly()
+        {
+            QueryExpression query = new QueryExpression("pluginassembly")
+            {
+                ColumnSet = new ColumnSet("content", "name")
+            };
+
+            if (ParameterSetName == "ById" || ParameterSetName == "VSProjectById")
+            {
+                query.Criteria.AddCondition("pluginassemblyid", ConditionOperator.Equal, Id);
+            }
+            else if (ParameterSetName == "ByName" || ParameterSetName == "VSProjectByName")
+            {
+                query.Criteria.AddCondition("name", ConditionOperator.Equal, Name);
+            }
+
+            EntityCollection results = Connection.RetrieveMultiple(query);
+            return results.Entities.FirstOrDefault();
         }
 
         private PluginAssemblyMetadata ExtractMetadata(byte[] assemblyBytes)
