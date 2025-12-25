@@ -94,7 +94,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         !entry.Name.EndsWith("/App.pa.yaml") &&
                         !entry.Name.EndsWith("/_EditorState.pa.yaml"))
                     {
-                        string screenName = Path.GetFileNameWithoutExtension(entry.Name);
+                        string screenName = Path.GetFileNameWithoutExtension( Path.GetFileNameWithoutExtension(entry.Name));
 
                         // Apply name filter if specified
                         if (!string.IsNullOrEmpty(ScreenName))
