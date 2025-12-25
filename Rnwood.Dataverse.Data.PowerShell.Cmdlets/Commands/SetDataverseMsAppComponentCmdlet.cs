@@ -1,5 +1,7 @@
 using ICSharpCode.SharpZipLib.Zip;
+using SharpYaml.Serialization;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -221,30 +223,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Adds the component header and indents the content.
-        /// Transforms: "Property: =Value" -> "Components:\n  ComponentName:\n    Property: =Value"
+        /// Adds the component header using SharpYaml to properly serialize the YAML structure.
+        /// Transforms the provided content into: "Components:\n  ComponentName:\n    ..."
         /// </summary>
         private string AddComponentHeader(string yamlContent, string componentName)
         {
-            // Add proper indentation (4 spaces) to each line
-            var lines = yamlContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            var indentedLines = lines.Select(line => 
+            try
             {
-                // Don't indent empty lines
-                if (string.IsNullOrWhiteSpace(line))
+                // Parse the component content YAML
+                var serializer = new Serializer();
+                var componentContent = serializer.Deserialize(yamlContent);
+
+                // Create the full structure: Components -> ComponentName -> content
+                var fullStructure = new Dictionary<object, object>
                 {
-                    return line;
-                }
-                return "    " + line;
-            });
+                    ["Components"] = new Dictionary<object, object>
+                    {
+                        [componentName] = componentContent
+                    }
+                };
 
-            // Build the full YAML with header
-            var result = new StringBuilder();
-            result.AppendLine("Components:");
-            result.AppendLine($"  {componentName}:");
-            result.Append(string.Join(Environment.NewLine, indentedLines));
-
-            return result.ToString();
+                // Serialize with proper indentation
+                var result = serializer.Serialize(fullStructure);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Failed to parse YAML content: {ex.Message}", ex),
+                    "YamlParseError",
+                    ErrorCategory.InvalidData,
+                    yamlContent));
+                return null; // Never reached due to ThrowTerminatingError
+            }
         }
     }
 }

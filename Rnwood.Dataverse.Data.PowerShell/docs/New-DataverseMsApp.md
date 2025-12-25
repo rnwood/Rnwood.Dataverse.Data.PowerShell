@@ -13,7 +13,8 @@ Creates a new default .msapp file for a Canvas app.
 ## SYNTAX
 
 ```
-New-DataverseMsApp [-Path] <String> [-Force] [-WhatIf] [-Confirm] [<CommonParameters>]
+New-DataverseMsApp [-Path] <String> [-Force] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -88,6 +89,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Confirm
 Prompts you for confirmation before running the cmdlet.
 
@@ -128,8 +144,6 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## OUTPUTS
 
 ### System.IO.FileInfo
-Returns a FileInfo object representing the created .msapp file.
-
 ## NOTES
 The created .msapp file includes:
 - Header.json with current timestamp and metadata
@@ -145,6 +159,7 @@ The created .msapp file includes:
 All GUIDs and timestamps are automatically generated to ensure uniqueness.
 
 ## RELATED LINKS
+
 [Get-DataverseMsAppScreen](Get-DataverseMsAppScreen.md)
 [Set-DataverseMsAppScreen](Set-DataverseMsAppScreen.md)
 [Get-DataverseMsAppComponent](Get-DataverseMsAppComponent.md)
