@@ -94,7 +94,7 @@ Retrieves available icons from supported online icon sets.
 Retrieves components from a .msapp file.
 
 ### [Get-DataverseMsAppProperties](Get-DataverseMsAppProperties.md)
-Retrieves app properties from the App.pa.yaml file in a .msapp file.
+{{ Fill in the Synopsis }}
 
 ### [Get-DataverseMsAppScreen](Get-DataverseMsAppScreen.md)
 Retrieves screens from a .msapp file.
@@ -180,6 +180,9 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 
 ### [Invoke-DataverseXrmToolbox](Invoke-DataverseXrmToolbox.md)
 Invokes an XrmToolbox plugin downloaded from NuGet with the current Dataverse connection injected.
+
+### [New-DataverseMsApp](New-DataverseMsApp.md)
+Creates a new default .msapp file for a Canvas app.
 
 ### [Publish-DataverseCustomizations](Publish-DataverseCustomizations.md)
 Publishes customizations in Dataverse.
@@ -341,7 +344,7 @@ Creates or updates a tab on a Dataverse form with support for column layouts.
 Adds or updates a component in a .msapp file.
 
 ### [Set-DataverseMsAppProperties](Set-DataverseMsAppProperties.md)
-Sets app properties in the App.pa.yaml file of a .msapp file.
+{{ Fill in the Synopsis }}
 
 ### [Set-DataverseMsAppScreen](Set-DataverseMsAppScreen.md)
 Adds or updates a screen in a .msapp file.

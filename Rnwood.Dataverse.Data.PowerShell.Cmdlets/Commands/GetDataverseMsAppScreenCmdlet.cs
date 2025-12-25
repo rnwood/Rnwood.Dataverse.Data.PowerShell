@@ -1,5 +1,7 @@
 using ICSharpCode.SharpZipLib.Zip;
+using SharpYaml.Serialization;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -154,39 +156,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Strips the screen header (e.g., "Screens:\n  ScreenName:") and unindents the content.
+        /// Strips the screen header (e.g., "Screens:\n  ScreenName:") using SharpYaml to parse and extract the screen content.
         /// </summary>
         private string StripScreenHeader(string yamlContent, string screenName)
         {
-            // Expected format:
-            // Screens:
-            //   ScreenName:
-            //     Property: Value
-            //     ...
-            
-            // We need to remove "Screens:" and "  ScreenName:" lines and unindent by 4 spaces
-            var lines = yamlContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            
-            if (lines.Length < 2)
+            try
             {
-                return yamlContent; // Not enough lines, return as-is
-            }
+                // Parse YAML using SharpYaml
+                var serializer = new Serializer();
+                var yamlObject = serializer.Deserialize(yamlContent);
 
-            // Skip first two lines (Screens: and   ScreenName:) and unindent the rest
-            var contentLines = lines.Skip(2).ToList();
-            
-            // Unindent by removing leading spaces (typically 4 spaces for screen content)
-            var result = string.Join(Environment.NewLine, contentLines.Select(line =>
-            {
-                // Remove up to 4 leading spaces
-                if (line.StartsWith("    "))
+                // Expected structure: { Screens: { ScreenName: { ... properties ... } } }
+                if (yamlObject is Dictionary<object, object> root &&
+                    root.TryGetValue("Screens", out var screensObj) &&
+                    screensObj is Dictionary<object, object> screens &&
+                    screens.TryGetValue(screenName, out var screenContent))
                 {
-                    return line.Substring(4);
+                    // Serialize just the screen content without the header
+                    var contentYaml = serializer.Serialize(screenContent);
+                    return contentYaml;
                 }
-                return line;
-            }));
 
-            return result;
+                // Fallback: return original if structure doesn't match
+                WriteWarning($"Could not parse screen YAML structure for '{screenName}'. Returning original content.");
+                return yamlContent;
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Error parsing YAML for screen '{screenName}': {ex.Message}. Returning original content.");
+                return yamlContent;
+            }
         }
     }
 }

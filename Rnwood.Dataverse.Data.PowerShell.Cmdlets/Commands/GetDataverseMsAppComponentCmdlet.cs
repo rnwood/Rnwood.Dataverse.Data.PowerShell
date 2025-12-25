@@ -1,5 +1,7 @@
 using ICSharpCode.SharpZipLib.Zip;
+using SharpYaml.Serialization;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -189,39 +191,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Strips the component header (e.g., "Components:\n  ComponentName:") and unindents the content.
+        /// Strips the component header (e.g., "Components:\n  ComponentName:") using SharpYaml to parse and extract the component content.
         /// </summary>
         private string StripComponentHeader(string yamlContent, string componentName)
         {
-            // Expected format:
-            // Components:
-            //   ComponentName:
-            //     Property: Value
-            //     ...
-            
-            // We need to remove "Components:" and "  ComponentName:" lines and unindent by 4 spaces
-            var lines = yamlContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            
-            if (lines.Length < 2)
+            try
             {
-                return yamlContent; // Not enough lines, return as-is
-            }
+                // Parse YAML using SharpYaml
+                var serializer = new Serializer();
+                var yamlObject = serializer.Deserialize(yamlContent);
 
-            // Skip first two lines (Components: and   ComponentName:) and unindent the rest
-            var contentLines = lines.Skip(2).ToList();
-            
-            // Unindent by removing leading spaces (typically 4 spaces for component content)
-            var result = string.Join(Environment.NewLine, contentLines.Select(line =>
-            {
-                // Remove up to 4 leading spaces
-                if (line.StartsWith("    "))
+                // Expected structure: { Components: { ComponentName: { ... properties ... } } }
+                if (yamlObject is Dictionary<object, object> root &&
+                    root.TryGetValue("Components", out var componentsObj) &&
+                    componentsObj is Dictionary<object, object> components &&
+                    components.TryGetValue(componentName, out var componentContent))
                 {
-                    return line.Substring(4);
+                    // Serialize just the component content without the header
+                    var contentYaml = serializer.Serialize(componentContent);
+                    return contentYaml;
                 }
-                return line;
-            }));
 
-            return result;
+                // Fallback: return original if structure doesn't match
+                WriteWarning($"Could not parse component YAML structure for '{componentName}'. Returning original content.");
+                return yamlContent;
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Error parsing YAML for component '{componentName}': {ex.Message}. Returning original content.");
+                return yamlContent;
+            }
         }
     }
 }

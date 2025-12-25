@@ -1,5 +1,7 @@
 using ICSharpCode.SharpZipLib.Zip;
+using SharpYaml.Serialization;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -212,29 +214,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Adds the "App:" header and indents the content.
-        /// Transforms: "Properties:\n  Theme: =Value" -> "App:\n  Properties:\n    Theme: =Value"
+        /// Adds the "App:" header using SharpYaml to properly serialize the YAML structure.
+        /// Transforms the provided content into: "App:\n  ..."
         /// </summary>
         private string AddAppHeader(string yamlContent)
         {
-            // Add proper indentation (2 spaces) to each line
-            var lines = yamlContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            var indentedLines = lines.Select(line => 
+            try
             {
-                // Don't indent empty lines
-                if (string.IsNullOrWhiteSpace(line))
+                // Parse the app properties content YAML
+                var serializer = new Serializer();
+                var appContent = serializer.Deserialize(yamlContent);
+
+                // Create the full structure: App -> content
+                var fullStructure = new Dictionary<object, object>
                 {
-                    return line;
-                }
-                return "  " + line;
-            });
+                    ["App"] = appContent
+                };
 
-            // Build the full YAML with header
-            var result = new StringBuilder();
-            result.AppendLine("App:");
-            result.Append(string.Join(Environment.NewLine, indentedLines));
-
-            return result.ToString();
+                // Serialize with proper indentation
+                var result = serializer.Serialize(fullStructure);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                ThrowTerminatingError(new ErrorRecord(
+                    new InvalidOperationException($"Failed to parse YAML content: {ex.Message}", ex),
+                    "YamlParseError",
+                    ErrorCategory.InvalidData,
+                    yamlContent));
+                return null; // Never reached due to ThrowTerminatingError
+            }
         }
     }
 }

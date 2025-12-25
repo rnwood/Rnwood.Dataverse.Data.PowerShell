@@ -1,5 +1,7 @@
 using ICSharpCode.SharpZipLib.Zip;
+using SharpYaml.Serialization;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Management.Automation;
@@ -118,38 +120,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Strips the "App:" header and unindents the content.
+        /// Strips the "App:" header using SharpYaml to parse and extract the app properties content.
         /// </summary>
         private string StripAppHeader(string yamlContent)
         {
-            // Expected format:
-            // App:
-            //   Properties:
-            //     ...
-            
-            // We need to remove "App:" line and unindent by 2 spaces
-            var lines = yamlContent.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
-            
-            if (lines.Length < 1)
+            try
             {
-                return yamlContent; // Not enough lines, return as-is
-            }
+                // Parse YAML using SharpYaml
+                var serializer = new Serializer();
+                var yamlObject = serializer.Deserialize(yamlContent);
 
-            // Skip first line (App:) and unindent the rest
-            var contentLines = lines.Skip(1).ToList();
-            
-            // Unindent by removing leading spaces (typically 2 spaces for app content)
-            var result = string.Join(Environment.NewLine, contentLines.Select(line =>
-            {
-                // Remove up to 2 leading spaces
-                if (line.StartsWith("  "))
+                // Expected structure: { App: { ... properties ... } }
+                if (yamlObject is Dictionary<object, object> root &&
+                    root.TryGetValue("App", out var appContent))
                 {
-                    return line.Substring(2);
+                    // Serialize just the app content without the header
+                    var contentYaml = serializer.Serialize(appContent);
+                    return contentYaml;
                 }
-                return line;
-            }));
 
-            return result;
+                // Fallback: return original if structure doesn't match
+                WriteWarning("Could not parse App YAML structure. Returning original content.");
+                return yamlContent;
+            }
+            catch (Exception ex)
+            {
+                WriteWarning($"Error parsing YAML for App properties: {ex.Message}. Returning original content.");
+                return yamlContent;
+            }
         }
     }
 }
