@@ -153,6 +153,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 bool screenExists = false;
                 string screenFileName = $"Src/{ScreenName}.pa.yaml";
+                var screenFiles = new Dictionary<string, string>(); // screenName -> yamlContent
+                string appYaml = null;
 
                 using (var zipInputStream = new ZipInputStream(memoryStream))
                 using (var zipOutputStream = new ZipOutputStream(resultStream))
@@ -162,17 +164,45 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ZipEntry entry;
                     while ((entry = zipInputStream.GetNextEntry()) != null)
                     {
-                        if (entry.Name == screenFileName)
+                        // Normalize path separators to forward slashes
+                        string normalizedName = entry.Name.Replace('\\', '/');
+                        string normalizedScreenFileName = screenFileName.Replace('\\', '/');
+                        
+                        if (normalizedName == normalizedScreenFileName)
                         {
                             screenExists = true;
                             WriteVerbose($"Updating existing screen '{ScreenName}'");
+                            ReadZipEntryBytes(zipInputStream); // Read to advance stream
                             AddZipEntry(zipOutputStream, entry.Name, yaml);
+                            screenFiles[ScreenName] = yaml;
+                        }
+                        else if (normalizedName.StartsWith("Controls/") && normalizedName.EndsWith(".json"))
+                        {
+                            // Skip existing Controls JSON files - they will be regenerated
+                            WriteVerbose($"Skipping existing control file: {entry.Name}");
+                            ReadZipEntryBytes(zipInputStream); // Read to advance stream
                         }
                         else
                         {
                             // Copy entry as-is
                             byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
                             AddZipEntry(zipOutputStream, entry.Name, entryBytes);
+
+                            // Collect App YAML for Controls generation
+                            if (normalizedName == "Src/App.pa.yaml")
+                            {
+                                appYaml = Encoding.UTF8.GetString(entryBytes);
+                            }
+                            // Collect all screen YAML files for Controls generation
+                            else if (normalizedName.StartsWith("Src/") && 
+                                normalizedName.EndsWith(".pa.yaml") && 
+                                !normalizedName.EndsWith("/App.pa.yaml") &&
+                                !normalizedName.EndsWith("/_EditorState.pa.yaml"))
+                            {
+                                string screenName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(entry.Name));
+                                string yamlContent = Encoding.UTF8.GetString(entryBytes);
+                                screenFiles[screenName] = yamlContent;
+                            }
                         }
                     }
 
@@ -181,12 +211,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         WriteVerbose($"Creating new screen '{ScreenName}'");
                         AddZipEntry(zipOutputStream, screenFileName, yaml);
+                        screenFiles[ScreenName] = yaml;
+                    }
+
+                    // Generate Controls JSON files
+                    WriteVerbose("Generating Controls JSON files");
+                    if (appYaml != null)
+                    {
+                        RegenerateControlsFiles(zipOutputStream, appYaml, screenFiles);
+                    }
+                    else
+                    {
+                        WriteWarning("App.pa.yaml not found - cannot generate Controls JSON files");
                     }
 
                     zipOutputStream.Finish();
                 }
 
                 return resultStream.ToArray();
+            }
+        }
+
+        private void RegenerateControlsFiles(ZipOutputStream zipOutputStream, string appYaml, Dictionary<string, string> screenFiles)
+        {
+            // Generate Controls/1.json for App
+            WriteVerbose("Generating Controls/1.json for App");
+            string appControlJson = MsAppControlsGenerator.GenerateAppControlJson(appYaml);
+            AddZipEntry(zipOutputStream, "Controls/1.json", appControlJson);
+
+            // Generate Controls/*.json for screens (sorted alphabetically by screen name)
+            // ControlUniqueId starts at 4 for first screen (1 is App, 3 is Host)
+            int controlUniqueId = 4;
+            var sortedScreens = screenFiles.OrderBy(kvp => kvp.Key).ToList();
+            
+            foreach (var screen in sortedScreens)
+            {
+                string screenName = screen.Key;
+                string yamlContent = screen.Value;
+                
+                WriteVerbose($"Generating Controls/{controlUniqueId}.json for screen '{screenName}'");
+                string screenControlJson = MsAppControlsGenerator.GenerateScreenControlJson(screenName, yamlContent, controlUniqueId);
+                AddZipEntry(zipOutputStream, $"Controls/{controlUniqueId}.json", screenControlJson);
+                
+                controlUniqueId++;
             }
         }
 
