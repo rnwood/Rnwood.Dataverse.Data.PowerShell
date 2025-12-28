@@ -135,10 +135,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter AsyncRibbonProcessing { get; set; }
 
         /// <summary>
-        /// Gets or sets whether to use update if additive mode (experimental and incomplete).
+        /// Gets or sets whether to use update if the existing solution present has same major and minor versions.
         /// </summary>
-        [Parameter(HelpMessage = "Use update if additive mode (experimental and incomplete). Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items removed ('TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status), uses simple install mode (no stage and upgrade or holding solution) for best performance.")]
-        public SwitchParameter UseUpdateIfAdditive { get; set; }
+        [Parameter(HelpMessage = "Use update if the existing solution present has same major and minor versions. Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items removed ('TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status), uses simple install mode (no stage and upgrade or holding solution) for best performance.")]
+        public SwitchParameter UseUpdateIfVersionMajorMinorMatches { get; set; }
 
         /// <summary>
         /// Gets or sets the polling interval in seconds for checking job status. Default is 5 seconds.
@@ -337,10 +337,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             ValidateSolutionComponents(solutionBytes);
 
             // Validate parameter combinations
-            if (UseUpdateIfAdditive.IsPresent && Mode != ImportMode.Auto && Mode != ImportMode.HoldingSolution)
+            if (UseUpdateIfVersionMajorMinorMatches.IsPresent && Mode != ImportMode.Auto && Mode != ImportMode.HoldingSolution)
             {
                 ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException("-UseUpdateIfAdditive is only valid with Auto (default) or HoldingSolution mode."),
+                    new InvalidOperationException("-UseUpdateIfVersionMajorMinorMatches is only valid with Auto (default) or HoldingSolution mode."),
                     "InvalidParameterCombination",
                     ErrorCategory.InvalidArgument,
                     null));
@@ -354,7 +354,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Extract solution info including version
             var (solutionUniqueName, isManaged, sourceSolutionVersion) = ExtractSolutionInfo(solutionBytes);
             WriteVerbose($"Source solution '{solutionUniqueName}' is {(isManaged ? "managed" : "unmanaged")}");
-            
+
             if (sourceSolutionVersion != null)
             {
                 WriteVerbose($"Source solution version: {sourceSolutionVersion}");
@@ -364,50 +364,36 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             bool shouldUseStageAndUpgrade = false;
             bool shouldUseHoldingSolution = false;
             bool solutionExists = DoesSolutionExist(solutionBytes);
+            Version installedVersion = solutionExists ? GetInstalledSolutionVersion(solutionUniqueName) : null;
 
             // Version checking logic
             if (solutionExists && (SkipIfSameVersion.IsPresent || SkipIfLowerVersion.IsPresent))
             {
-                Version installedVersion = GetInstalledSolutionVersion(solutionUniqueName);
-                if (installedVersion != null && sourceSolutionVersion != null)
+                WriteVerbose($"Installed solution version: {installedVersion}");
+
+                int versionComparison = sourceSolutionVersion.CompareTo(installedVersion);
+
+                if (SkipIfSameVersion.IsPresent && versionComparison == 0)
                 {
-                    WriteVerbose($"Installed solution version: {installedVersion}");
-                    
-                    int versionComparison = sourceSolutionVersion.CompareTo(installedVersion);
-                    
-                    if (SkipIfSameVersion.IsPresent && versionComparison == 0)
-                    {
-                        WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is already installed (same version).");
-                        
-                        // Check and update connection references and environment variables if provided
-                        CheckAndUpdateSolutionComponents(solutionUniqueName);
-                        
-                        return;
-                    }
-                    
-                    if (SkipIfLowerVersion.IsPresent && versionComparison < 0)
-                    {
-                        WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is lower than the installed version {installedVersion}.");
-                        
-                        // Check and update connection references and environment variables if provided
-                        CheckAndUpdateSolutionComponents(solutionUniqueName);
-                        
-                        return;
-                    }
-                    
-                    WriteVerbose($"Version check passed: source version {sourceSolutionVersion} vs installed version {installedVersion}");
+                    WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is already installed (same version).");
+
+                    // Check and update connection references and environment variables if provided
+                    CheckAndUpdateSolutionComponents(solutionUniqueName);
+
+                    return;
                 }
-                else
+
+                if (SkipIfLowerVersion.IsPresent && versionComparison < 0)
                 {
-                    if (sourceSolutionVersion == null)
-                    {
-                        WriteWarning($"Unable to extract source solution version for '{solutionUniqueName}'. Skipping version check.");
-                    }
-                    if (installedVersion == null)
-                    {
-                        WriteWarning($"Unable to retrieve installed solution version for '{solutionUniqueName}'. Skipping version check.");
-                    }
+                    WriteWarning($"Skipping import: Solution '{solutionUniqueName}' version {sourceSolutionVersion} is lower than the installed version {installedVersion}.");
+
+                    // Check and update connection references and environment variables if provided
+                    CheckAndUpdateSolutionComponents(solutionUniqueName);
+
+                    return;
                 }
+
+                WriteVerbose($"Version check passed: source version {sourceSolutionVersion} vs installed version {installedVersion}");
             }
 
             if (useHoldingSolution)
@@ -417,24 +403,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Check for existing holding solution (solutionname_Upgrade)
                 string holdingSolutionName = $"{solutionUniqueName}_Upgrade";
                 Version holdingSolutionVersion = GetInstalledSolutionVersion(holdingSolutionName);
-                
+
                 if (holdingSolutionVersion != null)
                 {
                     WriteVerbose($"Found existing holding solution '{holdingSolutionName}' with version {holdingSolutionVersion}");
-                    
+
                     // Compare with source solution version
                     if (sourceSolutionVersion != null)
                     {
                         WriteVerbose($"Comparing source version {sourceSolutionVersion} with existing holding solution version {holdingSolutionVersion}");
-                        
+
                         if (sourceSolutionVersion.CompareTo(holdingSolutionVersion) == 0)
                         {
                             // Same version - skip import
                             WriteWarning($"Skipping import: Holding solution '{holdingSolutionName}' version {holdingSolutionVersion} already exists with the same version as the source solution.");
-                            
+
                             // Check and update connection references and environment variables if provided
                             CheckAndUpdateSolutionComponents(solutionUniqueName);
-                            
+
                             return;
                         }
                         else
@@ -448,7 +434,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             errorMessage.AppendLine($"  2. Remove the existing holding solution by running: Remove-DataverseSolution -UniqueName '{holdingSolutionName}'");
                             errorMessage.AppendLine();
                             errorMessage.AppendLine("Note: Applying the upgrade will delete the original solution and promote the holding solution. Removing the holding solution may result in data loss if it contains changes.");
-                            
+
                             ThrowTerminatingError(new ErrorRecord(
                                 new InvalidOperationException(errorMessage.ToString()),
                                 "HoldingSolutionVersionMismatch",
@@ -502,69 +488,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            // Handle UseUpdateIfAdditive logic
-            if (UseUpdateIfAdditive.IsPresent && solutionExists && (shouldUseStageAndUpgrade || shouldUseHoldingSolution))
+            // Handle UseUpdateIfVersionMajorMinorMatches logic
+            if (UseUpdateIfVersionMajorMinorMatches.IsPresent && solutionExists && (shouldUseStageAndUpgrade || shouldUseHoldingSolution))
             {
-                WriteWarning("UseUpdateIfAdditive is experimental and incomplete. Behavior may be incorrect and may change in future versions.");
-
-                WriteVerbose("UseUpdateIfAdditive specified - comparing solution components...");
-
-                // Extract source components
-                string sourceSolutionName = ExtractSolutionName(solutionBytes);
-                var sourceExtractor = new FileComponentExtractor(Connection, this, solutionBytes);
-                var sourceComponents = sourceExtractor.GetComponents(includeSubcomponents: false);
-                WriteVerbose($"Extracted source solution: {sourceSolutionName} with {sourceComponents.Count} root components");
-
-                // Query target environment for solution id
-                var solutionQuery = new QueryExpression("solution")
+                WriteVerbose("UseUpdateIfVersionMajorMinorMatches is specified - checking major and minor version match...");
+                if (installedVersion.Major == sourceSolutionVersion.Major ||
+                    installedVersion.Minor == sourceSolutionVersion.Minor)
                 {
-                    ColumnSet = new ColumnSet("solutionid"),
-                    Criteria = new FilterExpression
-                    {
-                        Conditions =
-                        {
-                            new ConditionExpression("uniquename", ConditionOperator.Equal, sourceSolutionName)
-                        }
-                    },
-                    TopCount = 1
-                };
-
-                var solutions = Connection.RetrieveMultiple(solutionQuery);
-                if (solutions.Entities.Count > 0)
+                    WriteVerbose("Major and minor versions match - using Update import mode.");
+                    shouldUseStageAndUpgrade = false;
+                    shouldUseHoldingSolution = false;
+                } else
                 {
-                    var solutionId = solutions.Entities[0].Id;
-               
-
-                    // Compare components
-                    var sourceExtractor2 = new FileComponentExtractor(Connection, this, solutionBytes);
-                    var targetExtractor = new EnvironmentComponentExtractor(Connection, this, solutionId);
-                    var comparer = new SolutionComponentComparer(sourceExtractor2, targetExtractor, this);
-                    var comparisonResults = comparer.CompareComponents();
-
-                    // Count problematic statuses
-                    int targetOnlyCount = comparisonResults.Count(r => r.Status == SolutionComponentStatus.InTargetOnly);
-                    int lessInclusiveCount = comparisonResults.Count(r => r.Status == SolutionComponentStatus.InSourceAndTarget_BehaviourLessInclusiveInSource);
-
-                    WriteVerbose($"Comparison results: {targetOnlyCount} TargetOnly, {lessInclusiveCount} LessInclusiveInSource");
-
-                    if (targetOnlyCount == 0 && lessInclusiveCount == 0)
-                    {
-                        WriteVerbose("No removed components found - using simple install mode (no stage and upgrade or holding solution)");
-                        shouldUseStageAndUpgrade = false;
-                        shouldUseHoldingSolution = false;
-                    }
-                    else
-                    {
-                        WriteVerbose("Removed components found - proceeding with full upgrade logic to ensure they are removed correctly.");
-                        // List the problematic components
-                        foreach (var result in comparisonResults.Where(r => r.Status == SolutionComponentStatus.InTargetOnly || r.Status == SolutionComponentStatus.InSourceAndTarget_BehaviourLessInclusiveInSource))
-                        {
-                            string componentName = result.SourceComponent?.UniqueName ?? result.TargetComponent?.UniqueName ?? "Unknown";
-                            int componentType = result.SourceComponent?.ComponentType ?? result.TargetComponent?.ComponentType ?? 0;
-                            WriteVerbose($"  Removed component: Type {componentType} '{componentName}' - {result.Status}");
-                        }
-                        // Keep the existing logic for shouldUseStageAndUpgrade or shouldUseHoldingSolution
-                    }
+                    WriteVerbose("Major and minor versions does not match - Using Upgrade import mode.");
                 }
             }
 
@@ -588,7 +524,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var connectionId = entry.Value.ToString();
 
                         // Use the correctly-cased name from the solution file if available
-                        var correctlyCasedName = _solutionConnectionReferenceNames?.FirstOrDefault(n => 
+                        var correctlyCasedName = _solutionConnectionReferenceNames?.FirstOrDefault(n =>
                             string.Equals(n, connectionRefName, StringComparison.OrdinalIgnoreCase)) ?? connectionRefName;
 
                         WriteVerbose($"  Setting connection reference '{correctlyCasedName}' to connection '{connectionId}'");
@@ -611,7 +547,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     foreach (DictionaryEntry entry in EnvironmentVariables)
                     {
                         var envVarName = entry.Key.ToString();
-                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n => 
+                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n =>
                             string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase)) ?? envVarName;
                         correctlyCasedEnvVarNames.Add(correctlyCasedName);
                     }
@@ -625,7 +561,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var envVarValue = entry.Value.ToString();
 
                         // Use the correctly-cased name from the solution file if available
-                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n => 
+                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n =>
                             string.Equals(n, envVarSchemaName, StringComparison.OrdinalIgnoreCase)) ?? envVarSchemaName;
 
                         WriteVerbose($"  Setting environment variable '{correctlyCasedName}' to value '{envVarValue}'");
@@ -795,7 +731,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 int progress = 0;
                 if (jobResults.Entities.Count > 0)
                 {
-                    progress = (int) jobResults.Entities[0].GetAttributeValue<double>("progress");
+                    progress = (int)jobResults.Entities[0].GetAttributeValue<double>("progress");
                 }
 
                 var statusDescription = GetStatusDescription(statusCode);
@@ -897,65 +833,65 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private (string UniqueName, bool IsManaged, Version Version) ExtractSolutionInfo(byte[] solutionBytes)
         {
-                using (var memoryStream = new MemoryStream(solutionBytes))
-                using (var zipFile = new ZipFile(memoryStream))
+            using (var memoryStream = new MemoryStream(solutionBytes))
+            using (var zipFile = new ZipFile(memoryStream))
+            {
+                // Find the solution.xml file in the solution
+                var entryIndex = zipFile.FindEntry("solution.xml", true);
+
+                if (entryIndex != -1)
                 {
-                    // Find the solution.xml file in the solution
-                    var entryIndex = zipFile.FindEntry("solution.xml", true);
-
-                    if (entryIndex != -1)
+                    using (var stream = zipFile.GetInputStream(entryIndex))
+                    using (var reader = new StreamReader(stream))
                     {
-                        using (var stream = zipFile.GetInputStream(entryIndex))
-                        using (var reader = new StreamReader(stream))
+                        var xmlContent = reader.ReadToEnd();
+                        var xdoc = XDocument.Parse(xmlContent);
+
+                        // Navigate to the SolutionManifest element
+                        var solutionManifest = xdoc.Root.Element("SolutionManifest");
+                        if (solutionManifest == null)
                         {
-                            var xmlContent = reader.ReadToEnd();
-                            var xdoc = XDocument.Parse(xmlContent);
-
-                            // Navigate to the SolutionManifest element
-                            var solutionManifest = xdoc.Root.Element("SolutionManifest");
-                            if (solutionManifest == null)
-                            {
-                                ThrowTerminatingError(new ErrorRecord(new Exception("SolutionManifest element not found in solution.xml"), "SolutionManifestNotFound", ErrorCategory.InvalidData, null));
-                                return (null, false, null);
-                            }
-
-                            // Extract the UniqueName from the SolutionManifest
-                            var uniqueNameElement = solutionManifest.Element("UniqueName");
-
-                            string uniqueName = null;
-                            if (uniqueNameElement == null)
-                            {
-                                ThrowTerminatingError(new ErrorRecord(new Exception("UniqueName element not found in solution.xml"), "UniqueNameNotFound", ErrorCategory.InvalidData, null));
-                                return (null, false, null);
-                            }
-                            uniqueName = uniqueNameElement.Value;
-
-                            // Extract the Managed flag from the SolutionManifest
-                            var managedElement = solutionManifest.Element("Managed");
-
-                            bool isManaged = false;
-                            if (managedElement != null && !string.IsNullOrEmpty(managedElement.Value))
-                            {
-                                isManaged = managedElement.Value == "1";
-                                WriteVerbose($"Solution is {(isManaged ? "managed" : "unmanaged")}");
-                            }
-                            else
-                            {
-                                ThrowTerminatingError(new ErrorRecord(new Exception("Could not determine if solution is managed, assuming unmanaged"), "SolutionManagedStatusUnknown", ErrorCategory.InvalidData, null));
-                            }
-
-                            // Extract the Version from the SolutionManifest
-                            var versionElement = solutionManifest.Element("Version");
-                            Version version = null;
-                            if (versionElement != null && !string.IsNullOrEmpty(versionElement.Value))
-                            {
-                                Version.TryParse(versionElement.Value, out version);
-                            }
-
-                            return (uniqueName, isManaged, version);
+                            ThrowTerminatingError(new ErrorRecord(new Exception("SolutionManifest element not found in solution.xml"), "SolutionManifestNotFound", ErrorCategory.InvalidData, null));
+                            return (null, false, null);
                         }
+
+                        // Extract the UniqueName from the SolutionManifest
+                        var uniqueNameElement = solutionManifest.Element("UniqueName");
+
+                        string uniqueName = null;
+                        if (uniqueNameElement == null)
+                        {
+                            ThrowTerminatingError(new ErrorRecord(new Exception("UniqueName element not found in solution.xml"), "UniqueNameNotFound", ErrorCategory.InvalidData, null));
+                            return (null, false, null);
+                        }
+                        uniqueName = uniqueNameElement.Value;
+
+                        // Extract the Managed flag from the SolutionManifest
+                        var managedElement = solutionManifest.Element("Managed");
+
+                        bool isManaged = false;
+                        if (managedElement != null && !string.IsNullOrEmpty(managedElement.Value))
+                        {
+                            isManaged = managedElement.Value == "1";
+                            WriteVerbose($"Solution is {(isManaged ? "managed" : "unmanaged")}");
+                        }
+                        else
+                        {
+                            ThrowTerminatingError(new ErrorRecord(new Exception("Could not determine if solution is managed, assuming unmanaged"), "SolutionManagedStatusUnknown", ErrorCategory.InvalidData, null));
+                        }
+
+                        // Extract the Version from the SolutionManifest
+                        var versionElement = solutionManifest.Element("Version");
+                        Version version = null;
+                        if (versionElement != null && !string.IsNullOrEmpty(versionElement.Value))
+                        {
+                            Version.TryParse(versionElement.Value, out version);
+                        }
+
+                        return (uniqueName, isManaged, version);
                     }
                 }
+            }
 
             return (null, false, null);
         }
@@ -1280,7 +1216,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var defLink = query.AddLink("environmentvariabledefinition", "environmentvariabledefinitionid", "environmentvariabledefinitionid");
             defLink.Columns = new ColumnSet("schemaname");
             defLink.EntityAlias = "def";
-            
+
             // Filter by the definition's schemaname, not the value's schemaname
             defLink.LinkCriteria.AddCondition("schemaname", ConditionOperator.In, schemaNames.ToArray());
 
@@ -1302,7 +1238,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Get the schema name from the linked definition entity (via alias)
                 var schemaNameAlias = entity.GetAttributeValue<AliasedValue>("def.schemaname");
                 var schemaName = schemaNameAlias?.Value as string;
-                
+
                 if (!string.IsNullOrEmpty(schemaName))
                 {
                     result[schemaName] = entity.Id;
@@ -1432,7 +1368,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 // Upgrade solution not found, try the base solution
                 WriteVerbose($"Upgrade solution '{upgradeSolutionName}' not found, checking for base solution '{solutionUniqueName}'");
-                
+
                 var solutionQuery = new QueryExpression("solution")
                 {
                     ColumnSet = new ColumnSet("solutionid", "uniquename"),
@@ -1569,7 +1505,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var connectionId = entry.Value.ToString();
 
                     // Find the correctly-cased name from the solution (case-insensitive match)
-                    var correctlyCasedName = solutionConnRefNames.FirstOrDefault(n => 
+                    var correctlyCasedName = solutionConnRefNames.FirstOrDefault(n =>
                         string.Equals(n, connRefName, StringComparison.OrdinalIgnoreCase));
 
                     if (correctlyCasedName != null)
@@ -1593,7 +1529,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     var envVarValue = entry.Value.ToString();
 
                     // Find the correctly-cased name from the solution (case-insensitive match)
-                    var correctlyCasedName = solutionEnvVarNames.FirstOrDefault(n => 
+                    var correctlyCasedName = solutionEnvVarNames.FirstOrDefault(n =>
                         string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase));
 
                     if (correctlyCasedName != null)
@@ -1737,7 +1673,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     if (valueResults.Entities.Count > 0)
                     {
                         var currentValue = valueResults.Entities[0].GetAttributeValue<string>("value");
-                        
+
                         WriteVerbose($"  Current value: {currentValue ?? "(none)"}");
                         WriteVerbose($"  Desired value: {desiredValue}");
 

@@ -531,8 +531,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -UseUpdateIfAdditive
-Use update if additive mode (experimental and incomplete). Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If there are zero items in 'TargetOnly' or 'InSourceAndTarget_BehaviourLessInclusiveInSource' status, uses simple install mode (no stage and upgrade or holding solution). Use Compare-DataverseSolutionComponents to see what the comparison would show before using this switch.
+### -UseUpdateIfVersionMajorMinorMatches
+Use update if the major and minor version matches existing installed solution version. Only valid with Auto (default) or HoldingSolution mode. If the solution already exists in the target environment, compares the solution file with the target environment. If the existing version major and minor parts match, uses simple install mode (no stage and upgrade or holding solution).
 
 ```yaml
 Type: SwitchParameter
@@ -618,8 +618,10 @@ Use `-SkipEnvironmentVariableValidation` to bypass validation of environment var
 **Upgrade Scenarios:**
 When using -HoldingSolution to import a solution as an upgrade, the cmdlet extracts the solution's unique name from the solution.xml file within the ZIP and queries the target environment to check if it already exists. If it doesn't exist, the cmdlet automatically falls back to a regular import. This prevents errors when deploying to new environments.
 
-**UseUpdateIfAdditive Mode:**
-The -UseUpdateIfAdditive switch (experimental) performs a component comparison between the solution file and the target environment when the solution already exists. If the comparison shows only additive changes (no components removed or behavior changes that would remove data), it uses the simpler ImportSolutionAsyncRequest instead of StageAndUpgradeAsyncRequest or holding solution import for better performance. This switch is valid with Auto (default) or HoldingSolution mode. Use Compare-DataverseSolutionComponents to preview what the comparison would show before using this switch.
+**UseUpdateIfVersionMajorMinorMatches Mode:**
+The -UseUpdateIfVersionMajorMinorMatches switch compares the version number of existing installed solution with the target solution file. If the major and minor version number matches, it uses the simpler ImportSolutionAsyncRequest instead of StageAndUpgradeAsyncRequest or holding solution import for better performance. This switch is valid with Auto (default) or HoldingSolution mode.
+
+To reliably use this, you must put in place a process to increment the major or minor version numbers when (sub)components are removed, or when behaviour is switched to a less inclusive mode. Use `Compare-DataverseSolutionFile -TestIfAdditive` when exporting to compare old and new.
 
 **Version Checking:**
 The `-SkipIfSameVersion` and `-SkipIfLowerVersion` switches allow you to control whether an import should proceed based on version comparison:
