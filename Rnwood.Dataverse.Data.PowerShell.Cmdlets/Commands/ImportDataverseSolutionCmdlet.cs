@@ -492,7 +492,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (UseUpdateIfVersionMajorMinorMatches.IsPresent && solutionExists && (shouldUseStageAndUpgrade || shouldUseHoldingSolution))
             {
                 WriteVerbose("UseUpdateIfVersionMajorMinorMatches is specified - checking major and minor version match...");
-                if (installedVersion.Major == sourceSolutionVersion.Major ||
+                if (installedVersion.Major == sourceSolutionVersion.Major &&
                     installedVersion.Minor == sourceSolutionVersion.Minor)
                 {
                     WriteVerbose("Major and minor versions match - using Update import mode.");
