@@ -90,7 +90,6 @@ This command:
 - If the solution doesn't exist, performs a regular import
 - If the solution exists and is managed, performs a stage-and-upgrade operation
 - If the solution exists and is unmanaged, performs a regular import (upgrade)
-- Use `-UseUpdateIfAdditive` (experimental) to perform component comparison and use simple import mode if only additive changes are detected. This boosts import performance when nothing has been removed (full upgrader is needed to remove things). Valid with Auto (default) or HoldingSolution mode.
 
 Use `-Mode NoUpgrade` to force a regular import regardless of solution status.
 Use `-Mode StageAndUpgrade` to explicitly perform a stage-and-upgrade operation.
