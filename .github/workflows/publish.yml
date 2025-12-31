@@ -518,7 +518,7 @@ jobs:
       
       # Upload artifacts needed for publishing
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: module-${{ matrix.os }}-${{ matrix.powershell_version }}
           path: |
@@ -533,7 +533,7 @@ jobs:
       # Upload test failure reports as artifacts
       - name: Upload test failure report
         if: failure() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}
           path: test-failures-*.md
@@ -589,7 +589,7 @@ jobs:
           fetch-depth: 0
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: module-windows-latest-5
           path: .
@@ -693,7 +693,7 @@ jobs:
           fetch-depth: 0
       
       - name: Download build artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v7
         with:
           name: module-windows-latest-5
           path: .
