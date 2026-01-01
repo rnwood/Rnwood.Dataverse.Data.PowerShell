@@ -516,7 +516,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             // If URL is not provided, discover and select environment
                             if (Url == null)
                             {
-                                var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+                                var discoveryUrl = PromptToSelectEnvironmentUrl(url => GetTokenInteractive(publicClient, url)).GetAwaiter().GetResult();
                                 Url = new Uri(discoveryUrl);
                             }
 
@@ -558,7 +558,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             // If URL is not provided, discover and select environment
                             if (Url == null)
                             {
-                                var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+                                var discoveryUrl = PromptToSelectEnvironmentUrl(url => GetTokenWithUsernamePassword(publicClient, url)).GetAwaiter().GetResult();
                                 Url = new Uri(discoveryUrl);
                             }
 
@@ -612,7 +612,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             // If URL is not provided, discover and select environment
                             if (Url == null)
                             {
-                                var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+                                var discoveryUrl = PromptToSelectEnvironmentUrl(url => GetTokenWithDeviceCode(publicClient, url)).GetAwaiter().GetResult();
                                 Url = new Uri(discoveryUrl);
                             }
 
@@ -653,7 +653,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     .WithTenantId(TenantId?.ToString() ?? throw new Exception("TenantId must be specified to use environment discover (or specify -Url for an environment)"))
                                     .Build();
 
-                                var discoveryUrl = DiscoverAndSelectEnvironment(confAppForDiscovery).GetAwaiter().GetResult();
+                                var discoveryUrl = PromptToSelectEnvironmentUrl(url => GetTokenWithClientSecret(confAppForDiscovery, url)).GetAwaiter().GetResult();
                                 Url = new Uri(discoveryUrl);
                             }
 
@@ -725,7 +725,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     .WithTenantId(TenantId?.ToString() ?? throw new Exception("TenantId must be specified to use environment discover (or specify -Url for an environment)"))
                                     .Build();
 
-                                var discoveryUrl = DiscoverAndSelectEnvironment(confAppForDiscovery).GetAwaiter().GetResult();
+                                var discoveryUrl = PromptToSelectEnvironmentUrl(url => GetTokenWithClientCertificate(confAppForDiscovery, url)).GetAwaiter().GetResult();
                                 Url = new Uri(discoveryUrl);
                             }
 
@@ -799,7 +799,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     .Create(ClientId.ToString())
                                     .WithRedirectUri("http://localhost")
                                     .Build();
-                                var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+                                var discoveryUrl = PromptToSelectEnvironmentUrl(url => GetTokenWithAzureCredential(credential, url)).GetAwaiter().GetResult();
                                 Url = new Uri(discoveryUrl);
                             }
 
@@ -842,7 +842,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     .Create(ClientId.ToString())
                                     .WithRedirectUri("http://localhost")
                                     .Build();
-                                var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+                                var discoveryUrl = PromptToSelectEnvironmentUrl(url => GetTokenWithAzureCredential(credential, url)).GetAwaiter().GetResult();
                                 Url = new Uri(discoveryUrl);
                             }
 
@@ -870,14 +870,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         if (Url == null)
                         {
-                            using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
-                            {
-                                var discoveryUrl = PromptToSelectEnvironmentUrl(cts, url => GetTokenWithScriptBlock()).GetAwaiter().GetResult();
-                                Url = new Uri(discoveryUrl);
-                            }
+
+                            var discoveryUrl = PromptToSelectEnvironmentUrl(GetTokenWithScriptBlock).GetAwaiter().GetResult();
+                            Url = new Uri(discoveryUrl);
+
                         }
 
-                        result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithScriptBlock());
+                        result = new ServiceClientWithTokenProvider(Url, GetTokenWithScriptBlock);
                         break;
 
 
@@ -1003,7 +1002,7 @@ Url + "/api/data/v9.2/");
 
         private async Task<string> GetTokenWithClientSecret(IConfidentialClientApplication app, string url)
         {
-            Uri scope = new Uri(Url, "/.default");
+            Uri scope = new Uri(new Uri(url), "/.default");
             string[] scopes = new[] { scope.ToString() };
 
             using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
@@ -1015,7 +1014,7 @@ Url + "/api/data/v9.2/");
 
         private async Task<string> GetTokenWithClientCertificate(IConfidentialClientApplication app, string url)
         {
-            Uri scope = new Uri(Url, "/.default");
+            Uri scope = new Uri(new Uri(url), "/.default");
             string[] scopes = new[] { scope.ToString() };
 
             using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
@@ -1075,7 +1074,7 @@ Url + "/api/data/v9.2/");
 
         private async Task<string> GetTokenWithUsernamePassword(IPublicClientApplication app, string url)
         {
-            Uri scope = new Uri(Url, "/.default");
+            Uri scope = new Uri(new Uri(url), "/.default");
             string[] scopes = new[] { scope.ToString() };
 
             using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
@@ -1111,7 +1110,7 @@ Url + "/api/data/v9.2/");
 
         private async Task<string> GetTokenWithDeviceCode(IPublicClientApplication app, string url)
         {
-            Uri scope = new Uri(Url, "/.default");
+            Uri scope = new Uri(new Uri(url), "/.default");
             string[] scopes = new[] { scope.ToString() };
 
             using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
@@ -1154,7 +1153,7 @@ Url + "/api/data/v9.2/");
 
         private async Task<string> GetTokenInteractive(IPublicClientApplication app, string url)
         {
-            Uri scope = new Uri(Url, "/.default");
+            Uri scope = new Uri(new Uri(url), "/.default");
             string[] scopes = new[] { scope.ToString() };
 
             using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
@@ -1189,7 +1188,7 @@ Url + "/api/data/v9.2/");
 
         private async Task<string> GetTokenWithAzureCredential(TokenCredential credential, string url)
         {
-            Uri scope = new Uri(Url, "/.default");
+            Uri scope = new Uri(new Uri(url), "/.default");
             var tokenRequestContext = new TokenRequestContext(new[] { scope.ToString() });
 
             using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
@@ -1199,11 +1198,11 @@ Url + "/api/data/v9.2/");
             }
         }
 
-        private async Task<string> GetTokenWithScriptBlock()
+        private async Task<string> GetTokenWithScriptBlock(string url)
         {
             using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
             {
-                var results = await Task.Run(() => AccessToken.Invoke(), cts.Token);
+                var results = await Task.Run(() => AccessToken.Invoke(url), cts.Token);
                 if (results.Count == 0)
                 {
                     throw new InvalidOperationException("AccessToken script block did not return a value.");
@@ -1245,118 +1244,27 @@ Url + "/api/data/v9.2/");
             }
         }
 
-        private async Task<string> DiscoverAndSelectEnvironment(IPublicClientApplication app)
+        private async Task<string> PromptToSelectEnvironmentUrl(Func<string, Task<string>> tokenProvider)
         {
-            // Authenticate interactively to get access token for discovery
-            Uri discoveryScope = new Uri("https://globaldisco.crm.dynamics.com/.default");
-            string[] scopes = new[] { discoveryScope.ToString() };
+            if (System.Console.IsInputRedirected)
+            {
+                throw new InvalidOperationException("Cannot prompt for environment selection in non-interactive session. Please specify the -Url parameter.");
+            }
 
             using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
             {
-                AuthenticationResult authResult = null;
 
-                if (!string.IsNullOrEmpty(Username))
-                {
-                    try
-                    {
-                        authResult = await app.AcquireTokenSilent(scopes, Username).ExecuteAsync(cts.Token);
-                    }
-                    catch (MsalUiRequiredException)
-                    {
-                    }
-                }
-
-                if (authResult == null)
-                {
-                    authResult = await app.AcquireTokenInteractive(scopes).ExecuteAsync(cts.Token);
-                    Username = authResult.Account.Username;
-                }
-
-                Func<string, Task<string>> tokenProvider = (uri) => Task.FromResult(authResult.AccessToken);
-                return await PromptToSelectEnvironmentUrl(cts, tokenProvider);
-            }
-        }
-
-        private async Task<string> PromptToSelectEnvironmentUrl(CancellationTokenSource cts, Func<string, Task<string>> tokenProvider)
-        {
-
-            // Use ServiceClient.DiscoverOnlineOrganizationsAsync to get list of environments
-            var orgDetails = await ServiceClient.DiscoverOnlineOrganizationsAsync(
+                // Use ServiceClient.DiscoverOnlineOrganizationsAsync to get list of environments
+                var orgDetails = await ServiceClient.DiscoverOnlineOrganizationsAsync(
                 tokenProvider,
                 new Uri("https://globaldisco.crm.dynamics.com"),
                 null,
                 null,
                 cts.Token);
 
-            if (orgDetails == null || orgDetails.Count == 0)
-            {
-                throw new Exception("No Dataverse environments found for this user.");
-            }
-
-            // Display available environments and let user select
-            Host.UI.WriteLine("Available Dataverse environments:");
-            Host.UI.WriteLine("");
-
-            var orgList = orgDetails.ToList();
-            for (int i = 0; i < orgList.Count; i++)
-            {
-                var org = orgList[i];
-                Host.UI.WriteLine($"  {i + 1}. {org.FriendlyName} ({org.UniqueName})");
-                Host.UI.WriteLine($"      URL: {org.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication]}");
-                Host.UI.WriteLine("");
-            }
-
-            // Prompt for selection
-            int selection = -1;
-            while (selection < 1 || selection > orgList.Count)
-            {
-                try
-                {
-                    Host.UI.Write("Select environment (1-" + orgList.Count + "): ");
-                    var input = Host.UI.ReadLine();
-                    selection = int.Parse(input);
-
-                    if (selection < 1 || selection > orgList.Count)
-                    {
-                        Host.UI.WriteLine("Invalid selection. Please enter a number between 1 and " + orgList.Count);
-                    }
-                }
-                catch
-                {
-                    Host.UI.WriteLine("Invalid input. Please enter a number.");
-                    selection = -1;
-                }
-            }
-
-            var selectedOrg = orgList[selection - 1];
-            var url = selectedOrg.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication];
-
-            Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({selectedOrg.UniqueName})");
-
-            return url;
-        }
-
-        private async Task<string> DiscoverAndSelectEnvironment(IConfidentialClientApplication app)
-        {
-            // Authenticate with confidential client to get access token for discovery
-            Uri discoveryScope = new Uri("https://globaldisco.crm.dynamics.com/.default");
-            string[] scopes = new[] { discoveryScope.ToString() };
-
-            using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
-            {
-                AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync(cts.Token);
-
-                // Use ServiceClient.DiscoverOnlineOrganizationsAsync to get list of environments
-                var orgDetails = await ServiceClient.DiscoverOnlineOrganizationsAsync(
-                    (uri) => Task.FromResult(authResult.AccessToken),
-                    new Uri("https://globaldisco.crm.dynamics.com"),
-                    null,
-                    null,
-                    cts.Token);
-
                 if (orgDetails == null || orgDetails.Count == 0)
                 {
-                    throw new Exception("No Dataverse environments found for this service principal.");
+                    throw new Exception("No Dataverse environments found for this user.");
                 }
 
                 // Display available environments and let user select
