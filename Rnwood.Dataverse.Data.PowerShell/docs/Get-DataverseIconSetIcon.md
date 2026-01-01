@@ -92,7 +92,7 @@ Default value: `FluentUI`
 Type: String
 Parameter Sets: (All)
 Aliases:
-Accepted values: FluentUI, Iconoir, Tabler
+Accepted values: FluentUI, Iconoir
 
 Required: False
 Position: 0

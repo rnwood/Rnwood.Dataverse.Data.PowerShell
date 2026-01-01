@@ -17,7 +17,7 @@ Imports a solution to Dataverse using an asynchronous job with progress reportin
 Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
  [-SkipProductUpdateDependencies] [-Mode <ImportMode>] [-ConnectionReferences <Hashtable>]
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
- [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfVersionMajorMinorMatches]
  [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
  [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -25,13 +25,14 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
 
 ### FromFolder
 ```
-Import-DataverseSolution [-InFolder] <String> [-PackageType <ImportSolutionPackageType>]
+Import-DataverseSolution -InFolder <String> [-PackageType <ImportSolutionPackageType>]
  [-OverwriteUnmanagedCustomizations] [-PublishWorkflows] [-SkipProductUpdateDependencies] [-Mode <ImportMode>]
  [-ConnectionReferences <Hashtable>] [-EnvironmentVariables <Hashtable>] [-ConvertToManaged]
- [-SkipQueueRibbonJob] [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
- [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
- [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-SkipQueueRibbonJob] [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing]
+ [-UseUpdateIfVersionMajorMinorMatches] [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>]
+ [-SkipConnectionReferenceValidation] [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion]
+ [-SkipIfLowerVersion] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### FromBytes
@@ -39,7 +40,7 @@ Import-DataverseSolution [-InFolder] <String> [-PackageType <ImportSolutionPacka
 Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizations] [-PublishWorkflows]
  [-SkipProductUpdateDependencies] [-Mode <ImportMode>] [-ConnectionReferences <Hashtable>]
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
- [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfAdditive]
+ [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfVersionMajorMinorMatches]
  [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
  [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -294,7 +295,7 @@ Parameter Sets: FromFolder
 Aliases:
 
 Required: True
-Position: 0
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -353,7 +354,6 @@ Package type: 'Unmanaged' (default) or 'Managed'.
 Type: ImportSolutionPackageType
 Parameter Sets: FromFolder
 Aliases:
-Accepted values: Unmanaged, Managed
 
 Required: False
 Position: Named

@@ -31,13 +31,13 @@ Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] [-Cl
 
 ### Authenticate with client secret
 ```
-Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> -Url <Uri>
+Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
  -ClientSecret <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client certificate
 ```
-Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> -Url <Uri>
+Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
  -CertificatePath <String> [-CertificatePassword <String>] [-CertificateThumbprint <String>]
  [-CertificateStoreLocation <StoreLocation>] [-CertificateStoreName <StoreName>] [-Timeout <UInt32>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
@@ -155,6 +155,13 @@ PS C:\> $c = Get-DataverseConnection -url "https://myorg.crm4.dynamics.com" -cli
 
 Gets a connection to MYORG using Service Principal client ID and secret auth and stores the result in the `$c` variable for later use.
 
+### Example 2b
+```powershell
+PS C:\> $c = Get-DataverseConnection -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -clientsecret "itsasecret"
+```
+
+Authenticates with client ID and secret without specifying a URL. The cmdlet will use the service principal credentials to discover available environments, then you can select which environment to connect to. Both discovery and the final connection use the same client secret authentication.
+
 ### Example 3
 ```powershell
 PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -DefaultAzureCredential
@@ -217,6 +224,13 @@ PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Clie
 ```
 
 Gets a connection to MYORG using client certificate authentication with an unencrypted certificate file (no password required).
+
+### Example 11b
+```powershell
+PS C:\> $c = Get-DataverseConnection -ClientId "12345678-1234-1234-1234-123456789abc" -CertificatePath "./mycert.pfx"
+```
+
+Authenticates with client certificate without specifying a URL. The cmdlet will use the certificate credentials to discover available environments, then you can select which environment to connect to. Both discovery and the final connection use the same client certificate authentication.
 
 ### Example 12: Save a named connection
 ```powershell
@@ -755,7 +769,7 @@ URL of the Dataverse environment to connect to. For example https://myorg.crm11.
 
 ```yaml
 Type: Uri
-Parameter Sets: Authenticate with username and password, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
 Aliases:
 
 Required: False
@@ -767,7 +781,7 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Uri
-Parameter Sets: Authenticate with client secret, Authenticate with client certificate, Return a mock connection, Authenticate with access token script block
+Parameter Sets: Return a mock connection, Authenticate with access token script block
 Aliases:
 
 Required: True

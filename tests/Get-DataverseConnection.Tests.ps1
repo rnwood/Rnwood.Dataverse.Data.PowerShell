@@ -261,6 +261,13 @@ Describe "Get-DataverseConnection Named Connections" {
         $nameParam.ParameterType | Should -Be ([string])
     }
 
+    It "Validates Url is optional for client secret authentication" {
+        $null = getMockConnection
+        $cmd = Get-Command Get-DataverseConnection
+        $urlParam = $cmd.Parameters['Url']
+        $urlParam.ParameterSets['Authenticate with client secret'].IsMandatory | Should -Be $false
+    }
+
     It "ListConnections parameter set exists" {
         $cmdlet = Get-Command Get-DataverseConnection
         $parameterSet = $cmdlet.ParameterSets | Where-Object { $_.Name -eq "List saved named connections" }
@@ -380,11 +387,11 @@ Describe "Get-DataverseConnection Certificate Authentication" {
             $clientIdParam.ParameterSets['Authenticate with client certificate'].IsMandatory | Should -Be $true
         }
 
-        It "Validates Url is required for certificate authentication" {
+        It "Validates Url is optional for certificate authentication" {
             $null = getMockConnection
             $cmd = Get-Command Get-DataverseConnection
             $urlParam = $cmd.Parameters['Url']
-            $urlParam.ParameterSets['Authenticate with client certificate'].IsMandatory | Should -Be $true
+            $urlParam.ParameterSets['Authenticate with client certificate'].IsMandatory | Should -Be $false
         }
 
         It "Validates CertificatePath is required for certificate authentication" {
