@@ -144,8 +144,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Gets or sets the URL of the Dataverse environment to connect to.
 		/// </summary>
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
-		[Parameter(Mandatory = true, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
+		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
 		[Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
@@ -632,6 +632,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					case PARAMSET_CLIENTSECRET:
 						{
+							// If URL is not provided, discover and select environment using interactive auth
+							if (Url == null)
+							{
+								var publicClient = PublicClientApplicationBuilder
+									.Create(ClientId.ToString())
+									.WithRedirectUri("http://localhost")
+									.Build();
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+
 							string authority = GetAuthority();
 
 							var confApp = ConfidentialClientApplicationBuilder
@@ -682,6 +693,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					case PARAMSET_CLIENTCERTIFICATE:
 						{
+							// If URL is not provided, discover and select environment using interactive auth
+							if (Url == null)
+							{
+								var publicClient = PublicClientApplicationBuilder
+									.Create(ClientId.ToString())
+									.WithRedirectUri("http://localhost")
+									.Build();
+								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+
 							string authority = GetAuthority();
 
 							X509Certificate2 certificate = LoadCertificate();
