@@ -633,15 +633,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					case PARAMSET_CLIENTSECRET:
 						{
 							// If URL is not provided, discover and select environment using interactive auth
-							if (Url == null)
-							{
-								var publicClient = PublicClientApplicationBuilder
-									.Create(ClientId.ToString())
-									.WithRedirectUri("http://localhost")
-									.Build();
-								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
-								Url = new Uri(discoveryUrl);
-							}
+							DiscoverEnvironmentForServicePrincipal();
 
 							string authority = GetAuthority();
 
@@ -694,15 +686,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					case PARAMSET_CLIENTCERTIFICATE:
 						{
 							// If URL is not provided, discover and select environment using interactive auth
-							if (Url == null)
-							{
-								var publicClient = PublicClientApplicationBuilder
-									.Create(ClientId.ToString())
-									.WithRedirectUri("http://localhost")
-									.Build();
-								var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
-								Url = new Uri(discoveryUrl);
-							}
+							DiscoverEnvironmentForServicePrincipal();
 
 							string authority = GetAuthority();
 
@@ -1290,6 +1274,19 @@ Url + "/api/data/v9.2/");
 				Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({selectedOrg.UniqueName})");
 
 				return url;
+			}
+		}
+
+		private void DiscoverEnvironmentForServicePrincipal()
+		{
+			if (Url == null)
+			{
+				var publicClient = PublicClientApplicationBuilder
+					.Create(ClientId.ToString())
+					.WithRedirectUri("http://localhost")
+					.Build();
+				var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
+				Url = new Uri(discoveryUrl);
 			}
 		}
 	}
