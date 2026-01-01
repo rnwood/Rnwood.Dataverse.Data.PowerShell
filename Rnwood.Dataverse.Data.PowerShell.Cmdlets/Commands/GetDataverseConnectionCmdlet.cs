@@ -265,8 +265,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(Mandatory = false, HelpMessage = "Timeout for authentication operations. Defaults to 5 minutes.")]
 		public uint Timeout { get; set; } = 5 * 60;
 
-		// Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
-		private CancellationTokenSource _userCancellationCts;
+        /// <summary>
+        /// Gets or sets the tenant ID uses for authentication during environment discovery.
+        /// </summary>
+        [Parameter]
+        public Guid? TenantId { get; set; }
+
+        // Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
+        private CancellationTokenSource _userCancellationCts;
 
 		/// <summary>
 		/// Initializes the cmdlet processing.
@@ -632,19 +638,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					case PARAMSET_CLIENTSECRET:
 						{
-							// Build confidential client application first (needed for both discovery and connection)
-							// For discovery, we use a well-known authority for Azure AD multi-tenant apps
-							var confAppForDiscovery = ConfidentialClientApplicationBuilder
-								.Create(ClientId.ToString())
-								.WithRedirectUri("http://localhost")
-								.WithClientSecret(ClientSecret)
-								.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
-								.Build();
+
 
 							// If URL is not provided, discover and select environment using client secret auth
 							if (Url == null)
 							{
-								var discoveryUrl = DiscoverAndSelectEnvironment(confAppForDiscovery).GetAwaiter().GetResult();
+                                // Build confidential client application first (needed for both discovery and connection)
+                                // For discovery, we use a well-known authority for Azure AD multi-tenant apps
+                                var confAppForDiscovery = ConfidentialClientApplicationBuilder
+                                    .Create(ClientId.ToString())
+                                    .WithRedirectUri("http://localhost")
+                                    .WithClientSecret(ClientSecret)
+                                    .WithAuthority(AadAuthorityAudience.AzureAdMyOrg)
+									.WithTenantId(TenantId?.ToString() ?? throw new Exception("TenantId must be specified to use environment discover (or specify -Url for an environment)"))
+                                    .Build();
+
+                                var discoveryUrl = DiscoverAndSelectEnvironment(confAppForDiscovery).GetAwaiter().GetResult();
 								Url = new Uri(discoveryUrl);
 							}
 
@@ -703,19 +712,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 							// Load certificate first (needed for both discovery and connection)
 							X509Certificate2 certificate = LoadCertificate();
 
-							// Build confidential client application for discovery
-							// For discovery, we use a well-known authority for Azure AD multi-tenant apps
-							var confAppForDiscovery = ConfidentialClientApplicationBuilder
-								.Create(ClientId.ToString())
-								.WithRedirectUri("http://localhost")
-								.WithCertificate(certificate)
-								.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
-								.Build();
-
 							// If URL is not provided, discover and select environment using client certificate auth
 							if (Url == null)
 							{
-								var discoveryUrl = DiscoverAndSelectEnvironment(confAppForDiscovery).GetAwaiter().GetResult();
+                                // Build confidential client application for discovery
+                                // For discovery, we use a well-known authority for Azure AD multi-tenant apps
+                                var confAppForDiscovery = ConfidentialClientApplicationBuilder
+                                    .Create(ClientId.ToString())
+                                    .WithRedirectUri("http://localhost")
+                                    .WithCertificate(certificate)
+                                    .WithAuthority(AadAuthorityAudience.AzureAdMyOrg)
+                                    .WithTenantId(TenantId?.ToString() ?? throw new Exception("TenantId must be specified to use environment discover (or specify -Url for an environment)"))
+                                    .Build();
+
+                                var discoveryUrl = DiscoverAndSelectEnvironment(confAppForDiscovery).GetAwaiter().GetResult();
 								Url = new Uri(discoveryUrl);
 							}
 
