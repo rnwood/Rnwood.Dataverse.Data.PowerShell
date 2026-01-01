@@ -160,7 +160,7 @@ Gets a connection to MYORG using Service Principal client ID and secret auth and
 PS C:\> $c = Get-DataverseConnection -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -clientsecret "itsasecret"
 ```
 
-Authenticates with client ID and secret without specifying a URL. The cmdlet will prompt you to authenticate interactively to discover available environments, then you can select which environment to connect to. The actual connection will use the service principal credentials.
+Authenticates with client ID and secret without specifying a URL. The cmdlet will use the service principal credentials to discover available environments, then you can select which environment to connect to. Both discovery and the final connection use the same client secret authentication.
 
 ### Example 3
 ```powershell
@@ -230,7 +230,7 @@ Gets a connection to MYORG using client certificate authentication with an unenc
 PS C:\> $c = Get-DataverseConnection -ClientId "12345678-1234-1234-1234-123456789abc" -CertificatePath "./mycert.pfx"
 ```
 
-Authenticates with client certificate without specifying a URL. The cmdlet will prompt you to authenticate interactively to discover available environments, then you can select which environment to connect to. The actual connection will use the certificate credentials.
+Authenticates with client certificate without specifying a URL. The cmdlet will use the certificate credentials to discover available environments, then you can select which environment to connect to. Both discovery and the final connection use the same client certificate authentication.
 
 ### Example 12: Save a named connection
 ```powershell

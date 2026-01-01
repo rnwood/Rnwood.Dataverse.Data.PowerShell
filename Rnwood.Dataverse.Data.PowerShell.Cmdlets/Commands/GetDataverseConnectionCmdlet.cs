@@ -632,11 +632,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					case PARAMSET_CLIENTSECRET:
 						{
-							// If URL is not provided, discover and select environment using interactive auth
-							DiscoverEnvironmentForServicePrincipal();
+							// Build confidential client application first (needed for both discovery and connection)
+							// For discovery, we use a well-known authority for Azure AD multi-tenant apps
+							var confAppForDiscovery = ConfidentialClientApplicationBuilder
+								.Create(ClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.WithClientSecret(ClientSecret)
+								.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
+								.Build();
 
+							// If URL is not provided, discover and select environment using client secret auth
+							if (Url == null)
+							{
+								var discoveryUrl = DiscoverAndSelectEnvironment(confAppForDiscovery).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+
+							// Now get the authority for the selected environment
 							string authority = GetAuthority();
 
+							// Build the final confidential client with the correct authority
 							var confApp = ConfidentialClientApplicationBuilder
 							.Create(ClientId.ToString())
 							.WithRedirectUri("http://localhost")
@@ -685,13 +700,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 					case PARAMSET_CLIENTCERTIFICATE:
 						{
-							// If URL is not provided, discover and select environment using interactive auth
-							DiscoverEnvironmentForServicePrincipal();
-
-							string authority = GetAuthority();
-
+							// Load certificate first (needed for both discovery and connection)
 							X509Certificate2 certificate = LoadCertificate();
 
+							// Build confidential client application for discovery
+							// For discovery, we use a well-known authority for Azure AD multi-tenant apps
+							var confAppForDiscovery = ConfidentialClientApplicationBuilder
+								.Create(ClientId.ToString())
+								.WithRedirectUri("http://localhost")
+								.WithCertificate(certificate)
+								.WithAuthority(AadAuthorityAudience.AzureAdMultipleOrgs)
+								.Build();
+
+							// If URL is not provided, discover and select environment using client certificate auth
+							if (Url == null)
+							{
+								var discoveryUrl = DiscoverAndSelectEnvironment(confAppForDiscovery).GetAwaiter().GetResult();
+								Url = new Uri(discoveryUrl);
+							}
+
+							// Now get the authority for the selected environment
+							string authority = GetAuthority();
+
+							// Build the final confidential client with the correct authority
 							var confApp = ConfidentialClientApplicationBuilder
 							.Create(ClientId.ToString())
 							.WithRedirectUri("http://localhost")
@@ -1277,16 +1308,70 @@ Url + "/api/data/v9.2/");
 			}
 		}
 
-		private void DiscoverEnvironmentForServicePrincipal()
+		private async Task<string> DiscoverAndSelectEnvironment(IConfidentialClientApplication app)
 		{
-			if (Url == null)
+			// Authenticate with confidential client to get access token for discovery
+			Uri discoveryScope = new Uri("https://globaldisco.crm.dynamics.com/.default");
+			string[] scopes = new[] { discoveryScope.ToString() };
+
+			using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
 			{
-				var publicClient = PublicClientApplicationBuilder
-					.Create(ClientId.ToString())
-					.WithRedirectUri("http://localhost")
-					.Build();
-				var discoveryUrl = DiscoverAndSelectEnvironment(publicClient).GetAwaiter().GetResult();
-				Url = new Uri(discoveryUrl);
+				AuthenticationResult authResult = await app.AcquireTokenForClient(scopes).ExecuteAsync(cts.Token);
+
+				// Use ServiceClient.DiscoverOnlineOrganizationsAsync to get list of environments
+				var orgDetails = await ServiceClient.DiscoverOnlineOrganizationsAsync(
+					(uri) => Task.FromResult(authResult.AccessToken),
+					new Uri("https://globaldisco.crm.dynamics.com"),
+					null,
+					null,
+					cts.Token);
+
+				if (orgDetails == null || orgDetails.Count == 0)
+				{
+					throw new Exception("No Dataverse environments found for this service principal.");
+				}
+
+				// Display available environments and let user select
+				Host.UI.WriteLine("Available Dataverse environments:");
+				Host.UI.WriteLine("");
+
+				var orgList = orgDetails.ToList();
+				for (int i = 0; i < orgList.Count; i++)
+				{
+					var org = orgList[i];
+					Host.UI.WriteLine($"  {i + 1}. {org.FriendlyName} ({org.UniqueName})");
+					Host.UI.WriteLine($"      URL: {org.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication]}");
+					Host.UI.WriteLine("");
+				}
+
+				// Prompt for selection
+				int selection = -1;
+				while (selection < 1 || selection > orgList.Count)
+				{
+					try
+					{
+						Host.UI.Write("Select environment (1-" + orgList.Count + "): ");
+						var input = Host.UI.ReadLine();
+						selection = int.Parse(input);
+
+						if (selection < 1 || selection > orgList.Count)
+						{
+							Host.UI.WriteLine("Invalid selection. Please enter a number between 1 and " + orgList.Count);
+						}
+					}
+					catch
+					{
+						Host.UI.WriteLine("Invalid input. Please enter a number.");
+						selection = -1;
+					}
+				}
+
+				var selectedOrg = orgList[selection - 1];
+				var url = selectedOrg.Endpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication];
+
+				Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({selectedOrg.UniqueName})");
+
+				return url;
 			}
 		}
 	}
