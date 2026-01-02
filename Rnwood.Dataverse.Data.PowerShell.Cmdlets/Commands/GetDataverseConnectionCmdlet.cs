@@ -1284,16 +1284,34 @@ Url + "/api/data/v9.2/");
                 int selection = -1;
                 while (selection < 1 || selection > orgList.Count)
                 {
+                    // Check if user cancelled (Ctrl+C)
+                    if (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested)
+                    {
+                        throw new OperationCanceledException("Operation cancelled by user.", _userCancellationCts.Token);
+                    }
+
                     try
                     {
                         Host.UI.Write("Select environment (1-" + orgList.Count + "): ");
                         var input = Host.UI.ReadLine();
+                        
+                        // Check again after ReadLine() in case user pressed Ctrl+C
+                        if (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested)
+                        {
+                            throw new OperationCanceledException("Operation cancelled by user.", _userCancellationCts.Token);
+                        }
+
                         selection = int.Parse(input);
 
                         if (selection < 1 || selection > orgList.Count)
                         {
                             Host.UI.WriteLine("Invalid selection. Please enter a number between 1 and " + orgList.Count);
                         }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        // Re-throw cancellation exceptions
+                        throw;
                     }
                     catch
                     {

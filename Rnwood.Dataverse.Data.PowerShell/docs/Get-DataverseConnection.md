@@ -18,21 +18,22 @@ See the examples for this pattern below.
 
 ### Get default connection
 ```
-Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with username and password
 ```
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>]
- -Username <String> -Password <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ -Username <String> -Password <String> [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
 ```
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
- -ClientSecret <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ -ClientSecret <String> [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Authenticate with client certificate
@@ -40,79 +41,80 @@ Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -Cli
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
  -CertificatePath <String> [-CertificatePassword <String>] [-CertificateThumbprint <String>]
  [-CertificateStoreLocation <StoreLocation>] [-CertificateStoreName <StoreName>] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate interactively
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-Interactive] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Interactive] [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-DeviceCode] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DeviceCode] [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with DefaultAzureCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-DefaultAzureCredential]
- [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with ManagedIdentityCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-ManagedIdentity]
- [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Load a saved named connection
 ```
-Get-DataverseConnection [-SetAsDefault] -Name <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] -Name <String> [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Delete a saved named connection
 ```
 Get-DataverseConnection [-SetAsDefault] -Name <String> [-DeleteConnection] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Clear all saved connections
 ```
-Get-DataverseConnection [-SetAsDefault] [-ClearAllConnections] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [-ClearAllConnections] [-Timeout <UInt32>] [-TenantId <Guid>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### List saved named connections
 ```
-Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>] [-TenantId <Guid>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Return a mock connection
 ```
 Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [-RequestInterceptor <ScriptBlock>] -Url <Uri>
- [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with access token script block
 ```
-Get-DataverseConnection [-SetAsDefault] -Url <Uri> -AccessToken <ScriptBlock> [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] -AccessToken <ScriptBlock> [-Timeout <UInt32>]
+ [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with Dataverse SDK connection string.
 ```
-Get-DataverseConnection [-SetAsDefault] -ConnectionString <String> [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] -ConnectionString <String> [-Timeout <UInt32>] [-TenantId <Guid>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Load connection from PAC CLI profile
 ```
-Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout <UInt32>]
+Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout <UInt32>] [-TenantId <Guid>]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -749,6 +751,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -TenantId
+{{ Fill TenantId Description }}
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Timeout
 Timeout for authentication operations. Defaults to 5 minutes.
 
@@ -769,7 +786,7 @@ URL of the Dataverse environment to connect to. For example https://myorg.crm11.
 
 ```yaml
 Type: Uri
-Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential, Authenticate with access token script block
 Aliases:
 
 Required: False
@@ -781,7 +798,7 @@ Accept wildcard characters: False
 
 ```yaml
 Type: Uri
-Parameter Sets: Return a mock connection, Authenticate with access token script block
+Parameter Sets: Return a mock connection
 Aliases:
 
 Required: True
