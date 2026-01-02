@@ -846,4 +846,21 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### Microsoft.PowerPlatform.Dataverse.Client.ServiceClient
 ## NOTES
 
+### Environment Selection
+
+When the `-Url` parameter is not provided for authentication methods that support environment discovery (Interactive, DeviceCode, UsernamePassword, ClientSecret, ClientCertificate, DefaultAzureCredential, ManagedIdentity, AccessToken), the cmdlet will:
+
+1. Authenticate with the provided credentials
+2. Discover all available Dataverse environments for the authenticated user
+3. Display a numbered list of environments
+4. Prompt you to select an environment by entering its number
+
+You can press **CTRL+C** at the environment selection prompt to cancel the operation and abort the connection.
+
+### Security Considerations
+
+- The `-SaveCredentials` parameter saves passwords/secrets in encrypted form. This is **NOT RECOMMENDED** for production use - only use for testing or development scenarios.
+- Named connections cache authentication tokens using MSAL (Microsoft Authentication Library), allowing for silent token refresh without re-entering credentials.
+- For production scenarios, use managed identity, certificate-based authentication, or DefaultAzureCredential instead of username/password or client secret authentication.
+
 ## RELATED LINKS
