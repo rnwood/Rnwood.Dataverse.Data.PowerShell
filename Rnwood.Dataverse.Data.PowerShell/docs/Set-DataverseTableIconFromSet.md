@@ -14,7 +14,7 @@ Sets a table's vector icon by downloading an icon from an online icon set and cr
 
 ```
 Set-DataverseTableIconFromSet [-EntityName] <String> [[-IconSet] <String>] [-IconName] <String>
- [-PublisherPrefix] <String> [-Publish] [-PassThru] [-Connection <ServiceClient>]
+ -PublisherPrefix <String> [-Publish] [-PassThru] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -226,7 +226,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 3
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
