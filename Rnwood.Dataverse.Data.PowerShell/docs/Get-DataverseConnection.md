@@ -118,6 +118,14 @@ Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### Authenticate with Azure DevOps federated identity
+```
+Get-DataverseConnection [-SetAsDefault] [-Name <String>] -ClientId <Guid> -Url <Uri> -TenantId <Guid>
+ [-AzureDevOpsFederated] [-ServiceConnectionId <String>] [-Timeout <UInt32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+
 ## DESCRIPTION
 
 This cmdlet establishes a connection to a Microsoft Dataverse environment which can then be used with other cmdlets in this module.
@@ -134,6 +142,7 @@ Multiple authentication methods are supported:
 - Client certificate (for certificate-based service principal authentication)
 - DefaultAzureCredential (automatic credential discovery for Azure environments)
 - ManagedIdentityCredential (for Azure managed identity authentication)
+- Azure DevOps federated identity (for Azure Pipelines with Workload Identity Federation)
 - Connection string (for advanced scenarios)
 - PAC CLI profile (leverages existing Power Platform CLI authentication)
 - Mock connection (for testing)
@@ -318,6 +327,25 @@ PS C:\> $c = Get-DataverseConnection -FromPac -Profile "MyDevProfile"
 
 Connects to Dataverse using a specific named PAC CLI profile. The profile name must match one of the profiles created with `pac auth create --name <profilename>`. Alternatively, you can specify the index of the profile (e.g., "0" for the first profile).
 
+### Example 24: Azure DevOps federated authentication in a pipeline
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "12345678-1234-1234-1234-123456789abc" -TenantId "87654321-4321-4321-4321-cba987654321" -AzureDevOpsFederated
+```
+
+Connects to Dataverse using Azure DevOps federated identity (Workload Identity Federation). This authentication method is designed for Azure Pipelines and requires:
+- A service connection configured with Workload Identity Federation in Azure DevOps
+- The pipeline to have access to System.AccessToken (add to pipeline YAML: `SYSTEM_ACCESSTOKEN: $(System.AccessToken)`)
+- The service connection ID will be automatically detected from the pipeline context, or can be specified via `-ServiceConnectionId`
+
+This is the recommended authentication method for Azure Pipelines as it doesn't require storing secrets.
+
+### Example 25: Azure DevOps federated authentication with explicit service connection
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "12345678-1234-1234-1234-123456789abc" -TenantId "87654321-4321-4321-4321-cba987654321" -AzureDevOpsFederated -ServiceConnectionId "my-service-connection-guid"
+```
+
+Same as Example 24, but explicitly specifies the service connection ID instead of auto-detecting it from the pipeline context.
+
 ## PARAMETERS
 
 ### -AccessToken
@@ -331,6 +359,21 @@ Aliases:
 Required: True
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AzureDevOpsFederated
+Use Azure DevOps federated identity (Workload Identity Federation) for authentication. This requires running in an Azure DevOps pipeline with a federated service connection configured. The pipeline must have access to System.AccessToken.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Authenticate with Azure DevOps federated identity
+Aliases:
+
+Required: True
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -736,6 +779,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ServiceConnectionId
+Service connection ID for Azure DevOps federated authentication. If not specified, will be automatically detected from the PowerPlatformSPN pipeline input or service connection context.
+
+```yaml
+Type: String
+Parameter Sets: Authenticate with Azure DevOps federated identity
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SetAsDefault
 When set, this connection will be used as the default for cmdlets that don't have a connection parameter specified.
 
@@ -752,14 +810,26 @@ Accept wildcard characters: False
 ```
 
 ### -TenantId
-{{ Fill TenantId Description }}
+Tenant ID (Directory ID) of the Azure AD tenant. Required for Azure DevOps federated authentication and optionally for client secret/certificate authentication when not specifying -Url.
 
 ```yaml
 Type: Guid
-Parameter Sets: (All)
+Parameter Sets: Authenticate with client secret, Authenticate with client certificate
 Aliases:
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+```yaml
+Type: Guid
+Parameter Sets: Authenticate with Azure DevOps federated identity
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False
