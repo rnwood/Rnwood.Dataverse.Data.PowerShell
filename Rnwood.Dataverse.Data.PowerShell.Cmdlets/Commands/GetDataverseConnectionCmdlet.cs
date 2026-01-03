@@ -22,6 +22,7 @@ using System.Management.Automation;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -906,11 +907,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             // Get access token from SYSTEMVSSCONNECTION endpoint
                             string accessToken = GetAzureDevOpsAccessToken();
                             
-                            // Set environment variables for WorkloadIdentityCredential
-                            Environment.SetEnvironmentVariable("AZURE_FEDERATED_TOKEN_FILE", null);
-                            Environment.SetEnvironmentVariable("AZURE_TENANT_ID", TenantId?.ToString());
-                            Environment.SetEnvironmentVariable("AZURE_CLIENT_ID", ClientId.ToString());
-                            
                             // Create a custom token provider that uses Azure DevOps OIDC
                             Func<string, Task<string>> tokenProvider = async (url) =>
                             {
@@ -1526,7 +1522,23 @@ Url + "/api/data/v9.2/");
             
             try
             {
+                // Write token to file with restrictive permissions
                 File.WriteAllText(tempTokenFile, oidcToken);
+                
+                // On Unix-like systems, set file permissions to owner-only read/write (600)
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    try
+                    {
+                        // Use chmod 600 to restrict access to owner only
+                        var chmod = System.Diagnostics.Process.Start("chmod", $"600 {tempTokenFile}");
+                        chmod?.WaitForExit();
+                    }
+                    catch
+                    {
+                        WriteVerbose("Warning: Could not set restrictive permissions on temporary token file");
+                    }
+                }
                 
                 // Set environment variables for WorkloadIdentityCredential
                 Environment.SetEnvironmentVariable("AZURE_FEDERATED_TOKEN_FILE", tempTokenFile);
@@ -1553,11 +1565,13 @@ Url + "/api/data/v9.2/");
                     if (File.Exists(tempTokenFile))
                     {
                         File.Delete(tempTokenFile);
+                        WriteVerbose("Cleaned up temporary token file");
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Best effort cleanup
+                    // Log cleanup failure for troubleshooting
+                    WriteVerbose($"Warning: Failed to delete temporary token file: {ex.Message}");
                 }
             }
         }
