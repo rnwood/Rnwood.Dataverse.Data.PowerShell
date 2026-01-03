@@ -58,6 +58,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private const string PARAMSET_DEFAULTAZURECREDENTIAL = "Authenticate with DefaultAzureCredential";
         private const string PARAMSET_MANAGEDIDENTITY = "Authenticate with ManagedIdentityCredential";
         private const string PARAMSET_ACCESSTOKEN = "Authenticate with access token script block";
+        private const string PARAMSET_AZDOFEDERATED = "Authenticate with Azure DevOps federated identity";
 
         private const string PARAMSET_MOCK = "Return a mock connection";
         private const string PARAMSET_GETDEFAULT = "Get default connection";
@@ -97,6 +98,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
+        [Parameter(Mandatory = false, ParameterSetName = PARAMSET_AZDOFEDERATED, HelpMessage = "Name to save this connection under for later retrieval. Allows you to persist and reuse connections.")]
         [Parameter(Mandatory = true, ParameterSetName = PARAMSET_LOADNAMED, HelpMessage = "Name of a saved connection to load. The connection will be restored with cached credentials.")]
         [Parameter(Mandatory = true, ParameterSetName = PARAMSET_DELETENAMED, HelpMessage = "Name of the saved connection to delete.")]
         public string Name { get; set; }
@@ -139,6 +141,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_INTERACTIVE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEVICECODE, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "Client ID to use for authentication. By default the MS provided ID for PAC CLI is used to make it easy to get started.")]
+        [Parameter(Mandatory = true, ParameterSetName = PARAMSET_AZDOFEDERATED, HelpMessage = "Client ID (Application ID) of the Azure AD application registration used for federated authentication.")]
         public Guid ClientId { get; set; } = new Guid("9cee029c-6210-4654-90bb-17e6e9d36617");
 
         /// <summary>
@@ -153,6 +156,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
         [Parameter(Mandatory = true, ParameterSetName = PARAMSET_MOCK, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_ACCESSTOKEN, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
+        [Parameter(Mandatory = true, ParameterSetName = PARAMSET_AZDOFEDERATED, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
         public Uri Url { get; set; }
 
         /// <summary>
@@ -260,6 +264,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string Profile { get; set; }
 
         /// <summary>
+        /// Gets or sets a value indicating whether to use Azure DevOps federated identity authentication.
+        /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = PARAMSET_AZDOFEDERATED, HelpMessage = "Use Azure DevOps federated identity (Workload Identity Federation) for authentication. This requires running in an Azure DevOps pipeline with a federated service connection.")]
+        public SwitchParameter AzureDevOpsFederated { get; set; }
+
+        /// <summary>
+        /// Gets or sets the service connection ID for Azure DevOps federated authentication.
+        /// </summary>
+        [Parameter(Mandatory = false, ParameterSetName = PARAMSET_AZDOFEDERATED, HelpMessage = "Service connection ID for Azure DevOps federated authentication. If not specified, will be read from the PowerPlatformSPN pipeline input.")]
+        public string ServiceConnectionId { get; set; }
+
+        /// <summary>
         /// Gets or sets the timeout for authentication operations in seconds.
         /// </summary>
         [Parameter(Mandatory = false, HelpMessage = "Timeout for authentication operations. Defaults to 5 minutes.")]
@@ -268,7 +284,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the tenant ID uses for authentication during environment discovery.
         /// </summary>
-        [Parameter]
+        [Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTSECRET, HelpMessage = "Tenant ID for authentication. Required when using client secret or client certificate authentication without specifying -Url.")]
+        [Parameter(Mandatory = false, ParameterSetName = PARAMSET_CLIENTCERTIFICATE, HelpMessage = "Tenant ID for authentication. Required when using client secret or client certificate authentication without specifying -Url.")]
+        [Parameter(Mandatory = true, ParameterSetName = PARAMSET_AZDOFEDERATED, HelpMessage = "Tenant ID (Directory ID) of the Azure AD tenant. Required for Azure DevOps federated authentication.")]
         public Guid? TenantId { get; set; }
 
         // Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
@@ -880,6 +898,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         break;
 
 
+                    case PARAMSET_AZDOFEDERATED:
+                        {
+                            // Build OIDC token request URL from Azure DevOps pipeline environment variables
+                            string oidcTokenRequestUrl = BuildOidcTokenRequestUrl();
+                            
+                            // Get access token from SYSTEMVSSCONNECTION endpoint
+                            string accessToken = GetAzureDevOpsAccessToken();
+                            
+                            // Set environment variables for WorkloadIdentityCredential
+                            Environment.SetEnvironmentVariable("AZURE_FEDERATED_TOKEN_FILE", null);
+                            Environment.SetEnvironmentVariable("AZURE_TENANT_ID", TenantId?.ToString());
+                            Environment.SetEnvironmentVariable("AZURE_CLIENT_ID", ClientId.ToString());
+                            
+                            // Create a custom token provider that uses Azure DevOps OIDC
+                            Func<string, Task<string>> tokenProvider = async (url) =>
+                            {
+                                return await GetTokenWithAzureDevOpsFederated(oidcTokenRequestUrl, accessToken, url);
+                            };
+
+                            result = new ServiceClientWithTokenProvider(Url, tokenProvider);
+
+                            // Save connection metadata if a name was provided
+                            if (!string.IsNullOrEmpty(Name))
+                            {
+                                var store = new ConnectionStore();
+                                store.SaveConnection(Name, new ConnectionMetadata
+                                {
+                                    Url = Url.ToString(),
+                                    AuthMethod = "AzureDevOpsFederated",
+                                    ClientId = ClientId.ToString(),
+                                    SavedAt = DateTime.UtcNow
+                                });
+                                WriteVerbose($"Connection saved as '{Name}'");
+                            }
+
+                            break;
+                        }
+
                     case PARAMSET_FROMPAC:
                         {
                             string environmentUrlString;
@@ -1326,6 +1382,183 @@ Url + "/api/data/v9.2/");
                 Host.UI.WriteLine($"Selected environment: {selectedOrg.FriendlyName} ({selectedOrg.UniqueName})");
 
                 return url;
+            }
+        }
+
+        private string BuildOidcTokenRequestUrl()
+        {
+            const string oidcApiVersion = "7.2-preview.1";
+            
+            string projectId = GetEnvironmentVariable("System.TeamProjectId", "PROJECT_ID");
+            string hub = GetEnvironmentVariable("System.HostType", "HostType") ?? "build";
+            string planId = GetEnvironmentVariable("System.PlanId", "PLAN_ID");
+            string jobId = GetEnvironmentVariable("System.JobId", "JOB_ID");
+            
+            // Get service connection ID from parameter or environment
+            string serviceConnectionId = ServiceConnectionId;
+            if (string.IsNullOrEmpty(serviceConnectionId))
+            {
+                serviceConnectionId = GetEnvironmentVariable("ENDPOINT_URL_POWERPLATFORMSPN", "ServiceConnectionId");
+                if (string.IsNullOrEmpty(serviceConnectionId))
+                {
+                    throw new InvalidOperationException(
+                        "ServiceConnectionId is required for Azure DevOps federated authentication. " +
+                        "Either provide it via -ServiceConnectionId parameter or ensure the PowerPlatformSPN " +
+                        "service connection is configured in your pipeline.");
+                }
+            }
+            
+            string collectionUri = GetEnvironmentVariable("System.CollectionUri", "COLLECTION_URI");
+            if (string.IsNullOrEmpty(collectionUri))
+            {
+                collectionUri = GetEnvironmentVariable("System.TeamFoundationServerUri", "TFS_URI");
+            }
+            
+            if (string.IsNullOrEmpty(collectionUri))
+            {
+                throw new InvalidOperationException(
+                    "Cannot determine Azure DevOps collection URI. " +
+                    "This cmdlet must be run within an Azure DevOps pipeline.");
+            }
+            
+            string tokenRequestUrl = $"{collectionUri}{projectId}/_apis/distributedtask/hubs/{hub}/plans/{planId}/jobs/{jobId}/oidctoken?serviceConnectionId={serviceConnectionId}&api-version={oidcApiVersion}";
+            WriteVerbose($"OIDC Token Request URL: {tokenRequestUrl}");
+            
+            return tokenRequestUrl;
+        }
+
+        private string GetAzureDevOpsAccessToken()
+        {
+            // Try to get from environment variable set by Azure Pipelines
+            string accessToken = GetEnvironmentVariable("SYSTEM_ACCESSTOKEN", "AccessToken");
+            
+            if (string.IsNullOrEmpty(accessToken))
+            {
+                throw new InvalidOperationException(
+                    "Cannot retrieve Azure DevOps access token. " +
+                    "Ensure the pipeline has 'System.AccessToken' available. " +
+                    "You may need to add 'SYSTEM_ACCESSTOKEN: $(System.AccessToken)' to your pipeline's env section.");
+            }
+            
+            return accessToken;
+        }
+
+        private string GetEnvironmentVariable(string primaryName, string description)
+        {
+            // Try primary name first
+            string value = Environment.GetEnvironmentVariable(primaryName);
+            if (!string.IsNullOrEmpty(value))
+            {
+                WriteVerbose($"Found {description}: {primaryName}");
+                return value;
+            }
+            
+            // Try alternate names with different casing/format
+            string[] alternates = new[]
+            {
+                primaryName.ToUpperInvariant().Replace(".", "_"),
+                primaryName.ToLowerInvariant().Replace(".", "_"),
+                primaryName.Replace("System.", "SYSTEM_"),
+                primaryName.Replace(".", "_")
+            };
+            
+            foreach (var alternateName in alternates)
+            {
+                value = Environment.GetEnvironmentVariable(alternateName);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    WriteVerbose($"Found {description}: {alternateName}");
+                    return value;
+                }
+            }
+            
+            return null;
+        }
+
+        private async Task<string> GetTokenWithAzureDevOpsFederated(string oidcTokenRequestUrl, string adoAccessToken, string dataverseUrl)
+        {
+            using (var cts = CreateLinkedCts(TimeSpan.FromSeconds(Timeout)))
+            {
+                // Step 1: Get OIDC token from Azure DevOps
+                string oidcToken = await GetOidcTokenFromAzureDevOps(oidcTokenRequestUrl, adoAccessToken, cts.Token);
+                
+                // Step 2: Use the OIDC token to authenticate with Azure AD and get Dataverse token
+                return await ExchangeOidcTokenForDataverseToken(oidcToken, dataverseUrl, cts.Token);
+            }
+        }
+
+        private async Task<string> GetOidcTokenFromAzureDevOps(string oidcTokenRequestUrl, string accessToken, CancellationToken cancellationToken)
+        {
+            using (var httpClient = new HttpClient())
+            {
+                httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {accessToken}");
+                httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
+                
+                WriteVerbose("Requesting OIDC token from Azure DevOps...");
+                var response = await httpClient.PostAsync(oidcTokenRequestUrl, null, cancellationToken);
+                
+                if (!response.IsSuccessStatusCode)
+                {
+                    string errorContent = await response.Content.ReadAsStringAsync();
+                    throw new InvalidOperationException(
+                        $"Failed to get OIDC token from Azure DevOps. Status: {response.StatusCode}, Error: {errorContent}");
+                }
+                
+                string responseContent = await response.Content.ReadAsStringAsync();
+                WriteVerbose("Successfully retrieved OIDC token from Azure DevOps");
+                
+                // Parse the response to get the token
+                var jsonDoc = JsonDocument.Parse(responseContent);
+                if (jsonDoc.RootElement.TryGetProperty("oidcToken", out var tokenElement))
+                {
+                    return tokenElement.GetString();
+                }
+                
+                throw new InvalidOperationException("OIDC token not found in Azure DevOps response");
+            }
+        }
+
+        private async Task<string> ExchangeOidcTokenForDataverseToken(string oidcToken, string dataverseUrl, CancellationToken cancellationToken)
+        {
+            // Use WorkloadIdentityCredential with the OIDC token
+            // We need to write the token to a temp file as WorkloadIdentityCredential expects a file path
+            string tempTokenFile = Path.Combine(Path.GetTempPath(), $"ado-oidc-{Guid.NewGuid()}.token");
+            
+            try
+            {
+                File.WriteAllText(tempTokenFile, oidcToken);
+                
+                // Set environment variables for WorkloadIdentityCredential
+                Environment.SetEnvironmentVariable("AZURE_FEDERATED_TOKEN_FILE", tempTokenFile);
+                Environment.SetEnvironmentVariable("AZURE_TENANT_ID", TenantId?.ToString());
+                Environment.SetEnvironmentVariable("AZURE_CLIENT_ID", ClientId.ToString());
+                
+                var credential = new WorkloadIdentityCredential();
+                
+                // Get token for Dataverse
+                Uri scope = new Uri(new Uri(dataverseUrl), "/.default");
+                var tokenRequestContext = new TokenRequestContext(new[] { scope.ToString() });
+                
+                WriteVerbose("Exchanging OIDC token for Dataverse access token...");
+                var token = await credential.GetTokenAsync(tokenRequestContext, cancellationToken);
+                WriteVerbose("Successfully obtained Dataverse access token");
+                
+                return token.Token;
+            }
+            finally
+            {
+                // Clean up temp file
+                try
+                {
+                    if (File.Exists(tempTokenFile))
+                    {
+                        File.Delete(tempTokenFile);
+                    }
+                }
+                catch
+                {
+                    // Best effort cleanup
+                }
             }
         }
     }
