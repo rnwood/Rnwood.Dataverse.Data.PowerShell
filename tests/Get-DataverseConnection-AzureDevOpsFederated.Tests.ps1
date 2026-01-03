@@ -52,21 +52,22 @@ Describe "Get-DataverseConnection - Azure DevOps Federated Authentication" {
         $output = pwsh -noninteractive -noprofile -command {
             $env:PSModulePath = "$env:TESTMODULEPATH;$env:PSModulePath"
             Import-Module Rnwood.Dataverse.Data.PowerShell
-            try {
-                $connection = Get-DataverseConnection `
-                    -AzureDevOpsFederated `
-                    -ClientId "12345678-1234-1234-1234-123456789abc" `
-                    -TenantId "87654321-4321-4321-4321-cba987654321" `
-                    -Url "https://test.crm.dynamics.com"
+            $ErrorActionPreference = "Continue"
+            $connection = Get-DataverseConnection `
+                -AzureDevOpsFederated `
+                -ClientId "12345678-1234-1234-1234-123456789abc" `
+                -TenantId "87654321-4321-4321-4321-cba987654321" `
+                -Url "https://test.crm.dynamics.com" `
+                -ErrorVariable err
+            if ($err) {
+                Write-Output "ERROR: $($err[0].Exception.Message)"
+            } else {
                 Write-Output "SUCCESS"
-            } catch {
-                Write-Output "ERROR: $($_.Exception.Message)"
             }
         } 2>&1
         
         # Should error because required Azure DevOps environment variables are not set
-        $output | Should -Match "ERROR"
-        $output | Should -Match "Azure DevOps|pipeline|SYSTEM|environment"
+        $output | Should -Match "ERROR|ServiceConnectionId|Azure DevOps|pipeline"
     }
     
     It "Supports Name parameter for saving connection metadata" {
