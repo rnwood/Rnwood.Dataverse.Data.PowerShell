@@ -384,6 +384,11 @@ When importing solutions that contain connection references (for API connections
 - You must supply the value for each environment variable schema name.
 - If not provided and not already set in the environment, the import will fail.
 
+**Important Notes:**
+- The cmdlet only includes component parameters (connection references and environment variables) that are discovered in the solution file being imported.
+- Any extra parameters provided via `-ConnectionReferences` or `-EnvironmentVariables` that are not in the solution file will be ignored and a verbose message will be logged.
+- This filtering ensures that only relevant parameters are passed to the import operation.
+
 **Setting Values During Import:**
 
 ```powershell
@@ -396,6 +401,20 @@ Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
     -EnvironmentVariables @{
         'new_apiurl' = 'https://api.production.example.com'
         'new_apikey' = 'prod-key-12345'
+    }
+
+# You can provide extra parameters - they will be ignored if not in the solution
+# This allows using a common set of parameters for multiple solution imports
+Import-DataverseSolution -Connection $c -InFile "C:\Solutions\MySolution.zip" `
+    -ConnectionReferences @{
+        'new_sharepointconnection' = '12345678-1234-1234-1234-123456789012'
+        'new_sqlconnection' = '87654321-4321-4321-4321-210987654321'
+        'new_otherconnection' = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'  # Ignored if not in solution
+    } `
+    -EnvironmentVariables @{
+        'new_apiurl' = 'https://api.production.example.com'
+        'new_apikey' = 'prod-key-12345'
+        'new_othersetting' = 'value'  # Ignored if not in solution
     }
 
 # Skip validation if you want to ignore for some reason
