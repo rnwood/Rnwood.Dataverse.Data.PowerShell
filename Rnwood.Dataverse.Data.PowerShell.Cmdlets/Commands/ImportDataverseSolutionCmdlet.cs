@@ -505,6 +505,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Build ComponentParameters from ConnectionReferences and EnvironmentVariables hashtables
+            // Only include parameters that are discovered in the solution file
             EntityCollection componentParameters = null;
 
             int totalParams = (ConnectionReferences?.Count ?? 0) + (EnvironmentVariables?.Count ?? 0);
@@ -514,7 +515,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Processing {totalParams} component parameter(s)...");
                 componentParameters = new EntityCollection();
 
-                // Process connection references
+                // Process connection references - only include those discovered in the solution file
                 if (ConnectionReferences != null && ConnectionReferences.Count > 0)
                 {
                     WriteVerbose($"Processing {ConnectionReferences.Count} connection reference(s)...");
@@ -525,7 +526,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         // Use the correctly-cased name from the solution file if available
                         var correctlyCasedName = _solutionConnectionReferenceNames?.FirstOrDefault(n =>
-                            string.Equals(n, connectionRefName, StringComparison.OrdinalIgnoreCase)) ?? connectionRefName;
+                            string.Equals(n, connectionRefName, StringComparison.OrdinalIgnoreCase));
+
+                        if (correctlyCasedName == null)
+                        {
+                            WriteVerbose($"  Connection reference '{connectionRefName}' is not in the solution file, skipping.");
+                            continue;
+                        }
 
                         WriteVerbose($"  Setting connection reference '{correctlyCasedName}' to connection '{connectionId}'");
 
@@ -537,19 +544,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                // Process environment variables
+                // Process environment variables - only include those discovered in the solution file
                 if (EnvironmentVariables != null && EnvironmentVariables.Count > 0)
                 {
                     WriteVerbose($"Processing {EnvironmentVariables.Count} environment variable(s)...");
 
                     // Build list of correctly-cased names for querying existing values
+                    // Only include those that are in the solution file
                     var correctlyCasedEnvVarNames = new List<string>();
                     foreach (DictionaryEntry entry in EnvironmentVariables)
                     {
                         var envVarName = entry.Key.ToString();
                         var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n =>
-                            string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase)) ?? envVarName;
-                        correctlyCasedEnvVarNames.Add(correctlyCasedName);
+                            string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase));
+                        
+                        if (correctlyCasedName != null)
+                        {
+                            correctlyCasedEnvVarNames.Add(correctlyCasedName);
+                        }
                     }
 
                     // Query for existing environment variable values by schema name (using correct casing)
@@ -562,7 +574,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         // Use the correctly-cased name from the solution file if available
                         var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n =>
-                            string.Equals(n, envVarSchemaName, StringComparison.OrdinalIgnoreCase)) ?? envVarSchemaName;
+                            string.Equals(n, envVarSchemaName, StringComparison.OrdinalIgnoreCase));
+
+                        if (correctlyCasedName == null)
+                        {
+                            WriteVerbose($"  Environment variable '{envVarSchemaName}' is not in the solution file, skipping.");
+                            continue;
+                        }
 
                         WriteVerbose($"  Setting environment variable '{correctlyCasedName}' to value '{envVarValue}'");
 
