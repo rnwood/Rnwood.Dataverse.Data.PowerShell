@@ -70,12 +70,12 @@ Describe 'Get-DataverseWhoAmI' {
             $result = Get-DataverseWhoAmI -Connection $connection
             
             # Verify contact was not affected
-            $verifyContact = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.Id
+            $verifyContact = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.Id -Columns firstname, lastname
             $verifyContact.firstname | Should -Be "Test"
             $verifyContact.lastname | Should -Be "WhoAmI"
             
             # Verify no side effects - still only one record
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
