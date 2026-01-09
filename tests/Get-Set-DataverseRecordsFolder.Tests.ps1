@@ -48,7 +48,7 @@ Describe 'Get/Set-DataverseRecordsFolder' {
             }
             
             # Verify no side effects in Dataverse
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 3
         }
 
@@ -90,7 +90,7 @@ Describe 'Get/Set-DataverseRecordsFolder' {
             }
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
 
@@ -152,7 +152,7 @@ Describe 'Get/Set-DataverseRecordsFolder' {
             }
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -191,7 +191,7 @@ Describe 'Get/Set-DataverseRecordsFolder' {
             }
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -232,7 +232,7 @@ Describe 'Get/Set-DataverseRecordsFolder' {
             }
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
@@ -267,7 +267,7 @@ Describe 'Get/Set-DataverseRecordsFolder' {
             }
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
     }
