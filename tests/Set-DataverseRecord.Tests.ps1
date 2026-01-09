@@ -17,7 +17,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result.Id | Should -Not -Be ([Guid]::Empty)
             
             # Verify record was created
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $result.Id
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname, emailaddress1 -Id $result.Id
             $retrieved.firstname | Should -Be "John"
             $retrieved.lastname | Should -Be "Doe"
             $retrieved.emailaddress1 | Should -Be "john.doe@example.com"
@@ -41,7 +41,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             }
             
             # Verify all records were created
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $allContacts | Where-Object { $_.firstname -eq "Alice" } | Should -HaveCount 1
             $allContacts | Where-Object { $_.firstname -eq "Bob" } | Should -HaveCount 1
             $allContacts | Where-Object { $_.firstname -eq "Charlie" } | Should -HaveCount 1
@@ -57,7 +57,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result | Should -BeNullOrEmpty
             
             # Verify record still created
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Where-Object { $_.firstname -eq "Test" -and $_.lastname -eq "User" } | Should -HaveCount 1
         }
 
@@ -115,7 +115,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $updateEntity | Set-DataverseRecord -Connection $connection
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, lastname, emailaddress1
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.Id -eq $toUpdate.Id }
@@ -149,7 +149,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             # Note: PassThru with SDK Entity objects may not return all attributes in FakeXrmEasy
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
@@ -179,7 +179,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result.Id | Should -Be $initial.Id
             
             # Verify all records unchanged
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $allRecords | Should -HaveCount 2
             $allRecords | Where-Object { $_.firstname -eq "NoChange" } | Should -HaveCount 1
             $allRecords | Where-Object { $_.firstname -eq "Other" } | Should -HaveCount 1
@@ -208,7 +208,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $updateEntity | Set-DataverseRecord -Connection $connection
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, lastname, emailaddress1
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
@@ -239,7 +239,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result.Id | Should -Not -Be ([Guid]::Empty)
             
             # Verify created
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $result.Id
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns emailaddress1 -Id $result.Id
             $retrieved.emailaddress1 | Should -Be "new@example.com"
         }
 
@@ -268,7 +268,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result.Id | Should -Be $initial.Id
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, emailaddress1
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.emailaddress1 -eq "unique@example.com" }
@@ -303,7 +303,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result.Id | Should -Be $initial.Id
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, lastname, emailaddress1
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.firstname -eq "John" -and $_.lastname -eq "Doe" }
@@ -331,7 +331,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             } | Should -Throw "*AllowMultipleMatches*"
             
             # Verify no records were updated
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $allRecords | Where-Object { $_.firstname -eq "Updated" } | Should -BeNullOrEmpty
         }
 
@@ -351,7 +351,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
                 Set-DataverseRecord -Connection $connection -TableName contact -MatchOn lastname -AllowMultipleMatches
             
             # Verify ALL matching records were updated
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname, emailaddress1
             $updated = $allRecords | Where-Object { $_.emailaddress1 -eq "updated@test.com" }
             $updated | Should -HaveCount 2
             $updated | ForEach-Object { $_.lastname | Should -Be "TestUser" }
@@ -380,7 +380,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             } | Set-DataverseRecord -Connection $connection -NoUpdate
             
             # Verify not updated
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname
             $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
             $matchingRecord.firstname | Should -Be "Original"
             
@@ -420,7 +420,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -NoCreate
             
             # Verify all records in expected state - should still be 2 records
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname
             $allContacts | Should -HaveCount 2
             
             $updated = $allContacts | Where-Object { $_.Id -eq $initial.Id }
@@ -459,7 +459,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $updateEntity | Set-DataverseRecord -Connection $connection -NoUpdateColumns emailaddress1
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, lastname, emailaddress1
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
@@ -498,7 +498,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $updateEntity | Set-DataverseRecord -Connection $connection -NoUpdateColumns lastname, emailaddress1
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, lastname, emailaddress1
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
@@ -532,7 +532,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             } | Set-DataverseRecord -Connection $connection -UpdateAllColumns
             
             # Verify update
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, lastname
             $matchingRecord = $retrieved | Where-Object { $_.Id -eq $initial.Id }
             $matchingRecord.firstname | Should -Be "Updated"
             $matchingRecord.lastname | Should -Be "UpdatedLast"
@@ -555,7 +555,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result.Id | Should -BeOfType [Guid]
             
             # Verify record created without error
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $result.Id
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -Id $result.Id
             $retrieved.firstname | Should -Be "John"
         }
     }
@@ -575,7 +575,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result = $record | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $result.Id
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns birthdate -Id $result.Id
             $retrieved.birthdate.Date | Should -Be $birthdate.Date
         }
 
@@ -590,7 +590,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result = $record | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $result.Id
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns accountrolecode -Id $result.Id
             $retrieved.accountrolecode | Should -Be 2
         }
 
@@ -613,7 +613,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $result = $child | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify lookup
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $result.Id
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns parentcontactid -Id $result.Id
             $retrieved.parentcontactid.Id | Should -Be $parent.Id
         }
 
@@ -640,7 +640,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $updateEntity | Set-DataverseRecord -Connection $connection
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, emailaddress1
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
@@ -730,13 +730,13 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
         It "With -WhatIf, does not create records" {
             $connection = getMockConnection
             
-            $initialCount = (Get-DataverseRecord -Connection $connection -TableName contact).Count
+            $initialCount = (Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid).Count
             
             $record = @{ firstname = "WhatIfTest"; lastname = "User" }
             
             $record | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -WhatIf
             
-            $finalCount = (Get-DataverseRecord -Connection $connection -TableName contact).Count
+            $finalCount = (Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid).Count
             $finalCount | Should -Be $initialCount
         }
 
@@ -757,7 +757,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $updateEntity | Set-DataverseRecord -Connection $connection -WhatIf
             
             # Verify all records unchanged
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname
             $allRecords | Should -HaveCount 2
             
             $original = $allRecords | Where-Object { $_.Id -eq $initial.Id }
@@ -791,7 +791,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $second.Id | Should -Not -BeNullOrEmpty
             
             # Verify records exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $matches = $allContacts | Where-Object { $_.firstname -eq "Unique" -and $_.lastname -eq "User" }
             $matches | Should -Not -BeNullOrEmpty
         }
@@ -815,7 +815,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $updateEntity | Set-DataverseRecord -Connection $connection
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname
             $allRecords | Should -HaveCount 3
             
             $retrieved1 = $allRecords | Where-Object { $_.Id -eq $record1.Id }
@@ -831,7 +831,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
         It "No records are lost during batch operations" {
             $connection = getMockConnection
             
-            $initialCount = (Get-DataverseRecord -Connection $connection -TableName contact).Count
+            $initialCount = (Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid).Count
             
             $newRecords = 1..50 | ForEach-Object {
                 @{ firstname = "BatchUser$_"; lastname = "Test" }
@@ -839,7 +839,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             
             $newRecords | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly
             
-            $finalCount = (Get-DataverseRecord -Connection $connection -TableName contact).Count
+            $finalCount = (Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid).Count
             $finalCount | Should -Be ($initialCount + 50)
         }
 
@@ -868,7 +868,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $updateEntity | Set-DataverseRecord -Connection $connection
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, lastname, emailaddress1, description
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
@@ -897,7 +897,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             Remove-DataverseRecord -Connection $connection -TableName contact -Id $originalId
             
             # Verify deleted
-            $deleted = Get-DataverseRecord -Connection $connection -TableName contact -Id $originalId -ErrorAction SilentlyContinue
+            $deleted = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid -Id $originalId -ErrorAction SilentlyContinue
             $deleted | Should -BeNullOrEmpty
             
             # Recreate with same data
@@ -942,7 +942,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $updateEntity | Set-DataverseRecord -Connection $connection
             
             # Verify all records in expected state
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname
             $allRecords | Should -HaveCount 2
             
             $updated = $allRecords | Where-Object { $_.Id -eq $initial.Id }
@@ -1064,7 +1064,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $connection = getMockConnection -RequestInterceptor $interceptor
 
 
-            $existingrewcords = Get-DataverseRecord -Connection $connection -TableName contact
+            $existingrewcords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $existingrewcords.Count | Should -Be 0
 
             $records = @(
@@ -1074,7 +1074,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
 
             $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -Verbose
 
-            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $createdRecords.Count | Should -Be 2
             $createdRecords | ForEach-Object { $_.firstname | Should -BeIn @("John1", "John2") }
         }
@@ -1098,7 +1098,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
 
             $records | Set-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -Verbose
 
-            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $createdRecords.Count | Should -Be 2
             $createdRecords | ForEach-Object { $_.firstname | Should -BeIn @("John1", "John2") }
         }
@@ -1126,7 +1126,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $errors.Count | Should -Be 2
 
             # Verify no records were created
-            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $createdRecords.Count | Should -Be 0
         }
     }
@@ -1158,7 +1158,7 @@ Describe 'Set-DataverseRecord' {    Context 'Basic Record Creation' {
             $record | Set-DataverseRecord -Connection $connection
             
             # Verify it was created
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -Id $record.Id
             $retrieved | Should -Not -BeNull
             $retrieved.firstname | Should -Be "Test"
         }

@@ -195,7 +195,7 @@ Describe 'Set-DataverseRecord - NoUpdate and NoCreate Flags' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -NoCreate
             
             # Verify new record was NOT created
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns emailaddress1
             $allContacts | Should -HaveCount 1
             $allContacts[0].emailaddress1 | Should -Be "existing@example.com"
         }

@@ -177,7 +177,7 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, creditlimit
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Money"
             $result.creditlimit | Should -Be 50000.00
