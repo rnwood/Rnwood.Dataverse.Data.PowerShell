@@ -7,6 +7,9 @@ Writes a list of Dataverse records to a folder of JSON files.
 .DESCRIPTION
 Writes a list of Dataverse records to a folder where each file represents a single record. The files are named using the Id property (or properties specified via -idproperties).
 
+File and image columns (byte arrays) are automatically extracted to separate binary files in a '_files' subdirectory for efficient storage and change detection.
+Only files that have changed content are updated, reducing unnecessary writes.
+
 .PARAMETER OutputPath
 Path to write output to.
 
@@ -60,7 +63,14 @@ function Set-DataverseRecordsFolder {
 			remove-item -recurse $OutputPath/deletions
 		}
 
+		# Create _files directory for binary content
+		$filesPath = Join-Path $OutputPath "_files"
+		if (-not (test-path $filesPath)) {
+			new-item -type directory $filesPath | out-null
+		}
+
 		$newfiles = @()
+		$newBinaryFiles = @()
 	}
 
 	process {
@@ -68,7 +78,64 @@ function Set-DataverseRecordsFolder {
 		# Replace invalid filenam chars
 		$name = $name.Split([IO.Path]::GetInvalidFileNameChars()) -join '_'
 		$filename = "${name}.json"
-		$InputObject | convertto-json -depth 100 | out-file -encoding utf8 (join-path $OutputPath $filename)
+		
+		# Clone the object so we can modify it without affecting the original
+		$outputObject = [PSCustomObject]@{}
+		foreach ($prop in $InputObject.PSObject.Properties) {
+			$outputObject | Add-Member -MemberType NoteProperty -Name $prop.Name -Value $prop.Value
+		}
+		
+		# Process file and image columns (byte arrays)
+		foreach ($prop in $InputObject.PSObject.Properties) {
+			$value = $prop.Value
+			
+			# Check if property is a byte array (file or image column)
+			if ($null -ne $value -and $value -is [byte[]]) {
+				$propertyName = $prop.Name
+				
+				# Compute hash for change detection
+				if ($value.Length -gt 0) {
+					$hash = (Get-FileHash -InputStream ([System.IO.MemoryStream]::new($value)) -Algorithm SHA256).Hash
+				} else {
+					# Empty array - use a special marker hash
+					$hash = "EMPTY"
+				}
+				
+				# Create filename for binary file
+				$binaryFilename = "${name}_${propertyName}.bin"
+				$binaryFilePath = Join-Path $filesPath $binaryFilename
+				
+				# Check if file exists and has same hash
+				$needsWrite = $true
+				if (Test-Path $binaryFilePath) {
+					if ($value.Length -gt 0) {
+						$existingHash = (Get-FileHash -Path $binaryFilePath -Algorithm SHA256).Hash
+					} else {
+						# Empty file check
+						$existingHash = if ((Get-Item $binaryFilePath).Length -eq 0) { "EMPTY" } else { "NOTEMPTY" }
+					}
+					if ($existingHash -eq $hash) {
+						$needsWrite = $false
+					}
+				}
+				
+				# Only write if changed
+				if ($needsWrite) {
+					[System.IO.File]::WriteAllBytes($binaryFilePath, $value)
+				}
+				
+				$newBinaryFiles += $binaryFilename
+				
+				# Replace byte array with file reference
+				$outputObject.$propertyName = @{
+					"__fileReference" = $binaryFilename
+					"__hash" = $hash
+					"__size" = $value.Length
+				}
+			}
+		}
+		
+		$outputObject | convertto-json -depth 100 | out-file -encoding utf8 (join-path $OutputPath $filename)
 
 		if ($newfiles -contains $filename) {
 			throw "The properties $idproperties do not result in a unique filename. The value ''$filename' was generated more than once."
@@ -84,6 +151,19 @@ function Set-DataverseRecordsFolder {
 				move-item $_ $OutputPath/deletions
 			} else {
 				remove-item $_
+			}
+		}
+
+		# Clean up orphaned binary files in _files directory
+		$filesPath = Join-Path $OutputPath "_files"
+		if (Test-Path $filesPath) {
+			Get-ChildItem -Path $filesPath -Filter "*.bin" | Where-Object { $newBinaryFiles -notcontains $_.Name } | ForEach-Object {
+				Remove-Item $_.FullName
+			}
+			
+			# Remove _files directory if empty
+			if (-not (Get-ChildItem -Path $filesPath)) {
+				Remove-Item $filesPath
 			}
 		}
 

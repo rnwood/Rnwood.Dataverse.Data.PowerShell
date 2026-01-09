@@ -7,6 +7,8 @@ Reads a folder of JSON files written out by Set-DataverseRecordFolder and conver
 .DESCRIPTION
 Together these commands can be used to extract and import data to and from files, for instance for inclusion in source control, or build/deployment assets.
 
+File and image columns that were stored as separate binary files are automatically restored as byte arrays in the returned objects.
+
 .PARAMETER InputPath
 Path to folder to read JSON files from.
 
@@ -45,8 +47,47 @@ function Get-DataverseRecordsFolder {
 		if ($deletions) {
 			$path = "$InputPath/deletions"
 		}
+		
+		$filesPath = Join-Path $InputPath "_files"
+		
 		get-childitem $path -filter *.json | foreach-object {
-			get-content $_.fullname -encoding utf8 | convertfrom-json
+			$record = get-content $_.fullname -encoding utf8 | convertfrom-json
+			
+			# Collect properties that need to be restored from file references
+			$filesToRestore = @()
+			foreach ($prop in $record.PSObject.Properties) {
+				$value = $prop.Value
+				
+				# Check if property is a file reference
+				if ($null -ne $value -and 
+				    $value -is [PSCustomObject] -and 
+				    (Get-Member -InputObject $value -Name "__fileReference" -ErrorAction SilentlyContinue)) {
+					
+					$filesToRestore += @{
+						PropertyName = $prop.Name
+						FileReference = $value.__fileReference
+					}
+				}
+			}
+			
+			# Restore byte arrays from file references
+			foreach ($fileInfo in $filesToRestore) {
+				$binaryFilePath = Join-Path $filesPath $fileInfo.FileReference
+				
+				if (Test-Path $binaryFilePath) {
+					# Read binary file and restore as byte array
+					[byte[]]$byteArray = [System.IO.File]::ReadAllBytes($binaryFilePath)
+					# Remove the file reference property and add the byte array
+					$record.PSObject.Properties.Remove($fileInfo.PropertyName)
+					$record.PSObject.Properties.Add([PSNoteProperty]::new($fileInfo.PropertyName, $byteArray))
+				} else {
+					Write-Warning "Binary file not found: $binaryFilePath for property $($fileInfo.PropertyName)"
+					$record.PSObject.Properties.Remove($fileInfo.PropertyName)
+					$record.PSObject.Properties.Add([PSNoteProperty]::new($fileInfo.PropertyName, $null))
+				}
+			}
+			
+			$record
 		}
 	}
 
