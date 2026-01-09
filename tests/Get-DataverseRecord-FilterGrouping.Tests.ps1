@@ -9,7 +9,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         # Use a grouping hashtable to require firstname=Rob AND lastname=One
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{"and" = @(@{"firstname" = "Rob"}, @{ "lastname" = "One" }) }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -FilterValues @{"and" = @(@{"firstname" = "Rob"}, @{ "lastname" = "One" }) }
         $result | Should -HaveCount 1
         $result[0].firstname | Should -Be "Rob"
         $result[0].lastname | Should -Be "One"
@@ -30,7 +30,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
             )
         }
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues $filter
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -FilterValues $filter
         $result | Should -HaveCount 2
         $result.firstname | Should -Be "Rob", "Joe"
     }
@@ -43,7 +43,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         # Exclude where firstname = Rob OR lastname = Two
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -ExcludeFilterValues @{"or" = @(@{"firstname" = "Rob"}, @{ "lastname" = "Two" }) }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -ExcludeFilterValues @{"or" = @(@{"firstname" = "Rob"}, @{ "lastname" = "Two" }) }
         $result | Should -HaveCount 1
         $result[0].firstname | Should -Be "Joe"
     }
@@ -56,7 +56,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         # NOT(firstname = Rob) -> should return everyone except Rob
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ 'not' = @{ firstname = 'Rob' } }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -FilterValues @{ 'not' = @{ firstname = 'Rob' } }
         $result | Should -HaveCount 2
         $result.firstname | Should -Be 'Joe', 'Mary'
     }
@@ -69,7 +69,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         # NOT(firstname = Rob AND lastname = One) -> excludes only Rob One
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ 'not' = @{ firstname = 'Rob'; lastname = 'One' } }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -FilterValues @{ 'not' = @{ firstname = 'Rob'; lastname = 'One' } }
         $result | Should -HaveCount 2
         $result.firstname | Should -Be 'Joe', 'Mary'
     }
@@ -82,7 +82,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         # NOT(firstname = Rob OR firstname = Joe) -> only Mary Two remains
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ 'not' = @{ 'or' = @(@{ firstname = 'Rob' }, @{ firstname = 'Joe' }) } }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -FilterValues @{ 'not' = @{ 'or' = @(@{ firstname = 'Rob' }, @{ firstname = 'Joe' }) } }
         $result | Should -HaveCount 1
         $result[0].firstname | Should -Be 'Mary'
     }
@@ -95,7 +95,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         # (NOT firstname=Rob) AND lastname=One -> matches Joe One and Mary One
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ 'and' = @(@{ 'not' = @{ firstname = 'Rob' } }, @{ lastname = 'One' }) }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -FilterValues @{ 'and' = @(@{ 'not' = @{ firstname = 'Rob' } }, @{ lastname = 'One' }) }
         $result | Should -HaveCount 2
         $result.firstname | Should -Be 'Joe', 'Mary'
     }
@@ -108,7 +108,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         # XOR(firstname=Rob, firstname=Joe) -> matches Rob One and Joe One
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ 'xor' = @(@{ firstname = 'Rob' }, @{ firstname = 'Joe' }) }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -FilterValues @{ 'xor' = @(@{ firstname = 'Rob' }, @{ firstname = 'Joe' }) }
         $result | Should -HaveCount 2
         $result.firstname | Should -Be 'Rob', 'Joe'
     }
@@ -121,7 +121,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         # Exclude XOR(firstname=Rob, firstname=Joe) -> removes Rob One and Joe One -> leaves Mary
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -ExcludeFilterValues @{ 'xor' = @(@{ firstname = 'Rob' }, @{ firstname = 'Joe' }) }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -ExcludeFilterValues @{ 'xor' = @(@{ firstname = 'Rob' }, @{ firstname = 'Joe' }) }
         $result | Should -HaveCount 1
         $result[0].firstname | Should -Be 'Mary'
     }
@@ -134,7 +134,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         Set-DataverseRecord -connection $connection -TableName contact
 
         # (xor(firstname=Rob, firstname=Joe) AND lastname=One) -> matches Rob One and Joe One but not Mary One
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ 'and' = @(@{ 'xor' = @(@{ firstname = 'Rob' }, @{ firstname = 'Joe' }) }, @{ lastname = 'One' }) }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -FilterValues @{ 'and' = @(@{ 'xor' = @(@{ firstname = 'Rob' }, @{ firstname = 'Joe' }) }, @{ lastname = 'One' }) }
         $result | Should -HaveCount 2
         $result.firstname | Should -Be 'Rob', 'Joe'
     }
@@ -147,7 +147,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         @{"firstname" = "Rob"; "lastname" = "Two" } | 
         Set-DataverseRecord -connection $connection -TableName contact
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -ExcludeFilterValues @{"firstname" = "Rob" }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -ExcludeFilterValues @{"firstname" = "Rob" }
         
         $result | SHould -HaveCount 1
         $result.firstname | Should -be "Joe"
@@ -161,7 +161,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         @{"firstname" = "Rob"; "lastname" = "Three" } | 
         Set-DataverseRecord -connection $connection -TableName contact
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact `
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname `
             -ExcludeFilterValues `
                 @{"lastname" = "One" },
                 @{"lastname" = "Three" }
@@ -178,7 +178,7 @@ Describe 'Get-DataverseRecord - Advanced Filter Grouping (AND/OR/NOT/XOR)' {
         @{"firstname" = "Rob"; "lastname" = "Two" } | 
         Set-DataverseRecord -connection $connection -TableName contact
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -ExcludeFilterValues @{"firstname" = @{operator="Equal"; value="Rob"} }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -ExcludeFilterValues @{"firstname" = @{operator="Equal"; value="Rob"} }
         
         $result | SHould -HaveCount 1
         $result.firstname | Should -be "Joe"

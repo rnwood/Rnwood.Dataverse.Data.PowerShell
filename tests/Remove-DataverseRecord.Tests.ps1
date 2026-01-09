@@ -9,7 +9,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
 
             $created | Remove-DataverseRecord -Connection $connection -TableName contact
 
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $created.Id
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $created.Id -Columns contactid
             $retrieved | Should -BeNullOrEmpty
         }
 
@@ -24,7 +24,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
 
             $created | Remove-DataverseRecord -Connection $connection -TableName contact -verbose
 
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid -verbose
             $remaining.Count | Should -Be 0
         }
     }
@@ -44,7 +44,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
                 Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1
             
             # Verify only John was deleted
-            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact)
+            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact -Columns emailaddress1)
             $remaining.Count | Should -Be 1
             $remaining[0].emailaddress1 | Should -Be "jane@test.com"
         }
@@ -63,7 +63,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
                 Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn @("firstname", "lastname")
             
             # Verify only Alice was deleted
-            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact)
+            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname)
             $remaining.Count | Should -Be 1
             $remaining[0].firstname | Should -Be "Bob"
         }
@@ -84,7 +84,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             } | Should -Throw "*AllowMultipleMatches*"
             
             # Verify no records were deleted
-            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact)
+            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid)
             $remaining.Count | Should -Be 2
         }
 
@@ -104,7 +104,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
                 Remove-DataverseRecord -Connection $connection -TableName contact -MatchOn lastname -AllowMultipleMatches
             
             # Verify only Bob remains
-            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact)
+            $remaining = @(Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname)
             $remaining.Count | Should -Be 1
             $remaining[0].firstname | Should -Be "Bob"
         }
@@ -174,7 +174,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             $created | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -Verbose
 
             # Check they are deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose 
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid -verbose 
             $remaining.Count | Should -Be 0
         }
 
@@ -205,7 +205,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             $created | Remove-DataverseRecord -Connection $connection -TableName contact -Retries 1 -InitialRetryDelay 0.1 -Verbose
 
             # Check they are deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid -verbose
             $remaining.Count | Should -Be 0
         }
 
@@ -239,7 +239,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             $errors.Count | Should -Be 2
 
             # Verify records are still there
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid -verbose
             $remaining.Count | Should -Be 2
         }
     }
@@ -259,7 +259,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             $created | Remove-DataverseRecord -Connection $connection -TableName contact -MaxDegreeOfParallelism 2 -verbose
 
             # Verify all deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -verbose
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid -verbose
             $remaining.Count | Should -Be 0
         }
 
@@ -277,7 +277,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             $created | Remove-DataverseRecord -Connection $connection -TableName contact -MaxDegreeOfParallelism 1
 
             # Verify all deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $remaining.Count | Should -Be 0
         }
 
@@ -295,7 +295,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             $created | Remove-DataverseRecord -Connection $connection -TableName contact -MaxDegreeOfParallelism 3 -BatchSize 5 -verbose
 
             # Verify all deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $remaining.Count | Should -Be 0
         }
 
@@ -328,7 +328,7 @@ Describe "Remove-DataverseRecord" {    Context "Basic Removal" {
             $errors.Count | Should -BeGreaterThan 0
             
             # Should have deleted some records (not all failed)
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $remaining.Count | Should -BeLessThan 9
         }
     }

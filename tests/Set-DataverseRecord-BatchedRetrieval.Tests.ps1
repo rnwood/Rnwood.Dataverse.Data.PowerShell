@@ -281,7 +281,7 @@ Describe "Set-DataverseRecord Batched Retrieval" {
             $state.RetrieveMultipleCalls | Should -Be 2 -Because "First retrieval should fail, second should succeed on retry"
             
             # Verify records were created (meaning retry succeeded)
-            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $createdRecords.Count | Should -Be 3 -Because "All 3 records should be created after successful retry"
             
             # The key assertion: records should NOT have been created during the failed batch
@@ -318,7 +318,7 @@ Describe "Set-DataverseRecord Batched Retrieval" {
             $contacts | Set-DataverseRecord -Connection $connection -TableName contact -Retries 2 -InitialRetryDelay 0.1 -RetrievalBatchSize 2 -Verbose
             
             # Verify retry succeeded
-            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $createdRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $createdRecords.Count | Should -Be 2 -Because "Records should be created after retry succeeds"
         }
         

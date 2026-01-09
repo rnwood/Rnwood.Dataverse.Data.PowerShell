@@ -18,8 +18,8 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
  [-Criteria <FilterExpression>] [-Links <DataverseLinkEntity[]>] [-ExcludeFilterValues <Hashtable[]>]
  [-ExcludeFilterOr] [-ActiveOnly] [-Id <Guid[]>] [-Name <String[]>] [-ExcludeId <Guid[]>] [-Columns <String[]>]
  [-ExcludeColumns <String[]>] [-OrderBy <String[]>] [-Top <Int32>] [-PageSize <Int32>]
- [-LookupValuesReturnName] [-IncludeSystemColumns] [-Unpublished] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-LookupValuesReturnName] [-IncludeSystemColumns] [-IncludeFileAndImageMetadataColumns] [-Unpublished]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### MatchOn
@@ -27,8 +27,8 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
 Get-DataverseRecord [-TableName] <String> -InputObject <PSObject> -MatchOn <String[][]> [-AllowMultipleMatches]
  [-VerboseRecordCount] [-RecordCount] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>]
  [-Top <Int32>] [-PageSize <Int32>] [-RetrievalBatchSize <UInt32>] [-LookupValuesReturnName]
- [-IncludeSystemColumns] [-Unpublished] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-IncludeSystemColumns] [-IncludeFileAndImageMetadataColumns] [-Unpublished] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### FetchXml
@@ -493,6 +493,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -IncludeFileAndImageMetadataColumns
+Includes file and image metadata columns in output. Default does not include them. Ignored if Columns parameter is used. Ignored if `-Columns` parameter is used.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Simple, MatchOn
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -IncludeSystemColumns
 Include system columns in output. By default system columns are excluded; use this switch to include them. Ignored if `-Columns` parameter is used.
 
@@ -820,7 +835,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Management.Automation.PSObject
 ## OUTPUTS
 
-### System.Collections.Generic.IEnumerable`1[[System.Management.Automation.PSObject, System.Management.Automation, Version=7.4.6.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]
+### System.Collections.Generic.IEnumerable`1[[System.Management.Automation.PSObject, System.Management.Automation, Version=7.5.0.500, Culture=neutral, PublicKeyToken=31bf3856ad364e35]]
 ## NOTES
 
 ## RELATED LINKS

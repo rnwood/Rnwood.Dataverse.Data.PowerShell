@@ -15,13 +15,13 @@ Describe 'Set-DataverseRecord - Upsert with Alternate Keys' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -Upsert -PassThru
             
             # Verify record was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, lastname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Upsert"
             $result.lastname | Should -Be "Insert"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -44,11 +44,11 @@ Describe 'Set-DataverseRecord - Upsert with Alternate Keys' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -Upsert
             
             # Verify record was updated, not duplicated
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $existing.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $existing.Id -Columns firstname
             $result.firstname | Should -Be "Updated"
             
             # Verify no side effects - still only one record
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -71,7 +71,7 @@ Describe 'Set-DataverseRecord - Upsert with Alternate Keys' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -Upsert
             
             # Verify only one record exists with updated data
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $allContacts | Should -HaveCount 1
             $allContacts[0].firstname | Should -Be "Second"
         }
@@ -94,7 +94,7 @@ Describe 'Set-DataverseRecord - Upsert with Alternate Keys' {
             ) | Set-DataverseRecord -Connection $connection -TableName contact -Upsert -PassThru
             
             # Verify two records exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, emailaddress1
             $allContacts | Should -HaveCount 2
             
             # Verify update occurred
@@ -138,11 +138,11 @@ Describe 'Set-DataverseRecord - Upsert with Alternate Keys' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -Upsert
             
             # Verify update worked
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result.firstname | Should -Be "UpsertUpdate"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }

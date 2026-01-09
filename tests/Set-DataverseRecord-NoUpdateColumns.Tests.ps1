@@ -23,14 +23,14 @@ Describe 'Set-DataverseRecord - NoUpdateColumns' {
                 -InputObject $updateData -NoUpdateColumns description
             
             # Verify record was updated correctly
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, lastname, emailaddress1, description
             $result.firstname | Should -Be "Updated"
             $result.emailaddress1 | Should -Be "updated@example.com"
             $result.description | Should -Be "Original description"  # Should remain unchanged
             $result.lastname | Should -Be "User"  # Should remain unchanged (not in update)
             
             # Verify no side effects - only one record exists
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -58,7 +58,7 @@ Describe 'Set-DataverseRecord - NoUpdateColumns' {
                 -InputObject $updateData -NoUpdateColumns emailaddress1, mobilephone, telephone1
             
             # Verify only allowed columns were updated
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, lastname, emailaddress1, mobilephone, telephone1
             $result.firstname | Should -Be "Jane"
             $result.lastname | Should -Be "Smith"
             $result.emailaddress1 | Should -Be "john@example.com"  # Unchanged
@@ -66,7 +66,7 @@ Describe 'Set-DataverseRecord - NoUpdateColumns' {
             $result.telephone1 | Should -Be "555-5678"  # Unchanged
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -87,7 +87,7 @@ Describe 'Set-DataverseRecord - NoUpdateColumns' {
             $updates | Set-DataverseRecord -Connection $connection -TableName contact -NoUpdateColumns emailaddress1
             
             # Verify both records were updated correctly
-            $results = Get-DataverseRecord -Connection $connection -TableName contact
+            $results = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, emailaddress1
             $results | Should -HaveCount 2
             
             $user1 = $results | Where-Object { $_.Id -eq $records[0].Id }
@@ -99,7 +99,7 @@ Describe 'Set-DataverseRecord - NoUpdateColumns' {
             $user2.emailaddress1 | Should -Be "user2@example.com"  # Unchanged
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
 
@@ -122,7 +122,7 @@ Describe 'Set-DataverseRecord - NoUpdateColumns' {
             $result.emailaddress1 | Should -Be "new@example.com"  # Should be set despite NoUpdateColumns
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -142,12 +142,12 @@ Describe 'Set-DataverseRecord - NoUpdateColumns' {
                 -InputObject $updateData -NoUpdateColumns emailaddress1, description  # description not in input
             
             # Verify update succeeded
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, emailaddress1
             $result.firstname | Should -Be "Updated"
             $result.emailaddress1 | Should -Be "test@example.com"  # Unchanged
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }

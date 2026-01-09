@@ -13,7 +13,7 @@ Describe 'Get-DataverseRecord - MatchOn' {
             
             # Retrieve using MatchOn
             $retrieved = @{ emailaddress1 = "john@test.com" } | 
-                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1
+                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -Columns firstname, emailaddress1
             
             $retrieved | Should -Not -BeNullOrEmpty
             $retrieved.firstname | Should -Be "John"
@@ -31,7 +31,7 @@ Describe 'Get-DataverseRecord - MatchOn' {
             
             # Retrieve using MatchOn with multiple columns
             $retrieved = @{ firstname = "Alice"; lastname = "Brown" } | 
-                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn @("firstname", "lastname")
+                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn @("firstname", "lastname") -Columns firstname, lastname, emailaddress1
             
             $retrieved | Should -Not -BeNullOrEmpty
             $retrieved.firstname | Should -Be "Alice"
@@ -51,7 +51,7 @@ Describe 'Get-DataverseRecord - MatchOn' {
             # Try to retrieve without AllowMultipleMatches - should error
             {
                 @{ emailaddress1 = "test@test.com" } | 
-                    Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -ErrorAction Stop
+                    Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -Columns emailaddress1 -ErrorAction Stop
             } | Should -Throw "*AllowMultipleMatches*"
         }
 
@@ -68,7 +68,7 @@ Describe 'Get-DataverseRecord - MatchOn' {
             
             # Retrieve all matching records
             $retrieved = @{ lastname = "TestUser" } | 
-                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn lastname -AllowMultipleMatches
+                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn lastname -AllowMultipleMatches -Columns firstname, lastname, emailaddress1
             
             $retrieved | Should -HaveCount 2
             $retrieved.lastname | ForEach-Object { $_ | Should -Be "TestUser" }
@@ -79,7 +79,7 @@ Describe 'Get-DataverseRecord - MatchOn' {
             
             # Try to retrieve non-existent record
             $retrieved = @{ emailaddress1 = "nonexistent@test.com" } | 
-                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1
+                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -Columns contactid
             
             $retrieved | Should -BeNullOrEmpty
         }

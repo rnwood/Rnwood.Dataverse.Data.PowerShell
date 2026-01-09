@@ -83,7 +83,7 @@ Describe 'Set-DataverseFormControl - Subgrid Default Parameters' {
                 -Labels @{1033 = 'Related Data'}
             
             # Get the raw XML
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             
             # Verify indicationOfSubgrid attribute is present
             $form.formxml | Should -Match 'id="test_subgrid_2"[^>]*indicationOfSubgrid="true"'
@@ -177,7 +177,7 @@ Describe 'Set-DataverseFormControl - Subgrid Default Parameters' {
                 -ControlType "Subgrid" -ControlId "validation_test" `
                 -Labels @{1033 = 'Test Grid'}
             
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             
             # Should be valid XML
             { [xml]$form.formxml } | Should -Not -Throw

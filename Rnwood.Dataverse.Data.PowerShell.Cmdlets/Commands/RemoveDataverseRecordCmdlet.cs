@@ -214,7 +214,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private List<Guid> ResolveRecordsByMatchOn()
         {
             List<Guid> resolvedIds = new List<Guid>();
-            EntityMetadata entityMetadata = _metadataFactory.GetMetadata(TableName);
+            EntityMetadata entityMetadata = _metadataFactory.GetLimitedMetadata(TableName);
 
             // Convert InputObject to Entity to get values for matching
             var entityConverter = new DataverseEntityConverter(Connection, _metadataFactory);
@@ -267,7 +267,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Processing MatchOn batch of {_matchOnResolveQueue.Count} record(s)");
 
-            EntityMetadata entityMetadata = _metadataFactory.GetMetadata(TableName);
+            EntityMetadata entityMetadata = _metadataFactory.GetLimitedMetadata(TableName);
 
             // Try each MatchOn column list in order
             foreach (string[] matchOnColumnList in MatchOn)

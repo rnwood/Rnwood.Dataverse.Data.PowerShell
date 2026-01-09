@@ -19,7 +19,7 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, lastname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Assigned"
             $result.lastname | Should -Be "User"
@@ -28,7 +28,7 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             # The test validates that the cmdlet accepts ownerid without error
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -50,12 +50,12 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact
             
             # Verify record still exists and other fields unchanged
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, lastname
             $result.firstname | Should -Be "Reassign"
             $result.lastname | Should -Be "Test"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -76,12 +76,12 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Owner"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
@@ -101,7 +101,7 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Status"
             
@@ -109,7 +109,7 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             # The test validates the cmdlet accepts statuscode without error
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -129,12 +129,12 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact
             
             # Verify record still exists and other fields unchanged
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, lastname
             $result.firstname | Should -Be "Change"
             $result.lastname | Should -Be "Status"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -155,11 +155,11 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact
             
             # Verify record still exists
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result.firstname | Should -Be "Both"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -182,13 +182,13 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             } | Set-DataverseRecord -Connection $connection -TableName contact
             
             # Verify all updates applied
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns emailaddress1, firstname, lastname
             $result.firstname | Should -Be "Updated"
             $result.emailaddress1 | Should -Be "updated@example.com"
             $result.lastname | Should -Be "Status"  # Unchanged
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -209,11 +209,11 @@ Describe 'Set-DataverseRecord - ownerid Assignment and Status Changes' {
             $updates | Set-DataverseRecord -Connection $connection -TableName contact
             
             # Verify both records still exist
-            $results = Get-DataverseRecord -Connection $connection -TableName contact
+            $results = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $results | Should -HaveCount 2
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
     }

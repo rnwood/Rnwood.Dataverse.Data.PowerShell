@@ -73,13 +73,13 @@ Describe 'Set-DataverseRecord Multi-Request Completion' {    Context 'Multiple R
             }
             
             # Verify records were created in Dataverse
-            $retrieved1 = Get-DataverseRecord -Connection $connection -TableName contact -Id $results[0].Id
+            $retrieved1 = Get-DataverseRecord -Connection $connection -TableName contact -Id $results[0].Id -Columns firstname
             $retrieved1.firstname | Should -Be "Contact1"
             
-            $retrieved2 = Get-DataverseRecord -Connection $connection -TableName contact -Id $results[1].Id
+            $retrieved2 = Get-DataverseRecord -Connection $connection -TableName contact -Id $results[1].Id -Columns firstname
             $retrieved2.firstname | Should -Be "Contact2"
             
-            $retrieved3 = Get-DataverseRecord -Connection $connection -TableName contact -Id $results[2].Id
+            $retrieved3 = Get-DataverseRecord -Connection $connection -TableName contact -Id $results[2].Id -Columns firstname
             $retrieved3.firstname | Should -Be "Contact3"
         }
         
@@ -103,7 +103,7 @@ Describe 'Set-DataverseRecord Multi-Request Completion' {    Context 'Multiple R
             $result.Id | Should -Not -Be ([Guid]::Empty)
             
             # Verify record was created
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $result.Id
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Id $result.Id -Columns firstname
             $retrieved.firstname | Should -Be "Test"
         }
     }

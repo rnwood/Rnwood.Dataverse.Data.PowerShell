@@ -395,7 +395,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(TableName);
+            EntityMetadata entityMetadata = entityMetadataFactory.GetLimitedMetadata(TableName);
 
             // Create a context to access utility methods
             var context = new SetOperationContext(

@@ -70,7 +70,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             /// </summary>
             public void CreateRequest()
             {
-                EntityMetadata metadata = MetadataFactory.GetMetadata(TableName);
+                EntityMetadata metadata = MetadataFactory.GetLimitedMetadata(TableName);
 
                 if (metadata.IsIntersect.GetValueOrDefault())
                 {

@@ -15,7 +15,7 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
             Remove-DataverseRecord -Connection $connection -TableName contact -Id $records[0].Id -WhatIf
             
             # Verify NO records were deleted
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
             ($allContacts | Where-Object { $_.Id -eq $records[0].Id }) | Should -HaveCount 1
         }
@@ -33,7 +33,7 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
             $records | Remove-DataverseRecord -Connection $connection -TableName contact -WhatIf
             
             # Verify NO records were deleted
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
 
@@ -53,7 +53,7 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
             }
             
             # Verify NO records were deleted
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 3
         }
     }
@@ -72,11 +72,11 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
             Remove-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Confirm:$false
             
             # Verify record WAS deleted
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns contactid
             $result | Should -BeNullOrEmpty
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -BeNullOrEmpty
         }
 
@@ -94,7 +94,7 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
             $records | Remove-DataverseRecord -Connection $connection -Confirm:$false
             
             # Verify all records WERE deleted
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -BeNullOrEmpty
         }
 
@@ -116,7 +116,7 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
             $toDelete.Id | Remove-DataverseRecord -Connection $connection -TableName contact -Confirm:$false
             
             # Verify correct records were deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $remaining | Should -HaveCount 1
             $remaining[0].firstname | Should -Be "Keep"
         }
@@ -136,11 +136,11 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
             Remove-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -WhatIf -Confirm:$false
             
             # Verify record was NOT deleted (WhatIf prevents deletion)
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns contactid
             $result | Should -Not -BeNullOrEmpty
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -160,7 +160,7 @@ Describe 'Remove-DataverseRecord - WhatIf and Confirm Support' {
             $toDelete | Remove-DataverseRecord -Connection $connection -Confirm:$false
             
             # Verify selective deletion
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns lastname
             $remaining | Should -HaveCount 1
             $remaining[0].lastname | Should -Be "Safe"
         }

@@ -15,13 +15,13 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, lastname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Multi"
             $result.lastname | Should -Be "Select"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -39,11 +39,11 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
                 -InputObject @{ firstname = "Updated" }
             
             # Verify update
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result.firstname | Should -Be "Updated"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -61,11 +61,11 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
                 -InputObject @{ lastname = "Cleared" }
             
             # Verify update
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns lastname
             $result.lastname | Should -Be "Cleared"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
@@ -83,7 +83,7 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns birthdate, firstname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "DateTime"
             
@@ -91,7 +91,7 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
             $result.birthdate | Should -Not -BeNullOrEmpty
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -111,11 +111,11 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
                 -InputObject @{ birthdate = $newDate }
             
             # Verify update
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns birthdate
             $result.birthdate | Should -Not -BeNullOrEmpty
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -134,11 +134,11 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
                 -InputObject @{ birthdate = $null }
             
             # Verify DateTime cleared
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns birthdate
             # birthdate may be null or empty depending on implementation
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -154,12 +154,12 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns birthdate
             $result | Should -Not -BeNullOrEmpty
             $result.birthdate | Should -Not -BeNullOrEmpty
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
@@ -177,13 +177,13 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname, creditlimit
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Money"
             $result.creditlimit | Should -Be 50000.00
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -203,11 +203,11 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
                 -InputObject @{ annualincome = 85000.00 }
             
             # Verify update
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns annualincome
             $result.annualincome | Should -Be 85000.00
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -227,11 +227,11 @@ Describe 'Set-DataverseRecord - Complex Type Conversions' {
                 -InputObject @{ creditlimit = $null }
             
             # Verify Money field is null
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns creditlimit
             $result.creditlimit | Should -BeNullOrEmpty
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }

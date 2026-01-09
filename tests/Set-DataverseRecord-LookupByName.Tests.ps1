@@ -19,7 +19,7 @@ Describe 'Set-DataverseRecord - Lookup by Name and LookupColumns' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify child was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $childContact.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $childContact.Id -Columns firstname, lastname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Child"
             
@@ -28,7 +28,7 @@ Describe 'Set-DataverseRecord - Lookup by Name and LookupColumns' {
             $resultWithLookup.parentcontactid | Should -Not -BeNullOrEmpty
             
             # Verify no side effects - both records exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
 
@@ -56,12 +56,12 @@ Describe 'Set-DataverseRecord - Lookup by Name and LookupColumns' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify child was created correctly
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $childContact.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $childContact.Id -Columns firstname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Reference"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
 
@@ -87,12 +87,12 @@ Describe 'Set-DataverseRecord - Lookup by Name and LookupColumns' {
                 -InputObject @{ parentcontactid = $parent2.Id }
             
             # Verify child record updated (other fields unchanged)
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $child.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $child.Id -Columns firstname, lastname
             $result.firstname | Should -Be "Child"
             $result.lastname | Should -Be "Update"
             
             # Verify no side effects - all 3 records exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 3
         }
 
@@ -114,12 +114,12 @@ Describe 'Set-DataverseRecord - Lookup by Name and LookupColumns' {
                 -InputObject @{ parentcontactid = $null }
             
             # Verify lookup was cleared (other fields unchanged)
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $child.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $child.Id -Columns firstname, lastname
             $result.firstname | Should -Be "Child"
             $result.lastname | Should -Be "Clear"
             
             # Verify no side effects - both records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
     }
@@ -145,12 +145,12 @@ Describe 'Set-DataverseRecord - Lookup by Name and LookupColumns' {
                 -LookupColumns @{ parentcontactid = "lastname" } -PassThru
             
             # Verify child was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $child.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $child.Id -Columns firstname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Child"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
 
@@ -175,7 +175,7 @@ Describe 'Set-DataverseRecord - Lookup by Name and LookupColumns' {
             $children | Should -HaveCount 2
             
             # Verify no side effects - all 4 records exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 4
         }
     }
@@ -200,12 +200,12 @@ Describe 'Set-DataverseRecord - Lookup by Name and LookupColumns' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify contact was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.Id -Columns firstname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Multi"
             
             # Verify no side effects - all 3 records exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 3
         }
     }
