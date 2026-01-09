@@ -15,11 +15,11 @@ Describe 'Set-DataverseRecord - OptionSet by Label' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns accountrolecode
             $result.accountrolecode | Should -Be 1
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -38,11 +38,11 @@ Describe 'Set-DataverseRecord - OptionSet by Label' {
                 -InputObject @{ accountrolecode = 2 }
             
             # Verify update
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns accountrolecode
             $result.accountrolecode | Should -Be 2
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -61,11 +61,11 @@ Describe 'Set-DataverseRecord - OptionSet by Label' {
                 -InputObject @{ accountrolecode = $null }
             
             # Verify value is null
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns accountrolecode
             $result.accountrolecode | Should -BeNullOrEmpty
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -88,13 +88,13 @@ Describe 'Set-DataverseRecord - OptionSet by Label' {
                 }
             
             # Verify updates
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns accountrolecode, firstname, lastname
             $result.accountrolecode | Should -Be 2
             $result.firstname | Should -Be "Updated"
             $result.lastname | Should -Be "Option"  # Unchanged
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -111,14 +111,14 @@ Describe 'Set-DataverseRecord - OptionSet by Label' {
             # Verify all records created correctly
             $records | Should -HaveCount 3
             
-            $results = Get-DataverseRecord -Connection $connection -TableName contact
+            $results = Get-DataverseRecord -Connection $connection -TableName contact -Columns accountrolecode
             $results | Should -HaveCount 3
             
             ($results | Where-Object { $_.accountrolecode -eq 1 }) | Should -HaveCount 2
             ($results | Where-Object { $_.accountrolecode -eq 2 }) | Should -HaveCount 1
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 3
         }
     }
@@ -135,11 +135,11 @@ Describe 'Set-DataverseRecord - OptionSet by Label' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Verify record created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns donotbulkemail
             $result.donotbulkemail | Should -Be $true
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -158,11 +158,11 @@ Describe 'Set-DataverseRecord - OptionSet by Label' {
                 -InputObject @{ donotbulkemail = $true }
             
             # Verify update
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns donotbulkemail
             $result.donotbulkemail | Should -Be $true
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
