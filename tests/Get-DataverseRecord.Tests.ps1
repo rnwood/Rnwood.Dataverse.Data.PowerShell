@@ -13,7 +13,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
 
         $in | Set-DataverseRecord -Connection $connection
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid, firstname, birthdate, accountrolecode, parentcontactid
 
         $result | Should -BeOfType [PSCustomObject]
             
@@ -48,7 +48,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
             
         $in | Set-DataverseRecord -Connection $connection
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
 
         $result | Should -BeOfType [PSCustomObject]
             
@@ -62,7 +62,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"="1"}
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -filter @{"firstname"="1"}
         $result | Should -HaveCount 1
         $result[0].firstname | Should -Be "1"
     }
@@ -71,7 +71,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname:Like"="1%"}
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -filter @{"firstname:Like"="1%"}
         $result | Should -HaveCount 2
     }
 
@@ -79,7 +79,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"=@{"operator"="Like"; "value"="1%"}}
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -filter @{"firstname"=@{"operator"="Like"; "value"="1%"}}
         $result | Should -HaveCount 2
     }
 
@@ -87,7 +87,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname:Null"=""}
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -filter @{"firstname:Null"=""}
         $result | Should -HaveCount 0
     }
 
@@ -95,7 +95,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"=@{"operator"="Null"}}
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -filter @{"firstname"=@{"operator"="Null"}}
         $result | Should -HaveCount 0
     }
 
@@ -104,7 +104,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
         @{"firstname" = "" } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"="$null"}
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -filter @{"firstname"="$null"}
         $result | Should -HaveCount 1
     }
 
@@ -112,7 +112,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname"=@{"operator"="In"; "value"=("1", "2")}}
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -filter @{"firstname"=@{"operator"="In"; "value"=("1", "2")}}
         $result | Should -HaveCount 2
     }
 
@@ -120,7 +120,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..10 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -PageSize 2
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -PageSize 2
         $result | Should -HaveCount 10
     }
 
@@ -128,7 +128,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..9 | Sort-Object -Descending | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -Top 5 -OrderBy firstname
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -Top 5 -OrderBy firstname
         $result | Should -HaveCount 5
         1..5 | ForEach-Object { $result[$_ - 1].firstname | Should -Be $_ }
     }
@@ -137,7 +137,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..9 | Sort-Object -Descending | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -OrderBy firstname
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -OrderBy firstname
         $result | Should -HaveCount 9
         1..9 | ForEach-Object { $result[$_ - 1].firstname | Should -Be $_ }
     }
@@ -146,7 +146,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..9 | Sort-Object -Descending | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -OrderBy firstname -top 5
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -OrderBy firstname -top 5
         $result | Should -HaveCount 5
         1..5 | ForEach-Object { $result[$_ - 1].firstname | Should -Be $_ }
     }
@@ -155,7 +155,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         
         $connection = getMockConnection
         1..9 | ForEach-Object { @{"firstname" = "$_" } } | Set-DataverseRecord -Connection $connection -TableName contact
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -OrderBy firstname- -top 5
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -OrderBy firstname- -top 5
         $result | Should -HaveCount 5
         0..4 | ForEach-Object { $result[$_].firstname | Should -Be (9 - $_) }
     }
@@ -167,7 +167,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
             $letter = $_
             1..3 | Sort-Object -Descending | ForEach-Object { @{"firstname" = "$_"; "lastname" = $letter } } | Set-DataverseRecord -Connection $connection -TableName contact
         }
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -OrderBy firstname, lastname -top 5
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -OrderBy firstname, lastname -top 5
 
         $result[0].firstname | Should -be "1"
         $result[0].lastname | Should -be "a"
@@ -183,7 +183,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
             $letter = $_
             1..3 | Sort-Object -Descending | ForEach-Object { @{"firstname" = "$_"; "lastname" = $letter } } | Set-DataverseRecord -Connection $connection -TableName contact
         }
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -OrderBy firstname, lastname- -top 5
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -OrderBy firstname, lastname- -top 5
 
         $result[0].firstname | Should -be "1"
         $result[0].lastname | Should -be "c"
@@ -200,7 +200,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         @{"firstname" = "Rob"; "lastname" = "Two" } | 
         Set-DataverseRecord -connection $connection -TableName contact
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"firstname" = "Rob" }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname -filter @{"firstname" = "Rob" }
         
         $result | Should -HaveCount 2
         $result.firstname | Should -be "Rob", "Rob"
@@ -214,7 +214,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         @{"firstname" = "Rob"; "lastname" = "Two" } | 
         Set-DataverseRecord -connection $connection -TableName contact
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"lastname" = "One"; "firstname" = "Joe" }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -filter @{"lastname" = "One"; "firstname" = "Joe" }
         
         $result | Should -HaveCount 1
         $result.firstname | Should -be "Joe"
@@ -228,7 +228,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         @{"firstname" = "Rob"; "lastname" = "Two" } | 
         Set-DataverseRecord -connection $connection -TableName contact
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -filter @{"lastname" = "One"; "firstname" = "Rob" }, @{"firstname" = "Joe" }
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -filter @{"lastname" = "One"; "firstname" = "Rob" }, @{"firstname" = "Joe" }
         
         $result | Should -HaveCount 2
         $result.firstname | Should -be "Rob", "Joe"
@@ -332,7 +332,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
         @{"firstname" = "Rob"; "lastname" = "Two"; "contactid"=$ids[2] } | 
         Set-DataverseRecord -connection $connection -TableName contact
 
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -id $ids[0], $ids[1]
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid -id $ids[0], $ids[1]
         $result | Should -HaveCount 2
         $result[0].Id | Should -be $ids[0]
         $result[1].Id | Should -be $ids[1]
@@ -349,7 +349,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
             Set-DataverseRecord -Connection $connection -TableName contact
 
         # IncludeFilter: lastname = One OR firstname = Joe -> matches Rob One and Joe One
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -IncludeFilter `
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -IncludeFilter `
             @{"lastname" = "One"}, `
             @{"firstname" = "Joe"}
 
@@ -387,7 +387,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
             Set-DataverseRecord -Connection $connection -TableName contact
 
         # ExcludeFilter: lastname = One OR firstname = Rob -> excludes Rob One, Joe One, Rob Two -> leaves Mary Two
-        $result = Get-DataverseRecord -Connection $connection -TableName contact -ExcludeFilter `
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -ExcludeFilter `
             @{"lastname" = "One"}, `
             @{"firstname" = "Rob"} 
 
@@ -406,7 +406,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
 
         # Include: lastname = One OR firstname = Rob -> Rob One, Joe One, Rob Two
         # Exclude: firstname = Rob -> removes Rob One and Rob Two -> leaves Joe One
-        $result = Get-DataverseRecord -Connection $connection -TableName contact `
+        $result = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname `
             -IncludeFilter @{"lastname" = "One"}, @{"firstname" = "Rob"} `
             -ExcludeFilter @{"firstname" = "Rob"}
 
@@ -433,7 +433,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
             $dataverseLinkEntity = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.DataverseLinkEntity($linkEntity)
             
             # This should work without error - the mock doesn't fully support links but we can test it doesn't throw
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $dataverseLinkEntity } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $dataverseLinkEntity } | Should -Not -Throw
         }
 
         It "Given -Links with simplified hashtable syntax (contact.accountid = account.accountid), creates link correctly" {
@@ -448,7 +448,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
             }
             
             # This should convert the hashtable to a DataverseLinkEntity and work without error
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $simplifiedLink } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $simplifiedLink } | Should -Not -Throw
         }
 
         It "Given -Links with simplified syntax including type, creates link with correct join operator" {
@@ -461,7 +461,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
                 'type' = 'LeftOuter'
             }
             
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $simplifiedLink } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $simplifiedLink } | Should -Not -Throw
         }
 
         It "Given -Links with simplified syntax including alias, creates link with alias" {
@@ -474,7 +474,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
                 'alias' = 'linkedAccount'
             }
             
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $simplifiedLink } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $simplifiedLink } | Should -Not -Throw
         }
 
         It "Given -Links with simplified syntax including filter, creates link with filter conditions" {
@@ -490,7 +490,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
                 }
             }
             
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $simplifiedLink } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $simplifiedLink } | Should -Not -Throw
         }
 
         It "Given -Links with multiple simplified links, creates multiple join conditions" {
@@ -508,7 +508,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
                 }
             )
             
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $links } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $links } | Should -Not -Throw
         }
 
         It "Given -Links with nested child links (array), creates nested join conditions" {
@@ -529,7 +529,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
                 }
             )
 
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $links } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $links } | Should -Not -Throw
         }
 
         It "Given -Links with nested child link (single hashtable), creates nested join condition" {
@@ -547,7 +547,7 @@ Describe 'Get-DataverseRecord' {    It "Converts to a PS object with properties 
                 }
             )
 
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $links } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $links } | Should -Not -Throw
         }
     }
 
