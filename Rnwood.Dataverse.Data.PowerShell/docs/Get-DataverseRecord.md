@@ -27,7 +27,7 @@ Get-DataverseRecord [-TableName] <String> [-VerboseRecordCount] [-RecordCount] [
 Get-DataverseRecord [-TableName] <String> -InputObject <PSObject> -MatchOn <String[][]> [-AllowMultipleMatches]
  [-VerboseRecordCount] [-RecordCount] [-Columns <String[]>] [-ExcludeColumns <String[]>] [-OrderBy <String[]>]
  [-Top <Int32>] [-PageSize <Int32>] [-RetrievalBatchSize <UInt32>] [-LookupValuesReturnName]
- [-IncludeSystemColumns]  [-IncludeFileAndImageMetadataColumns] [-Unpublished] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-IncludeSystemColumns] [-IncludeFileAndImageMetadataColumns] [-Unpublished] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
 ```
 
