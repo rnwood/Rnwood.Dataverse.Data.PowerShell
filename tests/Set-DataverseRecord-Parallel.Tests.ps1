@@ -12,7 +12,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
             $created.Count | Should -Be 10
 
             # Verify all created
-            $retrieved = @(Get-DataverseRecord -Connection $connection -TableName contact -verbose)
+            $retrieved = @(Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid -verbose)
             $retrieved.Count | Should -Be 10
         }
 
@@ -27,7 +27,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
             $created.Count | Should -Be 5
 
             # Verify all created
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $retrieved.Count | Should -Be 5
         }
 
@@ -42,7 +42,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
             $created.Count | Should -Be 20
 
             # Verify all created
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $retrieved.Count | Should -Be 20
         }
 
@@ -64,7 +64,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
             $updated.Count | Should -Be 10
 
             # Verify updates
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $retrieved | Where-Object { $_.firstname -like "UpdatedTest*" } | Should -HaveCount 10
         }
 
@@ -96,7 +96,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
             $errors.Count | Should -BeGreaterThan 0
             
             # Should have created some records (not all failed)
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $retrieved.Count | Should -BeLessThan 9
             $retrieved.Count | Should -BeGreaterThan 0
         }
@@ -112,7 +112,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
             $created.Count | Should -Be 10
 
             # Verify all created
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $retrieved.Count | Should -Be 10
 
             # Upsert again with updates (should update existing records)
@@ -123,7 +123,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
             $upserted.Count | Should -Be 10
 
             # Verify still 10 records (no duplicates)
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $retrieved.Count | Should -Be 10
         }
 
@@ -140,7 +140,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
             $withoutPassThru | Should -BeNullOrEmpty
 
             # Clear records
-            Get-DataverseRecord -Connection $connection -TableName contact | Remove-DataverseRecord -Connection $connection -TableName contact
+            Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid | Remove-DataverseRecord -Connection $connection -TableName contact
 
             # With PassThru
             $withPassThru = $records | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru -MaxDegreeOfParallelism 2
@@ -165,7 +165,7 @@ Describe "Set-DataverseRecord Parallel Processing" {    Context "Parallel Proces
             $updated.Count | Should -Be 5
 
             # Verify updates
-            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact
+            $retrieved = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $retrieved.Count | Should -Be 5
             $retrieved | Where-Object { $_.firstname -like "Updated*" } | Should -HaveCount 5
         }
