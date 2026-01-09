@@ -48,7 +48,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $result | Should -Not -BeNullOrEmpty
             
             # Verify the control was created with Standard type (verify via form XML)
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             $form.formxml | Should -Match 'datafieldname="firstname"'
             $form.formxml | Should -Match '4273EDBD-AC1D-40D3-9FB2-095C621B552D'  # Standard control class ID
         }
@@ -60,7 +60,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $result | Should -Not -BeNullOrEmpty
             
             # Verify the control was created with Email type
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             $form.formxml | Should -Match 'datafieldname="emailaddress1"'
             $form.formxml | Should -Match 'ADA2203E-B4CD-49BE-9DDF-234642B43B52'  # Email control class ID
         }
@@ -72,7 +72,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $result | Should -Not -BeNullOrEmpty
             
             # Verify the control was created with Boolean type
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             $form.formxml | Should -Match 'datafieldname="donotemail"'
             $form.formxml | Should -Match '67FAC785-CD58-4F9F-ABB3-4B7DDC6ED5ED'  # Boolean control class ID
         }
@@ -86,7 +86,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $result | Should -Not -BeNullOrEmpty
             
             # Verify the control was created with explicitly specified type
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             $form.formxml | Should -Match 'datafieldname="lastname"'
             $form.formxml | Should -Match '4273EDBD-AC1D-40D3-9FB2-095C621B552D'  # Standard control class ID
         }
@@ -105,7 +105,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $result | Should -Not -BeNullOrEmpty
             
             # Verify Standard control type was used
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             $form.formxml | Should -Match 'datafieldname="parentcustomerid.name"'
             $form.formxml | Should -Match '4273EDBD-AC1D-40D3-9FB2-095C621B552D'  # Standard control class ID
         }
@@ -120,7 +120,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $result | Should -Be "mysubgrid"
             
             # Verify the control was created with Subgrid type and no datafieldname
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             $form.formxml | Should -Match 'id="mysubgrid"'
             $form.formxml | Should -Match 'E7A81278-8635-4d9e-8D4D-59480B391C5B'  # Subgrid control class ID
             # Should NOT have datafieldname attribute for subgrids
@@ -135,7 +135,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $result | Should -Be "mywebresource"
             
             # Verify the control was created with WebResource type
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             $form.formxml | Should -Match 'id="mywebresource"'
             $form.formxml | Should -Match '9FDF5F91-88B1-47f4-AD53-C11EFC01A01D'  # WebResource control class ID
         }
@@ -148,7 +148,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $result | Should -Be "myspacer"
             
             # Verify the control was created with Spacer type
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             $form.formxml | Should -Match 'id="myspacer"'
             $form.formxml | Should -Match '5546E6CD-394C-4BEE-94A8-4B09EB3A5C4A'  # Spacer control class ID
         }
@@ -177,7 +177,7 @@ Describe 'Set-DataverseFormControl - Automatic Control Type Determination' {
             $result | Should -Be "related_accounts"
             
             # Verify the control was created with Subgrid type
-            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId
+            $form = Get-DataverseRecord -Connection $connection -TableName systemform -Id $script:FormId -Columns formxml
             $form.formxml | Should -Match 'id="related_accounts"'
             $form.formxml | Should -Match 'E7A81278-8635-4d9e-8D4D-59480B391C5B'  # Subgrid control class ID
             # Subgrids should NOT have datafieldname attribute - it uses RelationshipName in parameters instead
