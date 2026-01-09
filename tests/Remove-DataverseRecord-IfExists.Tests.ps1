@@ -15,11 +15,11 @@ Describe 'Remove-DataverseRecord - IfExists Flag' {
             Remove-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -IfExists
             
             # Verify record was deleted
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns contactid
             $result | Should -BeNullOrEmpty
             
             # Verify no side effects - no other records
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -BeNullOrEmpty
         }
 
@@ -36,7 +36,7 @@ Describe 'Remove-DataverseRecord - IfExists Flag' {
                 Should -Not -Throw
             
             # Verify existing record was not affected
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $allContacts | Should -HaveCount 1
             $allContacts[0].firstname | Should -Be "Keeper"
         }
@@ -54,7 +54,7 @@ Describe 'Remove-DataverseRecord - IfExists Flag' {
                 Should -Throw
             
             # Verify existing record was not affected
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $allContacts | Should -HaveCount 1
             $allContacts[0].firstname | Should -Be "Existing"
         }
@@ -78,7 +78,7 @@ Describe 'Remove-DataverseRecord - IfExists Flag' {
             } } | Should -Not -Throw
             
             # Verify existing record was deleted, keeper remains
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $allContacts | Should -HaveCount 1
             $allContacts[0].firstname | Should -Be "Keep"
         }
@@ -100,7 +100,7 @@ Describe 'Remove-DataverseRecord - IfExists Flag' {
                 Remove-DataverseRecord -Connection $connection -IfExists
             
             # Verify correct records deleted
-            $remaining = Get-DataverseRecord -Connection $connection -TableName contact
+            $remaining = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $remaining | Should -HaveCount 1
             $remaining[0].firstname | Should -Be "Keep"
             
@@ -110,7 +110,7 @@ Describe 'Remove-DataverseRecord - IfExists Flag' {
                 Should -Not -Throw
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
