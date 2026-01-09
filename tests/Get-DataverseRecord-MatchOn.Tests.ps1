@@ -51,7 +51,7 @@ Describe 'Get-DataverseRecord - MatchOn' {
             # Try to retrieve without AllowMultipleMatches - should error
             {
                 @{ emailaddress1 = "test@test.com" } | 
-                    Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -ErrorAction Stop
+                    Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -Columns emailaddress1 -ErrorAction Stop
             } | Should -Throw "*AllowMultipleMatches*"
         }
 
@@ -79,7 +79,7 @@ Describe 'Get-DataverseRecord - MatchOn' {
             
             # Try to retrieve non-existent record
             $retrieved = @{ emailaddress1 = "nonexistent@test.com" } | 
-                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1
+                Get-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -Columns contactid
             
             $retrieved | Should -BeNullOrEmpty
         }

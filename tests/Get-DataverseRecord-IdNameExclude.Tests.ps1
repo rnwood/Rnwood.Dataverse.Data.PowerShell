@@ -59,7 +59,7 @@ Describe 'Get-DataverseRecord - Id, Name, and ExcludeId Parameters' {
             
             # Try to get non-existent record
             $nonExistentId = [Guid]::NewGuid()
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $nonExistentId
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $nonExistentId -Columns contactid
             
             # Assert no results
             $result | Should -BeNullOrEmpty
@@ -85,7 +85,7 @@ Describe 'Get-DataverseRecord - Id, Name, and ExcludeId Parameters' {
             
             # Get records by name (fullname is auto-generated from firstname + lastname)
             $targetNames = @("John Doe", "Bob Johnson")
-            $results = Get-DataverseRecord -Connection $connection -TableName contact -Name $targetNames
+            $results = Get-DataverseRecord -Connection $connection -TableName contact -Name $targetNames -Columns firstname, lastname
             
             # Assert correct records returned
             $results | Should -HaveCount 2
@@ -107,7 +107,7 @@ Describe 'Get-DataverseRecord - Id, Name, and ExcludeId Parameters' {
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly
             
             # Get record by name
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Name "Unique Person"
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Name "Unique Person" -Columns firstname, lastname
             
             # Assert correct record returned
             $result | Should -Not -BeNullOrEmpty
@@ -127,7 +127,7 @@ Describe 'Get-DataverseRecord - Id, Name, and ExcludeId Parameters' {
                 Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly
             
             # Try to get non-existent name
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Name "NonExistent Name"
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Name "NonExistent Name" -Columns contactid
             
             # Assert no results
             $result | Should -BeNullOrEmpty
