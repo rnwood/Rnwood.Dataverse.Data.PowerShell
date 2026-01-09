@@ -28,7 +28,7 @@ Describe 'Invoke-DataverseSql' -Skip {
             $results[0].emailaddress1 | Should -Be "john@example.com"
             
             # Verify no side effects - both records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
 
@@ -49,7 +49,7 @@ Describe 'Invoke-DataverseSql' -Skip {
             $results | Should -HaveCount 2
             
             # Verify no side effects - all 5 records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 5
         }
 
@@ -75,7 +75,7 @@ Describe 'Invoke-DataverseSql' -Skip {
             ($results | Where-Object { $_.firstname -eq "Bob" }) | Should -HaveCount 1
             
             # Verify no side effects - all 3 records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 3
         }
     }
@@ -88,7 +88,7 @@ Describe 'Invoke-DataverseSql' -Skip {
             Invoke-DataverseSql -Connection $connection -Sql "INSERT INTO contact (firstname, lastname, emailaddress1) VALUES ('Test', 'User', 'test@example.com')"
             
             # Verify record was created
-            $results = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "User" }
+            $results = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "User" } -Columns emailaddress1, firstname, lastname
             $results | Should -Not -BeNullOrEmpty
             $results | Should -HaveCount 1
             $results[0].firstname | Should -Be "Test"
@@ -96,7 +96,7 @@ Describe 'Invoke-DataverseSql' -Skip {
             $results[0].emailaddress1 | Should -Be "test@example.com"
             
             # Verify only one record was created (no side effects)
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -112,14 +112,14 @@ Describe 'Invoke-DataverseSql' -Skip {
             Invoke-DataverseSql -Connection $connection -Sql "INSERT INTO contact (firstname, lastname, emailaddress1) VALUES (@fname, @lname, @email)" -Parameters $params
             
             # Verify record was created with correct values
-            $results = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "Insert" }
+            $results = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "Insert" } -Columns emailaddress1, firstname
             $results | Should -Not -BeNullOrEmpty
             $results | Should -HaveCount 1
             $results[0].firstname | Should -Be "Parameterized"
             $results[0].emailaddress1 | Should -Be "param@example.com"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
@@ -139,17 +139,17 @@ Describe 'Invoke-DataverseSql' -Skip {
             Invoke-DataverseSql -Connection $connection -Sql "UPDATE contact SET firstname = 'Updated' WHERE lastname = 'UpdateTest'"
             
             # Verify records were updated
-            $updatedRecords = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "UpdateTest" }
+            $updatedRecords = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "UpdateTest" } -Columns firstname, lastname
             $updatedRecords | Should -HaveCount 2
             $updatedRecords | ForEach-Object { $_.firstname | Should -Be "Updated" }
             
             # Verify unrelated record was not affected (no side effects)
-            $unchangedRecord = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "Different" }
+            $unchangedRecord = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "Different" } -Columns lastname
             $unchangedRecord | Should -HaveCount 1
             $unchangedRecord[0].firstname | Should -Be "NoChange"
             
             # Verify total count unchanged
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 3
         }
 
@@ -169,13 +169,13 @@ Describe 'Invoke-DataverseSql' -Skip {
             Invoke-DataverseSql -Connection $connection -Sql "UPDATE contact SET firstname = @newFirstName, emailaddress1 = @newEmail WHERE contactid = @targetId" -Parameters $params
             
             # Verify record was updated correctly
-            $updatedRecord = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $updatedRecord = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns lastname
             $updatedRecord.firstname | Should -Be "NewName"
             $updatedRecord.emailaddress1 | Should -Be "new@example.com"
             $updatedRecord.lastname | Should -Be "UpdateMe"  # Unchanged field remains
             
             # Verify no side effects - only one record exists
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
@@ -196,15 +196,15 @@ Describe 'Invoke-DataverseSql' -Skip {
             Invoke-DataverseSql -Connection $connection -Sql "DELETE FROM contact WHERE lastname = 'DeleteMe'"
             
             # Verify records were deleted
-            $deletedRecords = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "DeleteMe" }
+            $deletedRecords = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "DeleteMe" } -Columns contactid
             $deletedRecords | Should -BeNullOrEmpty
             
             # Verify kept records still exist (no side effects)
-            $keptRecords = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "KeepMe" }
+            $keptRecords = Get-DataverseRecord -Connection $connection -TableName contact -FilterValues @{ lastname = "KeepMe" } -Columns contactid
             $keptRecords | Should -HaveCount 2
             
             # Verify total count
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
 
@@ -221,7 +221,7 @@ Describe 'Invoke-DataverseSql' -Skip {
             Invoke-DataverseSql -Connection $connection -Sql "DELETE FROM contact WHERE lastname = 'WhatIfTest'" -WhatIf
             
             # Verify NO records were deleted (WhatIf prevents deletion)
-            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact
+            $allRecords = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allRecords | Should -HaveCount 2
             $allRecords | ForEach-Object { $_.lastname | Should -Be "WhatIfTest" }
         }
@@ -255,7 +255,7 @@ Describe 'Invoke-DataverseSql' -Skip {
             ($results | Where-Object { $_.lastname -eq "Johnson" }) | Should -HaveCount 1
             
             # Verify no side effects - all records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 3
         }
     }

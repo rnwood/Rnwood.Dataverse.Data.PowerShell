@@ -21,12 +21,12 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
             Set-DataverseRecord -Connection $connection -TableName contact -InputObject $updateData -UpdateAllColumns
             
             # Verify record was updated
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns emailaddress1, firstname
             $result.firstname | Should -Be "Updated"
             $result.emailaddress1 | Should -Be "updated@example.com"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -48,11 +48,11 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -MatchOn emailaddress1 -UpdateAllColumns
             
             # Verify update
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result.firstname | Should -Be "Updated"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -70,11 +70,11 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
                 -InputObject @{ firstname = "Fast" } -UpdateAllColumns
             
             # Verify update
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result.firstname | Should -Be "Fast"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
@@ -101,13 +101,13 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
             Set-DataverseRecord -Connection $connection -TableName contact -InputObject $updateData -IgnoreProperties description
             
             # Verify update (description should remain original)
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns description, emailaddress1, firstname
             $result.firstname | Should -Be "Updated"
             $result.emailaddress1 | Should -Be "updated@example.com"
             $result.description | Should -Be "Original description"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -132,13 +132,13 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
                 -IgnoreProperties firstname, emailaddress1
             
             # Verify only lastname was updated
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns emailaddress1, firstname, lastname
             $result.firstname | Should -Be "Multi"
             $result.lastname | Should -Be "Updated"
             $result.emailaddress1 | Should -Be "multi@example.com"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -156,11 +156,11 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
                 -InputObject @{ firstname = "Updated" } -IgnoreProperties nonexistentfield
             
             # Verify update succeeded
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result.firstname | Should -Be "Updated"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
     }
@@ -179,12 +179,12 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -CallerId $callerId -BatchSize 1 -PassThru
             
             # Verify record was created
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result | Should -Not -BeNullOrEmpty
             $result.firstname | Should -Be "Delegated"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -204,11 +204,11 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
                 -InputObject @{ firstname = "Updated" } -CallerId $callerId -BatchSize 1
             
             # Verify update
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $record.Id -Columns firstname
             $result.firstname | Should -Be "Updated"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 1
         }
 
@@ -227,7 +227,7 @@ Describe 'Set-DataverseRecord - Advanced Parameters' {
             $records | Should -HaveCount 2
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns contactid
             $allContacts | Should -HaveCount 2
         }
     }
