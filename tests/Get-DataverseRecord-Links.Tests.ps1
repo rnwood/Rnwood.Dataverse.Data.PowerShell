@@ -20,7 +20,7 @@ Describe 'Get-DataverseRecord - Links' {
             $dataverseLinkEntity = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.DataverseLinkEntity($linkEntity)
             
             # This should work without error - the mock doesn't fully support links but we can test it doesn't throw
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $dataverseLinkEntity } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $dataverseLinkEntity } | Should -Not -Throw
         }
 
         It "Given -Links with simplified hashtable syntax (contact.accountid = account.accountid), creates link correctly" {
@@ -35,7 +35,7 @@ Describe 'Get-DataverseRecord - Links' {
             }
             
             # This should convert the hashtable to a DataverseLinkEntity and work without error
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $simplifiedLink } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $simplifiedLink } | Should -Not -Throw
         }
 
         It "Given -Links with simplified syntax including type, creates link with correct join operator" {
@@ -48,7 +48,7 @@ Describe 'Get-DataverseRecord - Links' {
                 'type' = 'LeftOuter'
             }
             
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $simplifiedLink } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $simplifiedLink } | Should -Not -Throw
         }
 
         It "Given -Links with simplified syntax including alias, creates link with alias" {
@@ -61,7 +61,7 @@ Describe 'Get-DataverseRecord - Links' {
                 'alias' = 'linkedAccount'
             }
             
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $simplifiedLink } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $simplifiedLink } | Should -Not -Throw
         }
 
         It "Given -Links with simplified syntax including filter, creates link with filter conditions" {
@@ -77,7 +77,7 @@ Describe 'Get-DataverseRecord - Links' {
                 }
             }
             
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $simplifiedLink } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $simplifiedLink } | Should -Not -Throw
         }
 
         It "Given -Links with multiple simplified links, creates multiple join conditions" {
@@ -95,7 +95,7 @@ Describe 'Get-DataverseRecord - Links' {
                 }
             )
             
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $links } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $links } | Should -Not -Throw
         }
 
         It "Given -Links with nested child links (array), creates nested join conditions" {
@@ -116,7 +116,7 @@ Describe 'Get-DataverseRecord - Links' {
                 }
             )
 
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $links } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $links } | Should -Not -Throw
         }
 
         It "Given -Links with nested child link (single hashtable), creates nested join condition" {
@@ -134,7 +134,7 @@ Describe 'Get-DataverseRecord - Links' {
                 }
             )
 
-            { Get-DataverseRecord -Connection $connection -TableName contact -Links $links } | Should -Not -Throw
+            { Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname -Links $links } | Should -Not -Throw
         }
     }
 }

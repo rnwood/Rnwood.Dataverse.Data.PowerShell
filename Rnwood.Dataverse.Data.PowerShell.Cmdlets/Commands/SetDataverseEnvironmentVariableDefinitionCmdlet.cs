@@ -167,7 +167,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private string GetTypeLabel(OptionSetValue optionSetValue)
         {
             if (optionSetValue == null) return null;
-            var entityMetadata = entityMetadataFactory.GetMetadata("environmentvariabledefinition");
+            var entityMetadata = entityMetadataFactory.GetLimitedMetadata("environmentvariabledefinition");
             var typeAttribute = (EnumAttributeMetadata)entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == "type");
             if (typeAttribute != null)
             {
@@ -182,7 +182,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         private OptionSetValue ConvertTypeStringToOptionSetValue(string typeString)
         {
-            var entityMetadata = entityMetadataFactory.GetMetadata("environmentvariabledefinition");
+            var entityMetadata = entityMetadataFactory.GetLimitedMetadata("environmentvariabledefinition");
             var typeAttribute = entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == "type");
             return (OptionSetValue)entityConverter.ConvertToDataverseValue(entityMetadata, "type", typeAttribute, typeString, new ConvertToDataverseEntityColumnOptions());
         }

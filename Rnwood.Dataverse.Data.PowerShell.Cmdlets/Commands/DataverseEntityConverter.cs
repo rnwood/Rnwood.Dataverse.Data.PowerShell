@@ -1,5 +1,6 @@
 ﻿
 
+using Castle.Core.Internal;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
@@ -41,7 +42,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             result.Properties.Add(new PSNoteProperty("Id", entity.Id));
             result.Properties.Add(new PSNoteProperty("TableName", entity.LogicalName));
 
-            EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(entity.LogicalName);
+            EntityMetadata entityMetadata = entityMetadataFactory.GetLimitedMetadata(entity.LogicalName);
 
             foreach (AttributeMetadata attributeMetadata in entityMetadata.Attributes.OrderBy(a => a.LogicalName, StringComparer.OrdinalIgnoreCase))
             {
@@ -67,11 +68,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (entities.Entities.Any())
                     {
-                        EntityMetadata referencedEntityMetadata = entityMetadataFactory.GetMetadata(entities.Entities.First().LogicalName);
+                        EntityMetadata referencedEntityMetadata = entityMetadataFactory.GetLimitedMetadata(entities.Entities.First().LogicalName);
 
                         foreach (Entity referenceEntity in entities.Entities)
                         {
-                            psObjects.Add(ConvertToPSObject(referenceEntity, new ColumnSet(GetAllColumnNames(referencedEntityMetadata, false, null)), getValueType));
+                            psObjects.Add(ConvertToPSObject(referenceEntity, new ColumnSet(GetAllColumnNames(referencedEntityMetadata, false, null, false)), getValueType));
                         }
                     }
 
@@ -101,7 +102,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(entityName);
+            EntityMetadata entityMetadata = entityMetadataFactory.GetLimitedMetadata(entityName);
 
             Entity result = new Entity(entityName);
 
@@ -167,7 +168,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets all column names for an entity.
         /// </summary>
-        public static string[] GetAllColumnNames(EntityMetadata entityMetadata, bool includeSystemColumns, string[] excludeColumns)
+        public static string[] GetAllColumnNames(EntityMetadata entityMetadata, bool includeSystemColumns, string[] excludeColumns, bool includeFileAndImageMetadataColumns)
         {
             string[] magicColumns = new string[0];
 
@@ -177,7 +178,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             return entityMetadata.Attributes
-                                 .Where(a => a.IsValidForRead.GetValueOrDefault() && a.AttributeOf == null)
+                                 .Where(a => a.IsValidForRead.GetValueOrDefault()
+                                 && (a.AttributeOf == null
+                                    || includeFileAndImageMetadataColumns 
+                                    && entityMetadata.Attributes.Any(ao => (ao.LogicalName == a.AttributeOf || $"{ao.LogicalName}id" ==a.AttributeOf) 
+                                        && (ao.AttributeTypeName == AttributeTypeDisplayName.FileType || ao.AttributeTypeName == AttributeTypeDisplayName.ImageType))
+                                 )
+                                 && (a.AttributeType != AttributeTypeCode.Virtual
+                                    || a.AttributeTypeName == AttributeTypeDisplayName.FileType //Include the file id columns
+                                    )
+                                 )
                                  .Select(a => a.LogicalName)
                                  .Concat(magicColumns)
                                  .Except(!includeSystemColumns
@@ -228,7 +238,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
 
                         //For some odd reason the EntityReference Name that is returned is sometimes null even though the record it's pointing at has a name
-                        string nameAttribute = entityMetadataFactory.GetMetadata(entityReferenceValue.LogicalName).PrimaryNameAttribute;
+                        string nameAttribute = entityMetadataFactory.GetLimitedMetadata(entityReferenceValue.LogicalName).PrimaryNameAttribute;
 
                         //Some internal entities do not have a primary name attribute
                         if (nameAttribute == null)
@@ -316,12 +326,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         if (manyToManyRelationshipMetadata.Entity1IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
                         {
-                            string nameAttribute = entityMetadataFactory.GetMetadata(manyToManyRelationshipMetadata.Entity1LogicalName).PrimaryNameAttribute;
+                            string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity1LogicalName).PrimaryNameAttribute;
                             return service.Retrieve(manyToManyRelationshipMetadata.Entity1LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
                         }
                         else if (manyToManyRelationshipMetadata.Entity2IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
                         {
-                            string nameAttribute = entityMetadataFactory.GetMetadata(manyToManyRelationshipMetadata.Entity2LogicalName).PrimaryNameAttribute;
+                            string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity2LogicalName).PrimaryNameAttribute;
                             return service.Retrieve(manyToManyRelationshipMetadata.Entity2LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
                         }
                     }
@@ -334,16 +344,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     if (entities.Entities.Any())
                     {
-                        EntityMetadata referencedEntityMetadata = entityMetadataFactory.GetMetadata(entities.Entities.First().LogicalName);
+                        EntityMetadata referencedEntityMetadata = entityMetadataFactory.GetLimitedMetadata(entities.Entities.First().LogicalName);
 
                         foreach (Entity referenceEntity in entities.Entities)
                         {
-                            psObjects.Add(ConvertToPSObject(referenceEntity, new ColumnSet(GetAllColumnNames(referencedEntityMetadata, false, new[] { "exchangeentryid" })), getValueType));
+                            psObjects.Add(ConvertToPSObject(referenceEntity, new ColumnSet(GetAllColumnNames(referencedEntityMetadata, false, new[] { "exchangeentryid" }, false)), getValueType));
                         }
                     }
 
                     return psObjects.ToArray();
-
                 default:
                     if (attributeMetadata is MultiSelectPicklistAttributeMetadata
                         multiPicklistAttributeMetadata)
@@ -449,7 +458,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                                 if (lookupEntity != null)
                                 {
-                                    var targetEntityMetadata = entityMetadataFactory.GetMetadata(lookupEntity);
+                                    var targetEntityMetadata = entityMetadataFactory.GetLimitedMetadata(lookupEntity);
                                     string lookupNameAttribute = targetEntityMetadata.PrimaryNameAttribute;
 
 
@@ -648,12 +657,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 nameProp = customObj.Properties.FirstOrDefault(p => p.Name.Equals("EntityName", StringComparison.OrdinalIgnoreCase));
                             }
 
-							if (nameProp == null)
-							{
-								nameProp = customObj.Properties.FirstOrDefault(p => p.Name.Equals("LogicalName", StringComparison.OrdinalIgnoreCase));
-							}
+                            if (nameProp == null)
+                            {
+                                nameProp = customObj.Properties.FirstOrDefault(p => p.Name.Equals("LogicalName", StringComparison.OrdinalIgnoreCase));
+                            }
 
-							if (nameProp == null)
+                            if (nameProp == null)
                             {
                                 throw new FormatException("Could not convert value to entity reference. TableName(/EntityName/LogicalName) property is missing");
                             }
@@ -689,7 +698,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                     }
                                     else if (key.Equals("TableName", StringComparison.OrdinalIgnoreCase)
                                         || key.Equals("EntityName", StringComparison.OrdinalIgnoreCase)
-										|| key.Equals("LogicalName", StringComparison.OrdinalIgnoreCase))
+                                        || key.Equals("LogicalName", StringComparison.OrdinalIgnoreCase))
                                     {
                                         entityName = value;
                                     }
@@ -742,7 +751,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                                     try
                                     {
-                                        targetEntityMetadata = entityMetadataFactory.GetMetadata(targetEntityName);
+                                        targetEntityMetadata = entityMetadataFactory.GetLimitedMetadata(targetEntityName);
                                     }
                                     catch (Exception e)
                                     {
@@ -985,8 +994,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (value is Entity entity)
             {
                 // Get all columns for the entity
-                EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(entity.LogicalName);
-                ColumnSet columns = new ColumnSet(GetAllColumnNames(entityMetadata, false, null));
+                EntityMetadata entityMetadata = entityMetadataFactory.GetLimitedMetadata(entity.LogicalName);
+                ColumnSet columns = new ColumnSet(GetAllColumnNames(entityMetadata, false, null, false));
                 return ConvertToPSObject(entity, columns, _ => ValueType.Display);
             }
 
@@ -996,9 +1005,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 List<PSObject> psObjects = new List<PSObject>();
                 if (entityCollection.Entities.Any())
                 {
-                    EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(entityCollection.Entities.First().LogicalName);
-                    ColumnSet columns = new ColumnSet(GetAllColumnNames(entityMetadata, false, null));
-                    
+                    EntityMetadata entityMetadata = entityMetadataFactory.GetLimitedMetadata(entityCollection.Entities.First().LogicalName);
+                    ColumnSet columns = new ColumnSet(GetAllColumnNames(entityMetadata, false, null, false));
+
                     foreach (Entity e in entityCollection.Entities)
                     {
                         psObjects.Add(ConvertToPSObject(e, columns, _ => ValueType.Display));
@@ -1015,14 +1024,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     try
                     {
-                        EntityMetadata refEntityMetadata = entityMetadataFactory.GetMetadata(entityRef.LogicalName);
+                        EntityMetadata refEntityMetadata = entityMetadataFactory.GetLimitedMetadata(entityRef.LogicalName);
                         string nameAttribute = refEntityMetadata.PrimaryNameAttribute;
-                        
+
                         if (!string.IsNullOrEmpty(nameAttribute))
                         {
                             string name = service.Retrieve(entityRef.LogicalName, entityRef.Id, new ColumnSet(nameAttribute))
                                 .GetAttributeValue<string>(nameAttribute);
-                            
+
                             if (!string.IsNullOrEmpty(name))
                             {
                                 return name;

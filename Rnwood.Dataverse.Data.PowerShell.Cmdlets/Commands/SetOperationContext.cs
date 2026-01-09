@@ -664,7 +664,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         throw new NotSupportedException("MatchOn must only have a single array when used with Upsert");
                     }
 
-                    var key = MetadataFactory.GetMetadata(Target.LogicalName).Keys.FirstOrDefault(k => 
+                    var key = MetadataFactory.GetLimitedMetadata(Target.LogicalName).Keys.FirstOrDefault(k => 
                         k.KeyAttributes.Length == MatchOn[0].Length && k.KeyAttributes.All(a => MatchOn[0].Contains(a)));
                     if (key == null)
                     {

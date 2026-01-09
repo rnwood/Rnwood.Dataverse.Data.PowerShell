@@ -34,7 +34,7 @@ Describe 'Get-DataverseRecord - TotalRecordCount' {
             }
             
             # Verify no side effects - all records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 5
         }
 
@@ -65,7 +65,7 @@ Describe 'Get-DataverseRecord - TotalRecordCount' {
             }
             
             # Verify no side effects - all records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 4
         }
 
@@ -94,7 +94,7 @@ Describe 'Get-DataverseRecord - TotalRecordCount' {
             }
             
             # Verify no side effects - existing records remain
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 2
         }
 
@@ -121,7 +121,7 @@ Describe 'Get-DataverseRecord - TotalRecordCount' {
             }
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 20
         }
 
@@ -149,7 +149,7 @@ Describe 'Get-DataverseRecord - TotalRecordCount' {
             }
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 10
         }
     }

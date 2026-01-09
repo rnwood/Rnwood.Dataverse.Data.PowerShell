@@ -89,7 +89,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 EntityMetadata metadata = null;
                 try
                 {
-                    metadata = metadataFactory.GetMetadata(tableName);
+                    metadata = metadataFactory.GetLimitedMetadata(tableName);
                 }
                 catch
                 {

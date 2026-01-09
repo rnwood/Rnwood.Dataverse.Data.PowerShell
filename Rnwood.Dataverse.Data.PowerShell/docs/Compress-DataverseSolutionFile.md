@@ -62,7 +62,6 @@ Package type: 'Unmanaged' (default), 'Managed' (from a previous unpack 'Both'), 
 Type: SolutionPackageType
 Parameter Sets: (All)
 Aliases:
-Accepted values: Unmanaged, Managed, Both
 
 Required: False
 Position: Named

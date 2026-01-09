@@ -19,7 +19,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
             } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
             
             # Query with LookupValuesReturnName
-            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $child.Id -LookupValuesReturnName
+            $result = Get-DataverseRecord -Connection $connection -TableName contact -Id $child.Id -Columns firstname, lastname, parentcontactid -LookupValuesReturnName
             
             # Verify result
             $result | Should -Not -BeNullOrEmpty
@@ -30,7 +30,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
             # The test validates the flag is accepted without error
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 2
         }
 
@@ -58,7 +58,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
             $result.firstname | Should -Be "Default"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 2
         }
     }
@@ -87,7 +87,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
             # The exact behavior depends on the cmdlet implementation
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, accountrolecode
             $allContacts | Should -HaveCount 1
         }
 
@@ -113,7 +113,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
             # The exact behavior depends on metadata and implementation
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, accountrolecode
             $allContacts | Should -HaveCount 1
         }
 
@@ -138,7 +138,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
             $result.firstname | Should -Be "Mixed"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname
             $allContacts | Should -HaveCount 1
         }
 
@@ -161,7 +161,7 @@ Describe 'Get-DataverseRecord - Column Formatting' {
             # accountrolecode without suffix uses default behavior
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, accountrolecode
             $allContacts | Should -HaveCount 1
         }
     }

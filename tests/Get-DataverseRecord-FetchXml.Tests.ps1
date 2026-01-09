@@ -36,7 +36,7 @@ Describe 'Get-DataverseRecord - FetchXml' {
             ($results | Where-Object { $_.firstname -eq "Bob" }) | Should -HaveCount 1
             
             # Verify no side effects - all records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname, emailaddress1
             $allContacts | Should -HaveCount 3
         }
 
@@ -73,7 +73,7 @@ Describe 'Get-DataverseRecord - FetchXml' {
             $results[2].firstname | Should -Be "Charlie"
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 3
         }
 
@@ -112,7 +112,7 @@ Describe 'Get-DataverseRecord - FetchXml' {
             $results[0].emailaddress1 | Should -Be "match@example.com"
             
             # Verify no side effects - all records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname, emailaddress1
             $allContacts | Should -HaveCount 3
         }
     }
@@ -148,7 +148,7 @@ Describe 'Get-DataverseRecord - FetchXml' {
             $results | ForEach-Object { $_.firstname | Should -BeLike "TestUser*" }
             
             # Verify no side effects
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 3
         }
 
@@ -177,7 +177,7 @@ Describe 'Get-DataverseRecord - FetchXml' {
             $results | Should -HaveCount 3
             
             # Verify no side effects - all 10 records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 10
         }
 
@@ -214,7 +214,7 @@ Describe 'Get-DataverseRecord - FetchXml' {
             ($results | Where-Object { $_.lastname -eq "Brown" }) | Should -BeNullOrEmpty
             
             # Verify no side effects - all records still exist
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
+            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact -Columns firstname, lastname
             $allContacts | Should -HaveCount 3
         }
     }
