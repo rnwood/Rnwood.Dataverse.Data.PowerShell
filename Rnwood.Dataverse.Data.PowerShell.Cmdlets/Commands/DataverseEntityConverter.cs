@@ -180,14 +180,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return entityMetadata.Attributes
                                  .Where(a => a.IsValidForRead.GetValueOrDefault()
                                  && (a.AttributeOf == null
-                                    || includeFileAndImageMetadataColumns 
-                                    && entityMetadata.Attributes.Any(ao => (ao.LogicalName == a.AttributeOf || $"{ao.LogicalName}id" ==a.AttributeOf) 
-                                        && (ao.AttributeTypeName == AttributeTypeDisplayName.FileType || ao.AttributeTypeName == AttributeTypeDisplayName.ImageType))
+                                    || a.AttributeTypeName == AttributeTypeDisplayName.ImageType //Include the image columns
+                                    || (includeFileAndImageMetadataColumns
+                                    && entityMetadata.Attributes.Any(ao => (ao.LogicalName == a.AttributeOf || $"{ao.LogicalName}id" == a.AttributeOf)
+                                        && (ao.AttributeTypeName == AttributeTypeDisplayName.FileType || ao.AttributeTypeName == AttributeTypeDisplayName.ImageType)))
                                  )
                                  && (a.AttributeType != AttributeTypeCode.Virtual
                                     || a.AttributeTypeName == AttributeTypeDisplayName.FileType //Include the file id columns
+                                    || a.AttributeTypeName == AttributeTypeDisplayName.ImageType
                                     )
+                                 && (a.AttributeType != AttributeTypeCode.Uniqueidentifier || !a.LogicalName.EndsWith("id") || includeFileAndImageMetadataColumns || !entityMetadata.Attributes.Any(ao => ao.AttributeOf == a.LogicalName && ao.AttributeTypeName == AttributeTypeDisplayName.ImageType))
                                  )
+
                                  .Select(a => a.LogicalName)
                                  .Concat(magicColumns)
                                  .Except(!includeSystemColumns
@@ -320,20 +324,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 case AttributeTypeCode.Uniqueidentifier:
                     Guid? guidValue = entity.GetAttributeValue<Guid?>(attributeMetadata.LogicalName);
 
-                    if (guidValue.HasValue && entityMetadata.IsIntersect.GetValueOrDefault() && !useRawValues)
+                    if (guidValue.HasValue)
                     {
-                        ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
+                        if (entityMetadata.IsIntersect.GetValueOrDefault() && !useRawValues)
+                        {
+                            ManyToManyRelationshipMetadata manyToManyRelationshipMetadata = entityMetadata.ManyToManyRelationships[0];
 
-                        if (manyToManyRelationshipMetadata.Entity1IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
-                        {
-                            string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity1LogicalName).PrimaryNameAttribute;
-                            return service.Retrieve(manyToManyRelationshipMetadata.Entity1LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
+                            if (manyToManyRelationshipMetadata.Entity1IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity1LogicalName).PrimaryNameAttribute;
+                                return service.Retrieve(manyToManyRelationshipMetadata.Entity1LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
+                            }
+                            else if (manyToManyRelationshipMetadata.Entity2IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity2LogicalName).PrimaryNameAttribute;
+                                return service.Retrieve(manyToManyRelationshipMetadata.Entity2LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
+                            }
                         }
-                        else if (manyToManyRelationshipMetadata.Entity2IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
+                        else if (entityMetadata.Attributes.Any(a => a.AttributeTypeName == AttributeTypeDisplayName.ImageType && a.AttributeOf == attributeMetadata.LogicalName))
                         {
-                            string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity2LogicalName).PrimaryNameAttribute;
-                            return service.Retrieve(manyToManyRelationshipMetadata.Entity2LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
+                            return new DataverseFileReference(guidValue.Value);
                         }
+
                     }
                     return guidValue;
 
@@ -354,7 +366,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     return psObjects.ToArray();
                 default:
-                    if (attributeMetadata is MultiSelectPicklistAttributeMetadata
+                    if (attributeMetadata.AttributeTypeName == AttributeTypeDisplayName.FileType)
+                    {
+                        Guid? fileId = entity.GetAttributeValue<Guid?>(attributeMetadata.LogicalName);
+                        if (fileId.HasValue)
+                        {
+                            return new DataverseFileReference(fileId.Value);
+                        }
+                        else
+                        {
+                            return null;
+                        }
+                    }
+                    else if (attributeMetadata is MultiSelectPicklistAttributeMetadata
                         multiPicklistAttributeMetadata)
                     {
                         OptionSetValueCollection optionSetValues = entity.GetAttributeValue<OptionSetValueCollection>(attributeMetadata.LogicalName);
