@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xrm.Sdk;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +29,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid Id
         { get; set; }
 
-		
+
+        public string Type => "FileReference";
 
 		/// <summary>
 		/// Implicitly converts a DataverseEntityReference to a Guid.

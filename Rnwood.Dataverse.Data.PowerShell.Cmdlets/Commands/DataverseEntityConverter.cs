@@ -145,20 +145,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                object convertedValue = ConvertToDataverseValue(entityMetadata, property.Name, attributeMetadata, property.Value, columnOptions);
-
-                if (attributeMetadata != null)
+                try
                 {
-                    result[attributeMetadata.LogicalName] = convertedValue;
+                    object convertedValue = ConvertToDataverseValue(entityMetadata, property.Name, attributeMetadata, property.Value, columnOptions);
 
-                    if (attributeMetadata.LogicalName == entityMetadata.PrimaryIdAttribute && convertedValue != null)
+                    if (attributeMetadata != null)
                     {
-                        result.Id = (Guid)convertedValue;
+                        result[attributeMetadata.LogicalName] = convertedValue;
+
+                        if (attributeMetadata.LogicalName == entityMetadata.PrimaryIdAttribute && convertedValue != null)
+                        {
+                            result.Id = (Guid)convertedValue;
+                        }
                     }
-                }
-                else
+                    else
+                    {
+                        result[property.Name.ToLower()] = convertedValue;
+                    }
+                } catch (FormatException conversionEx)
                 {
-                    result[property.Name.ToLower()] = convertedValue;
+                    throw new FormatException($"Error converting column value '{attributeMetadata.LogicalName}' - {conversionEx.Message}", conversionEx);
                 }
             }
 
@@ -856,7 +862,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
 
                 default:
-                    if (attributeMetadata is MultiSelectPicklistAttributeMetadata
+                    if (attributeMetadata.AttributeTypeName == AttributeTypeDisplayName.FileType) {
+                        if (string.IsNullOrEmpty(stringValue))
+                        {
+                            return null;
+                        } 
+
+                        if (psValue is DataverseFileReference fileReference)
+                        {
+                            return fileReference.Id;
+                        }else if (psValue is PSObject psObject)
+                        {
+                            var idProp = psObject.Properties.FirstOrDefault(p => p.Name.Equals("Id", StringComparison.OrdinalIgnoreCase));
+
+                            if (idProp == null)
+                            {
+                                throw new FormatException("Could not convert value to file reference. Id property is missing");
+                            }
+
+                            return Guid.Parse(idProp.Value.ToString());
+                        }
+
+                        return Guid.Parse(stringValue);
+                    }
+                    else if (attributeMetadata.AttributeTypeName == AttributeTypeDisplayName.ImageType)
+                    {
+                        if (string.IsNullOrEmpty(stringValue))
+                        {
+                            return null;
+                        }
+
+                        byte[] bytes = Convert.FromBase64String(stringValue);
+                        return bytes;
+                    }
+                    else if (attributeMetadata is MultiSelectPicklistAttributeMetadata
          multiPicklistAttributeMetadata)
                     {
                         if (psValue == null)
@@ -883,7 +922,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                     else
                     {
-                        throw new NotImplementedException("Conversion to column type " + attributeMetadata.AttributeType.Value + " not implemented");
+                        throw new NotImplementedException($"Column {attributeMetadata.LogicalName} - conversion to column type {attributeMetadata.AttributeType.Value} is not implemented");
                     }
                     break;
             }
