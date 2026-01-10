@@ -13,8 +13,8 @@ Writes a list of Dataverse records to a folder of JSON files.
 ## SYNTAX
 
 ```
-Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>] [-withdeletions]
- [[-idproperties] <String[]>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Set-DataverseRecordsFolder [-OutputPath] <String> [[-InputObject] <PSObject>] [[-Connection] <Object>]
+ [-withdeletions] [[-idproperties] <String[]>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -32,6 +32,21 @@ Writes all contacts to the folder `data/contacts`.
 
 ## PARAMETERS
 
+### -Connection
+Dataverse connection to use for downloading files. Required if records contain DataverseFileReference properties.
+
+```yaml
+Type: Object
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -idproperties
 Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
 
@@ -41,7 +56,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: False
-Position: 3
+Position: 4
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

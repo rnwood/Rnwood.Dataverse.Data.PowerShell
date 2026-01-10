@@ -19,7 +19,8 @@ Set-DataverseRecord -InputObject <PSObject> -TableName <String> [-BatchSize <UIn
  [-UpdateAllColumns] [-CreateOnly] [-Upsert] [-LookupColumns <Hashtable>]
  [-BypassBusinessLogicExecution <BusinessLogicTypes[]>] [-BypassBusinessLogicExecutionStepIds <Guid[]>]
  [-Retries <Int32>] [-InitialRetryDelay <Int32>] [-MaxDegreeOfParallelism <Int32>] [-EnableDuplicateDetection]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-FileDirectory <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -419,7 +420,7 @@ PS C:\> $associations | Set-DataverseRecord -TableName "listcontact" -CreateOnly
 
 Creates multiple many-to-many associations in a batch operation. This example associates multiple contacts with a marketing list using the `listcontact` intersect table. The property names (`contactid`, `listid`) must match the exact column names in the intersect table. The cmdlet automatically batches these operations for improved performance.
 
-### Example 18: Using retry logic for transient failures
+### Example 19: Using retry logic for transient failures
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $records = @(
@@ -433,15 +434,6 @@ PS C:\> $records | Set-DataverseRecord -TableName contact -CreateOnly -Retries 3
 ```
 
 Creates multiple contacts with automatic retry on transient failures. Failed requests will be retried up to 3 times with delays of 500ms, 1000ms, and 2000ms respectively. The `-Verbose` flag shows retry attempts and wait times.
-
-### Example 19: Custom retry delay for rate limiting
-```powershell
-PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
-PS C:\> # Handle rate limiting with longer initial delay
-PS C:\> $largeDataset | Set-DataverseRecord -TableName account -Retries 5 -InitialRetryDelay 2000
-```
-
-Processes a large dataset with automatic retry configured for rate limiting scenarios. Uses 5 retry attempts with an initial 2-second delay, doubling on each retry (2s, 4s, 8s, 16s, 32s).
 
 ### Example 20: Process records in parallel for maximum throughput
 ```powershell
@@ -487,6 +479,41 @@ PS C:\> @{
 ```
 
 Updates ALL contacts with lastname "TestUser" by setting their email address. The -AllowMultipleMatches switch allows updating all matching records when multiple records match the MatchOn criteria. Without this switch, an error would be raised if multiple matches are found.
+
+### Example 23: Import records with file attachments from Set-DataverseRecordsFolder
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> # Import records from a folder created by Set-DataverseRecordsFolder
+PS C:\> # The folder structure should look like:
+PS C:\> #   data/documents/
+PS C:\> #     ??? record1.json  (contains documentbody = "abc123-...")
+PS C:\> #     ??? record2.json
+PS C:\> #     ??? files/
+PS C:\> #         ??? abc123-...  (GUID folder)
+PS C:\> #             ??? contract.pdf (the actual file)
+
+PS C:\> Get-DataverseRecordsFolder -InputPath data/documents | 
+    Set-DataverseRecord -TableName document -FileDirectory data/documents/files -MatchOn name
+```
+
+Imports records from a folder previously exported using `Set-DataverseRecordsFolder`. The `-FileDirectory` parameter points to the `files` subfolder where file attachments are stored. When the cmdlet detects that a file column value (GUID) is being set, it looks for a subfolder with that GUID name and uploads the file found there.
+
+### Example 24: Create records with file uploads
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> # Prepare a file directory structure
+PS C:\> $fileId = [Guid]::NewGuid()
+PS C:\> New-Item -ItemType Directory -Path "temp/files/$fileId" -Force
+PS C:\> Copy-Item "C:\Documents\report.pdf" "temp/files/$fileId/report.pdf"
+
+PS C:\> # Create a record with a file column
+PS C:\> @{
+    name = "Monthly Report"
+    new_document = $fileId  # File column set to the GUID
+} | Set-DataverseRecord -TableName new_report -FileDirectory temp/files -CreateOnly
+```
+
+Creates a new record with a file attachment. The file column (`new_document`) is set to a GUID that corresponds to a subfolder in the FileDirectory. The cmdlet creates the record first, then uploads the file from the subfolder.
 
 ## PARAMETERS
 
@@ -607,6 +634,33 @@ If specified, duplicate detection will be enabled by setting SuppressDuplicateDe
 
 ```yaml
 Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -FileDirectory
+Path to a directory containing file attachments to upload. When a file column value (GUID) changes, the cmdlet looks for a subfolder with the matching GUID inside this directory and uploads the single file found there.
+
+This parameter is designed to work with folders created by `Set-DataverseRecordsFolder`. When records with file columns are exported using that cmdlet, files are saved to a `files` subfolder with each file in its own GUID-named subfolder. When importing records back using this parameter, the cmdlet automatically uploads files when their GUID values change.
+
+**Requirements:**
+- The FileDirectory must contain subfolders named with the file ID (GUID)
+- Each subfolder must contain exactly one file
+- The file column value in the input object must be a valid GUID
+
+**Behavior:**
+- On create: If a file column has a non-empty GUID, the file is uploaded after record creation
+- On update: If the file column GUID has changed, the file is uploaded after record update
+- File uploads are executed after the main record operation completes
+
+```yaml
+Type: String
 Parameter Sets: (All)
 Aliases:
 

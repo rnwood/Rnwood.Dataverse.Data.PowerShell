@@ -8,6 +8,7 @@ using Microsoft.Xrm.Sdk.Query;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Text;
@@ -52,6 +53,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             Id = parameters.Id;
             AllowMultipleMatches = parameters.AllowMultipleMatches;
             EnableDuplicateDetection = parameters.EnableDuplicateDetection;
+            FileDirectory = parameters.FileDirectory;
             Retries = parameters.Retries;
             InitialRetryDelay = parameters.InitialRetryDelay;
             RetriesRemaining = parameters.Retries;
@@ -84,6 +86,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Guid Id { get; }
         public bool AllowMultipleMatches { get; }
         public bool EnableDuplicateDetection { get; }
+        public string FileDirectory { get; }
         public int Retries { get; }
         public int InitialRetryDelay { get; }
         public int RetriesRemaining { get; set; }
@@ -96,28 +99,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Entity Target { get; set; }
         public EntityMetadata EntityMetadata { get; set; }
         public Entity ExistingRecord { get; set; }
-        
+
+        /// <summary>
+        /// List of pending file uploads to execute after the main record operation completes.
+        /// Each item contains the column name and file ID to upload.
+        /// </summary>
+        public List<(string ColumnName, Guid FileId)> PendingFileUploads { get; } = new List<(string, Guid)>();
+
         /// <summary>
         /// Callbacks to invoke when each request completes successfully.
         /// One callback per request in the Requests list.
         /// </summary>
         public List<Action<OrganizationResponse>> ResponseCompletions { get; set; }
-        
+
         /// <summary>
         /// Callback to invoke when the operation encounters a fault.
         /// Returns true if the fault was handled, false otherwise.
         /// </summary>
         public Func<OrganizationServiceFault, bool> ResponseExceptionCompletion { get; set; }
-        
+
         /// <summary>
         /// Callback to invoke when the operation completes successfully.
         /// This is a convenience property for single-request contexts.
         /// Setting this property adds the callback to ResponseCompletions.
         /// </summary>
-        public Action<OrganizationResponse> ResponseCompletion 
-        { 
+        public Action<OrganizationResponse> ResponseCompletion
+        {
             get => ResponseCompletions.Count > 0 ? ResponseCompletions[0] : null;
-            set 
+            set
             {
                 if (ResponseCompletions.Count == 0)
                 {
@@ -238,12 +247,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Create sorted lists of values for comparison
                         var existingValues = existingCollection.Select(o => o.Value).OrderBy(v => v).ToList();
                         var targetValues = targetCollection.Select(o => o.Value).OrderBy(v => v).ToList();
-                        
+
                         // Compare sorted lists - this handles duplicates and order correctly
                         if (existingValues.SequenceEqual(targetValues))
                         {
                             target.Attributes.Remove(column.Key);
                         }
+                    }
+                }
+                else if (existingRecord.GetAttributeValue<object>(column.Key) is byte[] existingBytes && column.Value is byte[] targetBytes)
+                {
+                    // Compare byte arrays by content
+                    if (existingBytes.SequenceEqual(targetBytes))
+                    {
+                        target.Attributes.Remove(column.Key);
                     }
                 }
             }
@@ -488,6 +505,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             SetIdProperty(InputObject, response.id);
             _writeVerbose(string.Format("Created new record {0}:{1} columns:\n{2}", target.LogicalName, response.id, columnSummary));
 
+            // Execute any pending file uploads
+            ExecutePendingFileUploads(response.id);
+
             if (PassThru)
             {
                 _writeObject(ConvertInputToPSObjectForPassThru(InputObject, response.id));
@@ -500,6 +520,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public void UpdateCompletion(Entity target, Entity existingRecord, string updatedColumnSummary)
         {
             _writeVerbose(string.Format("Updated existing record {0}:{1} columns:\n{2}", target.LogicalName, existingRecord.Id, updatedColumnSummary));
+
+            // Execute any pending file uploads
+            ExecutePendingFileUploads(existingRecord.Id);
 
             if (PassThru)
             {
@@ -526,6 +549,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 _writeVerbose(string.Format("Upsert updated existing record {0}:{1} columns:\n{2}", TableName, GetKeySummary(targetUpdate), columnSummary));
             }
+
+            // Execute any pending file uploads
+            ExecutePendingFileUploads(response.Target.Id);
 
             if (PassThru)
             {
@@ -633,10 +659,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 _writeVerbose($"Added create of new intersect record {TableName}:{record1.Id},{record2.Id} to batch");
 
                 // Set up completion callback and error handler
-                ResponseCompletion = (response) => {
+                ResponseCompletion = (response) =>
+                {
                     AssociateUpsertCompletion(true, Target, manyToManyRelationshipMetadata, record1, record2);
                 };
-                ResponseExceptionCompletion = (fault) => {
+                ResponseExceptionCompletion = (fault) =>
+                {
                     return AssociateUpsertError(fault, Target, manyToManyRelationshipMetadata, record1, record2);
                 };
 
@@ -646,15 +674,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity1IntersectAttribute, ConditionOperator.Equal, record1.Id);
                     getIdQuery.Criteria.AddCondition(manyToManyRelationshipMetadata.Entity2IntersectAttribute, ConditionOperator.Equal, record2.Id);
                     Requests.Add(new RetrieveMultipleRequest() { Query = getIdQuery });
-                    
+
                     // Add completion for the second request to set the Id on the InputObject
-                    ResponseCompletions.Add((response) => {
+                    ResponseCompletions.Add((response) =>
+                    {
                         AssociateUpsertGetIdCompletion(response);
                     });
                 }
             }
             else
             {
+                // Detect and queue file uploads before creating the upsert request
+                DetectAndQueueFileUploads(Target, null);
+
                 Entity targetUpdate = new Entity(Target.LogicalName) { Id = Target.Id };
 
                 if (MatchOn != null)
@@ -664,7 +696,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         throw new NotSupportedException("MatchOn must only have a single array when used with Upsert");
                     }
 
-                    var key = MetadataFactory.GetLimitedMetadata(Target.LogicalName).Keys.FirstOrDefault(k => 
+                    var key = MetadataFactory.GetLimitedMetadata(Target.LogicalName).Keys.FirstOrDefault(k =>
                         k.KeyAttributes.Length == MatchOn[0].Length && k.KeyAttributes.All(a => MatchOn[0].Contains(a)));
                     if (key == null)
                     {
@@ -679,24 +711,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
 
-                targetUpdate.Attributes.AddRange(Target.Attributes.Where(a => 
+                targetUpdate.Attributes.AddRange(Target.Attributes.Where(a =>
                     !DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
 
                 string columnSummary = GetColumnSummary(targetUpdate, EntityConverter);
 
                 UpsertRequest request = new UpsertRequest() { Target = targetUpdate };
-                
+
                 if (EnableDuplicateDetection)
                 {
                     request.Parameters["SuppressDuplicateDetection"] = false;
                 }
-                
+
                 Requests.Add(request);
 
                 _writeVerbose($"Added upsert of new record {TableName}:{GetKeySummary(targetUpdate)} to batch - columns:\n{columnSummary}");
 
                 // Set up completion callback
-                ResponseCompletion = (response) => {
+                ResponseCompletion = (response) =>
+                {
                     UpsertCompletion(targetUpdate, (UpsertResponse)response);
                 };
             }
@@ -729,8 +762,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
+            // Detect and queue file uploads after removing unchanged columns
+            DetectAndQueueFileUploads(Target, ExistingRecord);
+
             Entity targetUpdate = new Entity(Target.LogicalName);
-            targetUpdate.Attributes.AddRange(Target.Attributes.Where(a => 
+            targetUpdate.Attributes.AddRange(Target.Attributes.Where(a =>
                 !DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
 
             if (EntityMetadata.IsIntersect.GetValueOrDefault())
@@ -741,26 +777,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     _writeObject(ConvertInputToPSObjectForPassThru(InputObject, ExistingRecord.Id));
                 }
             }
-            else if (targetUpdate.Attributes.Any())
+            else if (targetUpdate.Attributes.Any() || PendingFileUploads.Count > 0)
             {
-                UpdateRequest request = new UpdateRequest() { Target = Target };
-                ApplyBypassBusinessLogicExecution(request);
-                
-                if (EnableDuplicateDetection)
+                if (targetUpdate.Attributes.Any())
                 {
-                    request.Parameters["SuppressDuplicateDetection"] = false;
+                    UpdateRequest request = new UpdateRequest() { Target = Target };
+                    ApplyBypassBusinessLogicExecution(request);
+
+                    if (EnableDuplicateDetection)
+                    {
+                        request.Parameters["SuppressDuplicateDetection"] = false;
+                    }
+
+                    string updatedColumnSummary = GetColumnSummary(targetUpdate, EntityConverter);
+
+                    Requests.Add(request);
+
+                    _writeVerbose($"Added updated of existing record {TableName}:{ExistingRecord.Id} to batch - columns:\n{updatedColumnSummary}");
+
+                    // Set up completion callback
+                    ResponseCompletion = (response) =>
+                    {
+                        UpdateCompletion(Target, ExistingRecord, updatedColumnSummary);
+                    };
                 }
-                
-                string updatedColumnSummary = GetColumnSummary(targetUpdate, EntityConverter);
+                else
+                {
+                    // Only file uploads, no regular column updates
+                    _writeVerbose($"No column changes for record {TableName}:{ExistingRecord.Id}, but file uploads pending");
 
-                Requests.Add(request);
+                    // Execute file uploads directly since there's no update request
+                    ExecutePendingFileUploads(ExistingRecord.Id);
 
-                _writeVerbose($"Added updated of existing record {TableName}:{ExistingRecord.Id} to batch - columns:\n{updatedColumnSummary}");
-
-                // Set up completion callback
-                ResponseCompletion = (response) => {
-                    UpdateCompletion(Target, ExistingRecord, updatedColumnSummary);
-                };
+                    if (PassThru)
+                    {
+                        _writeObject(ConvertInputToPSObjectForPassThru(InputObject, ExistingRecord.Id));
+                    }
+                }
             }
             else
             {
@@ -810,35 +863,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 Requests.Add(request);
 
                 _writeVerbose($"Added create of new intersect record {TableName}:{record1.Id},{record2.Id} to batch");
-                
+
                 // Set up completion callback
-                ResponseCompletion = (response) => {
+                ResponseCompletion = (response) =>
+                {
                     AssociateCompletion(Target, manyToManyRelationshipMetadata, record1, record2);
                 };
             }
             else
             {
+                // Detect and queue file uploads before creating the record
+                DetectAndQueueFileUploads(Target, null);
+
                 // Handle regular entity creation
                 Entity targetCreate = new Entity(Target.LogicalName) { Id = Target.Id };
-                targetCreate.Attributes.AddRange(Target.Attributes.Where(a => 
+                targetCreate.Attributes.AddRange(Target.Attributes.Where(a =>
                     !DontUpdateDirectlyColumnNames.Contains(a.Key, StringComparer.OrdinalIgnoreCase)));
 
                 string columnSummary = GetColumnSummary(targetCreate, EntityConverter);
 
                 CreateRequest request = new CreateRequest() { Target = targetCreate };
                 ApplyBypassBusinessLogicExecution(request);
-                
+
                 if (EnableDuplicateDetection)
                 {
                     request.Parameters["SuppressDuplicateDetection"] = false;
                 }
-                
+
                 Requests.Add(request);
 
                 _writeVerbose($"Added created of new record {TableName}:{targetCreate.Id} to batch - columns:\n{columnSummary}");
-                
+
                 // Set up completion callback
-                ResponseCompletion = (response) => {
+                ResponseCompletion = (response) =>
+                {
                     CreateCompletion(Target, targetCreate, columnSummary, (CreateResponse)response);
                 };
             }
@@ -847,6 +905,325 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public override string ToString()
         {
             return $"Set {TableName}:{Id}";
+        }
+
+        /// <summary>
+        /// Detects file column changes between target and existing record, and queues file uploads.
+        /// This should be called after RemoveUnchangedColumns to ensure only changed columns are processed.
+        /// </summary>
+        /// <param name="targetEntity">The target entity with values to set.</param>
+        /// <param name="existingEntity">The existing entity (null for creates).</param>
+        public void DetectAndQueueFileUploads(Entity targetEntity, Entity existingEntity)
+        {
+            if (string.IsNullOrEmpty(FileDirectory))
+            {
+                return;
+            }
+
+            // Find all file type columns in the entity metadata
+            var fileColumns = EntityMetadata.Attributes
+                .Where(a => a.AttributeTypeName == AttributeTypeDisplayName.FileType)
+                .ToList();
+
+            foreach (var fileColumn in fileColumns)
+            {
+                string columnName = fileColumn.LogicalName;
+
+                // Check if this column is being set
+                if (!targetEntity.Contains(columnName))
+                {
+                    continue;
+                }
+
+                object targetValue = targetEntity.GetAttributeValue<object>(columnName);
+
+                // Get the file ID from the target value
+                Guid? targetFileId = null;
+                if (targetValue is Guid guidValue)
+                {
+                    targetFileId = guidValue;
+                }
+                else if (targetValue != null)
+                {
+                    // Try to parse as string (might come from JSON deserialization)
+                    string stringValue = targetValue.ToString();
+                    if (Guid.TryParse(stringValue, out Guid parsedGuid))
+                    {
+                        targetFileId = parsedGuid;
+                    }
+                }
+
+                // Skip if the file ID is empty
+                if (!targetFileId.HasValue || targetFileId.Value == Guid.Empty)
+                {
+                    continue;
+                }
+
+                // Check if the file needs to be uploaded by comparing metadata
+                bool needsUpload = false;
+
+                if (existingEntity == null)
+                {
+                    // For creates, always upload files
+                    needsUpload = true;
+                }
+                else
+                {
+                    // For updates, compare file metadata to detect changes
+                    Guid? existingFileId = existingEntity.GetAttributeValue<Guid?>(columnName);
+
+                    if (!existingFileId.HasValue || existingFileId.Value == Guid.Empty)
+                    {
+                        // No existing file, need to upload
+                        needsUpload = true;
+                    }
+                    else if (existingFileId.Value == targetFileId.Value)
+                    {
+                        // Different file ID, need to upload
+                        needsUpload = false;
+                    }
+                    else
+                    {
+                        // Get target file path and metadata
+                        string targetFilePath = FileUploadHelper.FindFileInDirectory(FileDirectory, targetFileId.Value);
+                        var targetFileInfo = new FileInfo(targetFilePath);
+
+                        // Download existing file metadata from Dataverse to compare
+                        var initRequest = new Microsoft.Crm.Sdk.Messages.InitializeFileBlocksDownloadRequest
+                        {
+                            Target = new EntityReference(TableName, existingEntity.Id),
+                            FileAttributeName = columnName
+                        };
+
+                        var initResponse = (Microsoft.Crm.Sdk.Messages.InitializeFileBlocksDownloadResponse)Connection.Execute(initRequest);
+
+                        // Compare filename first (quick check)
+                        if (!string.Equals(targetFileInfo.Name, initResponse.FileName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            _writeVerbose($"File column {columnName}: filename changed from '{initResponse.FileName}' to '{targetFileInfo.Name}'");
+                            needsUpload = true;
+                        }
+                        // Compare file size (quick check)
+                        else if (targetFileInfo.Length != initResponse.FileSizeInBytes)
+                        {
+                            _writeVerbose($"File column {columnName}: size changed from {initResponse.FileSizeInBytes} to {targetFileInfo.Length} bytes");
+                            needsUpload = true;
+                        }
+                        else
+                        {
+                            // Same filename and size - compare content byte-by-byte
+                            needsUpload = !CompareFileContentsByBlocks(targetFilePath, initResponse.FileContinuationToken, initResponse.FileSizeInBytes, columnName);
+
+                            if (needsUpload)
+                            {
+                                _writeVerbose($"File column {columnName}: content changed");
+                            }
+                            else
+                            {
+                                _writeVerbose($"File column {columnName}: file unchanged (same filename, size, and content)");
+                            }
+                        }
+                    }
+                }
+
+                if (needsUpload)
+                {
+                    // Queue the file upload
+                    _writeVerbose($"Detected file column change: {columnName} = {targetFileId.Value}, will upload from FileDirectory");
+                    PendingFileUploads.Add((columnName, targetFileId.Value));
+
+                    // Remove the file column from the target entity - Dataverse manages the file ID
+                    // The file upload will set the value
+                    targetEntity.Attributes.Remove(columnName);
+                }
+                else
+                {
+                    // File is unchanged, remove from target to avoid unnecessary update
+                    targetEntity.Attributes.Remove(columnName);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Compares file contents by reading blocks incrementally from both files.
+        /// Uses FileStream seeking to read target file blocks on-demand without loading entire file.
+        /// Downloads existing file blocks from Dataverse and compares byte-by-byte, stopping early if they differ.
+        /// </summary>
+        /// <param name="targetFilePath">The path to the target file to compare.</param>
+        /// <param name="fileContinuationToken">The continuation token for downloading the existing file.</param>
+        /// <param name="existingFileSizeInBytes">The size of the existing file in bytes.</param>
+        /// <param name="columnName">The column name (for verbose logging).</param>
+        /// <returns>True if files are identical, false if they differ.</returns>
+        private bool CompareFileContentsByBlocks(string targetFilePath, string fileContinuationToken, long existingFileSizeInBytes, string columnName)
+        {
+            const string DOWNLOAD_BLOCK_REQUEST = "DownloadBlock";
+            const int BLOCK_SIZE = 4 * 1024 * 1024; // 4MB blocks
+
+            using (var targetFileStream = new FileStream(targetFilePath, FileMode.Open, FileAccess.Read, FileShare.Read, BLOCK_SIZE))
+            {
+                long existingOffset = 0;
+                long remainingExisting = existingFileSizeInBytes;
+
+                while (remainingExisting > 0)
+                {
+                    long blockSize = Math.Min(BLOCK_SIZE, remainingExisting);
+
+                    // Download block from existing file in Dataverse
+                    var downloadRequest = new OrganizationRequest(DOWNLOAD_BLOCK_REQUEST);
+                    downloadRequest.Parameters["FileContinuationToken"] = fileContinuationToken;
+                    downloadRequest.Parameters["Offset"] = existingOffset;
+                    downloadRequest.Parameters["BlockLength"] = blockSize;
+
+                    var downloadResponse = Connection.Execute(downloadRequest);
+
+                    if (!downloadResponse.Results.Contains("Data"))
+                    {
+                        // Unexpected - couldn't download block
+                        _writeVerbose($"File column {columnName}: could not download block at offset {existingOffset}");
+                        return false;
+                    }
+
+                    var existingData = downloadResponse.Results["Data"] as byte[];
+                    if (existingData == null || existingData.Length == 0)
+                    {
+                        // Unexpected - empty block
+                        _writeVerbose($"File column {columnName}: downloaded empty block at offset {existingOffset}");
+                        return false;
+                    }
+
+                    // Read corresponding block from target file
+                    byte[] targetBuffer = new byte[existingData.Length];
+                    int bytesRead = targetFileStream.Read(targetBuffer, 0, existingData.Length);
+
+                    // Check if we read the expected number of bytes
+                    if (bytesRead != existingData.Length)
+                    {
+                        // Target file is shorter than expected
+                        _writeVerbose($"File column {columnName}: target file is shorter (read {bytesRead} bytes, expected {existingData.Length})");
+                        return false;
+                    }
+
+                    // Compare byte-by-byte for this block
+                    for (int i = 0; i < existingData.Length; i++)
+                    {
+                        if (targetBuffer[i] != existingData[i])
+                        {
+                            // Found difference - files are different
+                            _writeVerbose($"File column {columnName}: content differs at byte {existingOffset + i}");
+                            return false;
+                        }
+                    }
+
+                    // Block matches - continue to next block
+                    existingOffset += existingData.Length;
+                    remainingExisting -= existingData.Length;
+                }
+
+                // Check if target file has more data than existing file
+                if (targetFileStream.Position < targetFileStream.Length)
+                {
+                    _writeVerbose($"File column {columnName}: target file is longer than existing file");
+                    return false;
+                }
+
+                // All blocks matched and file sizes are equal - files are identical
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Downloads file content from Dataverse using a continuation token.
+        /// </summary>
+        private byte[] DownloadFileContent(string fileContinuationToken, long fileSizeInBytes)
+        {
+            const string DOWNLOAD_BLOCK_REQUEST = "DownloadBlock";
+            const int BLOCK_SIZE = 4 * 1024 * 1024; // 4MB blocks
+
+            using (var memoryStream = new MemoryStream((int)fileSizeInBytes))
+            {
+                long offset = 0;
+                long remaining = fileSizeInBytes;
+
+                while (remaining > 0)
+                {
+                    long blockSize = Math.Min(BLOCK_SIZE, remaining);
+
+                    var downloadRequest = new OrganizationRequest(DOWNLOAD_BLOCK_REQUEST);
+                    downloadRequest.Parameters["FileContinuationToken"] = fileContinuationToken;
+                    downloadRequest.Parameters["Offset"] = offset;
+                    downloadRequest.Parameters["BlockLength"] = blockSize;
+
+                    var downloadResponse = Connection.Execute(downloadRequest);
+
+                    if (!downloadResponse.Results.Contains("Data"))
+                    {
+                        break;
+                    }
+
+                    var data = downloadResponse.Results["Data"] as byte[];
+                    if (data == null || data.Length == 0)
+                    {
+                        break;
+                    }
+
+                    memoryStream.Write(data, 0, data.Length);
+                    offset += data.Length;
+                    remaining -= data.Length;
+                }
+
+                return memoryStream.ToArray();
+            }
+        }
+
+        /// <summary>
+        /// Executes all pending file uploads for this record.
+        /// Should be called after the record has been created/updated and has a valid ID.
+        /// </summary>
+        /// <param name="recordId">The ID of the record to upload files to.</param>
+        public void ExecutePendingFileUploads(Guid recordId)
+        {
+            if (PendingFileUploads.Count == 0)
+            {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(FileDirectory))
+            {
+                throw new InvalidOperationException("FileDirectory is required when file column values are set");
+            }
+
+            foreach (var (columnName, fileId) in PendingFileUploads)
+            {
+                _writeVerbose($"Uploading file for column {columnName} with file ID {fileId} from {FileDirectory}");
+
+                try
+                {
+                    // Load the file from the directory
+                    var (content, fileName) = FileUploadHelper.LoadFileFromDirectory(FileDirectory, fileId);
+
+                    // Upload the file
+                    FileUploadHelper.UploadFile(
+                        Connection,
+                        TableName,
+                        recordId,
+                        columnName,
+                        content,
+                        fileName,
+                        _writeVerbose);
+
+                    _writeVerbose($"Successfully uploaded file '{fileName}' ({content.Length} bytes) to {TableName} record {recordId}, column {columnName}");
+                }
+                catch (FileNotFoundException ex)
+                {
+                    throw new FileNotFoundException($"Failed to upload file for column '{columnName}': {ex.Message}. Make sure -FileDirectory is specified and contains a subfolder named '{fileId}' with exactly one file.", ex);
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Failed to upload file for column '{columnName}' with file ID '{fileId}': {ex.Message}", ex);
+                }
+            }
+
+            PendingFileUploads.Clear();
         }
     }
 }
