@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xrm.Sdk;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,10 +43,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
         public string TableName { get; set; }
 
-		/// <summary>
-		/// Implicitly converts a DataverseEntityReference to a Guid.
-		/// </summary>
-		/// <param name="value">The entity reference to convert.</param>
+
+        public string Type => "EntityReference";
+
+        /// <summary>
+        /// Implicitly converts a DataverseEntityReference to a Guid.
+        /// </summary>
+        /// <param name="value">The entity reference to convert.</param>
         public static implicit operator Guid(DataverseEntityReference value)
         {
             return value.Id;

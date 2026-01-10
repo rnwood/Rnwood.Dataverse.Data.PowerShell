@@ -157,6 +157,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "If specified, duplicate detection will be enabled by setting SuppressDuplicateDetection to false in create, update, and upsert requests.")]
         public SwitchParameter EnableDuplicateDetection { get; set; }
 
+        /// <summary>
+        /// Path to a directory containing file attachments to upload. When a file column value (GUID) changes, 
+        /// the cmdlet looks for a subfolder with the matching GUID inside this directory and uploads the single file found there.
+        /// This is designed to work with folders created by Set-DataverseRecordsFolder.
+        /// </summary>
+        [Parameter(HelpMessage = "Path to a directory containing file attachments. When a file column value (GUID) changes, looks for a subfolder with the matching GUID and uploads the file found there.")]
+        public string FileDirectory { get; set; }
+
         // Explicit interface implementations for ISetOperationParameters
         bool ISetOperationParameters.NoUpdate => NoUpdate.IsPresent;
         bool ISetOperationParameters.NoCreate => NoCreate.IsPresent;
@@ -173,6 +181,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         Guid ISetOperationParameters.Id => Id;
         bool ISetOperationParameters.AllowMultipleMatches => AllowMultipleMatches.IsPresent;
         bool ISetOperationParameters.EnableDuplicateDetection => EnableDuplicateDetection.IsPresent;
+        string ISetOperationParameters.FileDirectory => FileDirectory;
 
         private SetBatchProcessor _setBatchProcessor;
         private RetrievalBatchProcessor _retrievalBatchProcessor;

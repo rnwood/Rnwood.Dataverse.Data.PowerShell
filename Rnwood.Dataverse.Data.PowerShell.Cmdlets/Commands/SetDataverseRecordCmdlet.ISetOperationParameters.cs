@@ -81,5 +81,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets a value indicating whether to enable duplicate detection (by setting SuppressDuplicateDetection to false in requests).
         /// </summary>
         bool EnableDuplicateDetection { get; }
+
+        /// <summary>
+        /// Gets the path to a directory containing file attachments to upload.
+        /// When a file column value (GUID) changes, the cmdlet looks for a subfolder with the matching GUID 
+        /// inside this directory and uploads the single file found there.
+        /// </summary>
+        string FileDirectory { get; }
     }
 }
