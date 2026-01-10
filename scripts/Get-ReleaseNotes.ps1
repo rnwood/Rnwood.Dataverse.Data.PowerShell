@@ -83,11 +83,10 @@ foreach ($commitLine in $commits -split "`n`n") {
                   $body -match '(?:^|\n)BREAKING[- ]CHANGE\s*:'
     
     if ($isBreaking) {
-        # Extract the description
-        $description = $normalizedSubject -replace '^[^:]+:\s*', ''
+        # Keep the full subject including conventional commit prefix
         $breakingChanges += @{
             Hash = $hash
-            Description = $description
+            Description = $normalizedSubject
             Body = $body
         }
         continue
@@ -95,20 +94,20 @@ foreach ($commitLine in $commits -split "`n`n") {
     
     # Check for features
     if ($normalizedSubject -match '^feat(\(.+?\))?:\s*(.+)') {
-        $description = $matches[2]
+        # Keep the full subject including conventional commit prefix
         $features += @{
             Hash = $hash
-            Description = $description
+            Description = $normalizedSubject
         }
         continue
     }
     
     # Check for fixes
     if ($normalizedSubject -match '^fix(\(.+?\))?:\s*(.+)') {
-        $description = $matches[2]
+        # Keep the full subject including conventional commit prefix
         $fixes += @{
             Hash = $hash
-            Description = $description
+            Description = $normalizedSubject
         }
         continue
     }
@@ -116,11 +115,11 @@ foreach ($commitLine in $commits -split "`n`n") {
     # Check for other conventional commit types
     if ($normalizedSubject -match '^(docs|chore|style|refactor|perf|test|build|ci)(\(.+?\))?:\s*(.+)') {
         $type = $matches[1]
-        $description = $matches[3]
+        # Keep the full subject including conventional commit prefix
         $other += @{
             Hash = $hash
             Type = $type
-            Description = $description
+            Description = $normalizedSubject
         }
         continue
     }
