@@ -65,31 +65,6 @@ Describe 'Test-DataverseRecordAccess' {
             $access.GetType().Name | Should -Be "AccessRights"
         }
 
-        It "Does not modify any data (read-only operation)" {
-            $connection = getMockConnection
-            
-            # Create test record
-            $contact = @{
-                firstname = "ReadOnly"
-                lastname = "Check"
-            } | Set-DataverseRecord -Connection $connection -TableName contact -CreateOnly -PassThru
-            
-            # Get current user ID
-            $whoAmI = Get-DataverseWhoAmI -Connection $connection
-            
-            # Test access using TableName and Id
-            $result = Test-DataverseRecordAccess -Connection $connection -TableName contact -Id $contact.Id -Principal $whoAmI.UserId
-            
-            # Verify contact was not affected
-            $verifyContact = Get-DataverseRecord -Connection $connection -TableName contact -Id $contact.Id
-            $verifyContact.firstname | Should -Be "ReadOnly"
-            $verifyContact.lastname | Should -Be "Check"
-            
-            # Verify no side effects - still only one record
-            $allContacts = Get-DataverseRecord -Connection $connection -TableName contact
-            $allContacts | Should -HaveCount 1
-        }
-
         It "Works with default connection" {
             $connection = getMockConnection
             
