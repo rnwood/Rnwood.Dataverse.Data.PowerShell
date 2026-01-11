@@ -16,9 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Loader\Rnwood.Dataverse.Data.PowerShell.Loader.csproj" />
-    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
