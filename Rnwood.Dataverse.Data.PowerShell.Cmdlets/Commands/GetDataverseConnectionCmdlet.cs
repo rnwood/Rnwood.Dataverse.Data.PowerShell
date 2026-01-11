@@ -1,36 +1,37 @@
 ﻿using Azure.Core;
 using Azure.Identity;
 using FakeItEasy;
-using FakeXrmEasy.Core;
-using FakeXrmEasy.Middleware;
 using FakeXrmEasy;
 using FakeXrmEasy.Abstractions;
 using FakeXrmEasy.Abstractions.Enums;
+using FakeXrmEasy.Core;
+using FakeXrmEasy.FakeMessageExecutors;
+using FakeXrmEasy.Middleware;
 using FakeXrmEasy.Middleware.Crud;
 using FakeXrmEasy.Middleware.Messages;
-using FakeXrmEasy.FakeMessageExecutors;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
+using Rnwood.Dataverse.Data.PowerShell.Cmdlets.Commands.Model;
+using Rnwood.Dataverse.Data.PowerShell.Commands.PacProfileParsing;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Net;
 using System.Net.Http;
 using System.Reflection;
+using System.Security;
+using System.Security.Cryptography.X509Certificates;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using AuthenticationResult = Microsoft.Identity.Client.AuthenticationResult;
-using System.Security;
-using System.Security.Cryptography.X509Certificates;
-using System.IO;
-using System.Text.Json;
-using Rnwood.Dataverse.Data.PowerShell.Commands.PacProfileParsing;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
