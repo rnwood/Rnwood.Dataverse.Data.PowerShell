@@ -168,9 +168,7 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_project `
     -HasNotes
 ```
 
-Enables both activities and notes support on an existing custom entity named `new_project`. The cmdlet creates the necessary relationships with the `activitypointer` and `annotation` tables.
-
-**Note**: This operation creates one-to-many relationships named `new_Project_ActivityPointers` and `new_Project_Annotations`. To disable these features later, use `Remove-DataverseRelationshipMetadata` to delete these relationships.
+Enables both activities and notes support on an existing custom entity named `new_project`.
 
 ### Example 10: Create entity and return metadata
 ```powershell
@@ -572,8 +570,6 @@ When enabled, users can:
 - See activity timelines on forms
 - Create activities related to these records
 
-**Changing after creation**: This property can be changed after entity creation. When enabling HasActivities on an existing entity, the cmdlet creates a one-to-many relationship with the `activitypointer` table. When disabling, you must manually delete the relationship using `Remove-DataverseRelationshipMetadata`.
-
 ```yaml
 Type: SwitchParameter
 Parameter Sets: ByProperties
@@ -593,8 +589,6 @@ When enabled, users can:
 - Add notes with rich text
 - Attach files to records
 - View notes history
-
-**Changing after creation**: This property can be changed after entity creation. When enabling HasNotes on an existing entity, the cmdlet creates a one-to-many relationship with the `annotation` table. When disabling, you must manually delete the relationship using `Remove-DataverseRelationshipMetadata`.
 
 ```yaml
 Type: SwitchParameter
