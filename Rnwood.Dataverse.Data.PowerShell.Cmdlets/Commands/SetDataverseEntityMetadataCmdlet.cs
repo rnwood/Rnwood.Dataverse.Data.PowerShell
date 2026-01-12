@@ -496,15 +496,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 if (HasActivities.ToBool() != existingEntity.HasActivities)
                 {
-                    WriteWarning($"Changing HasActivities from '{existingEntity.HasActivities}' to '{HasActivities.ToBool()}' requires creating or deleting the relationship with the 'activitypointer' table. This operation will create a one-to-many relationship named '{existingEntity.SchemaName}_ActivityPointers' if enabling, or require manual deletion if disabling.");
+                    WriteVerbose($"Changing HasActivities from '{existingEntity.HasActivities}' to '{HasActivities.ToBool()}'");
                     
                     if (HasActivities.ToBool())
                     {
+                        WriteWarning($"Enabling HasActivities will create a one-to-many relationship '{existingEntity.SchemaName}_ActivityPointers' with the 'activitypointer' table.");
                         UpdateHasActivities(existingEntity, true);
                     }
                     else
                     {
-                        WriteWarning("Disabling HasActivities after it has been enabled requires manual deletion of the relationship using Remove-DataverseRelationshipMetadata.");
+                        WriteWarning("Disabling HasActivities requires manual deletion of the relationship.");
+                        WriteWarning($"Use Remove-DataverseRelationshipMetadata to delete relationship '{existingEntity.SchemaName}_ActivityPointers'.");
                     }
                 }
             }
@@ -513,15 +515,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 if (HasNotes.ToBool() != existingEntity.HasNotes)
                 {
-                    WriteWarning($"Changing HasNotes from '{existingEntity.HasNotes}' to '{HasNotes.ToBool()}' requires creating or deleting the relationship with the 'annotation' table. This operation will create a one-to-many relationship named '{existingEntity.SchemaName}_Annotations' if enabling, or require manual deletion if disabling.");
+                    WriteVerbose($"Changing HasNotes from '{existingEntity.HasNotes}' to '{HasNotes.ToBool()}'");
                     
                     if (HasNotes.ToBool())
                     {
+                        WriteWarning($"Enabling HasNotes will create a one-to-many relationship '{existingEntity.SchemaName}_Annotations' with the 'annotation' table.");
                         UpdateHasNotes(existingEntity, true);
                     }
                     else
                     {
-                        WriteWarning("Disabling HasNotes after it has been enabled requires manual deletion of the relationship using Remove-DataverseRelationshipMetadata.");
+                        WriteWarning("Disabling HasNotes requires manual deletion of the relationship.");
+                        WriteWarning($"Use Remove-DataverseRelationshipMetadata to delete relationship '{existingEntity.SchemaName}_Annotations'.");
                     }
                 }
             }
@@ -947,8 +951,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex)
                 {
-                    // Check if relationship already exists or if there's a more specific error
-                    if (ex.Message.Contains("already exists") || ex.Message.Contains("duplicate"))
+                    // Check error code for duplicate relationship (0x80048200)
+                    // or check Detail for specific error types
+                    var fault = ex.Detail;
+                    bool isDuplicateError = fault != null && 
+                        (fault.ErrorCode == unchecked((int)0x80048200) || // Duplicate detection error
+                         fault.ErrorCode == unchecked((int)0x80048201) || // Relationship already exists
+                         ex.Message.Contains("already exists") || 
+                         ex.Message.Contains("duplicate"));
+                    
+                    if (isDuplicateError)
                     {
                         WriteVerbose($"Activities relationship already exists for '{existingEntity.LogicalName}'");
                     }
@@ -1017,8 +1029,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 catch (FaultException<OrganizationServiceFault> ex)
                 {
-                    // Check if relationship already exists or if there's a more specific error
-                    if (ex.Message.Contains("already exists") || ex.Message.Contains("duplicate"))
+                    // Check error code for duplicate relationship (0x80048200)
+                    // or check Detail for specific error types
+                    var fault = ex.Detail;
+                    bool isDuplicateError = fault != null && 
+                        (fault.ErrorCode == unchecked((int)0x80048200) || // Duplicate detection error
+                         fault.ErrorCode == unchecked((int)0x80048201) || // Relationship already exists
+                         ex.Message.Contains("already exists") || 
+                         ex.Message.Contains("duplicate"));
+                    
+                    if (isDuplicateError)
                     {
                         WriteVerbose($"Notes relationship already exists for '{existingEntity.LogicalName}'");
                     }
