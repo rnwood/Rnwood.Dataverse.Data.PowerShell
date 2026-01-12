@@ -489,6 +489,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 hasChanges = true;
             }
             
+            // Note: HasActivities and HasNotes updates require creating/deleting relationships
+            // with activitypointer and annotation entities respectively.
+            // Warn the user but don't block the operation - let Dataverse handle validation
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)))
+            {
+                if (HasActivities.ToBool() != existingEntity.HasActivities)
+                {
+                    WriteWarning($"Changing HasActivities from '{existingEntity.HasActivities}' to '{HasActivities.ToBool()}' requires creating or deleting the relationship with the 'activitypointer' table. This operation will create a one-to-many relationship named '{existingEntity.SchemaName}_ActivityPointers' if enabling, or require manual deletion if disabling.");
+                    
+                    if (HasActivities.ToBool())
+                    {
+                        UpdateHasActivities(existingEntity, true);
+                    }
+                    else
+                    {
+                        WriteWarning("Disabling HasActivities after it has been enabled requires manual deletion of the relationship using Remove-DataverseRelationshipMetadata.");
+                    }
+                }
+            }
+
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)))
+            {
+                if (HasNotes.ToBool() != existingEntity.HasNotes)
+                {
+                    WriteWarning($"Changing HasNotes from '{existingEntity.HasNotes}' to '{HasNotes.ToBool()}' requires creating or deleting the relationship with the 'annotation' table. This operation will create a one-to-many relationship named '{existingEntity.SchemaName}_Annotations' if enabling, or require manual deletion if disabling.");
+                    
+                    if (HasNotes.ToBool())
+                    {
+                        UpdateHasNotes(existingEntity, true);
+                    }
+                    else
+                    {
+                        WriteWarning("Disabling HasNotes after it has been enabled requires manual deletion of the relationship using Remove-DataverseRelationshipMetadata.");
+                    }
+                }
+            }
+            
             // Validate icon properties before updating
             if (!SkipIconValidation)
             {
@@ -630,17 +667,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            // Check if HasActivities was provided and is different (immutable after creation)
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)) &&
-                HasActivities.ToBool() != existingEntity.HasActivities)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Cannot change HasActivities from '{existingEntity.HasActivities}' to '{HasActivities.ToBool()}'. This property is immutable after creation."),
-                    "ImmutableHasActivities",
-                    ErrorCategory.InvalidOperation,
-                    null));
-            }
-
             // Check if IsActivity was provided and is different (immutable after creation)
             if (MyInvocation.BoundParameters.ContainsKey(nameof(IsActivity)) &&
                 IsActivity.ToBool() != existingEntity.IsActivity)
@@ -648,17 +674,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ThrowTerminatingError(new ErrorRecord(
                     new InvalidOperationException($"Cannot change IsActivity from '{existingEntity.IsActivity}' to '{IsActivity.ToBool()}'. This property is immutable after creation. Activity entities cannot be converted to standard entities and vice versa."),
                     "ImmutableIsActivity",
-                    ErrorCategory.InvalidOperation,
-                    null));
-            }
-
-            // Check if HasNotes was provided and is different (immutable after creation)
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)) &&
-                HasNotes.ToBool() != existingEntity.HasNotes)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Cannot change HasNotes from '{existingEntity.HasNotes}' to '{HasNotes.ToBool()}'. This property is immutable after creation."),
-                    "ImmutableHasNotes",
                     ErrorCategory.InvalidOperation,
                     null));
             }
@@ -882,6 +897,146 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             WriteVerbose($"{propertyName} '{iconName}' validated successfully");
+        }
+
+        /// <summary>
+        /// Updates the HasActivities property by creating or deleting the relationship with activitypointer.
+        /// </summary>
+        private void UpdateHasActivities(EntityMetadata existingEntity, bool enableActivities)
+        {
+            if (existingEntity.HasActivities == enableActivities)
+            {
+                WriteVerbose($"HasActivities is already set to {enableActivities}, no change needed");
+                return;
+            }
+
+            if (enableActivities)
+            {
+                // Enable activities by creating a 1:N relationship with activitypointer
+                WriteVerbose($"Enabling activities for entity '{existingEntity.LogicalName}' by creating relationship with activitypointer");
+                
+                var relationship = new OneToManyRelationshipMetadata
+                {
+                    SchemaName = $"{existingEntity.SchemaName}_ActivityPointers",
+                    ReferencedEntity = existingEntity.LogicalName,
+                    ReferencingEntity = "activitypointer",
+                    ReferencedAttribute = $"{existingEntity.LogicalName}id",
+                    ReferencingAttribute = "regardingobjectid",
+                    IsHierarchical = false,
+                    IsCustomizable = new BooleanManagedProperty(true),
+                    CascadeConfiguration = new CascadeConfiguration
+                    {
+                        Assign = CascadeType.NoCascade,
+                        Delete = CascadeType.RemoveLink,
+                        Merge = CascadeType.NoCascade,
+                        Reparent = CascadeType.NoCascade,
+                        Share = CascadeType.NoCascade,
+                        Unshare = CascadeType.NoCascade
+                    }
+                };
+
+                var request = new CreateOneToManyRequest
+                {
+                    OneToManyRelationship = relationship
+                };
+
+                try
+                {
+                    Connection.Execute(request);
+                    WriteVerbose($"Successfully enabled activities for '{existingEntity.LogicalName}'");
+                }
+                catch (FaultException<OrganizationServiceFault> ex)
+                {
+                    // Check if relationship already exists or if there's a more specific error
+                    if (ex.Message.Contains("already exists") || ex.Message.Contains("duplicate"))
+                    {
+                        WriteVerbose($"Activities relationship already exists for '{existingEntity.LogicalName}'");
+                    }
+                    else
+                    {
+                        WriteError(new ErrorRecord(
+                            new InvalidOperationException($"Failed to enable HasActivities: {ex.Message}. You may need to create the relationship manually using Set-DataverseRelationshipMetadata."),
+                            "FailedToEnableHasActivities",
+                            ErrorCategory.InvalidOperation,
+                            null));
+                    }
+                }
+            }
+            else
+            {
+                // Disable activities by deleting the relationship
+                WriteWarning($"Disabling HasActivities for '{existingEntity.LogicalName}' requires deleting the relationship with activitypointer. Use Remove-DataverseRelationshipMetadata with relationship name '{existingEntity.SchemaName}_ActivityPointers' to disable activities.");
+            }
+        }
+
+        /// <summary>
+        /// Updates the HasNotes property by creating or deleting the relationship with annotation.
+        /// </summary>
+        private void UpdateHasNotes(EntityMetadata existingEntity, bool enableNotes)
+        {
+            if (existingEntity.HasNotes == enableNotes)
+            {
+                WriteVerbose($"HasNotes is already set to {enableNotes}, no change needed");
+                return;
+            }
+
+            if (enableNotes)
+            {
+                // Enable notes by creating a 1:N relationship with annotation
+                WriteVerbose($"Enabling notes for entity '{existingEntity.LogicalName}' by creating relationship with annotation");
+                
+                var relationship = new OneToManyRelationshipMetadata
+                {
+                    SchemaName = $"{existingEntity.SchemaName}_Annotations",
+                    ReferencedEntity = existingEntity.LogicalName,
+                    ReferencingEntity = "annotation",
+                    ReferencedAttribute = $"{existingEntity.LogicalName}id",
+                    ReferencingAttribute = "objectid",
+                    IsHierarchical = false,
+                    IsCustomizable = new BooleanManagedProperty(true),
+                    CascadeConfiguration = new CascadeConfiguration
+                    {
+                        Assign = CascadeType.Cascade,
+                        Delete = CascadeType.Cascade,
+                        Merge = CascadeType.Cascade,
+                        Reparent = CascadeType.Cascade,
+                        Share = CascadeType.Cascade,
+                        Unshare = CascadeType.Cascade
+                    }
+                };
+
+                var request = new CreateOneToManyRequest
+                {
+                    OneToManyRelationship = relationship
+                };
+
+                try
+                {
+                    Connection.Execute(request);
+                    WriteVerbose($"Successfully enabled notes for '{existingEntity.LogicalName}'");
+                }
+                catch (FaultException<OrganizationServiceFault> ex)
+                {
+                    // Check if relationship already exists or if there's a more specific error
+                    if (ex.Message.Contains("already exists") || ex.Message.Contains("duplicate"))
+                    {
+                        WriteVerbose($"Notes relationship already exists for '{existingEntity.LogicalName}'");
+                    }
+                    else
+                    {
+                        WriteError(new ErrorRecord(
+                            new InvalidOperationException($"Failed to enable HasNotes: {ex.Message}. You may need to create the relationship manually using Set-DataverseRelationshipMetadata."),
+                            "FailedToEnableHasNotes",
+                            ErrorCategory.InvalidOperation,
+                            null));
+                    }
+                }
+            }
+            else
+            {
+                // Disable notes by deleting the relationship
+                WriteWarning($"Disabling HasNotes for '{existingEntity.LogicalName}' requires deleting the relationship with annotation. Use Remove-DataverseRelationshipMetadata with relationship name '{existingEntity.SchemaName}_Annotations' to disable notes.");
+            }
         }
     }
 }
