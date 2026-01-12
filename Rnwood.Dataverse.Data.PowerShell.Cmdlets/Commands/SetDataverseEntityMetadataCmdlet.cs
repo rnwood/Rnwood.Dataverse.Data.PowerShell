@@ -630,17 +630,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            // Check if HasActivities was provided and is different (immutable after creation)
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)) &&
-                HasActivities.ToBool() != existingEntity.HasActivities)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Cannot change HasActivities from '{existingEntity.HasActivities}' to '{HasActivities.ToBool()}'. This property is immutable after creation."),
-                    "ImmutableHasActivities",
-                    ErrorCategory.InvalidOperation,
-                    null));
-            }
-
             // Check if IsActivity was provided and is different (immutable after creation)
             if (MyInvocation.BoundParameters.ContainsKey(nameof(IsActivity)) &&
                 IsActivity.ToBool() != existingEntity.IsActivity)
@@ -648,17 +637,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ThrowTerminatingError(new ErrorRecord(
                     new InvalidOperationException($"Cannot change IsActivity from '{existingEntity.IsActivity}' to '{IsActivity.ToBool()}'. This property is immutable after creation. Activity entities cannot be converted to standard entities and vice versa."),
                     "ImmutableIsActivity",
-                    ErrorCategory.InvalidOperation,
-                    null));
-            }
-
-            // Check if HasNotes was provided and is different (immutable after creation)
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)) &&
-                HasNotes.ToBool() != existingEntity.HasNotes)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Cannot change HasNotes from '{existingEntity.HasNotes}' to '{HasNotes.ToBool()}'. This property is immutable after creation."),
-                    "ImmutableHasNotes",
                     ErrorCategory.InvalidOperation,
                     null));
             }
