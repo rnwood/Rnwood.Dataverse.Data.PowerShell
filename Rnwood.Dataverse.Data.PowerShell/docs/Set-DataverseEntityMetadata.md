@@ -160,7 +160,19 @@ PS C:\> Set-DataverseEntityMetadata -EntityName contact `
 
 Enables change tracking for the `contact` entity to support data synchronization scenarios.
 
-### Example 9: Create entity and return metadata
+### Example 9: Enable activities and notes on existing custom entity
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseEntityMetadata -EntityName new_project `
+    -HasActivities `
+    -HasNotes
+```
+
+Enables both activities and notes support on an existing custom entity named `new_project`. The cmdlet creates the necessary relationships with the `activitypointer` and `annotation` tables.
+
+**Note**: This operation creates one-to-many relationships named `new_Project_ActivityPointers` and `new_Project_Annotations`. To disable these features later, use `Remove-DataverseRelationshipMetadata` to delete these relationships.
+
+### Example 24: Create entity and return metadata
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $result = Set-DataverseEntityMetadata -EntityName new_item `
@@ -186,7 +198,7 @@ IsAuditEnabled   : False
 
 Creates an entity and returns its metadata using `-PassThru`.
 
-### Example 10: Use -WhatIf to preview changes
+### Example 24: Use -WhatIf to preview changes
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_test `
@@ -203,7 +215,7 @@ What if: Performing the operation "Create entity 'new_Test'" on target "Datavers
 
 Uses `-WhatIf` to see what would happen without actually creating the entity.
 
-### Example 11: Create entity with activities, notes, and audit
+### Example 24: Create entity with activities, notes, and audit
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_case `
@@ -222,7 +234,7 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_case `
 
 Creates a full-featured entity with all available options enabled.
 
-### Example 12: Update with Force parameter
+### Example 24: Update with Force parameter
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
@@ -232,7 +244,7 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
 
 Updates an entity without confirmation prompt (Force parameter bypasses confirmation).
 
-### Example 13: Create team-owned entity
+### Example 24: Create team-owned entity
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_resource `
@@ -246,7 +258,7 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_resource `
 
 Creates a team-owned entity where records are owned by teams rather than individual users.
 
-### Example 14: Batch create multiple entities
+### Example 24: Batch create multiple entities
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $entities = @(
@@ -269,7 +281,7 @@ PS C:\> foreach ($entity in $entities) {
 
 Creates multiple entities by iterating through a collection.
 
-### Example 15: Create with specific connection
+### Example 24: Create with specific connection
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
@@ -286,7 +298,7 @@ PS C:\> Set-DataverseEntityMetadata `
 
 Creates an entity using a specific connection instead of the default connection.
 
-### Example 16: Create entity with icon properties
+### Example 24: Create entity with icon properties
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
@@ -304,7 +316,7 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
 
 Creates an entity with custom icon properties. Icons control the visual appearance of the entity in the Dataverse UI.
 
-### Example 17: Update icon properties on existing entity
+### Example 24: Update icon properties on existing entity
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName account `
@@ -314,7 +326,7 @@ PS C:\> Set-DataverseEntityMetadata -EntityName account `
 
 Updates only the icon properties of an existing entity without changing other properties.
 
-### Example 18: Update entity using EntityMetadata object
+### Example 24: Update entity using EntityMetadata object
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get existing metadata
@@ -330,7 +342,7 @@ PS C:\> Set-DataverseEntityMetadata -EntityMetadata $metadata
 
 Retrieves an EntityMetadata object, modifies properties, and updates the entity using the modified object. This is useful for complex updates or bulk modifications.
 
-### Example 19: Pipeline EntityMetadata for batch updates
+### Example 24: Pipeline EntityMetadata for batch updates
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Update icons for multiple custom entities
@@ -345,7 +357,7 @@ PS C:\> Get-DataverseEntityMetadata |
 
 Retrieves all custom entities, updates their icon properties, and publishes the changes using the pipeline.
 
-### Example 20: Copy entity metadata properties to another entity
+### Example 24: Copy entity metadata properties to another entity
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Get source entity metadata
@@ -361,7 +373,7 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_customer `
 
 Copies icon properties from one entity to another entity.
 
-### Example 21: Create entity with validated icon webresources
+### Example 24: Create entity with validated icon webresources
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create an entity with all icon properties that reference valid webresources
@@ -386,7 +398,7 @@ Creates an entity with icon validation enabled (default). The cmdlet validates t
 
 If any webresource doesn't exist or has the wrong type, an error is thrown.
 
-### Example 22: Skip icon webresource validation
+### Example 24: Skip icon webresource validation
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create an entity without validating icon webresource existence
@@ -403,7 +415,7 @@ PS C:\> Set-DataverseEntityMetadata -EntityName new_product `
 
 Creates an entity with icon validation disabled. The cmdlet will not check if "new_product_icon" webresource exists or has the correct type. Use this when you plan to create the webresource later or want to bypass validation for development/testing.
 
-### Example 23: Create an activity entity
+### Example 24: Create an activity entity
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEntityMetadata -EntityName new_customactivity `
@@ -560,7 +572,7 @@ When enabled, users can:
 - See activity timelines on forms
 - Create activities related to these records
 
-**Note**: This property cannot be changed after entity creation.
+**Changing after creation**: This property can be changed after entity creation. When enabling HasActivities on an existing entity, the cmdlet creates a one-to-many relationship with the `activitypointer` table. When disabling, you must manually delete the relationship using `Remove-DataverseRelationshipMetadata`.
 
 ```yaml
 Type: SwitchParameter
@@ -582,7 +594,7 @@ When enabled, users can:
 - Attach files to records
 - View notes history
 
-**Note**: This property cannot be changed after entity creation.
+**Changing after creation**: This property can be changed after entity creation. When enabling HasNotes on an existing entity, the cmdlet creates a one-to-many relationship with the `annotation` table. When disabling, you must manually delete the relationship using `Remove-DataverseRelationshipMetadata`.
 
 ```yaml
 Type: SwitchParameter
