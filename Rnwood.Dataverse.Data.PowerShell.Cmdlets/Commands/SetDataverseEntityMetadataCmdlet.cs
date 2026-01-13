@@ -488,6 +488,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 entityToUpdate.ChangeTrackingEnabled = ChangeTrackingEnabled.ToBool();
                 hasChanges = true;
             }
+
+            // Update has activities
+            if (HasActivities.IsPresent)
+            {
+                entityToUpdate.HasActivities = HasActivities.ToBool();
+                hasChanges = true;
+            }
+
+            // Update has notes
+            if (HasNotes.IsPresent)
+            {
+                entityToUpdate.HasNotes = HasNotes.ToBool();
+                hasChanges = true;
+            }
             
             // Validate icon properties before updating
             if (!SkipIconValidation)
