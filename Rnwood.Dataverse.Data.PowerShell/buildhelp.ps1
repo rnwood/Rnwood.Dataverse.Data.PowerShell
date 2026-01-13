@@ -55,7 +55,29 @@ if (Test-Path (Join-Path $outdir 'en-GB')) {
 # Ensure output dir exists
 if (-not (Test-Path $outdir)) { New-Item -ItemType Directory -Path $outdir -Force | Out-Null }
 
-New-ExternalHelp -Verbose -Path $docsPath -OutputPath (Join-Path $outdir 'en-GB')
+# Generate help files to temporary location first
+$tempHelpPath = Join-Path $outdir 'en-GB'
+New-ExternalHelp -Verbose -Path $docsPath -OutputPath $tempHelpPath
+
+# Copy help files to cmdlet directories for each target framework and locale
+# PowerShell looks for help files in locale subdirectories relative to where the DLL is loaded
+# Support both en-GB and en-US (fallback for invariant culture)
+$frameworks = @('net8.0', 'net462')
+$locales = @('en-GB', 'en-US')
+foreach ($framework in $frameworks) {
+    foreach ($locale in $locales) {
+        $cmdletHelpDir = Join-Path $outdir "cmdlets/$framework/$locale"
+        if (-not (Test-Path $cmdletHelpDir)) {
+            New-Item -ItemType Directory -Path $cmdletHelpDir -Force | Out-Null
+        }
+        
+        # Copy the cmdlet help XML to the framework-specific directory
+        $sourceFile = Join-Path $tempHelpPath 'Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll-Help.xml'
+        if (Test-Path $sourceFile) {
+            Copy-Item -Path $sourceFile -Destination $cmdletHelpDir -Force -Verbose
+        }
+    }
+}
 
 # Save the new hash for incremental checks next time
 try {
