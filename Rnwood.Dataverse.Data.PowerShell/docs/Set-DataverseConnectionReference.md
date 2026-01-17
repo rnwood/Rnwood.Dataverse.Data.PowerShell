@@ -69,7 +69,22 @@ PS C:\> Set-DataverseConnectionReference -ConnectionReferences @{
 
 Sets multiple connection references at once using a hashtable.
 
-### Example 5: Set connection references with stored connection IDs
+### Example 5: Set connection references using connector name fallback
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseConnectionReference -ConnectionReferences @{
+    # All SharePoint connection references will use this connection
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    # All SQL connection references will use this connection  
+    'shared_sql' = '87654321-4321-4321-4321-210987654321'
+    # Override for a specific connection reference
+    'new_sharepoint_special' = '11111111-1111-1111-1111-111111111111'
+}
+```
+
+Sets connection references using connector names as fallback. All connection references using the SharePoint connector will be mapped to the first connection ID, except for 'new_sharepoint_special' which has a specific override. All SQL connection references will use the second connection ID.
+
+### Example 11: Set connection references with stored connection IDs
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $connectionIds = @{
@@ -81,7 +96,7 @@ PS C:\> Set-DataverseConnectionReference -ConnectionReferences $connectionIds
 
 Retrieves connection IDs by name and sets them for the connection references.
 
-### Example 6: Use with solution import workflow
+### Example 11: Use with solution import workflow
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Set connection references before importing solution
@@ -94,7 +109,7 @@ PS C:\> Import-DataverseSolution -InFile "solution.zip"
 
 Sets connection references before importing a solution, ensuring they are configured correctly.
 
-### Example 7: View operation results
+### Example 11: View operation results
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $result = Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharedconnectionref" -ConnectionId "12345678-1234-1234-1234-123456789abc"
@@ -154,7 +169,45 @@ Accept wildcard characters: False
 ```
 
 ### -ConnectionReferences
-Hashtable of connection reference logical names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).
+Hashtable of connection reference logical names or connector names to connection IDs. Used to set multiple connection references at once.
+
+Keys can be either:
+- Specific connection reference logical names (e.g., 'new_sharepoint_conn1')
+- Connector names for fallback matching (e.g., 'shared_sharepointonline')
+
+The connector name is the value after the last '/' in the full connector ID path. For example, if the full connector ID is '/providers/Microsoft.PowerApps/apis/shared_sharepointonline', the connector name is 'shared_sharepointonline'.
+
+When a hashtable key matches a connection reference logical name, it is used directly. If no direct match is found, the cmdlet queries all existing connection references to get their connector IDs and checks if the key matches a connector name. All connection references using that connector will be mapped to the specified connection ID.
+
+Logical name matches take precedence over connector name matches, allowing you to override the connector-level default for specific connection references.
+
+Example using logical names:
+```powershell
+@{
+    'new_sharepoint_conn1' = '12345678-1234-1234-1234-123456789012'
+    'new_sharepoint_conn2' = '87654321-4321-4321-4321-210987654321'
+}
+```
+
+Example using connector name fallback:
+```powershell
+@{
+    # All SharePoint connection references will use this connection
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    # All SQL connection references will use this connection
+    'shared_sql' = '87654321-4321-4321-4321-210987654321'
+}
+```
+
+Example mixing both approaches:
+```powershell
+@{
+    # Default for all SharePoint connection references
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    # Override for a specific SharePoint connection reference
+    'new_sharepoint_special' = '11111111-1111-1111-1111-111111111111'
+}
+```
 
 ```yaml
 Type: Hashtable
