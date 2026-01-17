@@ -144,14 +144,14 @@ Describe "Soulution Import Export E2E Tests" {
             
             # Create a SharePoint connection (for testing connector name fallback)
             $sharepointConnectionId = [guid]::NewGuid()
-            $sharepointConnection = @{
+            $sharepointConnection = [PSCustomObject] @{
                 connectionid = $sharepointConnectionId
                 name = "E2E Test Connection ${timestamp}_$testRunId SharePoint"
                 connectorid = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
             }
             
             Invoke-WithRetry {
-                Set-DataverseRecord -Connection $connection -TableName connection -Record $sharepointConnection -CreateOnly -Confirm:$false
+                Set-DataverseRecord -Connection $connection -TableName connection -InputObject $sharepointConnection -CreateOnly -Confirm:$false
             }
             Write-Host "  Created SharePoint connection: $sharepointConnectionId"
             
@@ -164,20 +164,20 @@ Describe "Soulution Import Export E2E Tests" {
             }
             
             Invoke-WithRetry {
-                Set-DataverseRecord -Connection $connection -TableName connection -Record $sqlConnection -CreateOnly -Confirm:$false
+                Set-DataverseRecord -Connection $connection -TableName connection -InputObject $sqlConnection -CreateOnly -Confirm:$false
             }
             Write-Host "  Created SQL connection: $sqlConnectionId"
             
             # Create a specific connection for override testing
             $overrideConnectionId = [guid]::NewGuid()
-            $overrideConnection = @{
+            $overrideConnection = [PSCustomObject] @{
                 connectionid = $overrideConnectionId
                 name = "E2E Test Connection ${timestamp}_$testRunId Override"
                 connectorid = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
             }
             
             Invoke-WithRetry {
-                Set-DataverseRecord -Connection $connection -TableName connection -Record $overrideConnection -CreateOnly -Confirm:$false
+                Set-DataverseRecord -Connection $connection -TableName connection -InputObject $overrideConnection -CreateOnly -Confirm:$false
             }
             Write-Host "  Created override connection: $overrideConnectionId"
             Write-Host "✓ Test connections created"
