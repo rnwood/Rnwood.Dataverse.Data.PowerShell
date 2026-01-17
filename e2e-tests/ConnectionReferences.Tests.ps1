@@ -121,8 +121,17 @@ Describe "Connection References E2E Tests" -Skip {
             # Step 2: Find existing connections to use for the test
             Write-Host "Step 2: Finding existing Dataverse connections to use..."
             
-            # List existing connections with the Dataverse connector
-            $existingConnections = Get-DataverseRecord -Connection $connection -TableName connectioninstance -Columns connectioninstanceid, name, connectorid -FilterValues @{ connectorid = '/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps' }
+            # First, get the connector record for Dataverse (connectorid is a lookup to connector table)
+            $dataverseConnector = Get-DataverseRecord -Connection $connection -TableName connector -Columns connectorid, name -FilterValues @{ name = 'shared_commondataserviceforapps' } | Select-Object -First 1
+            
+            if ($null -eq $dataverseConnector) {
+                throw "Dataverse connector 'shared_commondataserviceforapps' not found in connector table."
+            }
+            
+            Write-Host "  Found Dataverse connector: $($dataverseConnector.connectorid)"
+            
+            # Now list existing connections with the Dataverse connector (using connector GUID)
+            $existingConnections = Get-DataverseRecord -Connection $connection -TableName connectioninstance -Columns connectioninstanceid, name, connectorid -FilterValues @{ connectorid = $dataverseConnector.connectorid }
             
             if ($existingConnections.Count -eq 0) {
                 throw "No existing Dataverse connections found. At least one connection with connector 'shared_commondataserviceforapps' is required for this test."
