@@ -419,20 +419,36 @@ jobs:
           
           $standardResults = Invoke-Pester -Configuration $config
           
-          # Run E2E tests - Connection References test only
+          # Run E2E tests
           $config = New-PesterConfiguration
-          $config.Run.Path = 'e2e-tests/ConnectionReferences.Tests.ps1'
+          $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
           $config.Run.PassThru = $true
           $config.Output.Verbosity = 'Detailed'
           $config.Filter.ExcludeTag = 'LongRunning'
           
-          $e2eConnectionRefResult = Invoke-Pester -Configuration $config
+          $e2eModuleResult = Invoke-Pester -Configuration $config
           
-          # All other E2E tests are excluded
-          # Previously run tests:
-          # - e2e-tests/Module.Tests.ps1 (excluded)
-          # - e2e-tests/DynamicPluginAssembly.Tests.ps1 (excluded)
-          # - Other metadata tests (excluded)
+          # Check if we should also run metadata tests (Windows Latest only)
+          $shouldRunMetadataTests = ("${{ matrix.os }}" -eq 'windows-latest' -and "${{ matrix.powershell_version }}" -eq 'latest')
+          $metadataResult = $null
+          
+          if ($shouldRunMetadataTests) {
+              $metadataConfig = New-PesterConfiguration
+              $metadataConfig.Run.Path = @(
+                  'e2e-tests/ConnectionReferences.Tests.ps1'
+                  # Opt in per branch by uncommenting
+                  # 'e2e-tests/EntityKeyMetadata.Tests.ps1'
+                  # 'e2e-tests/EntityMetadata.Tests.ps1',
+                  # 'e2e-tests/AttributeMetadata.Tests.ps1', 
+                  # 'e2e-tests/RelationshipMetadata.Tests.ps1',
+                  # 'e2e-tests/OptionSetMetadata.Tests.ps1'
+              )
+              $metadataConfig.Run.PassThru = $true
+              $metadataConfig.Output.Verbosity = 'Detailed'
+              $metadataConfig.Filter.ExcludeTag = 'LongRunning'
+              
+              $metadataResult = Invoke-Pester -Configuration $metadataConfig
+          }
           
           # Check for failures
           $hasFailures = $false
@@ -441,7 +457,11 @@ jobs:
               $hasFailures = $true
           }
           
-          if ($e2eConnectionRefResult.FailedCount -gt 0) {
+          if ($e2eModuleResult.FailedCount -gt 0) {
+              $hasFailures = $true
+          }
+          
+          if ($metadataResult -and $metadataResult.FailedCount -gt 0) {
               $hasFailures = $true
           }
           
@@ -472,16 +492,14 @@ jobs:
             
             $standardResults = Invoke-Pester -Configuration $config
             
-            # Run E2E tests - Connection References test only
+            # Run E2E tests
             $config = New-PesterConfiguration
-            $config.Run.Path = 'e2e-tests/ConnectionReferences.Tests.ps1'
+            $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
             $config.Run.PassThru = $true
             $config.Output.Verbosity = 'Detailed'
             $config.Filter.ExcludeTag = 'LongRunning'
             
-            $e2eConnectionRefResult = Invoke-Pester -Configuration $config
-            
-            # All other E2E tests are excluded
+            $e2eResult = Invoke-Pester -Configuration $config
             
             # Check for failures
             $hasFailures = $false
@@ -490,7 +508,7 @@ jobs:
                 $hasFailures = $true
             }
             
-            if ($e2eConnectionRefResult.FailedCount -gt 0) {
+            if ($e2eResult.FailedCount -gt 0) {
                 $hasFailures = $true
             }
             

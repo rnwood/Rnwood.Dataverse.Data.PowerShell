@@ -182,32 +182,32 @@ When a hashtable key matches a connection reference logical name, it is used dir
 Logical name matches take precedence over connector name matches, allowing you to override the connector-level default for specific connection references.
 
 Example using logical names:
-```powershell
+
+
 @{
     'new_sharepoint_conn1' = '12345678-1234-1234-1234-123456789012'
     'new_sharepoint_conn2' = '87654321-4321-4321-4321-210987654321'
 }
-```
 
 Example using connector name fallback:
-```powershell
+
+
 @{
     # All SharePoint connection references will use this connection
     'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
     # All SQL connection references will use this connection
     'shared_sql' = '87654321-4321-4321-4321-210987654321'
 }
-```
 
 Example mixing both approaches:
-```powershell
+
+
 @{
     # Default for all SharePoint connection references
     'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
     # Override for a specific SharePoint connection reference
     'new_sharepoint_special' = '11111111-1111-1111-1111-111111111111'
 }
-```
 
 ```yaml
 Type: Hashtable

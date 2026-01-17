@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "Connection References E2E Tests" -Skip {
+Describe "Soulution Import Export E2E Tests" {
 
     BeforeAll {
         if ($env:TESTMODULEPATH) {
