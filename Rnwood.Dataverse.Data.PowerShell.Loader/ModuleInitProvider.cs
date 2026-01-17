@@ -4,6 +4,8 @@ using System.Management.Automation;
 using System.Reflection;
 using System.Threading;
 using Rnwood.Dataverse.Data.PowerShell.Commands;
+using System.Diagnostics;
+
 
 #if NETCOREAPP
 using System.Runtime.Loader;
@@ -42,7 +44,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
                 if (File.Exists(path))
                 {
-                    return alc.LoadFromAssemblyName(assemblyName);
+                    var fileVersion = FileVersionInfo.GetVersionInfo(path);
+                    if (assemblyName.Version == null || new Version(fileVersion.ProductVersion) >= assemblyName.Version)
+                    {
+                        return alc.LoadFromAssemblyName(assemblyName);
+                    }
                 }
 
                 return null;
