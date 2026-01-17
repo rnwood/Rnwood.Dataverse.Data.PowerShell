@@ -13,14 +13,18 @@ Describe 'Import-DataverseSolution - Connector ID Fallback' {
             param(
                 [string]$UniqueName,
                 [string]$Version,
-                [string[]]$ConnectionReferences = @()
+                [hashtable]$ConnectionReferences = @{} # Key: logical name, Value: connector ID
             )
             
-            # Build connection reference XML
+            # Build connection reference XML with connector IDs
             $connRefXml = ""
-            foreach ($connRef in $ConnectionReferences) {
+            foreach ($entry in $ConnectionReferences.GetEnumerator()) {
+                $logicalName = $entry.Key
+                $connectorId = $entry.Value
                 $connRefXml += @"
-    <connectionreference connectionreferencelogicalname="$connRef" />
+    <connectionreference connectionreferencelogicalname="$logicalName">
+      <connectorid>$connectorId</connectorid>
+    </connectionreference>
 "@
             }
             
@@ -119,34 +123,22 @@ $connRefXml
             $solutionPath = New-TestSolutionWithConnectionReferences `
                 -UniqueName "TestSolutionConnectorFallback" `
                 -Version "1.0.0.0" `
-                -ConnectionReferences @("new_sharepoint1", "new_sharepoint2")
+                -ConnectionReferences @{
+                    "new_sharepoint1" = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                    "new_sharepoint2" = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                }
             $Script:TestSolutionPaths += $solutionPath
             
-            # Create mock connection with connection references
+            # Create mock connection
             $mock = getMockConnection -Entities @("connectionreference", "solution")
             
-            # Create connection reference records with connector IDs
-            $connRef1 = New-Object Microsoft.Xrm.Sdk.Entity "connectionreference"
-            $connRef1.Id = $connRef1["connectionreferenceid"] = [Guid]::NewGuid()
-            $connRef1["connectionreferencelogicalname"] = "new_sharepoint1"
-            $connRef1["connectorid"] = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-            $connRef1["connectionid"] = $null
-            $connRef1 | Set-DataverseRecord -Connection $mock -CreateOnly
-            
-            $connRef2 = New-Object Microsoft.Xrm.Sdk.Entity "connectionreference"
-            $connRef2.Id = $connRef2["connectionreferenceid"] = [Guid]::NewGuid()
-            $connRef2["connectionreferencelogicalname"] = "new_sharepoint2"
-            $connRef2["connectorid"] = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-            $connRef2["connectionid"] = $null
-            $connRef2 | Set-DataverseRecord -Connection $mock -CreateOnly
-            
-            # Provide connection reference mapping by connector ID (not by logical name)
+            # Provide connection reference mapping by connector name (not by logical name)
             $connectionId = "12345678-1234-1234-1234-123456789012"
             $connectionReferences = @{
-                '/providers/Microsoft.PowerApps/apis/shared_sharepointonline' = $connectionId
+                'shared_sharepointonline' = $connectionId
             }
             
-            # Import should succeed and map both connection references via connector ID fallback
+            # Import should succeed and map both connection references via connector name fallback
             { 
                 Import-DataverseSolution -Connection $mock -InFile $solutionPath `
                     -ConnectionReferences $connectionReferences `
@@ -154,37 +146,25 @@ $connRefXml
             } | Should -Not -Throw
         }
 
-        It "Prefers logical name over connector ID when both match" {
+        It "Prefers logical name over connector name when both match" {
             # Create test solution with connection references
             $solutionPath = New-TestSolutionWithConnectionReferences `
                 -UniqueName "TestSolutionPrecedence" `
                 -Version "1.0.0.0" `
-                -ConnectionReferences @("new_sharepoint1", "new_sharepoint2")
+                -ConnectionReferences @{
+                    "new_sharepoint1" = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                    "new_sharepoint2" = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                }
             $Script:TestSolutionPaths += $solutionPath
             
-            # Create mock connection with connection references
+            # Create mock connection
             $mock = getMockConnection -Entities @("connectionreference", "solution")
             
-            # Create connection reference records with connector IDs
-            $connRef1 = New-Object Microsoft.Xrm.Sdk.Entity "connectionreference"
-            $connRef1.Id = $connRef1["connectionreferenceid"] = [Guid]::NewGuid()
-            $connRef1["connectionreferencelogicalname"] = "new_sharepoint1"
-            $connRef1["connectorid"] = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-            $connRef1["connectionid"] = $null
-            $connRef1 | Set-DataverseRecord -Connection $mock -CreateOnly
-            
-            $connRef2 = New-Object Microsoft.Xrm.Sdk.Entity "connectionreference"
-            $connRef2.Id = $connRef2["connectionreferenceid"] = [Guid]::NewGuid()
-            $connRef2["connectionreferencelogicalname"] = "new_sharepoint2"
-            $connRef2["connectorid"] = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-            $connRef2["connectionid"] = $null
-            $connRef2 | Set-DataverseRecord -Connection $mock -CreateOnly
-            
-            # Provide both connector ID (fallback) and specific logical name (override)
+            # Provide both connector name (fallback) and specific logical name (override)
             $defaultConnectionId = "12345678-1234-1234-1234-123456789012"
             $specificConnectionId = "87654321-4321-4321-4321-210987654321"
             $connectionReferences = @{
-                '/providers/Microsoft.PowerApps/apis/shared_sharepointonline' = $defaultConnectionId
+                'shared_sharepointonline' = $defaultConnectionId
                 'new_sharepoint1' = $specificConnectionId  # Override for specific connection reference
             }
             
@@ -201,42 +181,24 @@ $connRefXml
             $solutionPath = New-TestSolutionWithConnectionReferences `
                 -UniqueName "TestSolutionMixedConnectors" `
                 -Version "1.0.0.0" `
-                -ConnectionReferences @("new_sharepoint", "new_sql", "new_dataverse")
+                -ConnectionReferences @{
+                    "new_sharepoint" = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                    "new_sql" = "/providers/Microsoft.PowerApps/apis/shared_sql"
+                    "new_dataverse" = "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
+                }
             $Script:TestSolutionPaths += $solutionPath
             
-            # Create mock connection with connection references
+            # Create mock connection
             $mock = getMockConnection -Entities @("connectionreference", "solution")
             
-            # Create connection references for different connectors
-            $connRefSP = New-Object Microsoft.Xrm.Sdk.Entity "connectionreference"
-            $connRefSP.Id = $connRefSP["connectionreferenceid"] = [Guid]::NewGuid()
-            $connRefSP["connectionreferencelogicalname"] = "new_sharepoint"
-            $connRefSP["connectorid"] = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-            $connRefSP["connectionid"] = $null
-            $connRefSP | Set-DataverseRecord -Connection $mock -CreateOnly
-            
-            $connRefSQL = New-Object Microsoft.Xrm.Sdk.Entity "connectionreference"
-            $connRefSQL.Id = $connRefSQL["connectionreferenceid"] = [Guid]::NewGuid()
-            $connRefSQL["connectionreferencelogicalname"] = "new_sql"
-            $connRefSQL["connectorid"] = "/providers/Microsoft.PowerApps/apis/shared_sql"
-            $connRefSQL["connectionid"] = $null
-            $connRefSQL | Set-DataverseRecord -Connection $mock -CreateOnly
-            
-            $connRefDV = New-Object Microsoft.Xrm.Sdk.Entity "connectionreference"
-            $connRefDV.Id = $connRefDV["connectionreferenceid"] = [Guid]::NewGuid()
-            $connRefDV["connectionreferencelogicalname"] = "new_dataverse"
-            $connRefDV["connectorid"] = "/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps"
-            $connRefDV["connectionid"] = $null
-            $connRefDV | Set-DataverseRecord -Connection $mock -CreateOnly
-            
-            # Provide connection mappings by connector ID
+            # Provide connection mappings by connector name
             $connectionReferences = @{
-                '/providers/Microsoft.PowerApps/apis/shared_sharepointonline' = "11111111-1111-1111-1111-111111111111"
-                '/providers/Microsoft.PowerApps/apis/shared_sql' = "22222222-2222-2222-2222-222222222222"
-                '/providers/Microsoft.PowerApps/apis/shared_commondataserviceforapps' = "33333333-3333-3333-3333-333333333333"
+                'shared_sharepointonline' = "11111111-1111-1111-1111-111111111111"
+                'shared_sql' = "22222222-2222-2222-2222-222222222222"
+                'shared_commondataserviceforapps' = "33333333-3333-3333-3333-333333333333"
             }
             
-            # Import should succeed and map all connection references by their connector IDs
+            # Import should succeed and map all connection references by their connector names
             { 
                 Import-DataverseSolution -Connection $mock -InFile $solutionPath `
                     -ConnectionReferences $connectionReferences `
@@ -249,22 +211,17 @@ $connRefXml
             $solutionPath = New-TestSolutionWithConnectionReferences `
                 -UniqueName "TestSolutionNoMatch" `
                 -Version "1.0.0.0" `
-                -ConnectionReferences @("new_sharepoint")
+                -ConnectionReferences @{
+                    "new_sharepoint" = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
+                }
             $Script:TestSolutionPaths += $solutionPath
             
-            # Create mock connection with connection reference
+            # Create mock connection
             $mock = getMockConnection -Entities @("connectionreference", "solution")
-            
-            $connRef = New-Object Microsoft.Xrm.Sdk.Entity "connectionreference"
-            $connRef.Id = $connRef["connectionreferenceid"] = [Guid]::NewGuid()
-            $connRef["connectionreferencelogicalname"] = "new_sharepoint"
-            $connRef["connectorid"] = "/providers/Microsoft.PowerApps/apis/shared_sharepointonline"
-            $connRef["connectionid"] = $null
-            $connRef | Set-DataverseRecord -Connection $mock -CreateOnly
             
             # Provide connection mapping for different connector (no match)
             $connectionReferences = @{
-                '/providers/Microsoft.PowerApps/apis/shared_sql' = "12345678-1234-1234-1234-123456789012"
+                'shared_sql' = "12345678-1234-1234-1234-123456789012"
                 'new_different' = "87654321-4321-4321-4321-210987654321"
             }
             

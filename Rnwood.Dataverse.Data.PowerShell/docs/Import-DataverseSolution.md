@@ -92,21 +92,21 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" `
 
 Imports the solution and sets connection references for two connections and environment variables for two settings.
 
-### Example 3: Import with connector ID fallback
+### Example 3: Import with connector name fallback
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" `
     -ConnectionReferences @{
         # All SharePoint connection references will use this connection
-        '/providers/Microsoft.PowerApps/apis/shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+        'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
         # All SQL connection references will use this connection  
-        '/providers/Microsoft.PowerApps/apis/shared_sql' = '87654321-4321-4321-4321-210987654321'
+        'shared_sql' = '87654321-4321-4321-4321-210987654321'
         # Override for a specific connection reference
         'new_sharepoint_special' = '11111111-1111-1111-1111-111111111111'
     }
 ```
 
-Imports the solution using connector IDs as fallback. All connection references using the SharePoint connector will be mapped to the first connection ID, except for 'new_sharepoint_special' which has a specific override. All SQL connection references will use the second connection ID.
+Imports the solution using connector names as fallback. All connection references using the SharePoint connector will be mapped to the first connection ID, except for 'new_sharepoint_special' which has a specific override. All SQL connection references will use the second connection ID.
 
 ### Example 12: Import as holding solution (upgrade)
 ```powershell
@@ -239,15 +239,17 @@ Accept wildcard characters: False
 ```
 
 ### -ConnectionReferences
-Hashtable of connection reference schema names or connector IDs to connection IDs. Used to set connection references during import.
+Hashtable of connection reference schema names or connector names to connection IDs. Used to set connection references during import.
 
 Keys can be either:
 - Specific connection reference logical names (e.g., 'new_sharepoint_conn1')
-- Connector IDs for fallback matching (e.g., '/providers/Microsoft.PowerApps/apis/shared_sharepointonline')
+- Connector names for fallback matching (e.g., 'shared_sharepointonline')
 
-When a hashtable key matches a connection reference logical name, it is used directly. If no direct match is found, the cmdlet checks if the key matches a connector ID. All connection references using that connector will be mapped to the specified connection ID.
+The connector name is the value after the last '/' in the full connector ID path. For example, if the full connector ID is '/providers/Microsoft.PowerApps/apis/shared_sharepointonline', the connector name is 'shared_sharepointonline'.
 
-Logical name matches take precedence over connector ID matches, allowing you to override the connector-level default for specific connection references.
+When a hashtable key matches a connection reference logical name, it is used directly. If no direct match is found, the cmdlet checks if the key matches a connector name. All connection references using that connector will be mapped to the specified connection ID.
+
+Logical name matches take precedence over connector name matches, allowing you to override the connector-level default for specific connection references.
 
 Example using logical names:
 
@@ -257,14 +259,14 @@ Example using logical names:
     'new_sharepoint_conn2' = '87654321-4321-4321-4321-210987654321'
 }
 
-Example using connector ID fallback:
+Example using connector name fallback:
 
 
 @{
     # All SharePoint connection references will use this connection
-    '/providers/Microsoft.PowerApps/apis/shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
     # All SQL connection references will use this connection
-    '/providers/Microsoft.PowerApps/apis/shared_sql' = '87654321-4321-4321-4321-210987654321'
+    'shared_sql' = '87654321-4321-4321-4321-210987654321'
 }
 
 Example mixing both approaches:
@@ -272,7 +274,7 @@ Example mixing both approaches:
 
 @{
     # Default for all SharePoint connection references
-    '/providers/Microsoft.PowerApps/apis/shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
     # Override for a specific SharePoint connection reference
     'new_sharepoint_special' = '11111111-1111-1111-1111-111111111111'
 }
