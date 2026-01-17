@@ -101,7 +101,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the connection references.
         /// </summary>
-        [Parameter(HelpMessage = "Hashtable of connection reference schema names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).")]
+        [Parameter(HelpMessage = "Hashtable of connection reference schema names or connector IDs to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'} or @{'/providers/Microsoft.PowerApps/apis/shared_sharepointonline' = '00000000-0000-0000-0000-000000000000'}). Keys can be either specific connection reference logical names or connector IDs. Connection references without a specific logical name mapping will fall back to checking by connector ID.")]
         public Hashtable ConnectionReferences { get; set; }
 
         /// <summary>
@@ -181,6 +181,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Populated by ValidateSolutionComponents and used for case-insensitive matching against user-provided hashtable keys.
         /// </summary>
         private List<string> _solutionConnectionReferenceNames;
+
+        /// <summary>
+        /// Maps connection reference logical names to their connector IDs.
+        /// Populated by ValidateSolutionComponents and used for connector ID fallback matching.
+        /// </summary>
+        private Dictionary<string, string> _connectionReferenceConnectorIds;
 
         /// <summary>
         /// Stores environment variable schema names extracted from the solution file with correct casing.
@@ -519,28 +525,71 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (ConnectionReferences != null && ConnectionReferences.Count > 0)
                 {
                     WriteVerbose($"Processing {ConnectionReferences.Count} connection reference(s)...");
+                    
+                    // Keep track of which connection references have been mapped (to avoid duplicates)
+                    var mappedConnectionReferences = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    
                     foreach (DictionaryEntry entry in ConnectionReferences)
                     {
-                        var connectionRefName = entry.Key.ToString();
+                        var providedKey = entry.Key.ToString();
                         var connectionId = entry.Value.ToString();
 
-                        // Use the correctly-cased name from the solution file if available
+                        // Check if the provided key matches a connection reference logical name directly
                         var correctlyCasedName = _solutionConnectionReferenceNames?.FirstOrDefault(n =>
-                            string.Equals(n, connectionRefName, StringComparison.OrdinalIgnoreCase));
+                            string.Equals(n, providedKey, StringComparison.OrdinalIgnoreCase));
 
-                        if (correctlyCasedName == null)
+                        if (correctlyCasedName != null)
                         {
-                            WriteVerbose($"  Connection reference '{connectionRefName}' is not in the solution file, skipping.");
-                            continue;
+                            // Direct match by logical name
+                            WriteVerbose($"  Setting connection reference '{correctlyCasedName}' to connection '{connectionId}' (matched by logical name)");
+
+                            var componentParam = new Entity("connectionreference");
+                            componentParam["connectionreferencelogicalname"] = correctlyCasedName;
+                            componentParam["connectionid"] = connectionId;
+
+                            componentParameters.Entities.Add(componentParam);
+                            mappedConnectionReferences.Add(correctlyCasedName);
                         }
+                        else if (_connectionReferenceConnectorIds != null)
+                        {
+                            // Check if the provided key matches a connector ID (fallback)
+                            var matchingConnRefs = _connectionReferenceConnectorIds
+                                .Where(kvp => string.Equals(kvp.Value, providedKey, StringComparison.OrdinalIgnoreCase))
+                                .Select(kvp => kvp.Key)
+                                .ToList();
 
-                        WriteVerbose($"  Setting connection reference '{correctlyCasedName}' to connection '{connectionId}'");
+                            if (matchingConnRefs.Count > 0)
+                            {
+                                // Found connection reference(s) with this connector ID
+                                foreach (var connRefLogicalName in matchingConnRefs)
+                                {
+                                    // Only map if not already mapped by logical name
+                                    if (!mappedConnectionReferences.Contains(connRefLogicalName))
+                                    {
+                                        WriteVerbose($"  Setting connection reference '{connRefLogicalName}' to connection '{connectionId}' (matched by connector ID '{providedKey}')");
 
-                        var componentParam = new Entity("connectionreference");
-                        componentParam["connectionreferencelogicalname"] = correctlyCasedName;
-                        componentParam["connectionid"] = connectionId;
+                                        var componentParam = new Entity("connectionreference");
+                                        componentParam["connectionreferencelogicalname"] = connRefLogicalName;
+                                        componentParam["connectionid"] = connectionId;
 
-                        componentParameters.Entities.Add(componentParam);
+                                        componentParameters.Entities.Add(componentParam);
+                                        mappedConnectionReferences.Add(connRefLogicalName);
+                                    }
+                                    else
+                                    {
+                                        WriteVerbose($"  Skipping connection reference '{connRefLogicalName}' for connector ID '{providedKey}' as it's already mapped by logical name.");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                WriteVerbose($"  Key '{providedKey}' does not match any connection reference logical name or connector ID in the solution file, skipping.");
+                            }
+                        }
+                        else
+                        {
+                            WriteVerbose($"  Connection reference '{providedKey}' is not in the solution file, skipping.");
+                        }
                     }
                 }
 
@@ -925,6 +974,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _solutionConnectionReferenceNames = solutionComponents.ConnectionReferences;
             _solutionEnvironmentVariableNames = solutionComponents.EnvironmentVariables;
 
+            // Query connector IDs for connection references from Dataverse
+            _connectionReferenceConnectorIds = GetConnectionReferenceConnectorIds(solutionComponents.ConnectionReferences);
+
             // Validate connection references if not skipped
             if (!SkipConnectionReferenceValidation.IsPresent)
             {
@@ -1017,6 +1069,67 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return (connectionReferences, environmentVariables);
         }
 
+        private Dictionary<string, string> GetConnectionReferenceConnectorIds(List<string> connectionReferenceNames)
+        {
+            var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            if (connectionReferenceNames == null || connectionReferenceNames.Count == 0)
+            {
+                return result;
+            }
+
+            WriteVerbose($"Querying connector IDs for {connectionReferenceNames.Count} connection reference(s)...");
+
+            try
+            {
+                // Query connection references by logical name to get their connector IDs
+                var query = new QueryExpression("connectionreference")
+                {
+                    ColumnSet = new ColumnSet("connectionreferencelogicalname", "connectorid"),
+                    Criteria = new FilterExpression
+                    {
+                        Conditions =
+                        {
+                            new ConditionExpression("connectionreferencelogicalname", ConditionOperator.In, connectionReferenceNames.ToArray())
+                        }
+                    }
+                };
+
+                var allResults = new List<Entity>();
+                EntityCollection ec;
+                do
+                {
+                    ec = Connection.RetrieveMultiple(query);
+                    allResults.AddRange(ec.Entities);
+                    if (ec.MoreRecords)
+                    {
+                        query.PageInfo.PageNumber++;
+                        query.PageInfo.PagingCookie = ec.PagingCookie;
+                    }
+                } while (ec.MoreRecords);
+
+                foreach (var entity in allResults)
+                {
+                    var logicalName = entity.GetAttributeValue<string>("connectionreferencelogicalname");
+                    var connectorId = entity.GetAttributeValue<string>("connectorid");
+
+                    if (!string.IsNullOrEmpty(logicalName) && !string.IsNullOrEmpty(connectorId))
+                    {
+                        result[logicalName] = connectorId;
+                        WriteVerbose($"  Found connector ID '{connectorId}' for connection reference '{logicalName}'");
+                    }
+                }
+
+                WriteVerbose($"Retrieved connector IDs for {result.Count} connection reference(s).");
+            }
+            catch (Exception ex)
+            {
+                WriteVerbose($"Error querying connector IDs: {ex.Message}");
+            }
+
+            return result;
+        }
+
         private void ValidateConnectionReferences(List<string> requiredConnectionRefs)
         {
             if (requiredConnectionRefs == null || requiredConnectionRefs.Count == 0)
@@ -1031,27 +1144,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (var connRefName in requiredConnectionRefs)
             {
-                // Check if this connection reference is provided in the parameters (case-insensitive)
-                bool isProvided = GetHashtableValueCaseInsensitive(ConnectionReferences, connRefName) != null;
+                // Check if this connection reference is provided in the parameters by logical name (case-insensitive)
+                bool isProvidedByName = GetHashtableValueCaseInsensitive(ConnectionReferences, connRefName) != null;
 
-                if (!isProvided)
+                if (!isProvidedByName)
                 {
-                    // Check if it exists in the target environment with a value
-                    bool existsInTarget = CheckConnectionReferenceExistsInTarget(connRefName);
-
-                    if (!existsInTarget)
+                    // Check if provided by connector ID (fallback)
+                    bool isProvidedByConnectorId = false;
+                    if (_connectionReferenceConnectorIds != null && _connectionReferenceConnectorIds.TryGetValue(connRefName, out var connectorId))
                     {
-                        missingConnectionRefs.Add(connRefName);
-                        WriteVerbose($"Connection reference '{connRefName}' is not provided and does not exist in target environment.");
+                        if (!string.IsNullOrEmpty(connectorId))
+                        {
+                            isProvidedByConnectorId = GetHashtableValueCaseInsensitive(ConnectionReferences, connectorId) != null;
+                            if (isProvidedByConnectorId)
+                            {
+                                WriteVerbose($"Connection reference '{connRefName}' is provided via connector ID '{connectorId}' fallback.");
+                            }
+                        }
                     }
-                    else
+
+                    if (!isProvidedByConnectorId)
                     {
-                        WriteVerbose($"Connection reference '{connRefName}' exists in target environment.");
+                        // Check if it exists in the target environment with a value
+                        bool existsInTarget = CheckConnectionReferenceExistsInTarget(connRefName);
+
+                        if (!existsInTarget)
+                        {
+                            missingConnectionRefs.Add(connRefName);
+                            WriteVerbose($"Connection reference '{connRefName}' is not provided and does not exist in target environment.");
+                        }
+                        else
+                        {
+                            WriteVerbose($"Connection reference '{connRefName}' exists in target environment.");
+                        }
                     }
                 }
                 else
                 {
-                    WriteVerbose($"Connection reference '{connRefName}' is provided in parameters.");
+                    WriteVerbose($"Connection reference '{connRefName}' is provided in parameters by logical name.");
                 }
             }
 
@@ -1456,13 +1586,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             Dictionary<string, string> connectionReferencesToCheck = new Dictionary<string, string>();
             Dictionary<string, string> environmentVariablesToCheck = new Dictionary<string, string>();
 
-            // Query connection reference logical names for the IDs in the solution
+            // Query connection reference logical names and connector IDs for the IDs in the solution
             List<string> solutionConnRefNames = new List<string>();
+            Dictionary<string, string> solutionConnRefConnectorIds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
             if (connectionReferenceIds.Count > 0)
             {
                 var connRefQuery = new QueryExpression("connectionreference")
                 {
-                    ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname"),
+                    ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectorid"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
@@ -1473,10 +1604,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
 
                 var connRefs = Connection.RetrieveMultiple(connRefQuery);
-                solutionConnRefNames = connRefs.Entities
-                    .Select(e => e.GetAttributeValue<string>("connectionreferencelogicalname"))
-                    .Where(n => !string.IsNullOrEmpty(n))
-                    .ToList();
+                foreach (var connRef in connRefs.Entities)
+                {
+                    var logicalName = connRef.GetAttributeValue<string>("connectionreferencelogicalname");
+                    var connectorId = connRef.GetAttributeValue<string>("connectorid");
+                    
+                    if (!string.IsNullOrEmpty(logicalName))
+                    {
+                        solutionConnRefNames.Add(logicalName);
+                        
+                        if (!string.IsNullOrEmpty(connectorId))
+                        {
+                            solutionConnRefConnectorIds[logicalName] = connectorId;
+                        }
+                    }
+                }
             }
 
             // Query environment variable schema names for the IDs in the solution
@@ -1503,37 +1645,76 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Validate that all required connection references and environment variables have been provided
-            // This uses the same validation logic as the normal import path
-            if (!SkipConnectionReferenceValidation.IsPresent)
+            // Temporarily store connector IDs for validation
+            var previousConnectorIds = _connectionReferenceConnectorIds;
+            _connectionReferenceConnectorIds = solutionConnRefConnectorIds;
+            
+            try
             {
-                ValidateConnectionReferences(solutionConnRefNames);
-            }
+                // This uses the same validation logic as the normal import path
+                if (!SkipConnectionReferenceValidation.IsPresent)
+                {
+                    ValidateConnectionReferences(solutionConnRefNames);
+                }
 
-            if (!SkipEnvironmentVariableValidation.IsPresent)
+                if (!SkipEnvironmentVariableValidation.IsPresent)
+                {
+                    ValidateEnvironmentVariables(solutionEnvVarNames);
+                }
+            }
+            finally
             {
-                ValidateEnvironmentVariables(solutionEnvVarNames);
+                // Restore previous value
+                _connectionReferenceConnectorIds = previousConnectorIds;
             }
 
             // Process connection references - build list of those to update
             if (ConnectionReferences != null && ConnectionReferences.Count > 0 && solutionConnRefNames.Count > 0)
             {
+                // Keep track of which connection references have been mapped
+                var mappedConnectionReferences = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                
                 foreach (DictionaryEntry entry in ConnectionReferences)
                 {
-                    var connRefName = entry.Key.ToString();
+                    var providedKey = entry.Key.ToString();
                     var connectionId = entry.Value.ToString();
 
-                    // Find the correctly-cased name from the solution (case-insensitive match)
+                    // Check if the provided key matches a connection reference logical name directly
                     var correctlyCasedName = solutionConnRefNames.FirstOrDefault(n =>
-                        string.Equals(n, connRefName, StringComparison.OrdinalIgnoreCase));
+                        string.Equals(n, providedKey, StringComparison.OrdinalIgnoreCase));
 
                     if (correctlyCasedName != null)
                     {
-                        // Use the correctly-cased name from the solution
+                        // Direct match by logical name
                         connectionReferencesToCheck[correctlyCasedName] = connectionId;
+                        mappedConnectionReferences.Add(correctlyCasedName);
                     }
                     else
                     {
-                        WriteVerbose($"Connection reference '{connRefName}' is not in the solution, skipping.");
+                        // Check if the provided key matches a connector ID (fallback)
+                        var matchingConnRefs = solutionConnRefConnectorIds
+                            .Where(kvp => string.Equals(kvp.Value, providedKey, StringComparison.OrdinalIgnoreCase))
+                            .Select(kvp => kvp.Key)
+                            .ToList();
+
+                        if (matchingConnRefs.Count > 0)
+                        {
+                            // Found connection reference(s) with this connector ID
+                            foreach (var connRefLogicalName in matchingConnRefs)
+                            {
+                                // Only map if not already mapped by logical name
+                                if (!mappedConnectionReferences.Contains(connRefLogicalName))
+                                {
+                                    connectionReferencesToCheck[connRefLogicalName] = connectionId;
+                                    mappedConnectionReferences.Add(connRefLogicalName);
+                                    WriteVerbose($"Mapped connection reference '{connRefLogicalName}' to connection ID via connector ID '{providedKey}'.");
+                                }
+                            }
+                        }
+                        else
+                        {
+                            WriteVerbose($"Connection reference '{providedKey}' is not in the solution, skipping.");
+                        }
                     }
                 }
             }
