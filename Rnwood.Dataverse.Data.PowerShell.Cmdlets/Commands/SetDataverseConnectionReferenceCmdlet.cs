@@ -55,6 +55,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public Hashtable ConnectionReferences { get; set; }
 
         /// <summary>
+        /// Gets or sets the solution unique name to filter connection references by (for multiple parameter set).
+        /// When specified, only connection references that are components of this solution will be processed.
+        /// </summary>
+        [Parameter(ParameterSetName = "Multiple", HelpMessage = "Solution unique name to filter connection references by. When specified, only connection references that are components of this solution will be processed.")]
+        [ValidateNotNullOrEmpty]
+        public string SolutionUniqueName { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
@@ -87,11 +95,56 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 // Query all connection references to get their connector IDs for connector name fallback
-                WriteVerbose("Querying all connection references to support connector name fallback...");
+                // If SolutionUniqueName is specified, join with solution and solutioncomponent tables to filter
+                WriteVerbose("Querying connection references...");
+                
                 var allConnRefsQuery = new QueryExpression("connectionreference")
                 {
                     ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectorid")
                 };
+
+                // If filtering by solution, add join to solutioncomponent and solution tables
+                if (!string.IsNullOrEmpty(SolutionUniqueName))
+                {
+                    WriteVerbose($"Filtering connection references by solution: {SolutionUniqueName}");
+                    
+                    // Link to solutioncomponent table
+                    var solutionComponentLink = new LinkEntity
+                    {
+                        LinkFromEntityName = "connectionreference",
+                        LinkFromAttributeName = "connectionreferenceid",
+                        LinkToEntityName = "solutioncomponent",
+                        LinkToAttributeName = "objectid",
+                        JoinOperator = JoinOperator.Inner,
+                        LinkCriteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("componenttype", ConditionOperator.Equal, 10091) // Connection Reference component type
+                            }
+                        }
+                    };
+                    
+                    // Link from solutioncomponent to solution table
+                    var solutionLink = new LinkEntity
+                    {
+                        LinkFromEntityName = "solutioncomponent",
+                        LinkFromAttributeName = "solutionid",
+                        LinkToEntityName = "solution",
+                        LinkToAttributeName = "solutionid",
+                        JoinOperator = JoinOperator.Inner,
+                        LinkCriteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("uniquename", ConditionOperator.Equal, SolutionUniqueName)
+                            }
+                        }
+                    };
+                    
+                    solutionComponentLink.LinkEntities.Add(solutionLink);
+                    allConnRefsQuery.LinkEntities.Add(solutionComponentLink);
+                }
                 
                 var allConnRefs = Connection.RetrieveMultiple(allConnRefsQuery);
                 var connectorIdsByLogicalName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
@@ -114,7 +167,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
                 
-                WriteVerbose($"Found {allConnRefs.Entities.Count} connection reference(s) in the environment");
+                if (!string.IsNullOrEmpty(SolutionUniqueName))
+                {
+                    WriteVerbose($"Found {allConnRefs.Entities.Count} connection reference(s) in solution '{SolutionUniqueName}'");
+                }
+                else
+                {
+                    WriteVerbose($"Found {allConnRefs.Entities.Count} connection reference(s) in the environment");
+                }
                 
                 // Track which connection references have been mapped to avoid duplicates
                 var mappedConnectionReferences = new HashSet<string>(StringComparer.OrdinalIgnoreCase);

@@ -102,13 +102,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the connection references.
         /// </summary>
         [Parameter(HelpMessage = "Hashtable of connection reference schema names or connector names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'} or @{'shared_sharepointonline' = '00000000-0000-0000-0000-000000000000'}). Keys can be either specific connection reference logical names or connector names (value after last '/' in connector ID). Connection references without a specific logical name mapping will fall back to checking by connector name.")]
-        public Hashtable ConnectionReferences { get; set; }
+        public Hashtable ConnectionReferences { get; set; } = new Hashtable();
 
         /// <summary>
         /// Gets or sets environment variable values as a hashtable.
         /// </summary>
         [Parameter(HelpMessage = "Hashtable of environment variable schema names to values (e.g., @{'new_apiurl' = 'https://api.example.com'}).")]
-        public Hashtable EnvironmentVariables { get; set; }
+        public Hashtable EnvironmentVariables { get; set; } = new Hashtable();
 
         /// <summary>
         /// Gets or sets whether to convert to managed (obsolete).

@@ -21,16 +21,19 @@ Set-DataverseConnectionReference [-ConnectionReferenceLogicalName] <String> [-Co
 
 ### Multiple
 ```
-Set-DataverseConnectionReference -ConnectionReferences <Hashtable> [-Connection <ServiceClient>]
+Set-DataverseConnectionReference -ConnectionReferences <Hashtable> [-SolutionUniqueName <String>] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Creates or updates connection reference values in Dataverse. Can set a single connection reference or multiple connection references at once. The single parameter set will create a connection reference if it does not exist, while the multiple parameter set only updates existing connection references.
+Creates or updates connection reference values in Dataverse. Can set a single connection reference or multiple connection references at once. 
 
-This cmdlet uses the same table and column names as the Import-DataverseSolution cmdlet for consistency:
-- Table: `connectionreference`
-- Columns: `connectionreferencelogicalname`, `connectionid`, `connectorid`, `connectionreferencedisplayname`, `description`
+The single parameter set will create a connection reference if it does not exist, or update the existing connection reference.
+
+The multiple parameter set only updates existing connection references if they are found. The keys in the hastable are the logical names of the connection references to update, and the values are the connection IDs to set.
+When using the multiple parameter set, connector names can be used as keys for fallback matching. If a key does not match any connection reference logical name, the cmdlet will query all existing connection references to get their connector IDs and check if the key matches a connector name. All connection references using that connector will be mapped to the specified connection ID.
+Specify the -SolutionUniqueName parameter to limit the search for connection references to those included in a specific solution.
+
 
 ## EXAMPLES
 
