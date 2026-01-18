@@ -1566,7 +1566,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     Conditions =
                     {
                         new ConditionExpression("solutionid", ConditionOperator.Equal, solutionId),
-                        new ConditionExpression("componenttype", ConditionOperator.In, new object[] { 380, 635 }) // 380 = Environment Variable Definition, 635 = Connection Reference
+                        new ConditionExpression("componenttype", ConditionOperator.In, new object[] { 380, 10091 }) // 380 = Environment Variable Definition, 10091 = Connection Reference
                     }
                 }
             };
