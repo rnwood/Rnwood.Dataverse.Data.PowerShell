@@ -50,9 +50,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets connection references as a hashtable (for multiple parameter set).
         /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = "Multiple", HelpMessage = "Hashtable of connection reference logical names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).")]
+        [Parameter(Mandatory = true, ParameterSetName = "Multiple", HelpMessage = "Hashtable of connection reference logical names or connector names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'} or @{'shared_sharepointonline' = '00000000-0000-0000-0000-000000000000'}). Keys can be either specific connection reference logical names or connector names (value after last '/' in connector ID). Connection references without a specific logical name mapping will fall back to checking by connector name.")]
         [ValidateNotNullOrEmpty]
         public Hashtable ConnectionReferences { get; set; }
+
+        /// <summary>
+        /// Gets or sets the solution unique name to filter connection references by (for multiple parameter set).
+        /// When specified, only connection references that are components of this solution will be processed.
+        /// </summary>
+        [Parameter(ParameterSetName = "Multiple", HelpMessage = "Solution unique name to filter connection references by. When specified, only connection references that are components of this solution will be processed.")]
+        [ValidateNotNullOrEmpty]
+        public string SolutionUniqueName { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -86,14 +94,145 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
 
+                // Query all connection references to get their connector IDs for connector name fallback
+                // If SolutionUniqueName is specified, join with solution and solutioncomponent tables to filter
+                WriteVerbose("Querying connection references...");
+                
+                var allConnRefsQuery = new QueryExpression("connectionreference")
+                {
+                    ColumnSet = new ColumnSet("connectionreferenceid", "connectionreferencelogicalname", "connectorid")
+                };
+
+                // If filtering by solution, add join to solutioncomponent and solution tables
+                if (!string.IsNullOrEmpty(SolutionUniqueName))
+                {
+                    WriteVerbose($"Filtering connection references by solution: {SolutionUniqueName}");
+                    
+                    // Link to solutioncomponent table
+                    var solutionComponentLink = new LinkEntity
+                    {
+                        LinkFromEntityName = "connectionreference",
+                        LinkFromAttributeName = "connectionreferenceid",
+                        LinkToEntityName = "solutioncomponent",
+                        LinkToAttributeName = "objectid",
+                        JoinOperator = JoinOperator.Inner,
+                        LinkCriteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("componenttype", ConditionOperator.Equal, 10091) // Connection Reference component type
+                            }
+                        }
+                    };
+                    
+                    // Link from solutioncomponent to solution table
+                    var solutionLink = new LinkEntity
+                    {
+                        LinkFromEntityName = "solutioncomponent",
+                        LinkFromAttributeName = "solutionid",
+                        LinkToEntityName = "solution",
+                        LinkToAttributeName = "solutionid",
+                        JoinOperator = JoinOperator.Inner,
+                        LinkCriteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("uniquename", ConditionOperator.Equal, SolutionUniqueName)
+                            }
+                        }
+                    };
+                    
+                    solutionComponentLink.LinkEntities.Add(solutionLink);
+                    allConnRefsQuery.LinkEntities.Add(solutionComponentLink);
+                }
+                
+                var allConnRefs = Connection.RetrieveMultiple(allConnRefsQuery);
+                var connectorIdsByLogicalName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                var logicalNamesByConnRefId = new Dictionary<Guid, string>();
+                
+                foreach (var connRef in allConnRefs.Entities)
+                {
+                    var logicalName = connRef.GetAttributeValue<string>("connectionreferencelogicalname");
+                    var connectorId = connRef.GetAttributeValue<string>("connectorid");
+                    var connRefId = connRef.Id;
+                    
+                    if (!string.IsNullOrEmpty(logicalName))
+                    {
+                        logicalNamesByConnRefId[connRefId] = logicalName;
+                        
+                        if (!string.IsNullOrEmpty(connectorId))
+                        {
+                            connectorIdsByLogicalName[logicalName] = connectorId;
+                        }
+                    }
+                }
+                
+                if (!string.IsNullOrEmpty(SolutionUniqueName))
+                {
+                    WriteVerbose($"Found {allConnRefs.Entities.Count} connection reference(s) in solution '{SolutionUniqueName}'");
+                }
+                else
+                {
+                    WriteVerbose($"Found {allConnRefs.Entities.Count} connection reference(s) in the environment");
+                }
+                
+                // Track which connection references have been mapped to avoid duplicates
+                var mappedConnectionReferences = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                
                 foreach (DictionaryEntry entry in ConnectionReferences)
                 {
-                    var logicalName = entry.Key.ToString();
+                    var providedKey = entry.Key.ToString();
                     var connectionId = entry.Value.ToString();
-                    referencesToSet[logicalName] = new ConnectionReferenceInfo
+                    
+                    // Check if the provided key matches a connection reference logical name directly
+                    var matchingLogicalName = logicalNamesByConnRefId.Values.FirstOrDefault(ln =>
+                        string.Equals(ln, providedKey, StringComparison.OrdinalIgnoreCase));
+                    
+                    if (matchingLogicalName != null)
                     {
-                        ConnectionId = connectionId
-                    };
+                        // Direct match by logical name
+                        if (!mappedConnectionReferences.Contains(matchingLogicalName))
+                        {
+                            referencesToSet[matchingLogicalName] = new ConnectionReferenceInfo
+                            {
+                                ConnectionId = connectionId
+                            };
+                            mappedConnectionReferences.Add(matchingLogicalName);
+                            WriteVerbose($"Mapping connection reference '{matchingLogicalName}' by logical name");
+                        }
+                    }
+                    else
+                    {
+                        // Check if the provided key matches a connector name (fallback)
+                        var matchingConnRefs = connectorIdsByLogicalName
+                            .Where(kvp => DoesKeyMatchConnectorName(providedKey, kvp.Value))
+                            .Select(kvp => kvp.Key)
+                            .ToList();
+                        
+                        if (matchingConnRefs.Count > 0)
+                        {
+                            // Found connection reference(s) with this connector name
+                            foreach (var connRefLogicalName in matchingConnRefs)
+                            {
+                                // Only map if not already mapped by logical name
+                                if (!mappedConnectionReferences.Contains(connRefLogicalName))
+                                {
+                                    var connectorName = GetConnectorNameFromId(connectorIdsByLogicalName[connRefLogicalName]);
+                                    WriteVerbose($"Mapping connection reference '{connRefLogicalName}' to connection ID via connector name '{connectorName}'");
+                                    
+                                    referencesToSet[connRefLogicalName] = new ConnectionReferenceInfo
+                                    {
+                                        ConnectionId = connectionId
+                                    };
+                                    mappedConnectionReferences.Add(connRefLogicalName);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            WriteVerbose($"Key '{providedKey}' does not match any connection reference logical name or connector name, skipping.");
+                        }
+                    }
                 }
             }
 
@@ -235,6 +374,43 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 }
             }
+        }
+
+        /// <summary>
+        /// Extracts the connector name from a full connector ID path.
+        /// For example, "/providers/Microsoft.PowerApps/apis/shared_sharepointonline" becomes "shared_sharepointonline".
+        /// </summary>
+        private string GetConnectorNameFromId(string connectorId)
+        {
+            if (string.IsNullOrEmpty(connectorId))
+            {
+                return connectorId;
+            }
+
+            var lastSlashIndex = connectorId.LastIndexOf('/');
+            if (lastSlashIndex >= 0 && lastSlashIndex < connectorId.Length - 1)
+            {
+                return connectorId.Substring(lastSlashIndex + 1);
+            }
+
+            return connectorId;
+        }
+
+        /// <summary>
+        /// Checks if a provided key matches a connector ID, comparing just the connector name (after last /).
+        /// </summary>
+        private bool DoesKeyMatchConnectorName(string providedKey, string connectorId)
+        {
+            if (string.IsNullOrEmpty(providedKey) || string.IsNullOrEmpty(connectorId))
+            {
+                return false;
+            }
+
+            // Extract connector names from both
+            var providedConnectorName = GetConnectorNameFromId(providedKey);
+            var actualConnectorName = GetConnectorNameFromId(connectorId);
+
+            return string.Equals(providedConnectorName, actualConnectorName, StringComparison.OrdinalIgnoreCase);
         }
 
         private class ConnectionReferenceInfo

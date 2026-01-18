@@ -435,7 +435,6 @@ jobs:
           if ($shouldRunMetadataTests) {
               $metadataConfig = New-PesterConfiguration
               $metadataConfig.Run.Path = @(
-                  'e2e-tests/DynamicPluginAssembly.Tests.ps1'
                   # Opt in per branch by uncommenting
                   # 'e2e-tests/EntityKeyMetadata.Tests.ps1'
                   # 'e2e-tests/EntityMetadata.Tests.ps1',
