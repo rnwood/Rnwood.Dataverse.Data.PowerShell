@@ -504,7 +504,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose("Major and minor versions match - using Update import mode.");
                     shouldUseStageAndUpgrade = false;
                     shouldUseHoldingSolution = false;
-                } else
+                }
+                else
                 {
                     WriteVerbose("Major and minor versions does not match - Using Upgrade import mode.");
                 }
@@ -512,143 +513,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Build ComponentParameters from ConnectionReferences and EnvironmentVariables hashtables
             // Only include parameters that are discovered in the solution file
-            EntityCollection componentParameters = null;
-
-            int totalParams = (ConnectionReferences?.Count ?? 0) + (EnvironmentVariables?.Count ?? 0);
-
-            if (totalParams > 0)
-            {
-                WriteVerbose($"Processing {totalParams} component parameter(s)...");
-                componentParameters = new EntityCollection();
-
-                // Process connection references - only include those discovered in the solution file
-                if (ConnectionReferences != null && ConnectionReferences.Count > 0)
-                {
-                    WriteVerbose($"Processing {ConnectionReferences.Count} connection reference(s)...");
-                    
-                    // Keep track of which connection references have been mapped (to avoid duplicates)
-                    var mappedConnectionReferences = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                    
-                    foreach (DictionaryEntry entry in ConnectionReferences)
-                    {
-                        var providedKey = entry.Key.ToString();
-                        var connectionId = entry.Value.ToString();
-
-                        // Check if the provided key matches a connection reference logical name directly
-                        var correctlyCasedName = _solutionConnectionReferenceNames?.FirstOrDefault(n =>
-                            string.Equals(n, providedKey, StringComparison.OrdinalIgnoreCase));
-
-                        if (correctlyCasedName != null)
-                        {
-                            // Direct match by logical name
-                            WriteVerbose($"  Setting connection reference '{correctlyCasedName}' to connection '{connectionId}' (matched by logical name)");
-
-                            var componentParam = new Entity("connectionreference");
-                            componentParam["connectionreferencelogicalname"] = correctlyCasedName;
-                            componentParam["connectionid"] = connectionId;
-
-                            componentParameters.Entities.Add(componentParam);
-                            mappedConnectionReferences.Add(correctlyCasedName);
-                        }
-                        else if (_connectionReferenceConnectorIds != null)
-                        {
-                            // Check if the provided key matches a connector ID (fallback)
-                            var matchingConnRefs = _connectionReferenceConnectorIds
-                                .Where(kvp => DoesKeyMatchConnectorId(providedKey, kvp.Value))
-                                .Select(kvp => kvp.Key)
-                                .ToList();
-
-                            if (matchingConnRefs.Count > 0)
-                            {
-                                // Found connection reference(s) with this connector ID
-                                foreach (var connRefLogicalName in matchingConnRefs)
-                                {
-                                    // Only map if not already mapped by logical name
-                                    if (!mappedConnectionReferences.Contains(connRefLogicalName))
-                                    {
-                                        var connectorName = GetConnectorNameFromId(_connectionReferenceConnectorIds[connRefLogicalName]);
-                                        WriteVerbose($"  Setting connection reference '{connRefLogicalName}' to connection '{connectionId}' (matched by connector name '{connectorName}')");
-
-                                        var componentParam = new Entity("connectionreference");
-                                        componentParam["connectionreferencelogicalname"] = connRefLogicalName;
-                                        componentParam["connectionid"] = connectionId;
-
-                                        componentParameters.Entities.Add(componentParam);
-                                        mappedConnectionReferences.Add(connRefLogicalName);
-                                    }
-                                    else
-                                    {
-                                        WriteVerbose($"  Skipping connection reference '{connRefLogicalName}' for connector key '{providedKey}' as it's already mapped by logical name.");
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                WriteVerbose($"  Key '{providedKey}' does not match any connection reference logical name or connector name in the solution file, skipping.");
-                            }
-                        }
-                        else
-                        {
-                            WriteVerbose($"  Connection reference '{providedKey}' is not in the solution file, skipping.");
-                        }
-                    }
-                }
-
-                // Process environment variables - only include those discovered in the solution file
-                if (EnvironmentVariables != null && EnvironmentVariables.Count > 0)
-                {
-                    WriteVerbose($"Processing {EnvironmentVariables.Count} environment variable(s)...");
-
-                    // Build list of correctly-cased names for querying existing values
-                    // Only include those that are in the solution file
-                    var correctlyCasedEnvVarNames = new List<string>();
-                    foreach (DictionaryEntry entry in EnvironmentVariables)
-                    {
-                        var envVarName = entry.Key.ToString();
-                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n =>
-                            string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase));
-                        
-                        if (correctlyCasedName != null)
-                        {
-                            correctlyCasedEnvVarNames.Add(correctlyCasedName);
-                        }
-                    }
-
-                    // Query for existing environment variable values by schema name (using correct casing)
-                    var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(correctlyCasedEnvVarNames);
-
-                    foreach (DictionaryEntry entry in EnvironmentVariables)
-                    {
-                        var envVarSchemaName = entry.Key.ToString();
-                        var envVarValue = entry.Value.ToString();
-
-                        // Use the correctly-cased name from the solution file if available
-                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n =>
-                            string.Equals(n, envVarSchemaName, StringComparison.OrdinalIgnoreCase));
-
-                        if (correctlyCasedName == null)
-                        {
-                            WriteVerbose($"  Environment variable '{envVarSchemaName}' is not in the solution file, skipping.");
-                            continue;
-                        }
-
-                        WriteVerbose($"  Setting environment variable '{correctlyCasedName}' to value '{envVarValue}'");
-
-                        var componentParam = new Entity("environmentvariablevalue");
-                        componentParam["schemaname"] = correctlyCasedName;
-                        componentParam["value"] = envVarValue;
-
-                        // If there's an existing value record, include its ID for update
-                        if (existingEnvVarValuesBySchemaName.TryGetValue(correctlyCasedName, out var existingValueId))
-                        {
-                            componentParam["environmentvariablevalueid"] = existingValueId;
-                            WriteVerbose($"    Found existing value record with ID: {existingValueId}");
-                        }
-
-                        componentParameters.Entities.Add(componentParam);
-                    }
-                }
-            }
+            EntityCollection componentParameters = GetComponentParameters();
 
             // Create the async import request
             OrganizationRequest importRequest;
@@ -663,7 +528,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ConvertToManaged = ConvertToManaged.IsPresent,
                     SkipQueueRibbonJob = SkipQueueRibbonJob.IsPresent,
                     AsyncRibbonProcessing = AsyncRibbonProcessing.IsPresent,
-                    ComponentParameters = componentParameters
+                    ComponentParameters = componentParameters.Entities.Any() ? componentParameters : null
                 };
 
                 if (LayerDesiredOrder != null)
@@ -686,7 +551,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ConvertToManaged = ConvertToManaged.IsPresent,
                     SkipQueueRibbonJob = SkipQueueRibbonJob.IsPresent,
                     AsyncRibbonProcessing = AsyncRibbonProcessing.IsPresent,
-                    ComponentParameters = componentParameters
+                    ComponentParameters = componentParameters.Entities.Any() ? componentParameters : null
                 };
 
                 if (LayerDesiredOrder != null)
@@ -860,6 +725,149 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Wait before polling again
                 Thread.Sleep(pollingInterval);
             }
+        }
+
+        private EntityCollection GetComponentParameters()
+        {
+            EntityCollection componentParameters = null;
+
+            int totalParams = (ConnectionReferences?.Count ?? 0) + (EnvironmentVariables?.Count ?? 0);
+
+            if (totalParams > 0)
+            {
+                WriteVerbose($"Processing {totalParams} component parameter(s)...");
+                componentParameters = new EntityCollection();
+
+                // Process connection references - only include those discovered in the solution file
+                if (ConnectionReferences != null && ConnectionReferences.Count > 0)
+                {
+                    WriteVerbose($"Processing {ConnectionReferences.Count} connection reference(s)...");
+
+                    // Keep track of which connection references have been mapped (to avoid duplicates)
+                    var mappedConnectionReferences = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                    foreach (DictionaryEntry entry in ConnectionReferences)
+                    {
+                        var providedKey = entry.Key.ToString();
+                        var connectionId = entry.Value.ToString();
+
+                        // Check if the provided key matches a connection reference logical name directly
+                        var correctlyCasedName = _solutionConnectionReferenceNames?.FirstOrDefault(n =>
+                            string.Equals(n, providedKey, StringComparison.OrdinalIgnoreCase));
+
+                        if (correctlyCasedName != null)
+                        {
+                            // Direct match by logical name
+                            WriteVerbose($"  Setting connection reference '{correctlyCasedName}' to connection '{connectionId}' (matched by logical name)");
+
+                            var componentParam = new Entity("connectionreference");
+                            componentParam["connectionreferencelogicalname"] = correctlyCasedName;
+                            componentParam["connectionid"] = connectionId;
+
+                            componentParameters.Entities.Add(componentParam);
+                            mappedConnectionReferences.Add(correctlyCasedName);
+                        }
+                        else if (_connectionReferenceConnectorIds != null)
+                        {
+                            // Check if the provided key matches a connector ID (fallback)
+                            var matchingConnRefs = _connectionReferenceConnectorIds
+                                .Where(kvp => DoesKeyMatchConnectorId(providedKey, kvp.Value))
+                                .Select(kvp => kvp.Key)
+                                .ToList();
+
+                            if (matchingConnRefs.Count > 0)
+                            {
+                                // Found connection reference(s) with this connector ID
+                                foreach (var connRefLogicalName in matchingConnRefs)
+                                {
+                                    // Only map if not already mapped by logical name
+                                    if (!mappedConnectionReferences.Contains(connRefLogicalName))
+                                    {
+                                        var connectorName = GetConnectorNameFromId(_connectionReferenceConnectorIds[connRefLogicalName]);
+                                        WriteVerbose($"  Setting connection reference '{connRefLogicalName}' to connection '{connectionId}' (matched by connector name '{connectorName}')");
+
+                                        var componentParam = new Entity("connectionreference");
+                                        componentParam["connectionreferencelogicalname"] = connRefLogicalName;
+                                        componentParam["connectionid"] = connectionId;
+
+                                        componentParameters.Entities.Add(componentParam);
+                                        mappedConnectionReferences.Add(connRefLogicalName);
+                                    }
+                                    else
+                                    {
+                                        WriteVerbose($"  Skipping connection reference '{connRefLogicalName}' for connector key '{providedKey}' as it's already mapped by logical name.");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                WriteVerbose($"  Key '{providedKey}' does not match any connection reference logical name or connector name in the solution file, skipping.");
+                            }
+                        }
+                        else
+                        {
+                            WriteVerbose($"  Connection reference '{providedKey}' is not in the solution file, skipping.");
+                        }
+                    }
+                }
+
+                // Process environment variables - only include those discovered in the solution file
+                if (EnvironmentVariables != null && EnvironmentVariables.Count > 0)
+                {
+                    WriteVerbose($"Processing {EnvironmentVariables.Count} environment variable(s)...");
+
+                    // Build list of correctly-cased names for querying existing values
+                    // Only include those that are in the solution file
+                    var correctlyCasedEnvVarNames = new List<string>();
+                    foreach (DictionaryEntry entry in EnvironmentVariables)
+                    {
+                        var envVarName = entry.Key.ToString();
+                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n =>
+                            string.Equals(n, envVarName, StringComparison.OrdinalIgnoreCase));
+
+                        if (correctlyCasedName != null)
+                        {
+                            correctlyCasedEnvVarNames.Add(correctlyCasedName);
+                        }
+                    }
+
+                    // Query for existing environment variable values by schema name (using correct casing)
+                    var existingEnvVarValuesBySchemaName = GetExistingEnvironmentVariableValueIds(correctlyCasedEnvVarNames);
+
+                    foreach (DictionaryEntry entry in EnvironmentVariables)
+                    {
+                        var envVarSchemaName = entry.Key.ToString();
+                        var envVarValue = entry.Value.ToString();
+
+                        // Use the correctly-cased name from the solution file if available
+                        var correctlyCasedName = _solutionEnvironmentVariableNames?.FirstOrDefault(n =>
+                            string.Equals(n, envVarSchemaName, StringComparison.OrdinalIgnoreCase));
+
+                        if (correctlyCasedName == null)
+                        {
+                            WriteVerbose($"  Environment variable '{envVarSchemaName}' is not in the solution file, skipping.");
+                            continue;
+                        }
+
+                        WriteVerbose($"  Setting environment variable '{correctlyCasedName}' to value '{envVarValue}'");
+
+                        var componentParam = new Entity("environmentvariablevalue");
+                        componentParam["schemaname"] = correctlyCasedName;
+                        componentParam["value"] = envVarValue;
+
+                        // If there's an existing value record, include its ID for update
+                        if (existingEnvVarValuesBySchemaName.TryGetValue(correctlyCasedName, out var existingValueId))
+                        {
+                            componentParam["environmentvariablevalueid"] = existingValueId;
+                            WriteVerbose($"    Found existing value record with ID: {existingValueId}");
+                        }
+
+                        componentParameters.Entities.Add(componentParam);
+                    }
+                }
+            }
+
+            return componentParameters;
         }
 
         private bool DoesSolutionExist(byte[] solutionBytes)
