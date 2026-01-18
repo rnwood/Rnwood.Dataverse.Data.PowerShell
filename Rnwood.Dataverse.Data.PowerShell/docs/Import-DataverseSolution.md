@@ -92,7 +92,23 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" `
 
 Imports the solution and sets connection references for two connections and environment variables for two settings.
 
-### Example 3: Import as holding solution (upgrade)
+### Example 3: Import with connector name fallback
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" `
+    -ConnectionReferences @{
+        # All SharePoint connection references will use this connection
+        'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+        # All SQL connection references will use this connection  
+        'shared_sql' = '87654321-4321-4321-4321-210987654321'
+        # Override for a specific connection reference
+        'new_sharepoint_special' = '11111111-1111-1111-1111-111111111111'
+    }
+```
+
+Imports the solution using connector names as fallback. All connection references using the SharePoint connector will be mapped to the first connection ID, except for 'new_sharepoint_special' which has a specific override. All SQL connection references will use the second connection ID.
+
+### Example 12: Import as holding solution (upgrade)
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_v2.zip" -Mode HoldingSolution
@@ -100,7 +116,7 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_v2.zip" -Mode 
 
 Imports the solution as a holding solution for upgrade. If the solution doesn't already exist, it automatically falls back to a regular import.
 
-### Example 4: Import with overwrite and publish workflows
+### Example 12: Import with overwrite and publish workflows
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -OverwriteUnmanagedCustomizations -PublishWorkflows -Verbose
@@ -108,7 +124,7 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -Overwrit
 
 Imports the solution, overwrites unmanaged customizations, publishes workflows, and shows verbose output.
 
-### Example 5: Import solution bytes from pipeline
+### Example 12: Import solution bytes from pipeline
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $bytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
@@ -117,7 +133,7 @@ PS C:\> $bytes | Import-DataverseSolution -OverwriteUnmanagedCustomizations
 
 Imports solution from a byte array via pipeline.
 
-### Example 6: Import with custom timeout
+### Example 12: Import with custom timeout
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\LargeSolution.zip" -TimeoutSeconds 3600 -PollingIntervalSeconds 10
@@ -125,7 +141,7 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\LargeSolution.zip" -Timeo
 
 Imports a large solution with a 60-minute timeout and checks status every 10 seconds.
 
-### Example 7: Skip validation for pre-configured environments
+### Example 12: Skip validation for pre-configured environments
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -SkipConnectionReferenceValidation -SkipEnvironmentVariableValidation
@@ -133,7 +149,7 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -SkipConn
 
 Imports the solution and skips validation checks, useful when connection references and environment variables are already configured in the target environment.
 
-### Example 8: Force regular import (skip upgrade logic)
+### Example 12: Force regular import (skip upgrade logic)
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -Mode NoUpgrade
@@ -141,7 +157,7 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution.zip" -Mode NoU
 
 Imports the solution using regular import, bypassing any upgrade logic. Useful for fresh deployments or when you want to ensure a clean import.
 
-### Example 9: Explicit stage and upgrade (when conditions are met)
+### Example 12: Explicit stage and upgrade (when conditions are met)
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MyManagedSolution.zip" -Mode StageAndUpgrade
@@ -149,7 +165,7 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MyManagedSolution.zip" -M
 
 Explicitly requests stage and upgrade mode. The cmdlet will check if the solution exists and use StageAndUpgradeAsyncRequest if it does, otherwise falls back to regular import.
 
-### Example 10: Skip import if same version is already installed
+### Example 12: Skip import if same version is already installed
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" -SkipIfSameVersion
@@ -157,7 +173,7 @@ PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" -
 
 Skips the import if the solution version in the file (e.g., 1.0.0.0) is the same as the version already installed in the target environment. Useful for deployment scripts that should be idempotent.
 
-### Example 11: Skip import if a newer version is already installed
+### Example 12: Skip import if a newer version is already installed
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Import-DataverseSolution -InFile "C:\Solutions\MySolution_1.0.0.0.zip" -SkipIfLowerVersion
@@ -223,9 +239,45 @@ Accept wildcard characters: False
 ```
 
 ### -ConnectionReferences
-Hashtable of connection reference schema names to connection IDs. Used to set connection references during import.
+Hashtable of connection reference schema names or connector names to connection IDs. Used to set connection references during import.
 
-Example: @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}
+Keys can be either:
+- Specific connection reference logical names (e.g., 'new_sharepoint_conn1')
+- Connector names for fallback matching (e.g., 'shared_sharepointonline')
+
+The connector name is the value after the last '/' in the full connector ID path. For example, if the full connector ID is '/providers/Microsoft.PowerApps/apis/shared_sharepointonline', the connector name is 'shared_sharepointonline'.
+
+When a hashtable key matches a connection reference logical name, it is used directly. If no direct match is found, the cmdlet checks if the key matches a connector name. All connection references using that connector will be mapped to the specified connection ID.
+
+Logical name matches take precedence over connector name matches, allowing you to override the connector-level default for specific connection references.
+
+Example using logical names:
+
+
+@{
+    'new_sharepoint_conn1' = '12345678-1234-1234-1234-123456789012'
+    'new_sharepoint_conn2' = '87654321-4321-4321-4321-210987654321'
+}
+
+Example using connector name fallback:
+
+
+@{
+    # All SharePoint connection references will use this connection
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    # All SQL connection references will use this connection
+    'shared_sql' = '87654321-4321-4321-4321-210987654321'
+}
+
+Example mixing both approaches:
+
+
+@{
+    # Default for all SharePoint connection references
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    # Override for a specific SharePoint connection reference
+    'new_sharepoint_special' = '11111111-1111-1111-1111-111111111111'
+}
 
 ```yaml
 Type: Hashtable
