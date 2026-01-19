@@ -57,6 +57,9 @@ Retrieves entity key (alternate key) metadata for a Dataverse table.
 ### [Get-DataverseEntityMetadata](Get-DataverseEntityMetadata.md)
 Retrieves entity (table) metadata from Dataverse.
 
+### [Get-DataverseEnvironment](Get-DataverseEnvironment.md)
+Lists Dataverse environments accessible to the authenticated user.
+
 ### [Get-DataverseEnvironmentVariableDefinition](Get-DataverseEnvironmentVariableDefinition.md)
 Gets environment variable definitions from Dataverse.
 
