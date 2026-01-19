@@ -21,8 +21,8 @@ Set-DataverseConnectionReference [-ConnectionReferenceLogicalName] <String> [-Co
 
 ### Multiple
 ```
-Set-DataverseConnectionReference -ConnectionReferences <Hashtable> [-SolutionUniqueName <String>] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseConnectionReference -ConnectionReferences <Hashtable> [-SolutionUniqueName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -33,7 +33,6 @@ The single parameter set will create a connection reference if it does not exist
 The multiple parameter set only updates existing connection references if they are found. The keys in the hastable are the logical names of the connection references to update, and the values are the connection IDs to set.
 When using the multiple parameter set, connector names can be used as keys for fallback matching. If a key does not match any connection reference logical name, the cmdlet will query all existing connection references to get their connector IDs and check if the key matches a connector name. All connection references using that connector will be mapped to the specified connection ID.
 Specify the -SolutionUniqueName parameter to limit the search for connection references to those included in a specific solution.
-
 
 ## EXAMPLES
 
@@ -276,6 +275,21 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SolutionUniqueName
+Solution unique name to filter connection references by. When specified, only connection references that are components of this solution will be processed.
+
+```yaml
+Type: String
+Parameter Sets: Multiple
+Aliases:
 
 Required: False
 Position: Named
