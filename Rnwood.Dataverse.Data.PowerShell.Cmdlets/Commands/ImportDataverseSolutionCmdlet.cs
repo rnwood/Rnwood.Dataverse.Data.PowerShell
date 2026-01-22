@@ -528,7 +528,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ConvertToManaged = ConvertToManaged.IsPresent,
                     SkipQueueRibbonJob = SkipQueueRibbonJob.IsPresent,
                     AsyncRibbonProcessing = AsyncRibbonProcessing.IsPresent,
-                    ComponentParameters = componentParameters.Entities.Any() ? componentParameters : null
+                    ComponentParameters = componentParameters != null && componentParameters.Entities.Any() ? componentParameters : null
                 };
 
                 if (LayerDesiredOrder != null)
@@ -551,7 +551,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ConvertToManaged = ConvertToManaged.IsPresent,
                     SkipQueueRibbonJob = SkipQueueRibbonJob.IsPresent,
                     AsyncRibbonProcessing = AsyncRibbonProcessing.IsPresent,
-                    ComponentParameters = componentParameters.Entities.Any() ? componentParameters : null
+                    ComponentParameters = componentParameters != null && componentParameters.Entities.Any() ? componentParameters : null
                 };
 
                 if (LayerDesiredOrder != null)
