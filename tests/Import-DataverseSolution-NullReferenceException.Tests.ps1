@@ -103,7 +103,7 @@ Describe 'Import-DataverseSolution - NullReferenceException Bug Fix' {
         It "Does not throw NullReferenceException when solution has no components (new solution)" {
             # Create a solution with no connection references or environment variables
             $solutionPath = New-TestSolutionWithoutComponents `
-                -UniqueName "SchemaMigrationTracking" `
+                -UniqueName "TestNullRefFix_NoComponents1" `
                 -Version "1.0.0.0" `
                 -IsManaged $true
             $Script:TestSolutionPaths += $solutionPath
@@ -126,7 +126,7 @@ Describe 'Import-DataverseSolution - NullReferenceException Bug Fix' {
         It "Does not throw NullReferenceException with UseUpdateIfVersionMajorMinorMatches flag" {
             # Create a solution with no connection references or environment variables
             $solutionPath = New-TestSolutionWithoutComponents `
-                -UniqueName "SchemaMigrationTracking2" `
+                -UniqueName "TestNullRefFix_NoComponents2" `
                 -Version "1.0.0.0" `
                 -IsManaged $true
             $Script:TestSolutionPaths += $solutionPath
