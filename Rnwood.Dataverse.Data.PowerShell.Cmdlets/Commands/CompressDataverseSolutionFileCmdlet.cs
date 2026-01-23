@@ -88,12 +88,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var args = $"solution pack --zipfile \"{resolvedOutputPath}\" --folder \"{workingPath}\" --packagetype {PackageType}";
 
                 // Execute PAC CLI
-                int exitCode = PacCliHelper.ExecutePacCli(this, args);
+                var result = PacCliHelper.ExecutePacCliWithOutput(this, args);
 
-                if (exitCode != 0)
+                if (result.ExitCode != 0)
                 {
+                    var errorMessage = $"PAC CLI pack failed with exit code {result.ExitCode}";
+                    if (!string.IsNullOrWhiteSpace(result.Output))
+                    {
+                        errorMessage += $"{Environment.NewLine}PAC CLI output:{Environment.NewLine}{result.Output}";
+                    }
+                    
                     ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException($"PAC CLI pack failed with exit code {exitCode}"),
+                        new InvalidOperationException(errorMessage),
                         "PacCliFailed",
                         ErrorCategory.InvalidOperation,
                         resolvedPath));

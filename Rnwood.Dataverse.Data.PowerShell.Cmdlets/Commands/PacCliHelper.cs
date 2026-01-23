@@ -14,6 +14,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     internal static class PacCliHelper
     {
         /// <summary>
+        /// Represents the result of executing a PAC CLI command.
+        /// </summary>
+        internal class PacCliResult
+        {
+            public int ExitCode { get; set; }
+            public string Output { get; set; }
+        }
+        /// <summary>
         /// Gets the path to the PAC CLI executable from PATH.
         /// </summary>
         /// <param name="cmdlet">The cmdlet requesting the PAC CLI (for verbose/warning output).</param>
@@ -117,7 +125,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <param name="arguments">The arguments to pass to PAC CLI.</param>
         /// <param name="workingDirectory">The working directory for the process.</param>
         /// <returns>The exit code from the PAC CLI process.</returns>
+        [Obsolete("Use ExecutePacCliWithOutput instead to get detailed error output")]
         public static int ExecutePacCli(PSCmdlet cmdlet, string arguments, string workingDirectory = null)
+        {
+            var result = ExecutePacCliWithOutput(cmdlet, arguments, workingDirectory);
+            return result.ExitCode;
+        }
+
+        /// <summary>
+        /// Executes a PAC CLI command and returns the result with output.
+        /// </summary>
+        /// <param name="cmdlet">The cmdlet executing the command (for output).</param>
+        /// <param name="arguments">The arguments to pass to PAC CLI.</param>
+        /// <param name="workingDirectory">The working directory for the process.</param>
+        /// <returns>A PacCliResult containing the exit code and collected output.</returns>
+        public static PacCliResult ExecutePacCliWithOutput(PSCmdlet cmdlet, string arguments, string workingDirectory = null)
         {
             string pacPath = GetPacCliPath(cmdlet);
 
@@ -136,6 +158,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             var verboseMessages = new ConcurrentQueue<string>();
             var warningMessages = new ConcurrentQueue<string>();
+            var allOutputLines = new ConcurrentQueue<string>();
 
             using (var process = new Process { StartInfo = startInfo })
             {
@@ -144,6 +167,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     if (!string.IsNullOrEmpty(e.Data))
                     {
                         verboseMessages.Enqueue($"PAC: {e.Data}");
+                        allOutputLines.Enqueue(e.Data);
                     }
                 };
 
@@ -152,6 +176,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     if (!string.IsNullOrEmpty(e.Data))
                     {
                         warningMessages.Enqueue($"PAC: {e.Data}");
+                        allOutputLines.Enqueue(e.Data);
                     }
                 };
 
@@ -187,7 +212,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     cmdlet.WriteWarning(msg2);
                 }
 
-                return process.ExitCode;
+                // Collect all output for error reporting
+                var outputLines = new System.Collections.Generic.List<string>();
+                string line;
+                while (allOutputLines.TryDequeue(out line))
+                {
+                    outputLines.Add(line);
+                }
+
+                return new PacCliResult
+                {
+                    ExitCode = process.ExitCode,
+                    Output = string.Join(Environment.NewLine, outputLines)
+                };
             }
         }
     }
