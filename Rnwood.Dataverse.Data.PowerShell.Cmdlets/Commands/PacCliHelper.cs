@@ -18,7 +18,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         internal class PacCliResult
         {
+            /// <summary>
+            /// Gets or sets the exit code from the PAC CLI process.
+            /// </summary>
             public int ExitCode { get; set; }
+            
+            /// <summary>
+            /// Gets or sets the combined stdout and stderr output from the PAC CLI command.
+            /// </summary>
             public string Output { get; set; }
         }
         /// <summary>

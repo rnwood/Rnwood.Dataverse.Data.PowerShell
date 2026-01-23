@@ -15,6 +15,14 @@ Describe 'PacCliHelper - Error Output Inclusion' {
             # This test validates that the error handling code exists and is structured correctly
             # We're testing the pattern, not the actual PAC CLI execution since that would require
             # PAC CLI to be installed and would need to create failing scenarios
+            # 
+            # Note: This is a static code analysis test (checking source code patterns) rather than
+            # a functional test. While functional tests would be preferable, they would require:
+            # 1. PAC CLI to be installed in the test environment
+            # 2. Creating scenarios that cause PAC CLI to fail
+            # 3. Significantly more complex test setup
+            # Given that this change is primarily about message formatting, static analysis provides
+            # adequate validation that the new error handling is in place.
             
             # Check that the cmdlet code includes PAC CLI output in error messages
             $cmdletPath = Join-Path $PSScriptRoot ".." "Rnwood.Dataverse.Data.PowerShell.Cmdlets" "Commands"
