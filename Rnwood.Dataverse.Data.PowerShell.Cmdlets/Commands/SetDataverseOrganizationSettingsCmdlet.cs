@@ -1,6 +1,7 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Management.Automation;
 using System.Text;
@@ -21,10 +22,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Object containing values to update.
         /// When -OrgDbOrgSettings is specified: Property names are OrgDbOrgSettings setting names.
         /// When -OrgDbOrgSettings is NOT specified: Property names must match organization table column names.
+        /// Accepts either PSObject or Hashtable.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipeline = true, 
-            HelpMessage = "Object containing values to update. When -OrgDbOrgSettings is specified, property names are setting names. Otherwise, property names must match organization table column names.")]
-        public PSObject InputObject { get; set; }
+            HelpMessage = "Object containing values to update. When -OrgDbOrgSettings is specified, property names are setting names. Otherwise, property names must match organization table column names. Accepts PSObject or Hashtable.")]
+        public object InputObject { get; set; }
 
         /// <summary>
         /// If specified, updates settings within the OrgDbOrgSettings XML column instead of organization table columns.
@@ -45,6 +47,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            // Convert Hashtable to PSObject if necessary
+            PSObject inputPSObject = ConvertToPSObject(InputObject);
 
             // Retrieve the single organization record with all columns to compare existing values
             QueryExpression query = new QueryExpression("organization")
@@ -77,12 +82,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (OrgDbOrgSettings.IsPresent)
             {
                 // Update OrgDbOrgSettings XML
-                UpdateOrgDbOrgSettingsXml(orgEntity, updateEntity);
+                UpdateOrgDbOrgSettingsXml(orgEntity, updateEntity, inputPSObject);
             }
             else
             {
                 // Update regular organization table columns
-                UpdateOrganizationColumns(orgEntity, updateEntity);
+                UpdateOrganizationColumns(orgEntity, updateEntity, inputPSObject);
             }
 
             // Check if there are any updates to make
@@ -123,10 +128,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private void UpdateOrganizationColumns(Entity existingEntity, Entity updateEntity)
+        private PSObject ConvertToPSObject(object input)
         {
-            // Process properties from InputObject for regular organization columns
-            foreach (PSPropertyInfo property in InputObject.Properties)
+            // If already a PSObject, return as-is
+            if (input is PSObject psObj)
+            {
+                return psObj;
+            }
+
+            // If it's a Hashtable, convert to PSObject
+            if (input is Hashtable hashtable)
+            {
+                PSObject result = new PSObject();
+                foreach (DictionaryEntry kvp in hashtable)
+                {
+                    result.Properties.Add(new PSNoteProperty((string)kvp.Key, kvp.Value));
+                }
+                return result;
+            }
+
+            // For any other object type, wrap it in a PSObject
+            return new PSObject(input);
+        }
+
+        private void UpdateOrganizationColumns(Entity existingEntity, Entity updateEntity, PSObject inputObject)
+        {
+            // Process properties from inputObject for regular organization columns
+            foreach (PSPropertyInfo property in inputObject.Properties)
             {
                 // Skip standard PS properties
                 if (property.Name == "psobject" || property.Name == "pstypenames" || property.Name == "psextended")
@@ -153,7 +181,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private void UpdateOrgDbOrgSettingsXml(Entity existingEntity, Entity updateEntity)
+        private void UpdateOrgDbOrgSettingsXml(Entity existingEntity, Entity updateEntity, PSObject inputObject)
         {
             // Load existing XML
             string existingXml = existingEntity.Contains("orgdborgsettings") && existingEntity["orgdborgsettings"] != null
@@ -171,8 +199,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 bool hasChanges = false;
 
-                // Process each setting from InputObject
-                foreach (PSPropertyInfo setting in InputObject.Properties)
+                // Process each setting from inputObject
+                foreach (PSPropertyInfo setting in inputObject.Properties)
                 {
                     // Skip standard PS properties
                     if (setting.Name == "psobject" || setting.Name == "pstypenames" || setting.Name == "psextended")
@@ -237,7 +265,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     new InvalidOperationException($"Failed to update OrgDbOrgSettings XML: {ex.Message}", ex),
                     "XmlUpdateFailed",
                     ErrorCategory.InvalidData,
-                    InputObject));
+                    inputObject));
             }
         }
 

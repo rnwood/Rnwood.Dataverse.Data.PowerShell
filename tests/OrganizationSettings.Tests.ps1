@@ -222,4 +222,74 @@ Describe 'Set-DataverseOrganizationSettings' -Skip {
         $warnings | Should -Not -BeNullOrEmpty
         $warnings[0] | Should -BeLike "*No valid properties*"
     }
+
+    It "Updates organization record properties using Hashtable" {
+        $connection = getMockConnection -Entities @("organization")
+        
+        # Create an organization record
+        $org = New-Object Microsoft.Xrm.Sdk.Entity("organization")
+        $org.Id = [Guid]::NewGuid()
+        $org["organizationid"] = $org.Id
+        $org["name"] = "Original Name"
+        
+        $connection.Create($org) | Out-Null
+        
+        # Update the name using a hashtable
+        $updateObj = @{
+            name = "Updated Name via Hashtable"
+        }
+        
+        Set-DataverseOrganizationSettings -Connection $connection -InputObject $updateObj -Confirm:$false
+        
+        # Verify the update
+        $result = Get-DataverseOrganizationSettings -Connection $connection
+        $result.name | Should -Be "Updated Name via Hashtable"
+    }
+
+    It "Returns updated record when PassThru is specified with Hashtable" {
+        $connection = getMockConnection -Entities @("organization")
+        
+        # Create an organization record
+        $org = New-Object Microsoft.Xrm.Sdk.Entity("organization")
+        $org.Id = [Guid]::NewGuid()
+        $org["organizationid"] = $org.Id
+        $org["name"] = "Original Name"
+        
+        $connection.Create($org) | Out-Null
+        
+        # Update with PassThru using hashtable
+        $updateObj = @{
+            name = "Updated Name via Hashtable"
+        }
+        
+        $result = Set-DataverseOrganizationSettings -Connection $connection -InputObject $updateObj -PassThru -Confirm:$false
+        
+        $result | Should -Not -BeNullOrEmpty
+        $result.name | Should -Be "Updated Name via Hashtable"
+    }
+
+    It "Updates OrgDbOrgSettings XML using Hashtable" {
+        $connection = getMockConnection -Entities @("organization")
+        
+        # Create an organization record with initial XML
+        $org = New-Object Microsoft.Xrm.Sdk.Entity("organization")
+        $org.Id = [Guid]::NewGuid()
+        $org["organizationid"] = $org.Id
+        $org["orgdborgsettings"] = "<OrgSettings><Setting1>value1</Setting1></OrgSettings>"
+        
+        $connection.Create($org) | Out-Null
+        
+        # Update settings using hashtable
+        $updateObj = @{
+            Setting1 = "newvalue1"
+            Setting2 = "value2"
+        }
+        
+        Set-DataverseOrganizationSettings -Connection $connection -InputObject $updateObj -OrgDbOrgSettings -Confirm:$false
+        
+        # Verify the XML was updated
+        $result = Get-DataverseOrganizationSettings -Connection $connection -IncludeRawXml
+        $result.orgdborgsettings | Should -BeLike "*<Setting1>newvalue1</Setting1>*"
+        $result.orgdborgsettings | Should -BeLike "*<Setting2>value2</Setting2>*"
+    }
 }
