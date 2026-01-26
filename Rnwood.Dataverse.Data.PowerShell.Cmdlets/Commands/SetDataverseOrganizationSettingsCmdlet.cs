@@ -142,7 +142,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 PSObject result = new PSObject();
                 foreach (DictionaryEntry kvp in hashtable)
                 {
-                    result.Properties.Add(new PSNoteProperty((string)kvp.Key, kvp.Value));
+                    // Validate that the key is a string
+                    if (!(kvp.Key is string keyName))
+                    {
+                        WriteError(new ErrorRecord(
+                            new ArgumentException($"Hashtable keys must be strings. Found key of type '{kvp.Key?.GetType().Name ?? "null"}' with value '{kvp.Key}'."),
+                            "InvalidHashtableKey",
+                            ErrorCategory.InvalidArgument,
+                            kvp.Key));
+                        continue;
+                    }
+                    
+                    result.Properties.Add(new PSNoteProperty(keyName, kvp.Value));
                 }
                 return result;
             }
