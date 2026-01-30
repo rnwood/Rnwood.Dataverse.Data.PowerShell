@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "Solution Component E2E Tests" -Skip {
+Describe "Solution Component E2E Tests" {
 
     BeforeAll {
         if ($env:TESTMODULEPATH) {
@@ -114,7 +114,7 @@ Describe "Solution Component E2E Tests" -Skip {
                 
                 # Get the solution to retrieve its ID
                 $solution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName
-                $script:solutionId = $solution.solutionid
+                $script:solutionId = $solution.Id
             }
         
             Write-Host "✓ Test solution created (ID: $($script:solutionId))"
@@ -169,7 +169,7 @@ Describe "Solution Component E2E Tests" -Skip {
                 Wait-DataversePublish -Connection $connection -Verbose
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
-                $entityComponent = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                $entityComponent = $components | Where-Object { $_.ObjectId -eq $entityName }
                 if (-not $entityComponent) {
                     throw "Entity component not found in solution"
                 }
@@ -177,8 +177,13 @@ Describe "Solution Component E2E Tests" -Skip {
                     throw "Expected component type 1 (Entity), got $($entityComponent.ComponentType)"
                 }
                 Write-Host "  Found component: Type=$($entityComponent.ComponentType), Behavior=$($entityComponent.Behavior)"
+                
+                # Verify behavior 0 is correctly set
+                if ($entityComponent.Behavior -ne "IncludeSubcomponents") {
+                    throw "Expected behavior 'IncludeSubcomponents' for Behavior 0, got '$($entityComponent.Behavior)'"
+                }
             }
-            Write-Host "✓ Component verified in solution"
+            Write-Host "✓ Component verified in solution with Behavior 0 (IncludeSubcomponents)"
                 
             Write-Host "Step 5: Attempting to add same component with same behavior (should be no-op)..."
             Invoke-WithRetry {
@@ -227,13 +232,60 @@ Describe "Solution Component E2E Tests" -Skip {
                 Wait-DataversePublish -Connection $connection -Verbose
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
-                $entityComponent = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                $entityComponent = $components | Where-Object { $_.ObjectId -eq $entityName }
                 if (-not $entityComponent) {
                     throw "Entity component not found in solution after behavior change"
                 }
                 Write-Host "  Component behavior: $($entityComponent.Behavior)"
+                
+                # Verify behavior 1 is correctly set (critical fix validation)
+                if ($entityComponent.Behavior -ne "DoNotIncludeSubcomponents") {
+                    throw "Expected behavior 'DoNotIncludeSubcomponents' for Behavior 1, got '$($entityComponent.Behavior)'"
+                }
             }
-            Write-Host "✓ Behavior change verified"
+            Write-Host "✓ Behavior change verified - correctly set to DoNotIncludeSubcomponents"
+                
+            Write-Host "Step 7a: Changing component behavior from 1 to 2 (Include As Shell)..."
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                
+                $result = Set-DataverseSolutionComponent -Connection $connection `
+                    -SolutionName $solutionName `
+                    -ComponentId $script:entityObjectId `
+                    -ComponentType 1 `
+                    -Behavior 2 `
+                    -PassThru `
+                    -Confirm:$false
+                
+                if ($result.WasUpdated -ne $true) {
+                    throw "Component should be marked as updated when behavior changes"
+                }
+                if ($result.BehaviorValue -ne 2) {
+                    throw "Expected behavior value 2, got $($result.BehaviorValue)"
+                }
+                if ($result.Behavior -ne "Include As Shell") {
+                    throw "Expected behavior name 'Include As Shell', got '$($result.Behavior)'"
+                }
+            }
+            Write-Host "✓ Component behavior changed from 1 to 2"
+                
+            Write-Host "Step 7b: Verifying behavior 2 using Get-DataverseSolutionComponent..."
+            Invoke-WithRetry {
+                Wait-DataversePublish -Connection $connection -Verbose
+                $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
+                
+                $entityComponent = $components | Where-Object { $_.ObjectId -eq $entityName }
+                if (-not $entityComponent) {
+                    throw "Entity component not found in solution after behavior change to 2"
+                }
+                Write-Host "  Component behavior: $($entityComponent.Behavior)"
+                
+                # Verify behavior 2 is correctly set
+                if ($entityComponent.Behavior -ne "IncludeAsShell") {
+                    throw "Expected behavior 'IncludeAsShell' for Behavior 2, got '$($entityComponent.Behavior)'"
+                }
+            }
+            Write-Host "✓ Behavior 2 verified - correctly set to IncludeAsShell"
                 
             Write-Host "Step 8: Adding another attribute component to solution..."
             Invoke-WithRetry {
@@ -275,8 +327,8 @@ Describe "Solution Component E2E Tests" -Skip {
                 Write-Host "  Total components in solution: $($allComponents.Count)"
                 
                 # Verify we have at least our entity and attribute
-                $entityComp = $allComponents | Where-Object { $_.ObjectId -eq $script:entityObjectId }
-                $attributeComp = $allComponents | Where-Object { $_.ObjectId -eq $script:attributeObjectId }
+                $entityComp = $allComponents | Where-Object { $_.ObjectId -eq $entityName }
+                $attributeComp = $allComponents | Where-Object { $_.ObjectId -eq "new_testfield" }
                 
                 if (-not $entityComp) {
                     throw "Entity component not found in component list"
@@ -318,13 +370,13 @@ Describe "Solution Component E2E Tests" -Skip {
                 Wait-DataversePublish -Connection $connection -Verbose
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
-                $attributeComp = $components | Where-Object { $_.ObjectId -eq $script:attributeObjectId }
+                $attributeComp = $components | Where-Object { $_.ObjectId -eq "new_testfield" }
                 if ($attributeComp) {
                     throw "Attribute component should not be in solution after removal"
                 }
                 
                 # Entity should still be there
-                $entityComp = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                $entityComp = $components | Where-Object { $_.ObjectId -eq $entityName }
                 if (-not $entityComp) {
                     throw "Entity component should still be in solution"
                 }
