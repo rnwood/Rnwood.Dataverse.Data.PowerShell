@@ -22,7 +22,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Gets or sets the Dataverse connection to use for the cmdlet.
 		/// </summary>
-		[Parameter(Mandatory = false, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.")]
+		[Parameter(Mandatory = false, HelpMessage = "DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.")]
         public virtual ServiceClient Connection 
 		{ 
 			get { return _connection; }
