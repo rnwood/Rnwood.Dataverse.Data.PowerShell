@@ -169,7 +169,7 @@ Describe "Solution Component E2E Tests" {
                 Wait-DataversePublish -Connection $connection -Verbose
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
-                $entityComponent = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                $entityComponent = $components | Where-Object { $_.ObjectId -eq $entityName }
                 if (-not $entityComponent) {
                     throw "Entity component not found in solution"
                 }
@@ -232,7 +232,7 @@ Describe "Solution Component E2E Tests" {
                 Wait-DataversePublish -Connection $connection -Verbose
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
-                $entityComponent = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                $entityComponent = $components | Where-Object { $_.ObjectId -eq $entityName }
                 if (-not $entityComponent) {
                     throw "Entity component not found in solution after behavior change"
                 }
@@ -274,7 +274,7 @@ Describe "Solution Component E2E Tests" {
                 Wait-DataversePublish -Connection $connection -Verbose
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
-                $entityComponent = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                $entityComponent = $components | Where-Object { $_.ObjectId -eq $entityName }
                 if (-not $entityComponent) {
                     throw "Entity component not found in solution after behavior change to 2"
                 }
@@ -327,8 +327,8 @@ Describe "Solution Component E2E Tests" {
                 Write-Host "  Total components in solution: $($allComponents.Count)"
                 
                 # Verify we have at least our entity and attribute
-                $entityComp = $allComponents | Where-Object { $_.ObjectId -eq $script:entityObjectId }
-                $attributeComp = $allComponents | Where-Object { $_.ObjectId -eq $script:attributeObjectId }
+                $entityComp = $allComponents | Where-Object { $_.ObjectId -eq $entityName }
+                $attributeComp = $allComponents | Where-Object { $_.ObjectId -eq "new_testfield" }
                 
                 if (-not $entityComp) {
                     throw "Entity component not found in component list"
@@ -370,13 +370,13 @@ Describe "Solution Component E2E Tests" {
                 Wait-DataversePublish -Connection $connection -Verbose
                 $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
                 
-                $attributeComp = $components | Where-Object { $_.ObjectId -eq $script:attributeObjectId }
+                $attributeComp = $components | Where-Object { $_.ObjectId -eq "new_testfield" }
                 if ($attributeComp) {
                     throw "Attribute component should not be in solution after removal"
                 }
                 
                 # Entity should still be there
-                $entityComp = $components | Where-Object { $_.ObjectId -eq $script:entityObjectId }
+                $entityComp = $components | Where-Object { $_.ObjectId -eq $entityName }
                 if (-not $entityComp) {
                     throw "Entity component should still be in solution"
                 }
