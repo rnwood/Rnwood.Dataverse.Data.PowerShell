@@ -1,3 +1,5 @@
+. $PSScriptRoot/Common.ps1
+
 Describe 'Set-DataverseSolutionComponent' {
     
     It "Cmdlet is available" {
