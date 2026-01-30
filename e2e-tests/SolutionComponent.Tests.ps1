@@ -114,7 +114,7 @@ Describe "Solution Component E2E Tests" {
                 
                 # Get the solution to retrieve its ID
                 $solution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName
-                $script:solutionId = $solution.solutionid
+                $script:solutionId = $solution.Id
             }
         
             Write-Host "✓ Test solution created (ID: $($script:solutionId))"
