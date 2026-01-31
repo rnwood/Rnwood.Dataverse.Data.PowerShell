@@ -436,7 +436,7 @@ jobs:
               $metadataConfig = New-PesterConfiguration
               $metadataConfig.Run.Path = @(
                   # Opt in per branch by uncommenting
-                  'e2e-tests/SolutionComponent.Tests.ps1‎'
+                  'e2e-tests/InvokeDataverseRequest.Tests.ps1'
                   # 'e2e-tests/EntityKeyMetadata.Tests.ps1'
                   # 'e2e-tests/EntityMetadata.Tests.ps1',
                   # 'e2e-tests/AttributeMetadata.Tests.ps1', 
