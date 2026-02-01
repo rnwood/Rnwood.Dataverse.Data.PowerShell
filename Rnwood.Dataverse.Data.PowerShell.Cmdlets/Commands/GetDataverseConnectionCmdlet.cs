@@ -271,8 +271,47 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter]
         public Guid? TenantId { get; set; }
 
-        // Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
-        private CancellationTokenSource _userCancellationCts;
+		private void ValidateUrlIfRestricted(Uri url)
+		{
+			if (url == null)
+			{
+				return;
+			}
+
+			var allowedUrlsVar = SessionState.PSVariable.Get("Global:AllowedDataverseUrls");
+			if (allowedUrlsVar == null || allowedUrlsVar.Value == null)
+			{
+				return;
+			}
+
+			var allowedUrls = allowedUrlsVar.Value as object[];
+			if (allowedUrls == null || allowedUrls.Length == 0)
+			{
+				return;
+			}
+
+			string normalizedInputUrl = url.ToString().TrimEnd('/').ToLowerInvariant();
+
+			foreach (var allowedUrl in allowedUrls)
+			{
+				if (allowedUrl == null)
+				{
+					continue;
+				}
+
+				string normalizedAllowedUrl = allowedUrl.ToString().TrimEnd('/').ToLowerInvariant();
+				if (normalizedInputUrl == normalizedAllowedUrl)
+				{
+					return;
+				}
+			}
+
+			ThrowTerminatingError(new ErrorRecord(
+				new UnauthorizedAccessException($"Access to URL '{url}' is not allowed. The URL is not in the list of allowed Dataverse URLs."),
+				"UrlNotAllowed",
+				ErrorCategory.PermissionDenied,
+				url));
+		}
 
         /// <summary>
         /// Initializes the cmdlet processing.
@@ -401,6 +440,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 // Restore connection parameters from metadata
                 Url = new Uri(metadata.Url);
+				ValidateUrlIfRestricted(Url);
                 ClientId = string.IsNullOrEmpty(metadata.ClientId) ? ClientId : new Guid(metadata.ClientId);
                 Username = metadata.Username;
                 ManagedIdentityClientId = metadata.ManagedIdentityClientId;
@@ -520,6 +560,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 Url = new Uri(discoveryUrl);
                             }
 
+							ValidateUrlIfRestricted(Url);
+
                             result = new ServiceClientWithTokenProvider(Url, url => GetTokenInteractive(publicClient, url));
 
                             // Save connection metadata if a name was provided
@@ -561,6 +603,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 var discoveryUrl = PromptToSelectEnvironmentUrl(url => GetTokenWithUsernamePassword(publicClient, url)).GetAwaiter().GetResult();
                                 Url = new Uri(discoveryUrl);
                             }
+							ValidateUrlIfRestricted(Url);
 
                             result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithUsernamePassword(publicClient, url));
 
@@ -602,6 +645,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 .WithRedirectUri("http://localhost")
                                 .Build();
 
+							ValidateUrlIfRestricted(Url);
                             // Register MSAL cache if saving a named connection
                             if (!string.IsNullOrEmpty(Name))
                             {
@@ -657,6 +701,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 Url = new Uri(discoveryUrl);
                             }
 
+							ValidateUrlIfRestricted(Url);
+
                             // Now get the authority for the selected environment
                             string authority = GetAuthority();
 
@@ -706,6 +752,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                             break;
                         }
+							ValidateUrlIfRestricted(Url);
 
                     case PARAMSET_CLIENTCERTIFICATE:
                         {
@@ -747,6 +794,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 store.RegisterCache(confApp);
                             }
 
+							ValidateUrlIfRestricted(Url);
+
                             result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithClientCertificate(confApp, url));
 
                             // Save connection metadata if a name was provided
@@ -786,7 +835,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                             break;
                         }
-
+							ValidateUrlIfRestricted(Url);
                     case PARAMSET_DEFAULTAZURECREDENTIAL:
                         {
                             var credential = new Azure.Identity.DefaultAzureCredential();
@@ -805,6 +854,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                             result = new ServiceClientWithTokenProvider(Url, url => GetTokenWithAzureCredential(credential, url));
 
+						ValidateUrlIfRestricted(Url);
                             // Save connection metadata if a name was provided
                             if (!string.IsNullOrEmpty(Name))
                             {
