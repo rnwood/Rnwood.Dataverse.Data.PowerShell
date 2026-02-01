@@ -13,6 +13,7 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
     - Automatic data type conversion using metadata - use friendly labels for choices and names for lookups
     - Automatic lookup conversion - use record names instead of GUIDs (when unique)
 - On behalf of (delegation) support for create/update operations
+- **🤖 MCP Server for AI Assistants**: Model Context Protocol server that enables AI assistants like Claude to execute PowerShell scripts with Dataverse module. Features URL allowlist security, auto-connection, and persistent sessions. [Learn More ⬇](#mcp-server-for-ai-assistants)
 - Duplicate detection support for create/update/upsert operations
 - Full support for automatic paging
 - Concise PowerShell-friendly hashtable-based filters with grouped logical expressions (and/or/not/xor) and arbitrary nesting
@@ -258,6 +259,147 @@ For operations not covered by the cmdlets above, use [`Invoke-DataverseRequest`]
 - **NameAndInputs parameter set**: Specify request name and parameters as hashtable (returns converted PSObject by default, use `-Raw` for raw response)
 
 See the [Invoke-DataverseRequest documentation](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) for details on response conversion and parameter sets.
+
+## MCP Server for AI Assistants
+
+The **Model Context Protocol (MCP) Server** enables AI assistants like Claude Desktop to execute PowerShell scripts with the Dataverse module pre-loaded. This powerful integration allows AI to:
+
+- Query and analyze Dataverse data
+- Create, update, and delete records
+- Work with metadata and schema
+- Execute complex data operations
+- All with enterprise-grade security controls
+
+### Quick Start
+
+**1. Install the MCP Server as a .NET Global Tool:**
+
+```bash
+dotnet tool install --global Rnwood.Dataverse.Data.PowerShell.McpServer
+```
+
+**2. Configure in Claude Desktop**
+
+Edit `claude_desktop_config.json` (location varies by platform):
+
+```json
+{
+  "mcpServers": {
+    "dataverse": {
+      "command": "rnwood-dataverse-mcp",
+      "args": [
+        "--allowed-urls",
+        "https://yourorg.crm.dynamics.com"
+      ]
+    }
+  }
+}
+```
+
+**3. Restart Claude Desktop**
+
+The server will auto-connect to your Dataverse environment when first used.
+
+### Example Use Cases
+
+Once configured, you can ask Claude to help with Dataverse tasks:
+
+**"Show me all active contacts in our CRM"**
+```powershell
+Get-DataverseRecord -TableName contact -FilterValues @{ statecode = 0 } |
+  Select-Object fullname, emailaddress1, telephone1
+```
+
+**"Create a new account for Contoso Ltd"**
+```powershell
+Set-DataverseRecord -TableName account -InputObject @{
+    name = 'Contoso Ltd'
+    telephone1 = '555-0100'
+    websiteurl = 'https://contoso.com'
+} -CreateOnly
+```
+
+**"Find all opportunities worth more than $50,000"**
+```powershell
+Get-DataverseRecord -TableName opportunity -FilterValues @{
+    estimatedvalue = @{ GreaterThan = 50000 }
+    statecode = 0  # Active
+} | Select-Object name, estimatedvalue, customeridname
+```
+
+**"Generate a report of accounts created this month"**
+```powershell
+$startOfMonth = Get-Date -Day 1 -Hour 0 -Minute 0 -Second 0
+Get-DataverseRecord -TableName account -FilterValues @{
+    createdon = @{ GreaterThanOrEqual = $startOfMonth }
+} | Group-Object owneridname |
+  Select-Object Name, Count |
+  Sort-Object Count -Descending
+```
+
+**"Update all contacts at Fabrikam to have a new category"**
+```powershell
+# First, find the account
+$fabrikam = Get-DataverseRecord -TableName account -FilterValues @{ name = 'Fabrikam' }
+
+# Then update all related contacts
+Get-DataverseRecord -TableName contact -FilterValues @{
+    parentcustomerid = $fabrikam.accountid
+} | ForEach-Object {
+    Set-DataverseRecord -TableName contact -Id $_.contactid -InputObject @{
+        customertypecode = 3  # Strategic partner
+    }
+}
+```
+
+### Security Features
+
+The MCP Server includes enterprise-grade security:
+
+- **URL Allowlist**: Connections restricted to approved Dataverse environments only
+- **Restricted Language Mode**: Prevents .NET type access by default
+- **Provider Restrictions**: Filesystem and registry access disabled by default
+- **Auto-Connection**: Automatically connects to first allowed URL using interactive auth
+- **Session Isolation**: Each AI session runs in an isolated PowerShell environment
+
+### Advanced Configuration
+
+**Multiple Environments:**
+```json
+{
+  "mcpServers": {
+    "dataverse": {
+      "command": "rnwood-dataverse-mcp",
+      "args": [
+        "--allowed-urls",
+        "https://dev.crm.dynamics.com",
+        "https://test.crm.dynamics.com",
+        "https://prod.crm.dynamics.com"
+      ]
+    }
+  }
+}
+```
+
+**Unrestricted Mode (for trusted environments):**
+```json
+{
+  "mcpServers": {
+    "dataverse": {
+      "command": "rnwood-dataverse-mcp",
+      "args": [
+        "--allowed-urls",
+        "https://yourorg.crm.dynamics.com",
+        "--unrestricted-mode",
+        "--enable-providers"
+      ]
+    }
+  }
+}
+```
+
+For complete documentation including all MCP tools, security considerations, and troubleshooting, see the [**MCP Server Documentation**](Rnwood.Dataverse.Data.PowerShell.McpServer/README.md).
+
 
 ## Support and Contributing
 
