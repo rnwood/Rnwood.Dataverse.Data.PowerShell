@@ -272,16 +272,38 @@ The **Model Context Protocol (MCP) Server** enables AI assistants like Claude De
 
 ### Quick Start
 
-**1. Install the MCP Server as a .NET Global Tool:**
+**1. No Installation Required - Use dotnet exec (Recommended):**
+
+Configure in Claude Desktop by editing `claude_desktop_config.json` (location varies by platform):
+
+```json
+{
+  "mcpServers": {
+    "dataverse": {
+      "command": "dotnet",
+      "args": [
+        "exec",
+        "--package",
+        "Rnwood.Dataverse.Data.PowerShell.McpServer",
+        "rnwood-dataverse-mcp",
+        "--",
+        "--allowed-urls",
+        "https://yourorg.crm.dynamics.com"
+      ]
+    }
+  }
+}
+```
+
+This automatically downloads and runs the latest version from NuGet without any installation.
+
+**Alternative: Install as Global Tool:**
 
 ```bash
 dotnet tool install --global Rnwood.Dataverse.Data.PowerShell.McpServer
 ```
 
-**2. Configure in Claude Desktop**
-
-Edit `claude_desktop_config.json` (location varies by platform):
-
+Then configure with simpler syntax:
 ```json
 {
   "mcpServers": {
@@ -296,7 +318,7 @@ Edit `claude_desktop_config.json` (location varies by platform):
 }
 ```
 
-**3. Restart Claude Desktop**
+**2. Restart Claude Desktop**
 
 The server will auto-connect to your Dataverse environment when first used.
 
@@ -364,13 +386,18 @@ The MCP Server includes enterprise-grade security:
 
 ### Advanced Configuration
 
-**Multiple Environments:**
+**Multiple Environments (using dotnet exec):**
 ```json
 {
   "mcpServers": {
     "dataverse": {
-      "command": "rnwood-dataverse-mcp",
+      "command": "dotnet",
       "args": [
+        "exec",
+        "--package",
+        "Rnwood.Dataverse.Data.PowerShell.McpServer",
+        "rnwood-dataverse-mcp",
+        "--",
         "--allowed-urls",
         "https://dev.crm.dynamics.com",
         "https://test.crm.dynamics.com",
@@ -381,12 +408,18 @@ The MCP Server includes enterprise-grade security:
 }
 ```
 
-**Unrestricted Mode (for trusted environments):**
+**Unrestricted Mode (for trusted environments, using dotnet exec):**
 ```json
 {
   "mcpServers": {
     "dataverse": {
-      "command": "rnwood-dataverse-mcp",
+      "command": "dotnet",
+      "args": [
+        "exec",
+        "--package",
+        "Rnwood.Dataverse.Data.PowerShell.McpServer",
+        "rnwood-dataverse-mcp",
+        "--",
       "args": [
         "--allowed-urls",
         "https://yourorg.crm.dynamics.com",
