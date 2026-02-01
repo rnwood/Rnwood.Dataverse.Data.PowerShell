@@ -23,19 +23,21 @@ This MCP server allows AI assistants and other MCP clients to execute PowerShell
 
 ## Installation
 
-### Using dotnet exec (Recommended - No Installation Required)
+### Using `dnx` (Recommended - No Installation Required)
 
-Run the MCP server directly from NuGet without installing it globally:
+Run the MCP server directly from NuGet without installing it globally using the new `dnx` command (available in .NET 10 SDK):
 
 ```bash
-dotnet exec --package Rnwood.Dataverse.Data.PowerShell.McpServer rnwood-dataverse-mcp -- --allowed-urls https://myorg.crm.dynamics.com
+dnx rnwood-dataverse-mcp --allowed-urls https://myorg.crm.dynamics.com
 ```
 
 This approach:
 - **No installation needed** - downloads and runs the tool on-demand
 - **Always uses the latest version** - automatically fetches updates from NuGet
+- **Simpler syntax** - streamlined command compared to `dotnet exec`
 - **No global PATH pollution** - doesn't install anything permanently
-- **Easy to version-pin** - add `--version 1.2.3` to use a specific version
+
+> **Note**: The `dnx` command is available in .NET 10 SDK and later. For earlier versions of .NET, use the global tool installation method below.
 
 ### As a .NET Global Tool (Alternative)
 
@@ -112,20 +114,16 @@ rnwood-dataverse-mcp -u https://myorg.crm.dynamics.com --unrestricted-mode --ena
 
 Configure the server in Claude Desktop's `claude_desktop_config.json`:
 
-### Using dotnet exec (Recommended - No Installation Required)
+### Using `dnx` (Recommended - No Installation Required)
 
 **Basic configuration:**
 ```json
 {
   "mcpServers": {
     "dataverse-powershell": {
-      "command": "dotnet",
+      "command": "dnx",
       "args": [
-        "exec",
-        "--package",
-        "Rnwood.Dataverse.Data.PowerShell.McpServer",
         "rnwood-dataverse-mcp",
-        "--",
         "--allowed-urls",
         "https://myorg.crm.dynamics.com"
       ]
@@ -139,13 +137,9 @@ Configure the server in Claude Desktop's `claude_desktop_config.json`:
 {
   "mcpServers": {
     "dataverse-powershell": {
-      "command": "dotnet",
+      "command": "dnx",
       "args": [
-        "exec",
-        "--package",
-        "Rnwood.Dataverse.Data.PowerShell.McpServer",
         "rnwood-dataverse-mcp",
-        "--",
         "--allowed-urls",
         "https://dev.crm.dynamics.com",
         "https://test.crm.dynamics.com",
@@ -161,13 +155,9 @@ Configure the server in Claude Desktop's `claude_desktop_config.json`:
 {
   "mcpServers": {
     "dataverse-powershell": {
-      "command": "dotnet",
+      "command": "dnx",
       "args": [
-        "exec",
-        "--package",
-        "Rnwood.Dataverse.Data.PowerShell.McpServer",
         "rnwood-dataverse-mcp",
-        "--",
         "--allowed-urls",
         "https://myorg.crm.dynamics.com",
         "--unrestricted-mode",

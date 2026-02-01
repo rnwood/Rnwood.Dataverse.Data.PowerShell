@@ -272,7 +272,7 @@ The **Model Context Protocol (MCP) Server** enables AI assistants like Claude De
 
 ### Quick Start
 
-**1. No Installation Required - Use dotnet exec (Recommended):**
+**1. No Installation Required - Use `dnx` (Recommended):**
 
 Configure in Claude Desktop by editing `claude_desktop_config.json` (location varies by platform):
 
@@ -280,13 +280,9 @@ Configure in Claude Desktop by editing `claude_desktop_config.json` (location va
 {
   "mcpServers": {
     "dataverse": {
-      "command": "dotnet",
+      "command": "dnx",
       "args": [
-        "exec",
-        "--package",
-        "Rnwood.Dataverse.Data.PowerShell.McpServer",
         "rnwood-dataverse-mcp",
-        "--",
         "--allowed-urls",
         "https://yourorg.crm.dynamics.com"
       ]
@@ -295,7 +291,7 @@ Configure in Claude Desktop by editing `claude_desktop_config.json` (location va
 }
 ```
 
-This automatically downloads and runs the latest version from NuGet without any installation.
+The `dnx` command (new in .NET 10 SDK) automatically downloads and runs the latest version from NuGet without any installation.
 
 **Alternative: Install as Global Tool:**
 
@@ -386,18 +382,14 @@ The MCP Server includes enterprise-grade security:
 
 ### Advanced Configuration
 
-**Multiple Environments (using dotnet exec):**
+**Multiple Environments (using `dnx`):**
 ```json
 {
   "mcpServers": {
     "dataverse": {
-      "command": "dotnet",
+      "command": "dnx",
       "args": [
-        "exec",
-        "--package",
-        "Rnwood.Dataverse.Data.PowerShell.McpServer",
         "rnwood-dataverse-mcp",
-        "--",
         "--allowed-urls",
         "https://dev.crm.dynamics.com",
         "https://test.crm.dynamics.com",
@@ -408,19 +400,14 @@ The MCP Server includes enterprise-grade security:
 }
 ```
 
-**Unrestricted Mode (for trusted environments, using dotnet exec):**
+**Unrestricted Mode (for trusted environments, using `dnx`):**
 ```json
 {
   "mcpServers": {
     "dataverse": {
-      "command": "dotnet",
+      "command": "dnx",
       "args": [
-        "exec",
-        "--package",
-        "Rnwood.Dataverse.Data.PowerShell.McpServer",
         "rnwood-dataverse-mcp",
-        "--",
-      "args": [
         "--allowed-urls",
         "https://yourorg.crm.dynamics.com",
         "--unrestricted-mode",
