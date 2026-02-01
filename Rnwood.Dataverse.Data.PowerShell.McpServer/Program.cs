@@ -51,6 +51,10 @@ rootCommand.SetHandler(async (allowedUrls, enableProviders, unrestrictedMode) =>
     // STDIO mode
     var builder = Host.CreateApplicationBuilder();
 
+    builder.Services.AddSingleton(config);
+    builder.Services.AddSingleton<PowerShellExecutor>();
+    builder.Services.AddSingleton<PowerShellTools>();
+
     builder.Services.AddMcpServer()
         .WithStdioServerTransport()
         .WithTools<PowerShellTools>();
@@ -59,9 +63,6 @@ rootCommand.SetHandler(async (allowedUrls, enableProviders, unrestrictedMode) =>
     {
         options.LogToStandardErrorThreshold = LogLevel.Trace;
     });
-
-    builder.Services.AddSingleton(config);
-    builder.Services.AddSingleton<PowerShellExecutor>();
 
     await builder.Build().RunAsync();
 }, allowedUrlsOption, enableProvidersOption, unrestrictedModeOption);

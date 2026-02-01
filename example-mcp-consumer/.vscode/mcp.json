@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "dataverse-rnwood-powershell": {
+      "command": "dotnet",  
+      "args": [ "run", "--project", "..\\Rnwood.Dataverse.Data.PowerShell.McpServer\\Rnwood.Dataverse.Data.PowerShell.McpServer.csproj", "-u", "https://org94a83884.crm11.dynamics.com/"]
+    }
+  }
+}

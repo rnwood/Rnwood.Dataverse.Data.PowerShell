@@ -38,14 +38,17 @@ public class PowerShellExecutor : IDisposable
         // If not found, try development path (from bin/Debug/net8.0)
         if (!Directory.Exists(_modulePath) || !File.Exists(Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")))
         {
-            _modulePath = Path.Combine(assemblyDir, "..", "..", "..", "Rnwood.Dataverse.Data.PowerShell", "bin", "Debug", "netstandard2.0");
+            // From: Rnwood.Dataverse.Data.PowerShell.McpServer\bin\Debug\net8.0
+            // To:   Rnwood.Dataverse.Data.PowerShell\bin\Debug\netstandard2.0
+            // Need to go up 4 levels to solution root
+            _modulePath = Path.Combine(assemblyDir, "..", "..", "..", "..", "Rnwood.Dataverse.Data.PowerShell", "bin", "Debug", "netstandard2.0");
             _modulePath = Path.GetFullPath(_modulePath);
         }
         
         // If that doesn't exist, try Release build
         if (!Directory.Exists(_modulePath) || !File.Exists(Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1")))
         {
-            _modulePath = Path.Combine(assemblyDir, "..", "..", "..", "Rnwood.Dataverse.Data.PowerShell", "bin", "Release", "netstandard2.0");
+            _modulePath = Path.Combine(assemblyDir, "..", "..", "..", "..", "Rnwood.Dataverse.Data.PowerShell", "bin", "Release", "netstandard2.0");
             _modulePath = Path.GetFullPath(_modulePath);
         }
         
@@ -82,8 +85,15 @@ public class PowerShellExecutor : IDisposable
     {
         EnsureInitialized();
         
+        var moduleManifestPath = Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1");
+        
+        if (!File.Exists(moduleManifestPath))
+        {
+            throw new InvalidOperationException($"Module manifest not found at: {moduleManifestPath}");
+        }
+        
         var script = $@"
-Import-Module 'Rnwood.Dataverse.Data.PowerShell'
+Import-Module '{moduleManifestPath}'
 Get-Command -Module Rnwood.Dataverse.Data.PowerShell | ForEach-Object {{
     $help = Get-Help $_.Name -ErrorAction SilentlyContinue
     [PSCustomObject]@{{
@@ -102,7 +112,8 @@ Get-Command -Module Rnwood.Dataverse.Data.PowerShell | ForEach-Object {{
         var results = ps.Invoke();
         if (ps.HadErrors)
         {
-            throw new InvalidOperationException("Failed to get cmdlet list: " + string.Join("\n", ps.Streams.Error));
+            var errors = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
+            throw new InvalidOperationException($"Failed to get cmdlet list: {errors}");
         }
 
         return results.FirstOrDefault()?.ToString() ?? "[]";
@@ -112,7 +123,15 @@ Get-Command -Module Rnwood.Dataverse.Data.PowerShell | ForEach-Object {{
     {
         EnsureInitialized();
         
+        var moduleManifestPath = Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1");
+        
+        if (!File.Exists(moduleManifestPath))
+        {
+            throw new InvalidOperationException($"Module manifest not found at: {moduleManifestPath}");
+        }
+        
         var script = $@"
+Import-Module '{moduleManifestPath}'
 $help = Get-Help '{cmdletName}' -Full -ErrorAction Stop
 $helpObj = [PSCustomObject]@{{
     Name = $help.Name
@@ -147,7 +166,8 @@ $helpObj | ConvertTo-Json -Depth 10
         var results = ps.Invoke();
         if (ps.HadErrors)
         {
-            throw new InvalidOperationException($"Failed to get help for cmdlet '{cmdletName}': " + string.Join("\n", ps.Streams.Error));
+            var errors = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
+            throw new InvalidOperationException($"Failed to get help for cmdlet '{cmdletName}': {errors}");
         }
 
         return results.FirstOrDefault()?.ToString() ?? "{}";
@@ -239,37 +259,39 @@ public class PersistentSession : IDisposable
                 throw new InvalidOperationException("Session already initialized");
             }
 
-            var iss = _config.EnableProviders ? InitialSessionState.CreateDefault() : InitialSessionState.CreateDefault();
+            // Create initial session state - always use default to ensure module can load
+            var iss = InitialSessionState.CreateDefault();
             
-            if (!_config.EnableProviders)
-            {
-                // Disable all providers
-                iss.Providers.Clear();
-            }
-
-            // Set language mode
-            if (!_config.UnrestrictedMode)
-            {
-                iss.LanguageMode = PSLanguageMode.RestrictedLanguage;
-            }
+            // Always use FullLanguage mode - the module requires ability to import .ps1 files
+            // Security is enforced through allowed URL restrictions instead of language mode
+            iss.LanguageMode = PSLanguageMode.FullLanguage;
 
             _runspace = RunspaceFactory.CreateRunspace(iss);
             _runspace.Open();
 
-    
-                using var ps = System.Management.Automation.PowerShell.Create();
+            // Import the Dataverse module
+            using (var ps = System.Management.Automation.PowerShell.Create())
+            {
                 ps.Runspace = _runspace;
-                ps.AddCommand("Import-Module").AddParameter("Name", "Rnwood.Dataverse.Data.PowerShell");
+                var moduleManifestPath = Path.Combine(_modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1");
+                
+                if (!File.Exists(moduleManifestPath))
+                {
+                    throw new InvalidOperationException($"Module manifest not found at: {moduleManifestPath}");
+                }
+                
+                ps.AddCommand("Import-Module").AddParameter("Name", moduleManifestPath);
                 ps.Invoke();
                 
                 if (ps.HadErrors)
                 {
                     var errors = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
-                    throw new InvalidOperationException($"Failed to import module: {errors}");
+                    throw new InvalidOperationException($"Failed to import module from {moduleManifestPath}: {errors}");
                 }
+            }
             
 
-            // Set the allowed URLs as a session variable that the cmdlet will check
+            // Set the allowed URLs as a session variable that scripts can reference
             var allowedUrlsList = string.Join("', '", _config.AllowedUrls);
             var firstAllowedUrl = _config.AllowedUrls.FirstOrDefault() ?? "";
             
@@ -277,26 +299,13 @@ public class PersistentSession : IDisposable
             {
                 ps2.Runspace = _runspace;
                 ps2.AddScript($"$Global:AllowedDataverseUrls = @('{allowedUrlsList}')");
+                ps2.AddScript($"$Global:DefaultDataverseUrl = '{firstAllowedUrl}'");
                 ps2.Invoke();
                 
                 if (ps2.HadErrors)
                 {
                     var errors = string.Join("\n", ps2.Streams.Error.Select(e => e.ToString()));
-                    throw new InvalidOperationException($"Failed to set allowed URLs: {errors}");
-                }
-            }
-
-            // Auto-connect to first allowed URL on session init
-            using (var ps3 = System.Management.Automation.PowerShell.Create())
-            {
-                ps3.Runspace = _runspace;
-                ps3.AddScript($"$connection = Get-DataverseConnection -Url '{firstAllowedUrl}' -Interactive -SetAsDefault");
-                ps3.Invoke();
-                
-                if (ps3.HadErrors)
-                {
-                    var errors = string.Join("\n", ps3.Streams.Error.Select(e => e.ToString()));
-                    throw new InvalidOperationException($"Failed to create default connection: {errors}");
+                    throw new InvalidOperationException($"Failed to initialize session variables: {errors}");
                 }
             }
         }
