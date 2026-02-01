@@ -12,8 +12,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.McpServer.Tools;
 
 public class PowerShellExecutorConfig
 {
-    public string? ConnectionName { get; set; }
+    public string[] AllowedUrls { get; set; } = Array.Empty<string>();
     public bool EnableProviders { get; set; } = false;
+    public bool UnrestrictedMode { get; set; } = false;
 }
 
 public class PowerShellExecutor : IDisposable
@@ -67,34 +68,10 @@ public class PowerShellExecutor : IDisposable
         {
             if (_isInitialized) return;
 
-            // Test that we can load the connection
-            if (!string.IsNullOrEmpty(_config.ConnectionName))
+            // Validate allowed URLs were provided
+            if (_config.AllowedUrls == null || _config.AllowedUrls.Length == 0)
             {
-                var testScript = $"Import-Module Rnwood.Dataverse.Data.PowerShell";
-                
-                using var runspace = RunspaceFactory.CreateRunspace();
-                runspace.Open();
-                using var ps = System.Management.Automation.PowerShell.Create();
-                ps.Runspace = runspace;
-                ps.AddScript(testScript);
-                
-                    ps.Invoke();
-
-                testScript = $"$connection = Get-DataverseConnection -Name '{_config.ConnectionName}'; if ($null -eq $connection) {{ throw 'Failed to load connection' }}";
-                
-                try
-                {
-                    ps.Invoke();
-                    if (ps.HadErrors)
-                    {
-                        var errorMsg = string.Join("\n", ps.Streams.Error.Select(e => e.ToString()));
-                        throw new InvalidOperationException($"Failed to load named connection '{_config.ConnectionName}'.\n\n{errorMsg}\n\nTo save a connection, use:\nGet-DataverseConnection -Url <your-url> -Interactive -Name '{_config.ConnectionName}' -SetAsDefault\n\nOr list saved connections with:\nGet-DataverseConnection -List");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException($"Failed to validate connection '{_config.ConnectionName}': {ex.Message}\n\nTo save a connection, use:\nGet-DataverseConnection -Url <your-url> -Interactive -Name '{_config.ConnectionName}' -SetAsDefault\n\nOr list saved connections with:\nGet-DataverseConnection -List", ex);
-                }
+                throw new InvalidOperationException("No allowed URLs specified. Use --allowed-urls parameter to specify allowed Dataverse URLs.");
             }
 
             _isInitialized = true;
@@ -270,6 +247,12 @@ public class PersistentSession : IDisposable
                 iss.Providers.Clear();
             }
 
+            // Set language mode
+            if (!_config.UnrestrictedMode)
+            {
+                iss.LanguageMode = PSLanguageMode.RestrictedLanguage;
+            }
+
             _runspace = RunspaceFactory.CreateRunspace(iss);
             _runspace.Open();
 
@@ -286,18 +269,34 @@ public class PersistentSession : IDisposable
                 }
             
 
-            // Load the default connection if specified and set as default
-            if (!string.IsNullOrEmpty(_config.ConnectionName))
+            // Set the allowed URLs as a session variable that the cmdlet will check
+            var allowedUrlsList = string.Join("', '", _config.AllowedUrls);
+            var firstAllowedUrl = _config.AllowedUrls.FirstOrDefault() ?? "";
+            
+            using (var ps2 = System.Management.Automation.PowerShell.Create())
             {
-                using var ps2 = System.Management.Automation.PowerShell.Create();
                 ps2.Runspace = _runspace;
-                ps2.AddScript($"$connection = Get-DataverseConnection -Name '{_config.ConnectionName}' -SetAsDefault");
+                ps2.AddScript($"$Global:AllowedDataverseUrls = @('{allowedUrlsList}')");
                 ps2.Invoke();
                 
                 if (ps2.HadErrors)
                 {
                     var errors = string.Join("\n", ps2.Streams.Error.Select(e => e.ToString()));
-                    throw new InvalidOperationException($"Failed to load connection: {errors}");
+                    throw new InvalidOperationException($"Failed to set allowed URLs: {errors}");
+                }
+            }
+
+            // Auto-connect to first allowed URL on session init
+            using (var ps3 = System.Management.Automation.PowerShell.Create())
+            {
+                ps3.Runspace = _runspace;
+                ps3.AddScript($"$connection = Get-DataverseConnection -Url '{firstAllowedUrl}' -Interactive -SetAsDefault");
+                ps3.Invoke();
+                
+                if (ps3.HadErrors)
+                {
+                    var errors = string.Join("\n", ps3.Streams.Error.Select(e => e.ToString()));
+                    throw new InvalidOperationException($"Failed to create default connection: {errors}");
                 }
             }
         }

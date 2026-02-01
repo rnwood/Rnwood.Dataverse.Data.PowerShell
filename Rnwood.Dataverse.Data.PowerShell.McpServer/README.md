@@ -8,8 +8,10 @@ This MCP server allows AI assistants and other MCP clients to execute PowerShell
 
 - Dataverse Data PowerShell module pre-loaded
 - **Persistent sessions** - create sessions and run multiple scripts sequentially
-- **Restricted language mode** by default (can be disabled)
-- **Providers disabled** by default (can be enabled)
+- **Restricted language mode** by default (can be disabled with `--unrestricted-mode`)
+- **Providers disabled** by default (can be enabled with `--enable-providers`)
+- **URL allowlist** - restricts connections to specified Dataverse URLs only
+- **Auto-connection** - automatically connects to the first allowed URL on session creation
 - Incremental output retrieval
 
 ## Requirements
@@ -17,25 +19,7 @@ This MCP server allows AI assistants and other MCP clients to execute PowerShell
 - .NET 8.0 or later
 - PowerShell 7.4.6 or later (provided via Microsoft.PowerShell.SDK)
 - Built Rnwood.Dataverse.Data.PowerShell module
-- **A saved Dataverse connection** (required for startup)
-
-## Setup: Saving a Connection
-
-Before running the MCP server, you must save a named connection:
-
-```powershell
-# Install and import the module
-Install-Module Rnwood.Dataverse.Data.PowerShell -Scope CurrentUser
-Import-Module Rnwood.Dataverse.Data.PowerShell
-
-# Save a connection with a name
-Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -Name "MyConnection" -SetAsDefault
-```
-
-To list saved connections:
-```powershell
-Get-DataverseConnection -List
-```
+- **One or more allowed Dataverse URLs** (required parameter)
 
 ## Installation
 
@@ -65,252 +49,96 @@ dotnet build Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.Po
 
 ## Running
 
-The server supports several command-line options:
+The server requires specifying allowed Dataverse URLs and supports several command-line options:
 
-### Options
+### Required Options
 
-- `-c, --connection <name>` - Name of the saved Dataverse connection (or use `DATAVERSE_CONNECTION_NAME` env var)
-- `-u, --unrestricted-mode` - Disable PowerShell restricted language mode (default: restricted mode enabled)
+- `-u, --allowed-urls <url1> <url2> ...` - List of allowed Dataverse URLs for connections. Connections can only be made to these URLs. The server will auto-connect to the first URL on session creation.
+
+### Optional Flags
+
+- `-r, --unrestricted-mode` - Disable PowerShell restricted language mode (default: restricted mode enabled)
 - `-p, --enable-providers` - Enable PowerShell providers like FileSystem, Registry, etc. (default: providers disabled)
-- `-h, --http` - Run in HTTP mode instead of STDIO mode (uses ASP.NET environment variables and command line args for bindings)
 - `--help` - Display help information
-
-### Transport Modes
-
-#### STDIO Mode (Default)
-
-The default mode uses standard input/output for communication, suitable for direct process invocation by MCP clients like Claude Desktop.
-
-#### HTTP Mode
-
-HTTP mode exposes the MCP server over HTTP using the official `ModelContextProtocol.AspNetCore` package. The MCP endpoint is automatically configured by the framework. This mode is useful for:
-- Running the server as a web service
-- Accessing from multiple clients
-- Integration with load balancers or API gateways
-
-HTTP mode uses standard ASP.NET Core environment variables and command line arguments for configuration:
-- `ASPNETCORE_URLS` or `--urls` - Set binding addresses (default: `http://localhost:5000`)
-- `ASPNETCORE_ENVIRONMENT` - Set environment (Development, Production, etc.)
-
-**Example HTTP mode:**
-```bash
-# Run on default port (5000)
-rnwood-dataverse-mcp --connection MyConnection --http
-
-# Run on custom port
-rnwood-dataverse-mcp --connection MyConnection --http --urls "http://localhost:8080"
-
-# Run with custom URLs environment variable
-ASPNETCORE_URLS="http://0.0.0.0:5000" rnwood-dataverse-mcp --connection MyConnection --http
-```
 
 ### Examples
 
-**Using the global tool (after installation):**
+**Basic usage (restricted mode, no providers, auto-connect to first URL):**
 ```bash
-rnwood-dataverse-mcp --connection MyConnection
+rnwood-dataverse-mcp --allowed-urls https://myorg.crm.dynamics.com
 ```
 
-**From source:**
+**Multiple allowed URLs:**
 ```bash
-dotnet run --project McpServer.csproj -- --connection MyConnection
+rnwood-dataverse-mcp --allowed-urls https://dev.crm.dynamics.com https://prod.crm.dynamics.com
 ```
 
-**Allow unrestricted PowerShell:**
+**With unrestricted mode and providers enabled:**
 ```bash
-rnwood-dataverse-mcp -c MyConnection --unrestricted-mode
+rnwood-dataverse-mcp -u https://myorg.crm.dynamics.com --unrestricted-mode --enable-providers
 ```
 
-**Enable filesystem and other providers:**
-```bash
-rnwood-dataverse-mcp -c MyConnection --enable-providers
-```
+## URL Restrictions and Auto-Connection
 
-**Full access (unrestricted mode + providers):**
-```bash
-rnwood-dataverse-mcp -c MyConnection -u -p
-```
+### How it Works
 
-**HTTP mode:**
-```bash
-rnwood-dataverse-mcp -c MyConnection --http
-```
+1. **URL Allowlist**: The server wraps the `Get-DataverseConnection` cmdlet to enforce the list of allowed URLs. Any attempt to connect to a URL not in the allowlist will fail with an error message.
 
-**Using environment variable for connection:**
-```bash
-export DATAVERSE_CONNECTION_NAME=MyConnection
-dotnet run --project McpServer.csproj
-```
+2. **Auto-Connection**: On session creation, the server automatically creates an interactive connection to the first allowed URL and sets it as the default. The `$connection` variable is pre-loaded and ready to use.
 
-## Security Modes
+3. **Default Connection Handling**: If a script tries to get the default connection and none exists, the server automatically creates an interactive connection to the first allowed URL.
 
-### Restricted Language Mode (Default)
-- Limits PowerShell functionality for security
-- Prevents access to .NET types and methods
-- Best for untrusted script execution
-- Use `--unrestricted-mode` to disable
+### Security Benefits
 
-### Provider Restrictions (Default)
-- Disables FileSystem, Registry, and other providers
-- Prevents file system access and modifications
-- Use `--enable-providers` to enable providers
+- **Prevents data exfiltration**: Scripts cannot connect to arbitrary URLs
+- **Organizational control**: Administrators can restrict which Dataverse environments are accessible
+- **Audit trail**: All connections are limited to known, approved URLs
 
-**⚠️ Warning**: Using `--unrestricted-mode` and `--enable-providers` removes safety restrictions. Only use in trusted environments.
+## Claude Desktop Integration
 
-## MCP Tools
+Configure the server in Claude Desktop's `claude_desktop_config.json`:
 
-The server exposes five MCP tools for session management and script execution:
-
-### GetCmdletList
-
-Returns a list of all available Dataverse PowerShell cmdlets with their synopsis.
-
-**Parameters:** None
-
-**Returns:**
-- JSON array with objects containing:
-  - `Name`: Cmdlet name
-  - `Synopsis`: Brief description of what the cmdlet does
-
-### GetCmdletHelp
-
-Returns detailed help information for a specific cmdlet.
-
-**Parameters:**
-- `cmdletName` (string, required): The name of the cmdlet (e.g., "Get-DataverseRecord")
-
-**Returns:**
-- JSON object with:
-  - `Name`: Cmdlet name
-  - `Synopsis`: Brief description
-  - `Description`: Detailed description
-  - `Syntax`: Command syntax
-  - `Parameters`: Array of parameter details (name, type, required, description)
-  - `Examples`: Array of usage examples
-
-**Example:**
-```json
-{
-  "cmdletName": "Get-DataverseRecord"
-}
-```
-
-### CreateSession
-
-Creates a new persistent PowerShell session with the Dataverse module and connection pre-loaded.
-
-**Parameters:** None
-
-**Returns:**
-- JSON object with:
-  - `sessionId`: Unique identifier for the session
-  - `message`: Status message
-
-**Usage:**
-This creates a runspace that persists across multiple script executions. Variables and state are maintained between scripts.
-
-### RunScriptInSession
-
-Executes a PowerShell script in an existing persistent session.
-
-**Parameters:**
-- `sessionId` (string, required): The session ID from CreateSession
-- `script` (string, required): The PowerShell script to execute
-
-**Returns:**
-- JSON object with:
-  - `sessionId`: The session ID
-  - `scriptExecutionId`: Unique ID for this script execution
-  - `message`: Status message
-
-**Usage:**
-Scripts run in the same runspace, so variables and state persist. The `$connection` variable is pre-loaded.
-
-### StartScript
-
-Starts executing a PowerShell script with the Dataverse module pre-loaded and the default connection available as `$connection`.
-
-**Parameters:**
-- `script` (string, required): The PowerShell script to execute
-
-**Returns:**
-- JSON object with:
-  - `sessionId`: Unique identifier for this script execution session
-  - `message`: Status message
-
-
-### GetScriptOutput
-
-Retrieves output from a script execution within a persistent session.
-
-**Parameters:**
-- `sessionId` (string, required): The session ID from CreateSession
-- `scriptExecutionId` (string, required): The script execution ID from RunScriptInSession
-- `onlyNew` (boolean, optional): If true, returns only new output since the last call. If false, returns all output. Default: false
-
-**Returns:**
-- JSON object with:
-  - `sessionId`: The session ID
-  - `scriptExecutionId`: The script execution ID
-  - `output`: The script output (stdout, stderr, warnings, verbose, etc.)
-  - `isComplete`: Boolean indicating if the script has finished executing
-  - `hasError`: Boolean indicating if the script encountered errors
-  - `message`: Status message
-
-**Example:**
-```json
-{
-  "sessionId": "abc123...",
-  "scriptExecutionId": "xyz789...",
-  "onlyNew": false
-}
-```
-
-### EndSession
-
-Ends a PowerShell session and releases all associated resources.
-
-**Parameters:**
-- `sessionId` (string, required): The session ID to end
-
-**Returns:**
-- JSON object with:
-  - `sessionId`: The ended session ID
-  - `message`: Status message
-
-**Usage:**
-Always end sessions when done to free up resources.
-
-## Usage with MCP Clients
-
-### Claude Desktop Configuration
-
-**Using the global tool (recommended):**
-
-Default configuration (restricted mode, providers disabled):
+**Basic configuration:**
 ```json
 {
   "mcpServers": {
     "dataverse-powershell": {
       "command": "rnwood-dataverse-mcp",
       "args": [
-        "--connection",
-        "MyConnection"
+        "--allowed-urls",
+        "https://myorg.crm.dynamics.com"
       ]
     }
   }
 }
 ```
 
-Unrestricted mode with providers enabled:
+**With multiple environments:**
 ```json
 {
   "mcpServers": {
     "dataverse-powershell": {
       "command": "rnwood-dataverse-mcp",
       "args": [
-        "-c",
-        "MyConnection",
+        "--allowed-urls",
+        "https://dev.crm.dynamics.com",
+        "https://test.crm.dynamics.com",
+        "https://prod.crm.dynamics.com"
+      ]
+    }
+  }
+}
+```
+
+**With unrestricted mode and providers:**
+```json
+{
+  "mcpServers": {
+    "dataverse-powershell": {
+      "command": "rnwood-dataverse-mcp",
+      "args": [
+        "--allowed-urls",
+        "https://myorg.crm.dynamics.com",
         "--unrestricted-mode",
         "--enable-providers"
       ]
@@ -319,179 +147,141 @@ Unrestricted mode with providers enabled:
 }
 ```
 
-**Using from source (development):**
+## Available MCP Tools
 
-Default configuration:
-```json
-{
-  "mcpServers": {
-    "dataverse-powershell": {
-      "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj",
-        "--",
-        "--connection",
-        "MyConnection"
-      ]
-    }
-  }
-}
-```
-```
+The server exposes the following MCP tools:
 
-**Using environment variable:**
-```json
-{
-  "mcpServers": {
-    "dataverse-powershell": {
-      "command": "dotnet",
-      "args": [
-        "run",
-        "--project",
-        "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj"
-      ],
-      "env": {
-        "DATAVERSE_CONNECTION_NAME": "MyConnection"
-      }
-    }
-  }
-}
-```
+### GetCmdletList
 
-### Using the Published Binary
+Returns a list of all available Dataverse cmdlets with their synopsis.
 
-If you publish the server as a standalone executable:
+**Returns:** JSON array of cmdlets with name and synopsis
 
-```bash
-dotnet publish -c Release -r linux-x64 --self-contained
-```
+### GetCmdletHelp
 
-Then update the configuration:
+Returns detailed help for a specific cmdlet including description, parameters, and examples.
 
-```json
-{
-  "mcpServers": {
-    "dataverse-powershell": {
-      "command": "/path/to/Rnwood.Dataverse.Data.PowerShell.McpServer",
-      "args": ["--connection", "MyConnection"]
-    }
-  }
-}
-```
+**Parameters:**
+- `cmdletName` (string) - Name of the cmdlet
 
-## Example Workflows
+**Returns:** JSON object with detailed help information
 
-### Single Script Execution (Old Pattern - Still Supported)
+### CreateSession
 
-For backward compatibility, you can use sessions for one-off script execution:
+Creates a new persistent PowerShell session with the Dataverse module pre-loaded and auto-connects to the first allowed URL.
 
-1. Create a session: `CreateSession`
-2. Run a script: `RunScriptInSession` with your script
-3. Get output: `GetScriptOutput` 
-4. End session: `EndSession`
+**Returns:** Session ID (string)
 
-### Persistent Session (Recommended Pattern)
+**Notes:**
+- Session is initialized with `$connection` variable containing the default connection
+- Variables and state persist across script executions within the session
 
-For interactive work with state preservation:
+### RunScriptInSession
 
-1. Save a connection using PowerShell:
-   ```powershell
-   Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -Name "MyConnection" -SetAsDefault
-   ```
+Executes a PowerShell script in an existing session.
 
-2. Configure and start the MCP server
+**Parameters:**
+- `sessionId` (string) - Session ID from CreateSession
+- `script` (string) - PowerShell script to execute
 
-3. AI assistant discovers available cmdlets with `GetCmdletList`
+**Returns:** Script execution ID (string)
 
-4. AI assistant gets help for specific cmdlets with `GetCmdletHelp`
+**Notes:**
+- Script runs asynchronously
+- Use GetScriptOutput to retrieve results
 
-5. AI assistant creates a persistent session with `CreateSession`
+### GetScriptOutput
 
-6. AI assistant runs multiple scripts in sequence in the same session:
-   - First script: `RunScriptInSession` - e.g., `$accounts = Get-DataverseRecord -Connection $connection -TableName account -Top 10`
-   - Get results: `GetScriptOutput`
-   - Second script: `RunScriptInSession` - e.g., `$accounts | Select-Object name, accountnumber` (uses $accounts from previous script)
-   - Get results: `GetScriptOutput`
+Retrieves output from a script execution.
 
-7. AI assistant ends the session with `EndSession` when done
+**Parameters:**
+- `sessionId` (string) - Session ID
+- `scriptExecutionId` (string) - Script execution ID from RunScriptInSession
+- `onlyNew` (boolean) - If true, returns only output since last call; if false, returns all output
 
-7. AI assistant ends the session with `EndSession` when done
+**Returns:** JSON object with:
+- `isComplete` (boolean) - Whether script execution has finished
+- `output` (string) - Script output
+- `error` (string) - Error output if any
+
+### EndSession
+
+Closes and cleans up a persistent session.
+
+**Parameters:**
+- `sessionId` (string) - Session ID to end
 
 ## Security Considerations
 
-### Default Security (Recommended)
-- **Restricted Language Mode**: Limits PowerShell functionality, prevents access to .NET types
-- **Providers Disabled**: No FileSystem, Registry, or other provider access
-- **Module Restriction**: Only the Dataverse Data PowerShell module is pre-loaded
-- **Session Isolation**: Each session is isolated from others
+### Default Security Posture
 
-### With --unrestricted-mode
-- Allows full PowerShell language features
-- Access to .NET types and methods
-- **Use only in fully trusted environments**
+- **Restricted Language Mode**: Prevents access to .NET types and methods, limiting what scripts can do
+- **Providers Disabled**: No access to FileSystem, Registry, or other PowerShell providers
+- **URL Allowlist**: Connections restricted to specified Dataverse environments only
+- **Isolated Sessions**: Each session runs in its own isolated runspace
 
-### With --enable-providers
-- Enables FileSystem, Registry, and other providers
-- Allows file system access and modifications
-- **Use only when file operations are required and trusted**
+### Relaxed Security (Use with Caution)
 
-⚠️ **Warning**: This server executes arbitrary PowerShell code. Using `--unrestricted-mode` and `--enable-providers` removes safety restrictions. Only use in trusted environments with trusted clients.
+- **`--unrestricted-mode`**: Enables full PowerShell language features including .NET type access
+- **`--enable-providers`**: Enables filesystem and registry access
 
-## Architecture
+⚠️ **Warning**: Only use unrestricted mode and enabled providers in trusted environments with trusted clients, as they significantly expand the attack surface.
 
-The server consists of:
+### Recommended Best Practices
 
-- **Program.cs**: Entry point using System.CommandLine for argument parsing, configures the MCP server with STDIO transport
-- **PowerShellTools.cs**: MCP tool definitions (GetCmdletList, GetCmdletHelp, CreateSession, RunScriptInSession, GetScriptOutput, EndSession)
-- **PowerShellExecutor.cs**: Manages PowerShell sessions and script execution
-  - **PowerShellExecutorConfig**: Configuration for language mode and provider restrictions
-  - **PersistentSession**: Maintains a PowerShell runspace across multiple script executions
-  - **ScriptExecution**: Tracks individual script execution within a session
-  - Validates named connection on startup
-  - Creates PowerShell runspaces with configurable restrictions
-  - Loads the Dataverse module and default connection
-  - Provides cmdlet discovery and help retrieval
-  - Captures output, errors, warnings, and verbose messages
-  - Tracks script completion (not runspace completion)
-
-## Limitations
-
-- Sessions are stored in memory and lost on server restart
-- No support for interactive input (prompts, confirmations)
-- No support for UI elements (progress bars, etc.)
-- File system operations require `--enable-providers` flag
-- Requires a pre-saved named connection to start
-
-## Troubleshooting
-
-### Connection Not Found
-
-If the server fails to start with "Failed to load named connection":
-1. Save a connection using: `Get-DataverseConnection -Url <url> -Interactive -Name <name> -SetAsDefault`
-2. List saved connections: `Get-DataverseConnection -List`
-3. Ensure the connection name matches exactly (case-sensitive)
-
-### Module Not Found
-
-If the Dataverse module fails to load, ensure:
-1. The main solution has been built: `dotnet build`
-2. The module manifest exists at `Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/Rnwood.Dataverse.Data.PowerShell.psd1`
-3. Set `DATAVERSE_MODULE_PATH` environment variable if using a custom location
-
-### Server Not Responding
-
-Check stderr for error messages. The server logs to stderr (not stdout) to avoid interfering with MCP protocol messages.
+1. **Minimal URL List**: Only include necessary Dataverse environments in the allowed URLs list
+2. **Least Privilege**: Keep restricted mode and disabled providers unless specifically needed
+3. **Audit Access**: Monitor which environments are accessed and by whom
+4. **Separate Environments**: Use different MCP server instances for dev/test/prod with appropriate URL restrictions
 
 ## Development
 
-To debug the server:
+### Module Path Resolution
 
-1. Set breakpoints in Visual Studio or VS Code
-2. Start debugging the McpServer project
-3. Provide test input via stdin or use a test harness
+The server automatically discovers the module path in this order:
+
+1. Packaged module directory (for global tool): `{assembly-dir}/module/`
+2. Development Debug build: `../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/`
+3. Development Release build: `../Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/`
+4. Environment variable: `DATAVERSE_MODULE_PATH`
+
+### Running from Source
+
+```bash
+# Build the main module first
+dotnet build -c Release ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj
+
+# Run the MCP server
+dotnet run --project ./Rnwood.Dataverse.Data.PowerShell.McpServer/Rnwood.Dataverse.Data.PowerShell.McpServer.csproj -- --allowed-urls https://myorg.crm.dynamics.com
+```
+
+## Troubleshooting
+
+### Connection Issues
+
+If you encounter connection issues:
+
+1. **Verify URL is in allowlist**: Ensure the URL you're trying to connect to is in the `--allowed-urls` list
+2. **Check URL format**: URLs should be in format `https://yourorg.crm.dynamics.com` (no trailing slash)
+3. **Authentication**: The auto-connection uses interactive authentication - ensure browser authentication works
+4. **Saved Connections**: If using named connections, they must be to allowed URLs only
+
+### Module Not Found
+
+If the module cannot be found:
+
+1. Ensure the Rnwood.Dataverse.Data.PowerShell module is built
+2. Check the build output is in one of the expected locations
+3. Set `DATAVERSE_MODULE_PATH` environment variable to the module directory
+
+### Permission Issues
+
+If you encounter "not allowed" errors:
+
+1. Verify you're connecting to one of the allowed URLs
+2. Check that the URL matches exactly (case-insensitive, but trailing slashes are normalized)
+3. Ensure you're not trying to connect to a different environment
 
 ## License
 
-Same as the main Rnwood.Dataverse.Data.PowerShell project.
+MIT License - see the main repository for details.

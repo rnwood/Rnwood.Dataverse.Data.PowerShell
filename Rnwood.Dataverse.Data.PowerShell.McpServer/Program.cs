@@ -1,20 +1,21 @@
 using System;
 using System.CommandLine;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Rnwood.Dataverse.Data.PowerShell.McpServer.Tools;
 
 // Define command line options
-var connectionNameOption = new Option<string?>(
-    name: "--connection",
-    description: "The name of the saved Dataverse connection to use")
+var allowedUrlsOption = new Option<string[]>(
+    name: "--allowed-urls",
+    description: "List of allowed Dataverse URLs for connections (required). Connections can only be made to these URLs. Server will auto-connect to first URL.")
 {
-    IsRequired = false
+    IsRequired = true,
+    AllowMultipleArgumentsPerToken = true
 };
-connectionNameOption.AddAlias("-c");
+allowedUrlsOption.AddAlias("-u");
 
 var enableProvidersOption = new Option<bool>(
     name: "--enable-providers",
@@ -22,69 +23,47 @@ var enableProvidersOption = new Option<bool>(
     getDefaultValue: () => false);
 enableProvidersOption.AddAlias("-p");
 
-var httpModeOption = new Option<bool>(
-    name: "--http",
-    description: "Run in HTTP mode instead of STDIO mode (uses ASP.NET environment variables and command line args for bindings)",
+var unrestrictedModeOption = new Option<bool>(
+    name: "--unrestricted-mode",
+    description: "Disable restricted language mode (enables full PowerShell features)",
     getDefaultValue: () => false);
-httpModeOption.AddAlias("-h");
+unrestrictedModeOption.AddAlias("-r");
 
 var rootCommand = new RootCommand("Dataverse PowerShell MCP Server - Execute PowerShell scripts with Dataverse module via Model Context Protocol")
 {
-    connectionNameOption,
+    allowedUrlsOption,
     enableProvidersOption,
-    httpModeOption
+    unrestrictedModeOption
 };
 
-rootCommand.SetHandler(async (connectionName, enableProviders, httpMode) =>
+rootCommand.SetHandler(async (allowedUrls, enableProviders, unrestrictedMode) =>
 {
-    // Check environment variable if connection name not provided
-    connectionName ??= Environment.GetEnvironmentVariable("DATAVERSE_CONNECTION_NAME");
+    // Normalize URLs (remove trailing slashes)
+    var normalizedUrls = allowedUrls.Select(url => url.TrimEnd('/')).ToArray();
 
     var config = new PowerShellExecutorConfig
     {
-        ConnectionName = connectionName,
-        EnableProviders = enableProviders
+        AllowedUrls = normalizedUrls,
+        EnableProviders = enableProviders,
+        UnrestrictedMode = unrestrictedMode
     };
 
-    if (httpMode)
+    // STDIO mode
+    var builder = Host.CreateApplicationBuilder();
+
+    builder.Services.AddMcpServer()
+        .WithStdioServerTransport()
+        .WithTools<PowerShellTools>();
+
+    builder.Logging.AddConsole(options =>
     {
-        // HTTP mode - use ASP.NET Core with MCP HTTP transport
-        var builder = WebApplication.CreateBuilder(args);
+        options.LogToStandardErrorThreshold = LogLevel.Trace;
+    });
 
-        builder.Logging.AddConsole();
+    builder.Services.AddSingleton(config);
+    builder.Services.AddSingleton<PowerShellExecutor>();
 
-        builder.Services.AddSingleton(config);
-        builder.Services.AddSingleton<PowerShellExecutor>();
-
-        builder.Services.AddMcpServer()
-            .WithHttpTransport()
-            .WithTools<PowerShellTools>();
-
-        var app = builder.Build();
-        
-        app.MapMcp();
-
-        await app.RunAsync();
-    }
-    else
-    {
-        // STDIO mode (default)
-        var builder = Host.CreateApplicationBuilder();
-
-        builder.Services.AddMcpServer()
-            .WithStdioServerTransport()
-            .WithTools<PowerShellTools>();
-
-        builder.Logging.AddConsole(options =>
-        {
-            options.LogToStandardErrorThreshold = LogLevel.Trace;
-        });
-
-        builder.Services.AddSingleton(config);
-        builder.Services.AddSingleton<PowerShellExecutor>();
-
-        await builder.Build().RunAsync();
-    }
-}, connectionNameOption, enableProvidersOption, httpModeOption);
+    await builder.Build().RunAsync();
+}, allowedUrlsOption, enableProvidersOption, unrestrictedModeOption);
 
 return await rootCommand.InvokeAsync(args);
