@@ -209,6 +209,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     }
                 }
+                // If ID not provided, try to lookup existing view by Name and TableName
+                else if (!string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(TableName))
+                {
+                    WriteVerbose($"Looking up existing {(ViewType == "System" ? "system" : "personal")} view by name '{Name}' and table '{TableName}'");
+                    var query = new QueryExpression(entityName)
+                    {
+                        ColumnSet = new ColumnSet(true)
+                    };
+                    query.Criteria.AddCondition("name", ConditionOperator.Equal, Name);
+                    query.Criteria.AddCondition("returnedtypecode", ConditionOperator.Equal, TableName);
+                    
+                    var results = Connection.RetrieveMultiple(query);
+                    if (results.Entities.Count > 0)
+                    {
+                        viewEntity = results.Entities[0];
+                        viewId = viewEntity.Id;
+                        isUpdate = true;
+                        WriteVerbose($"Found existing {(ViewType == "System" ? "system" : "personal")} view with ID: {viewId}");
+                    }
+                    else
+                    {
+                        WriteVerbose($"No existing view found with name '{Name}' and table '{TableName}'");
+                    }
+                }
 
                 if (isUpdate)
                 {
@@ -223,7 +247,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         return;
                     }
 
-                    if (ShouldProcess($"{ViewType} view with ID '{Id}'", "Update"))
+                    string viewDescription = !string.IsNullOrEmpty(Name) ? $"'{Name}' (ID: {viewId})" : $"with ID '{viewId}'";
+                    if (ShouldProcess($"{ViewType} view {viewDescription}", "Update"))
                     {
                         Entity updateEntity = new Entity(entityName) { Id = viewId };
                         bool updated = false;
