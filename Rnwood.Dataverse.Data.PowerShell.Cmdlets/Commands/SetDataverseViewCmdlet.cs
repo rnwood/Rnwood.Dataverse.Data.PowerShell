@@ -215,7 +215,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     WriteVerbose($"Looking up existing {(ViewType == "System" ? "system" : "personal")} view by name '{Name}' and table '{TableName}'");
                     var query = new QueryExpression(entityName)
                     {
-                        ColumnSet = new ColumnSet(true)
+                        // Only retrieve columns needed for update logic
+                        ColumnSet = new ColumnSet("name", "description", "fetchxml", "layoutxml", "querytype", "returnedtypecode", "isdefault")
                     };
                     query.Criteria.AddCondition("name", ConditionOperator.Equal, Name);
                     query.Criteria.AddCondition("returnedtypecode", ConditionOperator.Equal, TableName);
