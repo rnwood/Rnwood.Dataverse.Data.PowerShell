@@ -71,7 +71,29 @@ PS C:\> Set-DataverseView -Id $viewId `
 
 Updates the name and description of an existing view. ViewType must be specified when updating.
 
-### Example 4: Add columns to a view
+### Example 4: Update existing view by name (upsert pattern)
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> # First call creates the view
+PS C:\> Set-DataverseView -PassThru `
+    -Name "Active Contacts" `
+    -TableName contact `
+    -ViewType "System" `
+    -Columns @("firstname", "lastname", "emailaddress1") `
+    -FilterValues @{ statecode = 0 }
+
+PS C:\> # Second call with same Name and TableName updates existing view (no duplicate created)
+PS C:\> Set-DataverseView -PassThru `
+    -Name "Active Contacts" `
+    -TableName contact `
+    -ViewType "System" `
+    -Columns @("firstname", "lastname", "emailaddress1", "telephone1") `
+    -FilterValues @{ statecode = 0 }
+```
+
+Demonstrates the upsert pattern: the second call updates the existing "Active Contacts" view instead of creating a duplicate, because it finds an existing view with the same Name and TableName.
+
+### Example 5: Add columns to a view
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseView -Id $viewId `
@@ -84,7 +106,7 @@ PS C:\> Set-DataverseView -Id $viewId `
 
 Adds new columns to an existing view without affecting existing columns.
 
-### Example 5: Add columns at specific positions
+### Example 6: Add columns at specific positions
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseView -Id $viewId `
@@ -95,7 +117,7 @@ PS C:\> Set-DataverseView -Id $viewId `
 
 Adds mobile phone and fax columns after the telephone1 column.
 
-### Example 6: Insert columns before a specific column
+### Example 7: Insert columns before a specific column
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseView -Id $viewId `
@@ -106,7 +128,7 @@ PS C:\> Set-DataverseView -Id $viewId `
 
 Inserts the job title column before the email address column in the layout.
 
-### Example 7: Clone a view using Get-DataverseView output
+### Example 8: Clone a view using Get-DataverseView output
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $originalView = Get-DataverseView -Id $originalViewId
@@ -122,7 +144,7 @@ PS C:\> Set-DataverseView -PassThru `
 
 Retrieves a view and creates a copy. The properties returned by Get-DataverseView (Columns, Filters, Links, OrderBy) are in the format expected by Set-DataverseView.
 
-### Example 8: Create view with complex filters
+### Example 9: Create view with complex filters
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseView -PassThru `
@@ -143,7 +165,7 @@ PS C:\> Set-DataverseView -PassThru `
 
 Creates a system view with nested logical filter expressions using AND/OR operators.
 
-### Example 9: Use FetchXML for advanced queries
+### Example 10: Use FetchXML for advanced queries
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $fetchXml = @"
@@ -603,6 +625,8 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 **Upsert Pattern:**
 - Creates new views if ID is not specified or view doesn't exist
 - Updates existing views if ID matches an existing view
+- When ID is not specified, looks up existing views by Name and TableName combination
+- If a view with the same Name and TableName exists, it will be updated instead of creating a duplicate
 - ViewType must be specified when updating by ID
 
 **Column Format Compatibility:**
