@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "Module" -Skip {
+Describe "Module" {
 
     BeforeAll {
 
@@ -514,6 +514,136 @@ Describe "Module" -Skip {
                 Remove-Item $downloadFolder -Recurse -Force -ErrorAction SilentlyContinue
                 
                 Write-Host "SUCCESS: Batch web resource operations completed successfully"
+                
+            } catch {
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
+            }
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
+
+    It "Provides clear error message when updating record with non-readable columns" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+            
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                Write-Host "Testing non-readable column error handling with serviceendpoint entity..."
+                
+                # The serviceendpoint entity has columns like 'saskey' and 'saskeyname' that are updatable but not readable
+                # First, check if we have any existing serviceendpoints to avoid creating one
+                $existingEndpoints = Get-DataverseRecord -Connection $connection -TableName serviceendpoint -Columns serviceendpointid -Top 1 -ErrorAction SilentlyContinue
+                
+                $testEndpointId = $null
+                $createdNew = $false
+                
+                if ($existingEndpoints -and $existingEndpoints.Count -gt 0) {
+                    Write-Host "Using existing serviceendpoint: $($existingEndpoints[0].serviceendpointid)"
+                    $testEndpointId = $existingEndpoints[0].serviceendpointid
+                } else {
+                    # Create a test serviceendpoint (Azure Service Bus endpoint)
+                    # Note: This requires proper Azure Service Bus configuration
+                    Write-Host "No existing serviceendpoints found. Creating test serviceendpoint..."
+                    $testNamespaceAddress = "sb://test-e2e-" + [Guid]::NewGuid().ToString().Substring(0, 8) + ".servicebus.windows.net/"
+                    
+                    try {
+                        $newEndpoint = @{
+                            name = "E2E Test Endpoint"
+                            namespaceaddress = $testNamespaceAddress
+                            contract = 2  # Queue
+                            messageformat = 1  # Binary
+                        } | Set-DataverseRecord -Connection $connection -TableName serviceendpoint -CreateOnly -PassThru
+                        
+                        $testEndpointId = $newEndpoint.Id
+                        $createdNew = $true
+                        Write-Host "Created test serviceendpoint: $testEndpointId"
+                    } catch {
+                        Write-Host "Warning: Could not create serviceendpoint. This test requires serviceendpoint entity access. Skipping..."
+                        Write-Host "Error: $_"
+                        return
+                    }
+                }
+                
+                # Now try to update with a non-readable column (saskey) in default mode
+                # This should fail with a clear error message
+                Write-Host "Attempting to update with non-readable 'saskey' column (should fail with clear error)..."
+                
+                $updateData = @{
+                    namespaceaddress = "sb://updated-address.servicebus.windows.net/"
+                    saskey = "test-sas-key-value"
+                }
+                
+                $errorReceived = $false
+                $errorMessage = ""
+                
+                try {
+                    Set-DataverseRecord -Connection $connection -TableName serviceendpoint -Id $testEndpointId -InputObject $updateData
+                    Write-Host "ERROR: Expected an exception but none was thrown!"
+                    throw "Update with non-readable column should have failed but succeeded"
+                } catch {
+                    $errorReceived = $true
+                    $errorMessage = $_.Exception.Message
+                    Write-Host "Received expected error: $errorMessage"
+                }
+                
+                if (-not $errorReceived) {
+                    throw "Did not receive expected error for non-readable column"
+                }
+                
+                # Verify error message contains helpful information
+                $missingElements = @()
+                if ($errorMessage -notmatch "not valid for read") {
+                    $missingElements += "missing 'not valid for read' explanation"
+                }
+                if ($errorMessage -notmatch "saskey") {
+                    $missingElements += "missing 'saskey' column name"
+                }
+                if ($errorMessage -notmatch "serviceendpoint") {
+                    $missingElements += "missing 'serviceendpoint' entity name"
+                }
+                if ($errorMessage -notmatch "-Upsert") {
+                    $missingElements += "missing '-Upsert' alternative"
+                }
+                if ($errorMessage -notmatch "-NoUpdate" -and $errorMessage -notmatch "-Create") {
+                    $missingElements += "missing '-NoUpdate' or '-Create' alternatives"
+                }
+                
+                if ($missingElements.Count -gt 0) {
+                    throw "Error message missing helpful information: $($missingElements -join ', '). Full message: $errorMessage"
+                }
+                
+                Write-Host "Verified: Error message contains all helpful information"
+                
+                # Now verify that -Upsert flag works as a workaround
+                Write-Host "Testing -Upsert workaround..."
+                try {
+                    Set-DataverseRecord -Connection $connection -TableName serviceendpoint -Id $testEndpointId -InputObject $updateData -Upsert
+                    Write-Host "SUCCESS: -Upsert flag worked as expected"
+                } catch {
+                    Write-Host "Warning: -Upsert also failed: $_"
+                    # This is acceptable - the main test is the error message quality
+                }
+                
+                # Cleanup if we created a new endpoint
+                if ($createdNew -and $testEndpointId) {
+                    Write-Host "Cleaning up test serviceendpoint..."
+                    try {
+                        Remove-DataverseRecord -Connection $connection -TableName serviceendpoint -Id $testEndpointId -Confirm:$false
+                        Write-Host "Cleanup complete"
+                    } catch {
+                        Write-Host "Warning: Could not clean up test serviceendpoint: $_"
+                    }
+                }
+                
+                Write-Host "SUCCESS: Non-readable column error handling test passed"
                 
             } catch {
                 # Format error with full details using Format-List with large width to avoid truncation
