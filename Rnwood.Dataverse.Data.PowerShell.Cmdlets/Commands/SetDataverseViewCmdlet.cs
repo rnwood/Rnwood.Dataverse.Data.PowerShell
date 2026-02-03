@@ -269,10 +269,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (!string.IsNullOrEmpty(Description))
                         {
                             string currentDescription = viewEntity.GetAttributeValue<string>("description");
-                            if (currentDescription != Description)
+                            WriteVerbose($"Comparing descriptions - Current: '{currentDescription}', New: '{Description}'");
+                            if (!string.Equals(currentDescription, Description, StringComparison.Ordinal))
                             {
                                 updateEntity["description"] = Description;
                                 updated = true;
+                                WriteVerbose("Description will be updated");
+                            }
+                            else
+                            {
+                                WriteVerbose("Description unchanged");
                             }
                         }
 
@@ -280,10 +286,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         if (!string.IsNullOrEmpty(FetchXml))
                         {
                             string currentFetchXml = viewEntity.GetAttributeValue<string>("fetchxml");
+                            WriteVerbose($"Comparing FetchXml - Current length: {currentFetchXml?.Length ?? 0}, New length: {FetchXml?.Length ?? 0}");
                             if (currentFetchXml != FetchXml)
                             {
                                 updateEntity["fetchxml"] = FetchXml;
                                 updated = true;
+                                WriteVerbose("FetchXml will be updated");
+                            }
+                            else
+                            {
+                                WriteVerbose("FetchXml unchanged");
                             }
                         }
                         // Or build/modify FetchXml based on simple parameters
@@ -406,8 +418,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             var converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
                             string columnSummary = QueryHelpers.GetColumnSummary(updateEntity, converter, false);
+                            WriteVerbose($"Executing update for view ID: {viewId} with columns:\n{columnSummary}");
                             Connection.Update(updateEntity);
-                            WriteVerbose($"Updated {(ViewType == "System" ? "system" : "personal")} view with ID: {Id} columns:\n{columnSummary}");
+                            WriteVerbose($"Updated {(ViewType == "System" ? "system" : "personal")} view with ID: {viewId}");
                         }
                         else
                         {
