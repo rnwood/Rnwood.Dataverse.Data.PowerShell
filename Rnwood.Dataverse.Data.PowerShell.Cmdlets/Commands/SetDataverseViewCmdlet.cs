@@ -421,6 +421,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             WriteVerbose($"Executing update for view ID: {viewId} with columns:\n{columnSummary}");
                             Connection.Update(updateEntity);
                             WriteVerbose($"Updated {(ViewType == "System" ? "system" : "personal")} view with ID: {viewId}");
+                            
+                            // Publish system view changes
+                            if (ViewType == "System")
+                            {
+                                WriteVerbose("Publishing system view changes...");
+                                string publishEntity = "savedquery";
+                                string parameterXml = $"<importexportxml><entities><entity>{publishEntity}</entity></entities></importexportxml>";
+                                
+                                var publishRequest = new PublishXmlRequest
+                                {
+                                    ParameterXml = parameterXml
+                                };
+                                Connection.Execute(publishRequest);
+                                WriteVerbose("System view published successfully");
+                            }
                         }
                         else
                         {
