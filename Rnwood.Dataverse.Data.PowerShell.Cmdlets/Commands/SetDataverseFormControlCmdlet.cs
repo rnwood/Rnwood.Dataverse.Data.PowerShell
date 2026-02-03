@@ -87,12 +87,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter Disabled { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the control is visible.
-        /// </summary>
-        [Parameter(HelpMessage = "Whether the control is visible")]
-        public SwitchParameter Visible { get; set; } = true;
-
-        /// <summary>
         /// Gets or sets the number of rows (for multiline text).
         /// </summary>
         [Parameter(HelpMessage = "Number of rows for multiline text controls")]
@@ -895,19 +889,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 cell.SetAttributeValue("rowspan", RowSpan.Value);
             }
 
-            // Set cell visibility based on Visible or Hidden parameters
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
-            {
-                if (!Visible.IsPresent)
-                {
-                    cell.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    cell.SetAttributeValue("visible", null);
-                }
-            }
-
+            // Set cell visibility based on Hidden parameter
             if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
             {
                 if (Hidden.IsPresent)

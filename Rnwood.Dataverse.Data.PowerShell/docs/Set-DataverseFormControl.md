@@ -15,7 +15,7 @@ Creates or updates a control in a Dataverse form section or header.
 ### Standard (Default)
 ```
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- [-DataField <String>] [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Visible] [-Rows <Int32>]
+ [-DataField <String>] [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Rows <Int32>]
  [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>] [-PassThru]
  [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -24,7 +24,7 @@ Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String
 ### RawXml
 ```
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- -ControlXml <String> [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Visible] [-Rows <Int32>]
+ -ControlXml <String> [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Rows <Int32>]
  [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>] [-PassThru]
  [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -44,7 +44,7 @@ You can specify control properties like data binding, positioning, visibility, l
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
 PS C:\> Set-DataverseFormControl -FormId $form.Id -SectionName 'GeneralSection' `
-    -DataField 'firstname' -Labels @{1033 = 'First Name'} -ShowLabel -Visible -PassThru
+    -DataField 'firstname' -Labels @{1033 = 'First Name'} -ShowLabel -PassThru
 ```
 
 Adds a text field control for the firstname attribute with a custom label.
@@ -124,7 +124,7 @@ Creates a subgrid control by specifying a relationship name in DataField. When D
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'ContactInfo' `
     -ControlId 'existing-control-id' -DataField 'telephone1' `
-    -Labels @{1033 = 'Primary Phone'} -IsRequired -ColSpan 1 -Visible
+    -Labels @{1033 = 'Primary Phone'} -IsRequired -ColSpan 1
 ```
 
 Updates an existing control's label, requirement status, and layout.
@@ -213,7 +213,6 @@ PS C:\> foreach ($ctrl in $controls) {
             Label = $ctrl.Label
             ColSpan = $ctrl.ColSpan
             ShowLabel = $true
-            Visible = $true
             PassThru = $true
         }
         if ($ctrl.IsRequired) { $params.IsRequired = $true }
@@ -631,21 +630,6 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Visible
-Whether the control is visible
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
