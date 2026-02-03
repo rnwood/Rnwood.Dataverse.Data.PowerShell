@@ -604,7 +604,7 @@ Describe "Module - Non-Readable Columns E2E" {
                 $errorMessage = ""
                 
                 try {
-                    Set-DataverseRecord -Connection $connection -TableName serviceendpoint -Id $testEndpointId -InputObject $updateData
+                    Set-DataverseRecord -Connection $connection -TableName serviceendpoint -Id $testEndpointId -InputObject $updateData -ErrorAction Stop
                     Write-Host "ERROR: Expected an exception but none was thrown!"
                     throw "Update with non-readable column should have failed but succeeded"
                 } catch {
