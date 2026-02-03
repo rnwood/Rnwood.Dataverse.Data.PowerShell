@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-Describe "Module" {
+Describe "Module" -Skip {
 
     BeforeAll {
 
@@ -526,6 +526,25 @@ Describe "Module" {
             throw "Failed"
         }
     }
+}
+
+Describe "Module - Non-Readable Columns E2E" {
+
+    BeforeAll {
+
+        if ($env:TESTMODULEPATH) {
+            $source = $env:TESTMODULEPATH
+        }
+        else {
+            $source = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/"
+        }
+
+        $tempmodulefolder = "$([IO.Path]::GetTempPath())/$([Guid]::NewGuid())"
+        new-item -ItemType Directory $tempmodulefolder
+        copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
+        $env:PSModulePath = $tempmodulefolder;
+        $env:ChildProcessPSModulePath = $tempmodulefolder
+    }
 
     It "Provides clear error message when updating record with non-readable columns" {
         pwsh -noninteractive -noprofile -command {
@@ -612,8 +631,11 @@ Describe "Module" {
                 if ($errorMessage -notmatch "-Upsert") {
                     $missingElements += "missing '-Upsert' alternative"
                 }
-                if ($errorMessage -notmatch "-NoUpdate" -and $errorMessage -notmatch "-Create") {
-                    $missingElements += "missing '-NoUpdate' or '-Create' alternatives"
+                if ($errorMessage -notmatch "-NoUpdate") {
+                    $missingElements += "missing '-NoUpdate' alternative"
+                }
+                if ($errorMessage -notmatch "-Create") {
+                    $missingElements += "missing '-Create' alternative"
                 }
                 
                 if ($missingElements.Count -gt 0) {

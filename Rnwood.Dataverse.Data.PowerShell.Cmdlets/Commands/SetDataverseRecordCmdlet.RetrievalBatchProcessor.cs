@@ -640,7 +640,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 var attributeMetadata = entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == columnName);
                 
-                // If we can't find the metadata or if the column is not valid for read, add it to the list
+                // If the column is not valid for read, add it to the list
                 if (attributeMetadata != null && !attributeMetadata.IsValidForRead.GetValueOrDefault())
                 {
                     nonReadableColumns.Add(columnName);
