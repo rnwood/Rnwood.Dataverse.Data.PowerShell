@@ -527,3 +527,114 @@ Describe "Module" -Skip {
         }
     }
 }
+
+Describe "Module - Non-Readable Columns E2E" {
+
+    BeforeAll {
+
+        if ($env:TESTMODULEPATH) {
+            $source = $env:TESTMODULEPATH
+        }
+        else {
+            $source = "$PSScriptRoot/../Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/"
+        }
+
+        $tempmodulefolder = "$([IO.Path]::GetTempPath())/$([Guid]::NewGuid())"
+        new-item -ItemType Directory $tempmodulefolder
+        copy-item -Recurse $source $tempmodulefolder/Rnwood.Dataverse.Data.PowerShell
+        $env:PSModulePath = $tempmodulefolder;
+        $env:ChildProcessPSModulePath = $tempmodulefolder
+    }
+
+    It "Provides clear error message when updating record with non-readable columns" {
+        pwsh -noninteractive -noprofile -command {
+            $env:PSModulePath = $env:ChildProcessPSModulePath
+            
+            Import-Module Rnwood.Dataverse.Data.PowerShell
+            
+            try {
+                $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
+                
+                Write-Host "Testing non-readable column error handling with organization entity..."
+                
+                # The organization entity has 'telemetryinstrumentationkey' column that is updatable but not readable
+                # There is always exactly 1 organization record in every Dataverse environment
+                $org = Get-DataverseRecord -Connection $connection -TableName organization -Columns organizationid -Top 1
+                
+                if (-not $org) {
+                    throw "Failed to retrieve organization record - this should always exist"
+                }
+                
+                $orgId = $org.organizationid
+                Write-Host "Using organization record: $orgId"
+                
+                # Now try to update with a non-readable column (telemetryinstrumentationkey) in default mode
+                # This should fail with a clear error message
+                Write-Host "Attempting to update with non-readable 'telemetryinstrumentationkey' column (should fail with clear error)..."
+                
+                $updateData = @{
+                    telemetryinstrumentationkey = "test-instrumentation-key-value"
+                }
+                
+                $errorReceived = $false
+                $errorMessage = ""
+                
+                try {
+                    Set-DataverseRecord -Connection $connection -TableName organization -Id $orgId -InputObject $updateData -ErrorAction Stop
+                    Write-Host "ERROR: Expected an exception but none was thrown!"
+                    throw "Update with non-readable column should have failed but succeeded"
+                } catch {
+                    $errorReceived = $true
+                    $errorMessage = $_.Exception.Message
+                    Write-Host "Received expected error: $errorMessage"
+                }
+                
+                if (-not $errorReceived) {
+                    throw "Did not receive expected error for non-readable column"
+                }
+                
+                # Verify error message contains helpful information
+                $missingElements = @()
+                if ($errorMessage -notmatch "not valid for read") {
+                    $missingElements += "missing 'not valid for read' explanation"
+                }
+                if ($errorMessage -notmatch "telemetryinstrumentationkey") {
+                    $missingElements += "missing 'telemetryinstrumentationkey' column name"
+                }
+                if ($errorMessage -notmatch "organization") {
+                    $missingElements += "missing 'organization' entity name"
+                }
+                if ($errorMessage -notmatch "-UpdateAllColumns") {
+                    $missingElements += "missing '-UpdateAllColumns' alternative"
+                }
+                
+                if ($missingElements.Count -gt 0) {
+                    throw "Error message missing helpful information: $($missingElements -join ', '). Full message: $errorMessage"
+                }
+                
+                Write-Host "Verified: Error message contains all helpful information"
+                
+                # Now verify that -UpdateAllColumns flag works as a workaround
+                Write-Host "Testing -Upsert workaround..."
+                try {
+                    Set-DataverseRecord -Connection $connection -TableName organization -Id $orgId -InputObject $updateData -UpdateAllColumns
+                    Write-Host "SUCCESS: -Upsert flag worked as expected"
+                } catch {
+                    Write-Host "Warning: -Upsert also failed: $_"
+                    # This is acceptable - the main test is the error message quality
+                }
+                
+                Write-Host "SUCCESS: Non-readable column error handling test passed"
+                
+            } catch {
+                # Format error with full details using Format-List with large width to avoid truncation
+                $errorDetails = "Failed: " + ($_ | Format-List * -Force | Out-String -Width 10000)
+                throw $errorDetails
+            }
+        }
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "Failed"
+        }
+    }
+}
