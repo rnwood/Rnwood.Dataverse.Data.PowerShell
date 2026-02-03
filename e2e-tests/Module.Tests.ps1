@@ -573,7 +573,6 @@ Describe "Module - Non-Readable Columns E2E" {
                 Write-Host "Attempting to update with non-readable 'telemetryinstrumentationkey' column (should fail with clear error)..."
                 
                 $updateData = @{
-                    name = $org.name  # Include a readable column to make it a valid update
                     telemetryinstrumentationkey = "test-instrumentation-key-value"
                 }
                 
@@ -605,14 +604,8 @@ Describe "Module - Non-Readable Columns E2E" {
                 if ($errorMessage -notmatch "organization") {
                     $missingElements += "missing 'organization' entity name"
                 }
-                if ($errorMessage -notmatch "-Upsert") {
-                    $missingElements += "missing '-Upsert' alternative"
-                }
-                if ($errorMessage -notmatch "-NoUpdate") {
-                    $missingElements += "missing '-NoUpdate' alternative"
-                }
-                if ($errorMessage -notmatch "-Create") {
-                    $missingElements += "missing '-Create' alternative"
+                if ($errorMessage -notmatch "-UpdateAllColumns") {
+                    $missingElements += "missing '-UpdateAllColumns' alternative"
                 }
                 
                 if ($missingElements.Count -gt 0) {
@@ -621,10 +614,10 @@ Describe "Module - Non-Readable Columns E2E" {
                 
                 Write-Host "Verified: Error message contains all helpful information"
                 
-                # Now verify that -Upsert flag works as a workaround
+                # Now verify that -UpdateAllColumns flag works as a workaround
                 Write-Host "Testing -Upsert workaround..."
                 try {
-                    Set-DataverseRecord -Connection $connection -TableName organization -Id $orgId -InputObject $updateData -Upsert
+                    Set-DataverseRecord -Connection $connection -TableName organization -Id $orgId -InputObject $updateData -UpdateAllColumns
                     Write-Host "SUCCESS: -Upsert flag worked as expected"
                 } catch {
                     Write-Host "Warning: -Upsert also failed: $_"
