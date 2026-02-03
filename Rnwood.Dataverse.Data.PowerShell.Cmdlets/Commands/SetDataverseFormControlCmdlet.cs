@@ -858,29 +858,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
-            {
-                if (!Visible.IsPresent)
-                {
-                    control.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", null);
-                }
-            }
 
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
-            {
-                if (Hidden.IsPresent)
-                {
-                    control.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", null);
-                }
-            }
 
             if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
             {
@@ -915,6 +893,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (RowSpan.HasValue)
             {
                 cell.SetAttributeValue("rowspan", RowSpan.Value);
+            }
+
+            // Set cell visibility based on Visible or Hidden parameters
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
+            {
+                if (!Visible.IsPresent)
+                {
+                    cell.SetAttributeValue("visible", "false");
+                }
+                else
+                {
+                    cell.SetAttributeValue("visible", null);
+                }
+            }
+
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
+            {
+                if (Hidden.IsPresent)
+                {
+                    cell.SetAttributeValue("visible", "false");
+                }
+                else
+                {
+                    cell.SetAttributeValue("visible", null);
+                }
             }
 
             // Note: Labels are now applied in ProcessRecord after positioning,

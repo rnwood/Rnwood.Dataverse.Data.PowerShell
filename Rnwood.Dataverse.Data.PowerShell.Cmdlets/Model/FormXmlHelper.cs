@@ -705,8 +705,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             ctrlObj.Properties.Add(new PSNoteProperty("DataField", control.Attribute("datafieldname")?.Value));
             ctrlObj.Properties.Add(new PSNoteProperty("ClassId", control.Attribute("classid")?.Value));
             ctrlObj.Properties.Add(new PSNoteProperty("Disabled", control.Attribute("disabled")?.Value == "true"));
-            ctrlObj.Properties.Add(new PSNoteProperty("Visible", control.Attribute("visible")?.Value != "false"));
-            ctrlObj.Properties.Add(new PSNoteProperty("Hidden", control.Attribute("visible")?.Value == "false"));
+            
+            // Visibility is stored at the cell level, not control level
+            bool visible = parentCell?.Attribute("visible")?.Value != "false";
+            ctrlObj.Properties.Add(new PSNoteProperty("Visible", visible));
+            ctrlObj.Properties.Add(new PSNoteProperty("Hidden", !visible));
+            
             ctrlObj.Properties.Add(new PSNoteProperty("ShowLabel", control.Attribute("showlabel")?.Value != "false"));
             ctrlObj.Properties.Add(new PSNoteProperty("IsRequired", control.Attribute("isrequired")?.Value == "true"));
 
