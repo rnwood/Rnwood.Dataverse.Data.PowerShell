@@ -565,7 +565,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             tabObj.Properties.Add(new PSNoteProperty("Id", tab.Attribute("id")?.Value));
             tabObj.Properties.Add(new PSNoteProperty("Name", tab.Attribute("name")?.Value));
             tabObj.Properties.Add(new PSNoteProperty("Expanded", tab.Attribute("expanded")?.Value == "true"));
-            tabObj.Properties.Add(new PSNoteProperty("Visible", tab.Attribute("visible")?.Value != "false"));
+            tabObj.Properties.Add(new PSNoteProperty("Hidden", tab.Attribute("visible")?.Value == "false"));
 
             // Parse labels
             var labelsElement = tab.Element("labels");
@@ -661,7 +661,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Model
             secObj.Properties.Add(new PSNoteProperty("Id", section.Attribute("id")?.Value));
             secObj.Properties.Add(new PSNoteProperty("Name", section.Attribute("name")?.Value));
             secObj.Properties.Add(new PSNoteProperty("ShowLabel", section.Attribute("showlabel")?.Value != "false"));
-            secObj.Properties.Add(new PSNoteProperty("Visible", section.Attribute("visible")?.Value != "false"));
+            secObj.Properties.Add(new PSNoteProperty("Hidden", section.Attribute("visible")?.Value == "false"));
 
             // Parse labels
             var labelsElement = section.Element("labels");
