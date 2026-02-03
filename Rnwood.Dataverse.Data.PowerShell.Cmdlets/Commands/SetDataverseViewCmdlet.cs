@@ -313,8 +313,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Or modify LayoutXml based on column changes
                         else if (Columns != null || AddColumns != null || RemoveColumns != null || UpdateColumns != null)
                         {
+                            // Extract table name for layout XML modification
+                            string tableName = viewEntity.GetAttributeValue<string>("returnedtypecode");
+                            
+                            // If tableName is not available from the view entity, try to use the TableName parameter
+                            if (string.IsNullOrEmpty(tableName) && !string.IsNullOrEmpty(TableName))
+                            {
+                                tableName = TableName;
+                            }
+                            
+                            // If still null, try to extract from FetchXML
+                            if (string.IsNullOrEmpty(tableName))
+                            {
+                                string currentFetchXml = viewEntity.GetAttributeValue<string>("fetchxml");
+                                if (!string.IsNullOrEmpty(currentFetchXml))
+                                {
+                                    try
+                                    {
+                                        XDocument fetchDoc = XDocument.Parse(currentFetchXml);
+                                        tableName = fetchDoc.Descendants("entity").FirstOrDefault()?.Attribute("name")?.Value;
+                                    }
+                                    catch
+                                    {
+                                        // If parsing fails, tableName will remain null
+                                    }
+                                }
+                            }
+                            
+                            if (string.IsNullOrEmpty(tableName))
+                            {
+                                throw new ArgumentException("TableName could not be determined from the existing view. Please specify the TableName parameter.");
+                            }
+                            
                             string currentLayoutXml = viewEntity.GetAttributeValue<string>("layoutxml");
-                            string modifiedLayoutXml = ModifyLayoutXml(currentLayoutXml);
+                            string modifiedLayoutXml = ModifyLayoutXml(currentLayoutXml, tableName);
                             if (currentLayoutXml != modifiedLayoutXml)
                             {
                                 updateEntity["layoutxml"] = modifiedLayoutXml;
@@ -393,7 +425,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     // Build layout XML if not provided
                     if (string.IsNullOrEmpty(layoutXml))
                     {
-                        layoutXml = BuildDefaultLayoutXml();
+                        layoutXml = BuildDefaultLayoutXml(TableName);
                     }
 
                     if (ShouldProcess($"{ViewType} view '{Name}' for table '{TableName}'", "Create"))
@@ -600,13 +632,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return modifiedFetchXml;
         }
 
-        private string BuildDefaultLayoutXml()
+        private string BuildDefaultLayoutXml(string tableName)
         {
             XNamespace ns = "http://schemas.microsoft.com/crm/2006/query";
             XElement grid = new XElement(ns + "grid",
                 new XAttribute("name", "resultset"),
-                new XAttribute("object", TableName),
-                new XAttribute("jump", TableName + "id"),
+                new XAttribute("object", tableName),
+                new XAttribute("jump", tableName + "id"),
                 new XAttribute("select", "1"),
                 new XAttribute("icon", "1"),
                 new XAttribute("preview", "1")
@@ -614,7 +646,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             XElement row = new XElement(ns + "row",
                 new XAttribute("name", "result"),
-                new XAttribute("id", TableName + "id")
+                new XAttribute("id", tableName + "id")
             );
 
             if (Columns != null && Columns.Length > 0)
@@ -638,7 +670,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 // If no columns specified, add a default column for the primary key
                 row.Add(new XElement(ns + "cell",
-                    new XAttribute("name", TableName + "id"),
+                    new XAttribute("name", tableName + "id"),
                     new XAttribute("width", 100)
                 ));
             }
@@ -647,7 +679,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             return grid.ToString();
         }
 
-        private string ModifyLayoutXml(string currentLayoutXml)
+        private string ModifyLayoutXml(string currentLayoutXml, string tableName)
         {
             XNamespace ns = "http://schemas.microsoft.com/crm/2006/query";
             XDocument doc;
@@ -661,13 +693,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             catch (Exception)
             {
                 // If parsing fails or no row element found, rebuild from scratch
-                return BuildDefaultLayoutXml();
+                return BuildDefaultLayoutXml(tableName);
             }
 
             if (row == null)
             {
                 // If no row element found, rebuild from scratch
-                return BuildDefaultLayoutXml();
+                return BuildDefaultLayoutXml(tableName);
             }
 
             // Replace columns if Columns parameter is provided

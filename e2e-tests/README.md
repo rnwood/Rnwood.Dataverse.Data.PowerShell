@@ -39,9 +39,38 @@ Invoke-Pester -Output Detailed -Path e2e-tests/FormManipulation.Tests.ps1
 
 # Run only form library and event handler tests
 Invoke-Pester -Output Detailed -Path e2e-tests/FormLibraryAndEventHandler.Tests.ps1
+
+# Run only view manipulation tests
+Invoke-Pester -Output Detailed -Path e2e-tests/View.Tests.ps1
 ```
 
 ## Test Files
+
+### View.Tests.ps1
+E2E test for view (savedquery/userquery) manipulation:
+
+**Test Coverage:**
+- Creating views with FetchXML (Set-DataverseView)
+- Retrieving views by ID (Get-DataverseView)
+- Updating view columns with empty layoutxml (bug fix scenario)
+- Verifying layoutxml generation and updates
+- Adding columns to existing views
+- Updating view name and description
+- Removing views (Remove-DataverseView)
+- Comprehensive validation at each step
+
+**Features:**
+- Uses unique test identifiers to avoid conflicts with concurrent runs
+- Tests the bug fix for empty layoutxml scenario
+- Validates column updates and layoutxml generation
+- Tests complete CRUD cycle for views
+- Proper cleanup of all created views
+- Detailed logging of all operations
+
+**Cleanup Behavior:**
+The test automatically cleans up:
+1. **Before test**: Removes any leftover views matching pattern `E2E Test View %`
+2. **After test**: Removes all created views
 
 ### FormLibraryAndEventHandler.Tests.ps1
 E2E test for form script library and event handler management:
