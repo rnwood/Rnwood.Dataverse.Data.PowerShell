@@ -555,38 +555,33 @@ Describe "Module - Non-Readable Columns E2E" {
             try {
                 $connection = Get-DataverseConnection -url ${env:E2ETESTS_URL} -ClientId ${env:E2ETESTS_CLIENTID} -ClientSecret ${env:E2ETESTS_CLIENTSECRET}
                 
-                Write-Host "Testing non-readable column error handling with serviceendpoint entity..."
+                Write-Host "Testing non-readable column error handling with organization entity..."
                 
-                # The serviceendpoint entity has columns like 'saskey' and 'saskeyname' that are updatable but not readable
-                # First, check if we have any existing serviceendpoints to avoid creating one
-                $existingEndpoints = Get-DataverseRecord -Connection $connection -TableName serviceendpoint -Columns serviceendpointid -Top 1 -ErrorAction SilentlyContinue
+                # The organization entity has 'telemetryinstrumentationkey' column that is updatable but not readable
+                # There is always exactly 1 organization record in every Dataverse environment
+                $org = Get-DataverseRecord -Connection $connection -TableName organization -Columns organizationid -Top 1
                 
-                if (-not $existingEndpoints -or $existingEndpoints.Count -eq 0) {
-                    # No existing serviceendpoints found
-                    # Creating a serviceendpoint requires specific configuration (path, auth settings, etc.)
-                    # Since this is complex and environment-specific, we'll skip the test if none exist
-                    Write-Host "No existing serviceendpoints found. This test requires at least one serviceendpoint to exist in the environment."
-                    Write-Host "Skipping test - cannot validate non-readable column handling without a serviceendpoint."
-                    return
+                if (-not $org) {
+                    throw "Failed to retrieve organization record - this should always exist"
                 }
                 
-                $testEndpointId = $existingEndpoints[0].serviceendpointid
-                Write-Host "Using existing serviceendpoint: $testEndpointId"
+                $orgId = $org.organizationid
+                Write-Host "Using organization record: $orgId"
                 
-                # Now try to update with a non-readable column (saskey) in default mode
+                # Now try to update with a non-readable column (telemetryinstrumentationkey) in default mode
                 # This should fail with a clear error message
-                Write-Host "Attempting to update with non-readable 'saskey' column (should fail with clear error)..."
+                Write-Host "Attempting to update with non-readable 'telemetryinstrumentationkey' column (should fail with clear error)..."
                 
                 $updateData = @{
-                    namespaceaddress = "sb://updated-address.servicebus.windows.net/"
-                    saskey = "test-sas-key-value"
+                    name = $org.name  # Include a readable column to make it a valid update
+                    telemetryinstrumentationkey = "test-instrumentation-key-value"
                 }
                 
                 $errorReceived = $false
                 $errorMessage = ""
                 
                 try {
-                    Set-DataverseRecord -Connection $connection -TableName serviceendpoint -Id $testEndpointId -InputObject $updateData -ErrorAction Stop
+                    Set-DataverseRecord -Connection $connection -TableName organization -Id $orgId -InputObject $updateData -ErrorAction Stop
                     Write-Host "ERROR: Expected an exception but none was thrown!"
                     throw "Update with non-readable column should have failed but succeeded"
                 } catch {
@@ -604,11 +599,11 @@ Describe "Module - Non-Readable Columns E2E" {
                 if ($errorMessage -notmatch "not valid for read") {
                     $missingElements += "missing 'not valid for read' explanation"
                 }
-                if ($errorMessage -notmatch "saskey") {
-                    $missingElements += "missing 'saskey' column name"
+                if ($errorMessage -notmatch "telemetryinstrumentationkey") {
+                    $missingElements += "missing 'telemetryinstrumentationkey' column name"
                 }
-                if ($errorMessage -notmatch "serviceendpoint") {
-                    $missingElements += "missing 'serviceendpoint' entity name"
+                if ($errorMessage -notmatch "organization") {
+                    $missingElements += "missing 'organization' entity name"
                 }
                 if ($errorMessage -notmatch "-Upsert") {
                     $missingElements += "missing '-Upsert' alternative"
@@ -629,7 +624,7 @@ Describe "Module - Non-Readable Columns E2E" {
                 # Now verify that -Upsert flag works as a workaround
                 Write-Host "Testing -Upsert workaround..."
                 try {
-                    Set-DataverseRecord -Connection $connection -TableName serviceendpoint -Id $testEndpointId -InputObject $updateData -Upsert
+                    Set-DataverseRecord -Connection $connection -TableName organization -Id $orgId -InputObject $updateData -Upsert
                     Write-Host "SUCCESS: -Upsert flag worked as expected"
                 } catch {
                     Write-Host "Warning: -Upsert also failed: $_"
