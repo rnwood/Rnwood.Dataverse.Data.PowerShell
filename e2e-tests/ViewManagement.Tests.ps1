@@ -181,7 +181,7 @@ Describe "View Management E2E Tests" {
                         -PassThru
                     
                     $updatedId | Should -Be $viewId
-                    Write-Host "✓ Update iteration $i: ID still matches original"
+                    Write-Host "✓ Update iteration ${i}: ID still matches original"
                 }
                 
                 # Verify still only one view
