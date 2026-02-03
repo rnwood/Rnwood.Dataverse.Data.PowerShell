@@ -654,7 +654,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var message = $"Cannot retrieve existing record for comparison because the following column(s) are not valid for read: {columnList}. " +
                               $"Entity: {entityMetadata.LogicalName}. " +
                               $"To update records with non-readable columns, use one of these alternatives: " +
-                              $"-Upsert (create if not exists, update if exists without comparison), " +
+                              $"-UpdateAllColumns (create if not exists, update if exists without comparison), " +
                               $"-NoUpdate (only create new records), " +
                               $"or -Create (fail if record exists).";
                 
