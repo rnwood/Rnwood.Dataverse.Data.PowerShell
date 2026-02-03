@@ -561,35 +561,17 @@ Describe "Module - Non-Readable Columns E2E" {
                 # First, check if we have any existing serviceendpoints to avoid creating one
                 $existingEndpoints = Get-DataverseRecord -Connection $connection -TableName serviceendpoint -Columns serviceendpointid -Top 1 -ErrorAction SilentlyContinue
                 
-                $testEndpointId = $null
-                $createdNew = $false
-                
-                if ($existingEndpoints -and $existingEndpoints.Count -gt 0) {
-                    Write-Host "Using existing serviceendpoint: $($existingEndpoints[0].serviceendpointid)"
-                    $testEndpointId = $existingEndpoints[0].serviceendpointid
-                } else {
-                    # Create a test serviceendpoint (Azure Service Bus endpoint)
-                    # Note: This requires proper Azure Service Bus configuration
-                    Write-Host "No existing serviceendpoints found. Creating test serviceendpoint..."
-                    $testNamespaceAddress = "sb://test-e2e-" + [Guid]::NewGuid().ToString().Substring(0, 8) + ".servicebus.windows.net/"
-                    
-                    try {
-                        $newEndpoint = @{
-                            name = "E2E Test Endpoint"
-                            namespaceaddress = $testNamespaceAddress
-                            contract = 2  # Queue
-                            messageformat = 1  # Binary
-                        } | Set-DataverseRecord -Connection $connection -TableName serviceendpoint -CreateOnly -PassThru
-                        
-                        $testEndpointId = $newEndpoint.Id
-                        $createdNew = $true
-                        Write-Host "Created test serviceendpoint: $testEndpointId"
-                    } catch {
-                        Write-Host "Warning: Could not create serviceendpoint. This test requires serviceendpoint entity access. Skipping..."
-                        Write-Host "Error: $_"
-                        return
-                    }
+                if (-not $existingEndpoints -or $existingEndpoints.Count -eq 0) {
+                    # No existing serviceendpoints found
+                    # Creating a serviceendpoint requires specific configuration (path, auth settings, etc.)
+                    # Since this is complex and environment-specific, we'll skip the test if none exist
+                    Write-Host "No existing serviceendpoints found. This test requires at least one serviceendpoint to exist in the environment."
+                    Write-Host "Skipping test - cannot validate non-readable column handling without a serviceendpoint."
+                    return
                 }
+                
+                $testEndpointId = $existingEndpoints[0].serviceendpointid
+                Write-Host "Using existing serviceendpoint: $testEndpointId"
                 
                 # Now try to update with a non-readable column (saskey) in default mode
                 # This should fail with a clear error message
@@ -652,17 +634,6 @@ Describe "Module - Non-Readable Columns E2E" {
                 } catch {
                     Write-Host "Warning: -Upsert also failed: $_"
                     # This is acceptable - the main test is the error message quality
-                }
-                
-                # Cleanup if we created a new endpoint
-                if ($createdNew -and $testEndpointId) {
-                    Write-Host "Cleaning up test serviceendpoint..."
-                    try {
-                        Remove-DataverseRecord -Connection $connection -TableName serviceendpoint -Id $testEndpointId -Confirm:$false
-                        Write-Host "Cleanup complete"
-                    } catch {
-                        Write-Host "Warning: Could not clean up test serviceendpoint: $_"
-                    }
                 }
                 
                 Write-Host "SUCCESS: Non-readable column error handling test passed"
