@@ -531,6 +531,7 @@ Describe "Form Manipulation E2E Tests" {
                     -SectionName "SecondSection" `
                     -ControlId "emailaddress1" `
                     -Confirm:$false
+                }
                 
                 Write-Host "  Removed control: emailaddress1"
                 
@@ -542,6 +543,7 @@ Describe "Form Manipulation E2E Tests" {
                     -TabName "CustomTab" `
                     -SectionName "SecondSection" `
                     -ControlId "emailaddress1"
+                }
                 
                 if ($removedControl) {
                     throw "Control 'emailaddress1' should have been removed but still exists"
