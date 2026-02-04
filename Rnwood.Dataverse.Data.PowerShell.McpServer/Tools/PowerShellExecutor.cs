@@ -13,8 +13,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.McpServer.Tools;
 public class PowerShellExecutorConfig
 {
     public string[] AllowedUrls { get; set; } = Array.Empty<string>();
-    public bool EnableProviders { get; set; } = false;
-    public bool UnrestrictedMode { get; set; } = false;
 }
 
 public class PowerShellExecutor : IDisposable
@@ -306,6 +304,23 @@ public class PersistentSession : IDisposable
                 {
                     var errors = string.Join("\n", ps2.Streams.Error.Select(e => e.ToString()));
                     throw new InvalidOperationException($"Failed to initialize session variables: {errors}");
+                }
+            }
+
+            // Automatically establish Dataverse connection
+            using (var ps3 = System.Management.Automation.PowerShell.Create())
+            {
+                ps3.Runspace = _runspace;
+                ps3.AddCommand("Get-DataverseConnection")
+                   .AddParameter("Interactive", true)
+                   .AddParameter("SetAsDefault", true)
+                   .AddParameter("Url", firstAllowedUrl);
+                ps3.Invoke();
+                
+                if (ps3.HadErrors)
+                {
+                    var errors = string.Join("\n", ps3.Streams.Error.Select(e => e.ToString()));
+                    throw new InvalidOperationException($"Failed to establish Dataverse connection: {errors}");
                 }
             }
         }

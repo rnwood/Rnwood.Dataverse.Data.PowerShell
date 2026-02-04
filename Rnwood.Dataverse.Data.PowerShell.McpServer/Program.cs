@@ -17,35 +17,19 @@ var allowedUrlsOption = new Option<string[]>(
 };
 allowedUrlsOption.AddAlias("-u");
 
-var enableProvidersOption = new Option<bool>(
-    name: "--enable-providers",
-    description: "Enable PowerShell providers (FileSystem, Registry, etc.)",
-    getDefaultValue: () => false);
-enableProvidersOption.AddAlias("-p");
-
-var unrestrictedModeOption = new Option<bool>(
-    name: "--unrestricted-mode",
-    description: "Disable restricted language mode (enables full PowerShell features)",
-    getDefaultValue: () => false);
-unrestrictedModeOption.AddAlias("-r");
-
 var rootCommand = new RootCommand("Dataverse PowerShell MCP Server - Execute PowerShell scripts with Dataverse module via Model Context Protocol")
 {
-    allowedUrlsOption,
-    enableProvidersOption,
-    unrestrictedModeOption
+    allowedUrlsOption
 };
 
-rootCommand.SetHandler(async (allowedUrls, enableProviders, unrestrictedMode) =>
+rootCommand.SetHandler(async (allowedUrls) =>
 {
     // Normalize URLs (remove trailing slashes)
     var normalizedUrls = allowedUrls.Select(url => url.TrimEnd('/')).ToArray();
 
     var config = new PowerShellExecutorConfig
     {
-        AllowedUrls = normalizedUrls,
-        EnableProviders = enableProviders,
-        UnrestrictedMode = unrestrictedMode
+        AllowedUrls = normalizedUrls
     };
 
     // STDIO mode
@@ -65,6 +49,6 @@ rootCommand.SetHandler(async (allowedUrls, enableProviders, unrestrictedMode) =>
     });
 
     await builder.Build().RunAsync();
-}, allowedUrlsOption, enableProvidersOption, unrestrictedModeOption);
+}, allowedUrlsOption);
 
 return await rootCommand.InvokeAsync(args);

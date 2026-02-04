@@ -137,9 +137,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+
 ## NOTES
 This cmdlet requires internet access to retrieve the icon list from the online repository. The icon list is retrieved fresh each time the cmdlet is run.
 

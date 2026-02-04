@@ -347,6 +347,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _userCancellationCts = null;
         }
 
+        private CancellationTokenSource _userCancellationCts;
+
         private CancellationTokenSource CreateLinkedCts(TimeSpan timeout)
         {
             var timeoutCts = new CancellationTokenSource(timeout);

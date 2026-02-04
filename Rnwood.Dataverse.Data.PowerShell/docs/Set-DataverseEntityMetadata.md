@@ -25,7 +25,7 @@ Set-DataverseEntityMetadata [-EntityName] <String> [-SchemaName <String>] [-Disp
 
 ### ByEntityMetadata
 ```
-Set-DataverseEntityMetadata [-EntityMetadata] <EntityMetadata> [-PassThru] [-Publish] [-SkipIconValidation]
+Set-DataverseEntityMetadata -EntityMetadata <EntityMetadata> [-PassThru] [-Publish] [-SkipIconValidation]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -537,7 +537,7 @@ Parameter Sets: ByEntityMetadata
 Aliases:
 
 Required: True
-Position: 0
+Position: Named
 Default value: None
 Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
@@ -833,21 +833,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-Controls how PowerShell handles progress messages. This is a common parameter added automatically by PowerShell.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SchemaName
 Schema name of the entity with publisher prefix (e.g., `new_CustomEntity`). Required when creating a new entity.
 
@@ -889,21 +874,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
