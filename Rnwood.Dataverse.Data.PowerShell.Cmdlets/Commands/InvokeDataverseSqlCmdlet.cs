@@ -347,10 +347,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 
 
-			Task<DbDataReader> task = Task.Run(() =>
+			Task<DbDataReader> task = Task.Run(async () =>
 			{
-				//Despite the Async, seems to block until completion
-				return _command.ExecuteReaderAsync();
+				// Pass cancellation token to enable CTRL+C cancellation during query execution
+				return await _command.ExecuteReaderAsync(_userCancellationCts.Token);
 			});
 
 			while (!task.IsCompleted)
@@ -359,8 +359,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				if (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
 				{
 					WriteVerbose("SQL query execution cancelled by user");
-					// Note: Sql4Cds doesn't support cancellation tokens directly, so the task may continue
-					// but we'll stop processing results
 					return;
 				}
 
@@ -378,6 +376,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				{
 					pendingConfirmation.RunSynchronously();
 				}
+			}
+
+			// Check if task was cancelled or faulted
+			if (task.IsCanceled)
+			{
+				WriteVerbose("SQL query execution was cancelled");
+				return;
+			}
+
+			if (task.IsFaulted)
+			{
+				// Re-throw the exception from the task
+				task.GetAwaiter().GetResult();
 			}
 
 			using (DbDataReader reader = task.Result)
