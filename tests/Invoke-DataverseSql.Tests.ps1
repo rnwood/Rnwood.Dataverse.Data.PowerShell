@@ -5,7 +5,6 @@ Describe 'Invoke-DataverseSql' {
         It "Accepts SQL as positional parameter" {
             # Test that the SQL parameter can be provided positionally without -Sql flag
             # This test validates parameter binding, not execution
-            $connection = getMockConnection
             
             # Get the cmdlet parameter metadata
             $cmdlet = Get-Command Invoke-DataverseSql
