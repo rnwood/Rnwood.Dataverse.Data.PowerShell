@@ -375,19 +375,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 			}
 
-			// Check if task was cancelled or faulted
+			// Check if task was cancelled
 			if (task.IsCanceled)
 			{
 				WriteVerbose("SQL query execution was cancelled");
 				return;
 			}
 
-			if (task.IsFaulted)
-			{
-				// Access task.Result to propagate the exception with full context
-				var _ = task.Result;
-			}
-
+			// Access task.Result - this will throw any exceptions from the task
 			using (DbDataReader reader = task.Result)
 			{
 				if (reader.HasRows)
