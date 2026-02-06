@@ -347,11 +347,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 
 
-			Task<DbDataReader> task = Task.Run(async () =>
-			{
-				// Pass cancellation token to enable CTRL+C cancellation during query execution
-				return await _command.ExecuteReaderAsync(_userCancellationCts.Token);
-			});
+			// Execute query with cancellation token support
+			Task<DbDataReader> task = _command.ExecuteReaderAsync(_userCancellationCts.Token);
 
 			while (!task.IsCompleted)
 			{
@@ -387,8 +384,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			if (task.IsFaulted)
 			{
-				// Re-throw the exception from the task
-				task.GetAwaiter().GetResult();
+				// Access task.Result to propagate the exception with full context
+				var _ = task.Result;
 			}
 
 			using (DbDataReader reader = task.Result)
