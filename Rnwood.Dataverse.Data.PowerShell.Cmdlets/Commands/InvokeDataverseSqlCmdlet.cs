@@ -31,7 +31,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// SQL to execute. See Sql4Cds docs.
 		/// </summary>
-		[Parameter(Mandatory = true, HelpMessage = "SQL to execute. See Sql4Cds docs.", ValueFromRemainingArguments = true)]
+		[Parameter(Mandatory = true, Position = 0, HelpMessage = "SQL to execute. See Sql4Cds docs.", ValueFromRemainingArguments = true)]
 		public string Sql { get; set; }
 		/// <summary>
 		/// Uses the TDS endpoint for supported queries. See Sql4Cds docs

@@ -1,6 +1,25 @@
 . $PSScriptRoot/Common.ps1
 
-Describe 'Invoke-DataverseSql' -Skip {
+Describe 'Invoke-DataverseSql' {
+    Context 'Parameter Binding' {
+        It "Accepts SQL as positional parameter" {
+            # Test that the SQL parameter can be provided positionally without -Sql flag
+            # This test validates parameter binding, not execution
+            $connection = getMockConnection
+            
+            # Get the cmdlet parameter metadata
+            $cmdlet = Get-Command Invoke-DataverseSql
+            $sqlParam = $cmdlet.Parameters['Sql']
+            
+            # Verify Sql parameter has Position = 0
+            $sqlParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] } | ForEach-Object {
+                $_.Position | Should -Be 0
+            }
+        }
+    }
+}
+
+Describe 'Invoke-DataverseSql - Full Execution' -Skip {
     # Note: SQL4Cds (MarkMpn.Sql4Cds.Engine) does not fully support FakeXrmEasy mock
     # These tests validate the command signature and expected behavior, but require
     # real Dataverse environment or enhanced mock support to pass.
