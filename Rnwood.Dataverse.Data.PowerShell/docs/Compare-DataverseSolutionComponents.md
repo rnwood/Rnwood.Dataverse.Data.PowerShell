@@ -26,13 +26,13 @@ Compare-DataverseSolutionComponents [-Connection <ServiceClient>] -SolutionBytes
 
 ### FileToFile
 ```
-Compare-DataverseSolutionComponents [-SolutionFile] <String> [-FileToFile] [-TargetSolutionFile] <String>
+Compare-DataverseSolutionComponents [-SolutionFile] <String> [-FileToFile] -TargetSolutionFile <String>
  [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### BytesToFile
 ```
-Compare-DataverseSolutionComponents -SolutionBytes <Byte[]> [-BytesToFile] [-TargetSolutionFile] <String>
+Compare-DataverseSolutionComponents -SolutionBytes <Byte[]> [-BytesToFile] -TargetSolutionFile <String>
  [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
@@ -297,7 +297,7 @@ Parameter Sets: FileToFile, BytesToFile
 Aliases:
 
 Required: True
-Position: 1
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

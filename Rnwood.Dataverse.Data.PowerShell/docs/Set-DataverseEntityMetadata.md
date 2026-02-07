@@ -25,7 +25,7 @@ Set-DataverseEntityMetadata [-EntityName] <String> [-SchemaName <String>] [-Disp
 
 ### ByEntityMetadata
 ```
-Set-DataverseEntityMetadata [-EntityMetadata] <EntityMetadata> [-PassThru] [-Publish] [-SkipIconValidation]
+Set-DataverseEntityMetadata -EntityMetadata <EntityMetadata> [-PassThru] [-Publish] [-SkipIconValidation]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -537,7 +537,7 @@ Parameter Sets: ByEntityMetadata
 Aliases:
 
 Required: True
-Position: 0
+Position: Named
 Default value: None
 Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
