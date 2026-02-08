@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Management.Automation;
 using Microsoft.Crm.Sdk.Messages;
-
 using Microsoft.Xrm.Sdk;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using MarkMpn.Sql4Cds.Engine;
