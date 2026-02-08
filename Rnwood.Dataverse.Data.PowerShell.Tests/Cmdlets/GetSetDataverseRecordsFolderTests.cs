@@ -48,8 +48,13 @@ $record = [PSCustomObject]@{{
 $record | Set-DataverseRecordsFolder -OutputPath '{folder.Replace("'", "''")}'
 
 # Read records back
-$results = Get-DataverseRecordsFolder -InputPath '{folder.Replace("'", "''")}'
-$results | ConvertTo-Json -Depth 10
+$results = @(Get-DataverseRecordsFolder -InputPath '{folder.Replace("'", "''")}')
+
+if ($results.Count -ne 1) {{ throw 'Expected 1 record, got ' + $results.Count }}
+if ($results[0].firstname -ne 'John') {{ throw 'firstname mismatch: ' + $results[0].firstname }}
+if ($results[0].lastname -ne 'Doe') {{ throw 'lastname mismatch: ' + $results[0].lastname }}
+
+Write-Output 'PASS'
 ";
 
         // Act
@@ -57,8 +62,6 @@ $results | ConvertTo-Json -Depth 10
         
         // Assert
         result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
-        result.StandardOutput.Should().Contain("John");
-        result.StandardOutput.Should().Contain("Doe");
     }
 
     [Fact]
@@ -76,7 +79,9 @@ $records = @(
 $records | Set-DataverseRecordsFolder -OutputPath '{folder.Replace("'", "''")}'
 
 # Count JSON files
-(Get-ChildItem -Path '{folder.Replace("'", "''")}' -Filter '*.json').Count
+$count = (Get-ChildItem -Path '{folder.Replace("'", "''")}' -Filter '*.json').Count
+if ($count -ne 3) {{ throw 'Expected 3 files, got ' + $count }}
+Write-Output 'PASS'
 ";
 
         // Act
@@ -84,7 +89,6 @@ $records | Set-DataverseRecordsFolder -OutputPath '{folder.Replace("'", "''")}'
         
         // Assert
         result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
-        result.StandardOutput.Trim().Should().Be("3");
     }
 
     [Fact]
@@ -94,7 +98,9 @@ $records | Set-DataverseRecordsFolder -OutputPath '{folder.Replace("'", "''")}'
         var folder = CreateTempFolder();
         var script = $@"
 $results = @(Get-DataverseRecordsFolder -InputPath '{folder.Replace("'", "''")}')
-$results.Count
+$count = $results.Count
+if ($count -ne 0) {{ throw 'Expected 0 records, got ' + $count }}
+Write-Output 'PASS'
 ";
 
         // Act
@@ -102,7 +108,6 @@ $results.Count
         
         // Assert
         result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
-        result.StandardOutput.Trim().Should().Be("0");
     }
 
     [Fact]
@@ -117,12 +122,20 @@ $record = [PSCustomObject]@{{
     birthdate = '1990-05-15T00:00:00'
     revenue = 12345.67
     isactive = $true
-    primarycontactid = [PSCustomObject]@{{ Id = [Guid]'00000000-0000-0000-0000-000000000099'; LogicalName = 'account' }}
+        primarycontactid = [PSCustomObject]@{{ Id = [Guid]'00000000-0000-0000-0000-000000000099'; LogicalName = 'account' }}
 }}
 
 $record | Set-DataverseRecordsFolder -OutputPath '{folder.Replace("'", "''")}'
-$results = Get-DataverseRecordsFolder -InputPath '{folder.Replace("'", "''")}'
-$results | ConvertTo-Json -Depth 10
+$results = @(Get-DataverseRecordsFolder -InputPath '{folder.Replace("'", "''")}')
+
+if ($results.Count -ne 1) {{ throw 'Expected 1 record, got ' + $results.Count }}
+$birthdate = [datetime]$results[0].birthdate
+if ($birthdate.ToString('yyyy-MM-dd') -ne '1990-05-15') {{ throw 'birthdate mismatch: ' + $birthdate.ToString('o') }}
+if ([decimal]$results[0].revenue -ne 12345.67) {{ throw 'revenue mismatch: ' + $results[0].revenue }}
+if ($results[0].isactive -ne $true) {{ throw 'isactive mismatch: ' + $results[0].isactive }}
+if ($results[0].primarycontactid.Id -ne [Guid]'00000000-0000-0000-0000-000000000099') {{ throw 'lookup Id mismatch' }}
+
+Write-Output 'PASS'
 ";
 
         // Act
@@ -130,9 +143,6 @@ $results | ConvertTo-Json -Depth 10
         
         // Assert
         result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
-        result.StandardOutput.Should().Contain("1990");  // Date preserved
-        result.StandardOutput.Should().Contain("12345"); // Decimal preserved
-        result.StandardOutput.Should().Contain("true");  // Boolean preserved
     }
 
     [Fact]
@@ -155,7 +165,9 @@ $afterFirst = (Get-ChildItem -Path '{folder.Replace("'", "''")}' -Filter '*.json
 $afterSecond = (Get-ChildItem -Path '{folder.Replace("'", "''")}' -Filter '*.json').Count
 
 # Verify: first call creates 1 file, second call also results in 1 file (previous was removed)
-Write-Output ""After first: $afterFirst, After second: $afterSecond""
+if ($afterFirst -ne 1) {{ throw 'Expected 1 file after first write, got ' + $afterFirst }}
+if ($afterSecond -ne 1) {{ throw 'Expected 1 file after second write, got ' + $afterSecond }}
+Write-Output 'PASS'
 ";
 
         // Act
@@ -163,8 +175,6 @@ Write-Output ""After first: $afterFirst, After second: $afterSecond""
         
         // Assert
         result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
-        result.StandardOutput.Should().Contain("After first: 1");
-        result.StandardOutput.Should().Contain("After second: 1");
     }
 
     [Fact]
@@ -185,7 +195,9 @@ $all = @(Get-DataverseRecordsFolder -InputPath '{folder.Replace("'", "''")}')
 $contacts = @($all | Where-Object {{ $_.TableName -eq 'contact' }})
 $accounts = @($all | Where-Object {{ $_.TableName -eq 'account' }})
 
-Write-Output ""Contacts: $($contacts.Count), Accounts: $($accounts.Count)""
+if ($contacts.Count -ne 1) {{ throw 'Expected 1 contact, got ' + $contacts.Count }}
+if ($accounts.Count -ne 1) {{ throw 'Expected 1 account, got ' + $accounts.Count }}
+Write-Output 'PASS'
 ";
 
         // Act
@@ -193,8 +205,6 @@ Write-Output ""Contacts: $($contacts.Count), Accounts: $($accounts.Count)""
         
         // Assert
         result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
-        result.StandardOutput.Should().Contain("Contacts: 1");
-        result.StandardOutput.Should().Contain("Accounts: 1");
     }
 
     [Fact]
@@ -209,7 +219,8 @@ Write-Output ""Contacts: $($contacts.Count), Accounts: $($accounts.Count)""
 
 # Check filename contains ID
 $files = Get-ChildItem -Path '{folder.Replace("'", "''")}' -Filter '*.json'
-$files.Name -match '{testId}'
+if (-not ($files.Name -match '{testId}')) {{ throw 'Expected filename to contain id {testId}' }}
+Write-Output 'PASS'
 ";
 
         // Act
@@ -217,7 +228,6 @@ $files.Name -match '{testId}'
         
         // Assert
         result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
-        result.StandardOutput.Should().Contain("True");
     }
 
     [Fact]
@@ -236,8 +246,10 @@ $record | Set-DataverseRecordsFolder -OutputPath '{folder.Replace("'", "''")}'
 $results = @(Get-DataverseRecordsFolder -InputPath '{folder.Replace("'", "''")}')
 
 # Check metadata is preserved
-Write-Output ""Id: $($results[0].Id)""
-Write-Output ""TableName: $($results[0].TableName)""
+if ($results.Count -ne 1) {{ throw 'Expected 1 record, got ' + $results.Count }}
+if ($results[0].Id -ne [Guid]'00000000-0000-0000-0000-000000000001') {{ throw 'Id mismatch: ' + $results[0].Id }}
+if ($results[0].TableName -ne 'contact') {{ throw 'TableName mismatch: ' + $results[0].TableName }}
+Write-Output 'PASS'
 ";
 
         // Act
@@ -245,7 +257,5 @@ Write-Output ""TableName: $($results[0].TableName)""
         
         // Assert
         result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
-        result.StandardOutput.Should().Contain("00000000-0000-0000-0000-000000000001");
-        result.StandardOutput.Should().Contain("TableName: contact");
     }
 }

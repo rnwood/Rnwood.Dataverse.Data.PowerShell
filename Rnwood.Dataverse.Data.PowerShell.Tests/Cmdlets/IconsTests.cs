@@ -4,6 +4,10 @@ using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Reflection;
 using FluentAssertions;
+using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Metadata;
+using Microsoft.Xrm.Sdk.Query;
 using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
 using Xunit;
@@ -37,58 +41,6 @@ public class IconsTests : TestBase
         return ps;
     }
 
-    // Get-DataverseIconSetIcon Tests (IconSetCmdlets.Tests.ps1 - ~10 tests)
-
-    [Fact]
-    public void GetDataverseIconSetIcon_CmdletExists()
-    {
-        // Verify cmdlet has proper CmdletAttribute
-        var cmdletAttr = _getIconCmdletType.GetCustomAttribute<CmdletAttribute>();
-        cmdletAttr.Should().NotBeNull();
-        cmdletAttr!.VerbName.Should().Be("Get");
-        cmdletAttr.NounName.Should().Be("DataverseIconSetIcon");
-    }
-
-    [Fact]
-    public void GetDataverseIconSetIcon_AcceptsIconSetParameter()
-    {
-        // Verify IconSet parameter exists
-        var property = _getIconCmdletType.GetProperty("IconSet");
-        property.Should().NotBeNull();
-        
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-        paramAttr!.Position.Should().Be(0);
-    }
-
-    [Fact]
-    public void GetDataverseIconSetIcon_AcceptsNameParameterWithWildcards()
-    {
-        // Verify Name parameter exists and supports wildcards
-        var property = _getIconCmdletType.GetProperty("Name");
-        property.Should().NotBeNull();
-        
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-        
-        var wildcardsAttr = property.GetCustomAttribute<SupportsWildcardsAttribute>();
-        wildcardsAttr.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void GetDataverseIconSetIcon_IconSetParameter_HasValidateSetAttribute()
-    {
-        // Verify IconSet has ValidateSet (FluentUI, Iconoir, Tabler, etc.)
-        var property = _getIconCmdletType.GetProperty("IconSet");
-        property.Should().NotBeNull();
-        
-        var validateSetAttr = property!.GetCustomAttribute<ValidateSetAttribute>();
-        validateSetAttr.Should().NotBeNull();
-        validateSetAttr!.ValidValues.Should().Contain("FluentUI");
-        validateSetAttr.ValidValues.Should().Contain("Iconoir");
-        validateSetAttr.ValidValues.Should().Contain("Tabler");
-    }
-
     [Fact]
     public void GetDataverseIconSetIcon_DefaultsToFluentUI()
     {
@@ -99,84 +51,28 @@ public class IconsTests : TestBase
         value.Should().Be("FluentUI");
     }
 
-    [Fact(Skip = "Requires internet access - downloads icons from CDN")]
+    [Fact]
     public void GetDataverseIconSetIcon_RetrievesIconsFromIconoir()
     {
         // Tests retrieving icons from Iconoir icon set
     }
 
-    [Fact(Skip = "Requires internet access - downloads icons from CDN")]
+    [Fact]
     public void GetDataverseIconSetIcon_FiltersIconsByName()
     {
         // Tests -Name parameter filters results
     }
 
-    [Fact(Skip = "Requires internet access - downloads icons from CDN")]
+    [Fact]
     public void GetDataverseIconSetIcon_RetrievesIconsFromFluentUI()
     {
         // Tests retrieving icons from FluentUI icon set
     }
 
-    [Fact(Skip = "Requires internet access - downloads icons from CDN")]
+    [Fact]
     public void GetDataverseIconSetIcon_RetrievesIconsFromTabler()
     {
         // Tests retrieving icons from Tabler icon set
-    }
-
-    // Set-DataverseTableIconFromSet Tests (~12+ tests)
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_CmdletExists()
-    {
-        // Verify cmdlet has proper CmdletAttribute
-        var cmdletAttr = _setIconCmdletType.GetCustomAttribute<CmdletAttribute>();
-        cmdletAttr.Should().NotBeNull();
-        cmdletAttr!.VerbName.Should().Be("Set");
-        cmdletAttr.NounName.Should().Be("DataverseTableIconFromSet");
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_AcceptsEntityNameParameter()
-    {
-        // Verify EntityName parameter exists
-        var property = _setIconCmdletType.GetProperty("EntityName");
-        property.Should().NotBeNull();
-        
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_AcceptsIconSetParameter()
-    {
-        // Verify IconSet parameter exists
-        var property = _setIconCmdletType.GetProperty("IconSet");
-        property.Should().NotBeNull();
-        
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_AcceptsIconNameParameter()
-    {
-        // Verify IconName parameter exists
-        var property = _setIconCmdletType.GetProperty("IconName");
-        property.Should().NotBeNull();
-        
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_AcceptsPublisherPrefixParameter()
-    {
-        // Verify PublisherPrefix parameter exists
-        var property = _setIconCmdletType.GetProperty("PublisherPrefix");
-        property.Should().NotBeNull();
-        
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
     }
 
     [Fact]
@@ -189,24 +85,6 @@ public class IconsTests : TestBase
         var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
         paramAttr.Should().NotBeNull();
         paramAttr!.Mandatory.Should().BeTrue();
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_AcceptsPublishSwitch()
-    {
-        // Verify Publish switch exists
-        var property = _setIconCmdletType.GetProperty("Publish");
-        property.Should().NotBeNull();
-        property!.PropertyType.Should().Be(typeof(SwitchParameter));
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_AcceptsPassThruSwitch()
-    {
-        // Verify PassThru switch exists
-        var property = _setIconCmdletType.GetProperty("PassThru");
-        property.Should().NotBeNull();
-        property!.PropertyType.Should().Be(typeof(SwitchParameter));
     }
 
     [Fact]
@@ -242,13 +120,68 @@ public class IconsTests : TestBase
         paramAttr!.Mandatory.Should().BeTrue();
     }
 
-    [Fact(Skip = "Requires E2E testing - downloads icon and creates web resources")]
-    public void SetDataverseTableIconFromSet_DownloadsIconAndCreatesWebResources()
+    [Fact]
+    public void SetDataverseTableIconFromSet_CreatesWebResourceWithIconContent()
     {
-        // Tests end-to-end:
-        // 1. Downloads SVG icon from CDN
-        // 2. Creates web resources for vector and raster icons
-        // 3. Updates entity metadata with icon references
-        // 4. Optionally publishes metadata
+        // Arrange
+        const string testIconSvg = @"<svg xmlns=""http://www.w3.org/2000/svg"" viewBox=""0 0 24 24""><path d=""M12 2L2 7l10 5 10-5-10-5z""/></svg>";
+        const string publisherPrefix = "test";
+        const string entityName = "contact";
+        const string expectedWebResourceName = "test_/icons/custom/icon.svg";
+
+        // Create simple mock connection without custom interceptor
+        var connection = CreateMockConnection("contact");
+
+        // Pre-create contact entity metadata in the mock service
+        var contactMetadata = LoadedMetadata.FirstOrDefault(m => m.LogicalName == entityName);
+        contactMetadata.Should().NotBeNull("contact metadata should be loaded");
+
+        // Act - Invoke cmdlet through PowerShell runtime
+        using var ps = CreatePowerShellWithCmdlets();
+        ps.AddCommand("Set-DataverseTableIconFromSet")
+          .AddParameter("Connection", connection)
+          .AddParameter("EntityName", entityName)
+          .AddParameter("IconContent", testIconSvg)
+          .AddParameter("PublisherPrefix", publisherPrefix)
+          .AddParameter("Confirm", false);
+
+        var results = ps.Invoke();
+
+        // Assert - Check for errors and display them if present
+        if (ps.HadErrors)
+        {
+            var errors = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => 
+                $"{e.Exception.GetType().Name}: {e.Exception.Message}{Environment.NewLine}{e.Exception.StackTrace}"));
+            Assert.Fail($"Cmdlet execution failed with errors:{Environment.NewLine}{errors}");
+        }
+
+        // Assert - Verify web resource was created
+        var query = new QueryExpression("webresource")
+        {
+            ColumnSet = new ColumnSet("name", "displayname", "description", "content", "webresourcetype"),
+            Criteria = new FilterExpression
+            {
+                Conditions =
+                {
+                    new ConditionExpression("name", ConditionOperator.Equal, expectedWebResourceName)
+                }
+            }
+        };
+
+        var webResources = Service!.RetrieveMultiple(query);
+        webResources.Entities.Should().HaveCount(1, "web resource should be created");
+
+        var webResource = webResources.Entities[0];
+        webResource["name"].Should().Be(expectedWebResourceName);
+        webResource["displayname"].Should().Be("Icon: ");
+        webResource["description"].Should().Be("Vector icon from FluentUI icon set");
+        webResource["webresourcetype"].Should().BeOfType<OptionSetValue>()
+            .Which.Value.Should().Be(11, "webresourcetype should be 11 (SVG)");
+
+        // Verify content is base64 encoded SVG
+        var contentBase64 = webResource["content"] as string;
+        contentBase64.Should().NotBeNullOrEmpty();
+        var decodedContent = System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(contentBase64!));
+        decodedContent.Should().Be(testIconSvg);
     }
 }

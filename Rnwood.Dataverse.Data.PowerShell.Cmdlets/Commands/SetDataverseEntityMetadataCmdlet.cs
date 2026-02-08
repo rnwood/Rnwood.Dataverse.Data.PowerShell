@@ -294,12 +294,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            if (HasActivities.IsPresent)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)))
             {
                 entity.HasActivities = HasActivities.ToBool();
             }
 
-            if (HasNotes.IsPresent)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)))
             {
                 entity.HasNotes = HasNotes.ToBool();
             }
@@ -384,11 +384,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else
             {
                 // For non-activity entities, set based on parameters
-                if (HasNotes.IsPresent)
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)))
                 {
                     request.HasNotes = HasNotes.ToBool();
                 }
-                if (HasActivities.IsPresent)
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)))
                 {
                     request.HasActivities = HasActivities.ToBool();
                 }
@@ -489,15 +489,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 hasChanges = true;
             }
 
-            // Update has activities
-            if (HasActivities.IsPresent)
+            // Update has activities - use BoundParameters to properly detect -HasActivities:$false
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)))
             {
                 entityToUpdate.HasActivities = HasActivities.ToBool();
                 hasChanges = true;
             }
 
-            // Update has notes
-            if (HasNotes.IsPresent)
+            // Update has notes - use BoundParameters to properly detect -HasNotes:$false
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)))
             {
                 entityToUpdate.HasNotes = HasNotes.ToBool();
                 hasChanges = true;

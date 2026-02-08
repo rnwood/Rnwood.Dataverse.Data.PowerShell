@@ -4,6 +4,8 @@ using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
+using System.Reflection;
+using Microsoft.PowerPlatform.Dataverse.Client;
 using Xunit;
 using PS = System.Management.Automation.PowerShell;
 
@@ -85,11 +87,60 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             attributeMetadata.MaxLength.Should().BeGreaterThan(0);
         }
 
-        [Fact(Skip = "Requires Set-DataverseConnectionAsDefault cmdlet")]
+        [Fact]
         public void GetDataverseAttributeMetadata_DefaultConnection_UsesDefaultConnection()
         {
-            // This test would require implementing Set-DataverseConnectionAsDefault cmdlet
-            // Skipping for now as it requires additional infrastructure
+            // Arrange
+            var initialSessionState = InitialSessionState.CreateDefault();
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Get-DataverseAttributeMetadata", typeof(Commands.GetDataverseAttributeMetadataCmdlet), null));
+
+            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+            runspace.Open();
+            using var ps = PS.Create();
+            ps.Runspace = runspace;
+
+            var mockConnection = CreateMockConnection();
+
+            try
+            {
+                SetDefaultConnection(mockConnection);
+
+                // Act - call without -Connection
+                ps.AddCommand("Get-DataverseAttributeMetadata")
+                  .AddParameter("EntityName", "contact")
+                  .AddParameter("AttributeName", "firstname");
+
+                var results = ps.Invoke();
+
+                // Assert
+                ps.HadErrors.Should().BeFalse();
+                results.Should().HaveCount(1);
+
+                var attributeMetadata = results[0].BaseObject as AttributeMetadata;
+                attributeMetadata.Should().NotBeNull();
+                attributeMetadata!.LogicalName.Should().Be("firstname");
+            }
+            finally
+            {
+                ClearDefaultConnection();
+            }
+        }
+
+        private static void ClearDefaultConnection()
+        {
+            var managerType = typeof(Commands.GetDataverseConnectionCmdlet).Assembly
+                .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
+            var clearMethod = managerType?.GetMethod("ClearDefaultConnection", BindingFlags.Public | BindingFlags.Static);
+            clearMethod?.Invoke(null, null);
+        }
+
+        private static void SetDefaultConnection(ServiceClient connection)
+        {
+            var managerType = typeof(Commands.GetDataverseConnectionCmdlet).Assembly
+                .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
+            var prop = managerType?.GetProperty("DefaultConnection", BindingFlags.Public | BindingFlags.Static);
+            prop?.SetValue(null, connection);
         }
 
         // ===== All Attributes Retrieval ===== (2 tests)

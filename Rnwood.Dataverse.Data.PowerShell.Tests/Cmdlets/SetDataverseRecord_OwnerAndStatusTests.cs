@@ -35,37 +35,142 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             return ps;
         }
 
-        [Fact(Skip = "Owner assignment requires systemuser entity and AssignRequest support in FakeXrmEasy")]
+        [Fact]
         public void SetDataverseRecord_Owner_CreatesRecordWithOwnerIdAndPerformsAssignment()
         {
-            // This test validates expected cmdlet behavior with ownerid field
-            // Requires systemuser entity metadata and AssignRequest support
-            // TODO: Enable in E2E tests with real Dataverse connection
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection("contact", "systemuser", "team");
+
+            var ownerId = Guid.NewGuid();
+            var owner = new Entity("systemuser")
+            {
+                Id = ownerId,
+                ["fullname"] = "Owner One"
+            };
+            Service!.Create(owner);
+
+            var newRecord = PSObject.AsPSObject(new
+            {
+                firstname = "Owned",
+                lastname = "Contact",
+                ownerid = ownerId
+            });
+
+            ps.AddCommand("Set-DataverseRecord")
+              .AddParameter("Connection", mockConnection)
+                            .AddParameter("TableName", "contact")
+                            .AddParameter("PassThru", true);
+
+            var results = ps.Invoke(new[] { newRecord });
+            var errors = string.Join("; ", ps.Streams.Error.Select(e => e.Exception?.Message ?? e.ToString()));
+
+            ps.HadErrors.Should().BeFalse(errors);
+            results.Should().HaveCount(1);
+
+            var createdId = (Guid)results[0].Properties["Id"].Value;
+            var created = Service.Retrieve("contact", createdId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            ((EntityReference)created["ownerid"]).Id.Should().Be(ownerId);
         }
 
-        [Fact(Skip = "Owner assignment requires systemuser entity metadata in FakeXrmEasy")]
+        [Fact]
         public void SetDataverseRecord_Owner_UpdatesOwnerIdOnExistingRecord()
         {
-            // This test validates ownerid update via AssignRequest
-            // Requires systemuser entity and proper AssignRequest handling
-            // TODO: Enable in E2E tests with real Dataverse connection
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection("contact", "systemuser", "team");
+
+            var initialOwnerId = Guid.NewGuid();
+            var newOwnerId = Guid.NewGuid();
+
+            Service!.Create(new Entity("systemuser") { Id = initialOwnerId, ["fullname"] = "Initial Owner" });
+            Service!.Create(new Entity("systemuser") { Id = newOwnerId, ["fullname"] = "New Owner" });
+
+            var record = new Entity("contact")
+            {
+                Id = Guid.NewGuid(),
+                ["firstname"] = "Change",
+                ["lastname"] = "Owner",
+                ["ownerid"] = new EntityReference("systemuser", initialOwnerId)
+            };
+            Service.Create(record);
+
+            var updateObj = PSObject.AsPSObject(new
+            {
+                Id = record.Id,
+                ownerid = newOwnerId
+            });
+
+            ps.AddCommand("Set-DataverseRecord")
+              .AddParameter("Connection", mockConnection)
+                            .AddParameter("TableName", "contact")
+                            .AddParameter("PassThru", true);
+
+            ps.Invoke(new[] { updateObj });
+            var errors = string.Join("; ", ps.Streams.Error.Select(e => e.Exception?.Message ?? e.ToString()));
+
+            ps.HadErrors.Should().BeFalse(errors);
+            var retrieved = Service.Retrieve("contact", record.Id, new Microsoft.Xrm.Sdk.Query.ColumnSet("ownerid"));
+            ((EntityReference)retrieved["ownerid"]).Id.Should().Be(newOwnerId);
         }
 
-        [Fact(Skip = "Owner assignment requires systemuser entity and AssignRequest support")]
+        [Fact]
         public void SetDataverseRecord_Owner_HandlesOwnerIdWithEntityReferenceObject()
         {
-            // This test validates ownerid as EntityReference-like object
-            // Requires systemuser entity metadata
-            // TODO: Enable in E2E tests with real Dataverse connection
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection("contact", "systemuser", "team");
+
+            var ownerId = Guid.NewGuid();
+            Service!.Create(new Entity("systemuser") { Id = ownerId, ["fullname"] = "Object Owner" });
+
+            var updateObj = PSObject.AsPSObject(new
+            {
+                firstname = "Ref",
+                lastname = "Owner",
+                ownerid = new { LogicalName = "systemuser", Id = ownerId }
+            });
+
+            ps.AddCommand("Set-DataverseRecord")
+              .AddParameter("Connection", mockConnection)
+                            .AddParameter("TableName", "contact")
+                            .AddParameter("PassThru", true);
+
+            var results = ps.Invoke(new[] { updateObj });
+            var errors = string.Join("; ", ps.Streams.Error.Select(e => e.Exception?.Message ?? e.ToString()));
+
+            ps.HadErrors.Should().BeFalse(errors);
+            results.Should().HaveCount(1);
+
+            var createdId = (Guid)results[0].Properties["Id"].Value;
+            var created = Service.Retrieve("contact", createdId, new Microsoft.Xrm.Sdk.Query.ColumnSet("ownerid"));
+            ((EntityReference)created["ownerid"]).Id.Should().Be(ownerId);
         }
 
-        [Fact(Skip = "SetStateRequest behavior during create requires special FakeXrmEasy setup")]
+        [Fact]
         public void SetDataverseRecord_Status_CreatesRecordWithStatusCodeAndPerformsStateChange()
         {
-            // This test validates statuscode during creation
-            // Requires SetStateRequest after create with zero-GUID-to-real-ID transition
-            // FakeXrmEasy may not handle this properly
-            // TODO: Enable in E2E tests with real Dataverse connection
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection("contact");
+
+            var newRecord = PSObject.AsPSObject(new
+            {
+                firstname = "Status",
+                lastname = "Create",
+                statuscode = 2
+            });
+
+            ps.AddCommand("Set-DataverseRecord")
+              .AddParameter("Connection", mockConnection)
+                            .AddParameter("TableName", "contact")
+                            .AddParameter("PassThru", true);
+
+            var results = ps.Invoke(new[] { newRecord });
+            var errors = string.Join("; ", ps.Streams.Error.Select(e => e.Exception?.Message ?? e.ToString()));
+
+            ps.HadErrors.Should().BeFalse(errors);
+            results.Should().HaveCount(1);
+
+            var createdId = (Guid)results[0].Properties["Id"].Value;
+            var created = Service!.Retrieve("contact", createdId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+            created.GetAttributeValue<OptionSetValue>("statuscode").Value.Should().Be(2);
         }
 
         [Fact]

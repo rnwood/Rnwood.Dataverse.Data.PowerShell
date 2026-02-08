@@ -141,6 +141,94 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                     }
                 }
 
+                if (request is RetrieveRequest retrieveRequest && retrieveRequest.Target != null)
+                {
+                    var target = retrieveRequest.Target;
+                    if (target.LogicalName is "systemuser" or "team")
+                    {
+                        var entity = GetOrCreateEntity(context, target.LogicalName, target.Id);
+                        var response = new RetrieveResponse();
+                        response.Results["Entity"] = entity;
+                        return response;
+                    }
+
+                    if (target.LogicalName == "contact" && target.Id == Guid.Empty)
+                    {
+                        var entity = GetOrCreateEntity(context, target.LogicalName, target.Id);
+                        var response = new RetrieveResponse();
+                        response.Results["Entity"] = entity;
+                        return response;
+                    }
+                }
+
+                if (request is RetrieveMultipleRequest retrieveMultipleRequest)
+                {
+                    // Handle RetrieveMultiple for organization entity (used by SQL4Cds DataSource constructor)
+                    if (retrieveMultipleRequest.Query is QueryExpression qe && qe.EntityName == "organization")
+                    {
+                        var orgEntity = new Entity("organization", _mockOrganizationId)
+                        {
+                            ["name"] = "MockOrganization",
+                            ["localeid"] = 1033 // English
+                        };
+                        var response = new RetrieveMultipleResponse();
+                        response.Results["EntityCollection"] = new EntityCollection(new List<Entity> { orgEntity });
+                        return response;
+                    }
+
+                    if (retrieveMultipleRequest.Query is QueryExpression qe2 && qe2.EntityName is "systemuser" or "team")
+                    {
+                        var targetId = ExtractIdFromFilters(qe2.Criteria);
+                        var entity = GetOrCreateEntity(context, qe2.EntityName, targetId);
+                        var response = new RetrieveMultipleResponse();
+                        response.Results["EntityCollection"] = new EntityCollection(new List<Entity> { entity });
+                        return response;
+                    }
+
+                    if (retrieveMultipleRequest.Query is QueryByAttribute qba && qba.EntityName is "systemuser" or "team")
+                    {
+                        var targetId = ExtractIdFromQueryByAttribute(qba);
+                        var entity = GetOrCreateEntity(context, qba.EntityName, targetId);
+                        var response = new RetrieveMultipleResponse();
+                        response.Results["EntityCollection"] = new EntityCollection(new List<Entity> { entity });
+                        return response;
+                    }
+                }
+
+                // Handle AssignRequest by updating ownerid on the target entity
+                if (request is AssignRequest assignRequest && assignRequest.Target != null && assignRequest.Assignee != null)
+                {
+                    var target = assignRequest.Target;
+                    var assignee = assignRequest.Assignee;
+
+                    var targetId = ResolveTargetId(target, context);
+                    var entity = baseService.Retrieve(target.LogicalName, targetId, new ColumnSet(true));
+                    entity["ownerid"] = new EntityReference(assignee.LogicalName, assignee.Id);
+                    baseService.Update(entity);
+
+                    return new AssignResponse { ResponseName = "Assign" };
+                }
+
+                // Handle SetStateRequest by setting statecode/statuscode on the entity
+                if (request is SetStateRequest setStateRequest && setStateRequest.EntityMoniker != null)
+                {
+                    var target = setStateRequest.EntityMoniker;
+                    var targetId = ResolveTargetId(target, context);
+                    var entity = baseService.Retrieve(target.LogicalName, targetId, new ColumnSet(true));
+
+                    if (setStateRequest.State != null)
+                    {
+                        entity["statecode"] = setStateRequest.State;
+                    }
+                    if (setStateRequest.Status != null)
+                    {
+                        entity["statuscode"] = setStateRequest.Status;
+                    }
+
+                    baseService.Update(entity);
+                    return new SetStateResponse { ResponseName = "SetState" };
+                }
+
                 // Handle RetrieveUnpublishedMultipleRequest by delegating to regular RetrieveMultiple
                 // This allows tests to work with forms and other components that query unpublished data first
                 var requestTypeName = request.GetType().Name;
@@ -295,7 +383,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                         return response;
                     }
                 }
-                // If entity not found, let FakeXrmEasy throw appropriate exception
+                // If entity not found, throw not found exception so cmdlet knows to create it
+                throw new System.ServiceModel.FaultException<OrganizationServiceFault>(
+                    new OrganizationServiceFault 
+                    { 
+                        ErrorCode = -2147220969, // Entity not found error code
+                        Message = $"Entity '{retrieveEntityRequest.LogicalName}' does not exist"
+                    },
+                    new System.ServiceModel.FaultReason($"Entity '{retrieveEntityRequest.LogicalName}' does not exist"));
             }
 
             // Handle RetrieveAttributeRequest - return attribute metadata from entity metadata
@@ -352,18 +447,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                     }
                 };
                 return response;
-            }
-
-            // Handle SetStateRequest - return empty response
-            if (requestTypeName == "SetStateRequest")
-            {
-                return new OrganizationResponse { ResponseName = "SetState" };
-            }
-
-            // Handle AssignRequest - return empty response
-            if (requestTypeName == "AssignRequest")
-            {
-                return new OrganizationResponse { ResponseName = "Assign" };
             }
 
             // Handle CreateAttributeRequest - return mock UUID
@@ -514,6 +597,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                         return metadata;
                     }
 
+                    // Provide minimal built-in metadata for system entities when no XML is present
+                    if (string.Equals(entityName, "systemuser", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var metadata = BuildSystemUserMetadata();
+                        MetadataCache[entityName] = metadata;
+                        return metadata;
+                    }
+
+                    if (string.Equals(entityName, "team", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var metadata = BuildTeamMetadata();
+                        MetadataCache[entityName] = metadata;
+                        return metadata;
+                    }
+
                     throw new FileNotFoundException(
                         $"Metadata file not found for entity '{entityName}'. " +
                         $"Ensure {entityName}.xml exists in the tests folder.");
@@ -532,6 +630,149 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         {
             var serializer = new DataContractSerializer(typeof(EntityMetadata));
             return serializer.ReadObject(stream) as EntityMetadata;
+        }
+
+        private static EntityMetadata BuildSystemUserMetadata()
+        {
+            var metadata = new EntityMetadata();
+
+            SetMetadataProperty(metadata, nameof(EntityMetadata.LogicalName), "systemuser");
+            SetMetadataProperty(metadata, nameof(EntityMetadata.SchemaName), "SystemUser");
+            SetMetadataProperty(metadata, nameof(EntityMetadata.PrimaryIdAttribute), "systemuserid");
+            SetMetadataProperty(metadata, nameof(EntityMetadata.PrimaryNameAttribute), "fullname");
+            SetMetadataProperty(metadata, nameof(EntityMetadata.ObjectTypeCode), 8);
+
+            AttributeMetadata BuildAttribute(AttributeMetadata attr, string logicalName, string schemaName, AttributeTypeCode type)
+            {
+                SetMetadataProperty(attr, nameof(AttributeMetadata.LogicalName), logicalName);
+                SetMetadataProperty(attr, nameof(AttributeMetadata.SchemaName), schemaName);
+                SetMetadataProperty(attr, nameof(AttributeMetadata.AttributeType), type);
+                return attr;
+            }
+
+            var fullname = BuildAttribute(new StringAttributeMetadata { MaxLength = 200 }, "fullname", "FullName", AttributeTypeCode.String);
+            var domain = BuildAttribute(new StringAttributeMetadata { MaxLength = 200 }, "domainname", "DomainName", AttributeTypeCode.String);
+            var id = BuildAttribute(new AttributeMetadata(), "systemuserid", "SystemUserId", AttributeTypeCode.Uniqueidentifier);
+
+            SetMetadataProperty(metadata, nameof(EntityMetadata.Attributes), new AttributeMetadata[] { fullname, domain, id });
+
+            return metadata;
+        }
+
+        private static EntityMetadata BuildTeamMetadata()
+        {
+            var metadata = new EntityMetadata();
+
+            SetMetadataProperty(metadata, nameof(EntityMetadata.LogicalName), "team");
+            SetMetadataProperty(metadata, nameof(EntityMetadata.SchemaName), "Team");
+            SetMetadataProperty(metadata, nameof(EntityMetadata.PrimaryIdAttribute), "teamid");
+            SetMetadataProperty(metadata, nameof(EntityMetadata.PrimaryNameAttribute), "name");
+            SetMetadataProperty(metadata, nameof(EntityMetadata.ObjectTypeCode), 9);
+
+            AttributeMetadata BuildAttribute(AttributeMetadata attr, string logicalName, string schemaName, AttributeTypeCode type)
+            {
+                SetMetadataProperty(attr, nameof(AttributeMetadata.LogicalName), logicalName);
+                SetMetadataProperty(attr, nameof(AttributeMetadata.SchemaName), schemaName);
+                SetMetadataProperty(attr, nameof(AttributeMetadata.AttributeType), type);
+                return attr;
+            }
+
+            var name = BuildAttribute(new StringAttributeMetadata { MaxLength = 200 }, "name", "Name", AttributeTypeCode.String);
+            var id = BuildAttribute(new AttributeMetadata(), "teamid", "TeamId", AttributeTypeCode.Uniqueidentifier);
+
+            SetMetadataProperty(metadata, nameof(EntityMetadata.Attributes), new AttributeMetadata[] { name, id });
+
+            return metadata;
+        }
+
+        private static void SetMetadataProperty(object target, string propertyName, object value)
+        {
+            var prop = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            prop?.SetValue(target, value);
+        }
+
+        private static Guid ResolveTargetId(EntityReference target, IXrmFakedContext context)
+        {
+            if (target.Id != Guid.Empty)
+            {
+                return target.Id;
+            }
+
+            var existing = context.CreateQuery(target.LogicalName).FirstOrDefault();
+            if (existing != null)
+            {
+                return existing.Id;
+            }
+
+            // If nothing exists yet, create a placeholder so follow-up requests succeed
+            var placeholder = new Entity(target.LogicalName) { Id = Guid.NewGuid() };
+            context.Initialize(new[] { placeholder });
+            return placeholder.Id;
+        }
+
+        private static Entity GetOrCreateEntity(IXrmFakedContext context, string logicalName, Guid id)
+        {
+            var entity = id != Guid.Empty
+                ? context.CreateQuery(logicalName).FirstOrDefault(e => e.Id == id)
+                : context.CreateQuery(logicalName).FirstOrDefault();
+
+            if (entity != null)
+            {
+                return entity;
+            }
+
+            var placeholder = new Entity(logicalName)
+            {
+                Id = id == Guid.Empty ? Guid.NewGuid() : id
+            };
+            context.Initialize(new[] { placeholder });
+            return placeholder;
+        }
+
+        private static Guid ExtractIdFromFilters(FilterExpression criteria)
+        {
+            foreach (var condition in criteria.Conditions)
+            {
+                if (condition.AttributeName.Equals("systemuserid", StringComparison.OrdinalIgnoreCase) ||
+                    condition.AttributeName.Equals("teamid", StringComparison.OrdinalIgnoreCase) ||
+                    condition.AttributeName.Equals("id", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (condition.Values.Count > 0 && condition.Values[0] is Guid guid)
+                    {
+                        return guid;
+                    }
+                }
+            }
+
+            foreach (var filter in criteria.Filters)
+            {
+                var nested = ExtractIdFromFilters(filter);
+                if (nested != Guid.Empty)
+                {
+                    return nested;
+                }
+            }
+
+            return Guid.Empty;
+        }
+
+        private static Guid ExtractIdFromQueryByAttribute(QueryByAttribute query)
+        {
+            for (int i = 0; i < query.Attributes.Count; i++)
+            {
+                var attr = query.Attributes[i] as string;
+                if (attr != null && (attr.Equals("systemuserid", StringComparison.OrdinalIgnoreCase)
+                    || attr.Equals("teamid", StringComparison.OrdinalIgnoreCase)
+                    || attr.Equals("id", StringComparison.OrdinalIgnoreCase)))
+                {
+                    if (i < query.Values.Count && query.Values[i] is Guid guid)
+                    {
+                        return guid;
+                    }
+                }
+            }
+
+            return Guid.Empty;
         }
 
         /// <summary>

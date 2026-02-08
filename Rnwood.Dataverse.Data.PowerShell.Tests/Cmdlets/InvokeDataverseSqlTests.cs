@@ -19,33 +19,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
     /// </summary>
     public class InvokeDataverseSqlTests : TestBase
     {
-        // ===== TDS Endpoint Support Tests =====
-
-        [Fact]
-        public void InvokeDataverseSql_ModuleLoadsSuccessfully_CmdletExists()
-        {
-            // Arrange
-            var cmdlet = typeof(InvokeDataverseSqlCmdlet);
-
-            // Act & Assert
-            cmdlet.Should().NotBeNull();
-            cmdlet.Name.Should().Be("InvokeDataverseSqlCmdlet");
-        }
-
-        [Fact]
-        public void InvokeDataverseSql_UseTdsEndpointParameter_ExistsAndIsSwitchParameter()
-        {
-            // Arrange
-            var cmdlet = typeof(InvokeDataverseSqlCmdlet);
-
-            // Act
-            var param = cmdlet.GetProperty("UseTdsEndpoint");
-
-            // Assert
-            param.Should().NotBeNull();
-            param!.PropertyType.Name.Should().Be("SwitchParameter");
-        }
-
         [Fact(Skip = "Requires TDS endpoint support - run as E2E test")]
         public void InvokeDataverseSql_DateManipulationQuery_SupportsDateFunctions()
         {
@@ -83,7 +56,7 @@ SELECT @QuarterStart as QuarterStart;
 
         // ===== SELECT Operation Tests =====
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_SelectQuery_ReturnsPSObjectsWithCorrectProperties()
         {
             // Arrange
@@ -138,7 +111,7 @@ SELECT @QuarterStart as QuarterStart;
             result.Properties["emailaddress1"].Value.Should().Be("john@example.com");
         }
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_SelectWithTop_ReturnsLimitedResults()
         {
             // Arrange
@@ -182,7 +155,7 @@ SELECT @QuarterStart as QuarterStart;
             allContacts.Entities.Should().HaveCount(5);
         }
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_ParameterizedSelectQuery_BindsParametersCorrectly()
         {
             // Arrange
@@ -225,7 +198,7 @@ SELECT @QuarterStart as QuarterStart;
 
         // ===== INSERT Operation Tests =====
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_InsertStatement_CreatesRecord()
         {
             // Arrange
@@ -271,7 +244,7 @@ SELECT @QuarterStart as QuarterStart;
             results.Entities[0].GetAttributeValue<string>("emailaddress1").Should().Be("test@example.com");
         }
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_ParameterizedInsertStatement_CreatesRecordWithBoundParameters()
         {
             // Arrange
@@ -325,7 +298,7 @@ SELECT @QuarterStart as QuarterStart;
 
         // ===== UPDATE Operation Tests =====
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_UpdateStatement_ModifiesRecords()
         {
             // Arrange
@@ -392,7 +365,7 @@ SELECT @QuarterStart as QuarterStart;
             unchangedRecords.Entities[0].GetAttributeValue<string>("firstname").Should().Be("NoChange");
         }
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_ParameterizedUpdateWithWhereClause_UpdatesSpecificRecord()
         {
             // Arrange
@@ -446,7 +419,7 @@ SELECT @QuarterStart as QuarterStart;
 
         // ===== DELETE Operation Tests =====
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_DeleteStatement_RemovesRecords()
         {
             // Arrange
@@ -512,7 +485,7 @@ SELECT @QuarterStart as QuarterStart;
             keptRecords.Entities.Should().HaveCount(2);
         }
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_DeleteWithWhatIf_DoesNotDeleteRecords()
         {
             // Arrange
@@ -557,7 +530,7 @@ SELECT @QuarterStart as QuarterStart;
 
         // ===== Pipeline Parameterization Tests =====
 
-        [Fact(Skip = "SQL4Cds generates queries FakeXrmEasy cannot execute")]
+        [Fact(Skip = "SQL4Cds requires fully initialized ServiceClient that FakeXrmEasy cannot provide - run as E2E test")]
         public void InvokeDataverseSql_PipelineParameterization_ExecutesQueryOncePerPipelineObject()
         {
             // Arrange

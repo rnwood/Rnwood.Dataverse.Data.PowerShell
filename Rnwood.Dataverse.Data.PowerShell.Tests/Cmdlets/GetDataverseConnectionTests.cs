@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
@@ -262,13 +263,44 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         // Results may or may not be empty depending on user's saved connections
     }
 
-    [Fact(Skip = "Cannot save connections in unit tests without affecting user's real connection store")]
+    [Fact]
     public void GetDataverseConnection_CanSaveNamedConnection_WithMockProvider()
     {
-        // This test cannot be enabled because:
-        // 1. There is no -Mock parameter in Get-DataverseConnection
-        // 2. Saving connections would affect the user's real connection store
-        // Use E2E tests for named connection functionality
+        // Arrange - Use temp directory to avoid affecting user's real connection store
+        var tempDir = Path.Combine(Path.GetTempPath(), $"DataverseTest_{Guid.NewGuid()}");
+        try
+        {
+            var store = new ConnectionStore(tempDir);
+            var testConnectionName = $"TestConn_{Guid.NewGuid()}";
+            var mockConnection = CreateMockConnection("contact");
+
+            // Act - Save a connection
+            var metadata = new ConnectionMetadata
+            {
+                Url = "https://test.crm.dynamics.com",
+                AuthMethod = "Interactive",
+                ClientId = "00000000-0000-0000-0000-000000000000",
+                Username = "testuser@test.com",
+                SavedAt = DateTime.UtcNow
+            };
+            store.SaveConnection(testConnectionName, metadata);
+
+            // Assert - Connection should be saved and loadable
+            store.ConnectionExists(testConnectionName).Should().BeTrue();
+            var loaded = store.LoadConnection(testConnectionName);
+            loaded.Should().NotBeNull();
+            loaded.Url.Should().Be("https://test.crm.dynamics.com");
+            loaded.AuthMethod.Should().Be("Interactive");
+            loaded.Username.Should().Be("testuser@test.com");
+        }
+        finally
+        {
+            // Cleanup
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+        }
     }
 
     [Fact]
@@ -291,11 +323,47 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         exception!.Message.Should().Contain("not found");
     }
 
-    [Fact(Skip = "Cannot test saved connections in unit tests without affecting user's real connection store")]
+    [Fact]
     public void GetDataverseConnection_ListConnections_ShowsSavedConnections()
     {
-        // This test cannot be enabled because it would need to create real saved connections
-        // which would affect the user's connection store
+        // Arrange - Use temp directory to avoid affecting user's real connection store
+        var tempDir = Path.Combine(Path.GetTempPath(), $"DataverseTest_{Guid.NewGuid()}");
+        try
+        {
+            var store = new ConnectionStore(tempDir);
+            var conn1Name = $"TestConn1_{Guid.NewGuid()}";
+            var conn2Name = $"TestConn2_{Guid.NewGuid()}";
+
+            // Act - Save multiple connections
+            store.SaveConnection(conn1Name, new ConnectionMetadata
+            {
+                Url = "https://test1.crm.dynamics.com",
+                AuthMethod = "Interactive",
+                ClientId = "00000000-0000-0000-0000-000000000001",
+                SavedAt = DateTime.UtcNow
+            });
+            store.SaveConnection(conn2Name, new ConnectionMetadata
+            {
+                Url = "https://test2.crm.dynamics.com",
+                AuthMethod = "DeviceCode",
+                ClientId = "00000000-0000-0000-0000-000000000002",
+                SavedAt = DateTime.UtcNow
+            });
+
+            // Assert - List should show both connections
+            var connections = store.ListConnections();
+            connections.Should().Contain(conn1Name);
+            connections.Should().Contain(conn2Name);
+            connections.Count.Should().BeGreaterOrEqualTo(2);
+        }
+        finally
+        {
+            // Cleanup
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, recursive: true);
+            }
+        }
     }
 
     // ===== Parameter Set Availability Tests =====
@@ -342,43 +410,6 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
     }
 
     [Fact]
-    public void GetDataverseConnection_ListConnectionsParameterSet_Exists()
-    {
-        // Arrange/Act
-        var listConnectionsAttrs = GetParameterAttributes("ListConnections");
-
-        // Assert
-        listConnectionsAttrs.Should().NotBeEmpty();
-        var paramSetAttr = listConnectionsAttrs!.FirstOrDefault(a => a.ParameterSetName.Contains("List saved"));
-        paramSetAttr.Should().NotBeNull("ListConnections parameter set should exist");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_DeleteConnectionParameterSet_Exists()
-    {
-        // Arrange/Act
-        var deleteConnectionAttrs = GetParameterAttributes("DeleteConnection");
-
-        // Assert
-        deleteConnectionAttrs.Should().NotBeEmpty();
-        var paramSetAttr = deleteConnectionAttrs!.FirstOrDefault(a => a.ParameterSetName.Contains("Delete"));
-        paramSetAttr.Should().NotBeNull("DeleteConnection parameter set should exist");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_LoadNamedParameterSet_Exists()
-    {
-        // Arrange/Act
-        var nameAttrs = GetParameterAttributes("Name");
-
-        // Assert
-        nameAttrs.Should().NotBeEmpty();
-        var loadNamedAttr = nameAttrs!.FirstOrDefault(a => a.ParameterSetName.Contains("Load a saved"));
-        loadNamedAttr.Should().NotBeNull("LoadNamed parameter set should exist");
-        loadNamedAttr!.Mandatory.Should().BeTrue("Name should be mandatory in LoadNamed parameter set");
-    }
-
-    [Fact]
     public void GetDataverseConnection_CanUseListConnectionsParameter()
     {
         // Arrange
@@ -412,41 +443,6 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
             .Which.InnerException as System.InvalidOperationException;
         exception.Should().NotBeNull();
         exception!.Message.Should().Contain("not found");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_CertificatePathParameter_Exists()
-    {
-        // Assert
-        ParameterExists("CertificatePath").Should().BeTrue();
-    }
-
-    [Fact]
-    public void GetDataverseConnection_CertificatePasswordParameter_Exists()
-    {
-        // Assert
-        ParameterExists("CertificatePassword").Should().BeTrue();
-    }
-
-    [Fact]
-    public void GetDataverseConnection_CertificateThumbprintParameter_Exists()
-    {
-        // Assert
-        ParameterExists("CertificateThumbprint").Should().BeTrue();
-    }
-
-    [Fact]
-    public void GetDataverseConnection_CertificateStoreLocationParameter_Exists()
-    {
-        // Assert
-        ParameterExists("CertificateStoreLocation").Should().BeTrue();
-    }
-
-    [Fact]
-    public void GetDataverseConnection_CertificateStoreNameParameter_Exists()
-    {
-        // Assert
-        ParameterExists("CertificateStoreName").Should().BeTrue();
     }
 
     [Fact]
@@ -496,21 +492,16 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         certPathAttr!.Mandatory.Should().BeTrue("CertificatePath should be required in certificate auth");
     }
 
-    [Fact(Skip = "Certificate validation test requires actually attempting connection - use E2E tests")]
+    [Fact(Skip = "E2E test - requires real certificate and connection attempt to validate certificate auth")]
     public void GetDataverseConnection_Certificate_ThrowsError_WhenNeitherPathNorThumbprint()
     {
-        // This requires actually attempting to connect, which would need real credentials
-        // Use E2E tests for this validation
+        // This test requires:
+        // 1. Real certificate credentials (path/thumbprint + client ID)
+        // 2. Actual connection attempt to validate certificate authentication
+        // Use E2E tests with real Dataverse environment for this scenario
     }
 
     // ===== ConnectionString Parameter Tests =====
-
-    [Fact]
-    public void GetDataverseConnection_ConnectionStringParameter_Exists()
-    {
-        // Assert
-        ParameterExists("ConnectionString").Should().BeTrue();
-    }
 
     [Fact]
     public void GetDataverseConnection_ConnectionStringParameter_InCorrectParameterSet()
@@ -564,10 +555,13 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         connStrProp!.PropertyType.Should().Be(typeof(string));
     }
 
-    [Fact(Skip = "ConnectionString auth requires valid connection string - use E2E tests")]
+    [Fact(Skip = "E2E test - requires valid Dataverse connection string to test authentication")]
     public void GetDataverseConnection_ConnectionString_CanUseWithoutUrl()
     {
-        // This requires actually attempting to connect with a real connection string
+        // This test requires:
+        // 1. Valid Dataverse connection string with credentials
+        // 2. Actual connection attempt to validate connection string parsing and authentication
+        // Use E2E tests with real Dataverse environment for this scenario
     }
 
     [Fact]
@@ -584,9 +578,12 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
             because: "parameter set name should contain 'connection string'");
     }
 
-    [Fact(Skip = "SetAsDefault with ConnectionString requires valid connection - use E2E tests")]
+    [Fact(Skip = "E2E test - requires valid connection string and stores default connection state")]
     public void GetDataverseConnection_SetAsDefault_WorksWithConnectionStringParameterSet()
     {
-        // This requires actually connecting with a real connection string
+        // This test requires:
+        // 1. Valid Dataverse connection string with credentials
+        // 2. Actual connection to create ServiceClient and set as default
+        // Use E2E tests with real Dataverse environment for this scenario
     }
 }

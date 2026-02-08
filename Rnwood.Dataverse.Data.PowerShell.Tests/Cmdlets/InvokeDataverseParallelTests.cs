@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
+using System;
 using System.Linq;
 using System.Management.Automation.Runspaces;
 using Xunit;
@@ -10,22 +11,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 {
     /// <summary>
     /// Tests for Invoke-DataverseParallel cmdlet.
-    /// Note: Invoke-DataverseParallel creates a RunspacePool that imports modules from the calling session.
-    /// In xUnit tests, cmdlets are registered directly (not as modules), so the worker runspaces
-    /// don't have access to Set-DataverseConnectionAsDefault which is called in the worker script.
-    /// These tests require E2E testing with the full module loaded.
+    /// Note: These tests use thread-local connection storage in DefaultConnectionManager
+    /// which allows worker runspaces to have their own connections without requiring
+    /// Set-DataverseConnectionAsDefault to be available as a cmdlet.
     /// </summary>
     public class InvokeDataverseParallelTests : TestBase
     {
-        [Fact(Skip = "Requires E2E - Worker runspaces need Set-DataverseConnectionAsDefault from module, not available in xUnit")]
+        [Fact]
         public void InvokeDataverseParallel_ProcessesInputObjectsInParallelChunks_ReturnsAllResults()
         {
             // Arrange
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Invoke-DataverseParallel", typeof(InvokeDataverseParallelCmdlet), null));
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();
@@ -50,6 +48,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 
             var results = ps.Invoke();
 
+            // Output errors for debugging
+            if (ps.HadErrors)
+            {
+                var errorMessages = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => $"{e}: {e.Exception}"));
+                throw new Exception($"PowerShell had errors:{Environment.NewLine}{errorMessages}");
+            }
+
             // Assert
             ps.HadErrors.Should().BeFalse();
             results.Should().HaveCount(10);
@@ -59,15 +64,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             sortedResults.Should().Equal(2, 4, 6, 8, 10, 12, 14, 16, 18, 20);
         }
 
-        [Fact(Skip = "Requires E2E - Worker runspaces need Set-DataverseConnectionAsDefault from module, not available in xUnit")]
+        [Fact]
         public void InvokeDataverseParallel_ClonedConnectionAvailableInScriptBlock_ProcessesSuccessfully()
         {
             // Arrange
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Invoke-DataverseParallel", typeof(InvokeDataverseParallelCmdlet), null));
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();
@@ -78,7 +81,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 
             var input = Enumerable.Range(1, 5).Cast<object>().ToArray();
 
-            // Act - Connection is available via PSDefaultParameterValues in script block
+            // Act - Connection is available via thread-local storage in script block
             ps.AddScript(@"
                 param($connection, $input)
                 $input | Invoke-DataverseParallel -Connection $connection -ChunkSize 2 -ScriptBlock {
@@ -96,15 +99,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             results.Should().AllSatisfy(r => r.BaseObject.ToString().Should().StartWith("success-"));
         }
 
-        [Fact(Skip = "Requires E2E - Worker runspaces need Set-DataverseConnectionAsDefault from module, not available in xUnit")]
+        [Fact]
         public void InvokeDataverseParallel_RespectsChunkSizeParameter_ProcessesInCorrectBatches()
         {
             // Arrange
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Invoke-DataverseParallel", typeof(InvokeDataverseParallelCmdlet), null));
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();
@@ -162,15 +163,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             results.Should().BeNullOrEmpty();
         }
 
-        [Fact(Skip = "Requires E2E - Worker runspaces need Set-DataverseConnectionAsDefault from module, not available in xUnit")]
+        [Fact]
         public void InvokeDataverseParallel_SingleItemInput_ProcessesSuccessfully()
         {
             // Arrange
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Invoke-DataverseParallel", typeof(InvokeDataverseParallelCmdlet), null));
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();

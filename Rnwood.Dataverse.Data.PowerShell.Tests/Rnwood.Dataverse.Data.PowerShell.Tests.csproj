@@ -64,6 +64,7 @@
   <!-- Project reference to cmdlets -->
   <ItemGroup>
     <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj" />
+    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell\Rnwood.Dataverse.Data.PowerShell.csproj" />
   </ItemGroup>
   
   <!-- Embedded metadata XML files -->

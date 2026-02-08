@@ -140,18 +140,32 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             results.Entities.Should().OnlyContain(e => e.GetAttributeValue<string>("firstname") == "Updated");
         }
 
-        [Fact(Skip = "Error handling in parallel mode uses async error queues that don't reliably set HadErrors in FakeXrmEasy")]
+        [Fact]
         public void SetDataverseRecord_Parallel_HandlesErrorsInParallelProcessing()
         {
-            // This test validates error handling across parallel workers.
-            // In parallel mode, errors are queued asynchronously and may not set HadErrors
-            // consistently with FakeXrmEasy's mock service. The parallel error handling
-            // is tested in E2E with real Dataverse where actual errors can occur.
-            //
-            // Key behaviors to verify in E2E:
-            // - Errors from parallel workers are aggregated correctly
-            // - HadErrors is set when any worker encounters an error
-            // - Error details include context about which record failed
+            // Arrange - Use TransientFailureSimulator to force errors in parallel mode
+            var simulator = new TransientFailureSimulator(100, TransientFailureSimulator.ContainsCreateOrUpdate);
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection(simulator.Intercept, "contact");
+
+            // Act - Try to create records with forced failures, use ErrorAction Continue so errors are captured
+            ps.AddScript(@"
+                param($conn)
+                $records = 1..5 | ForEach-Object {
+                    @{ firstname = ""Error$_""; lastname = ""User$_"" }
+                }
+                $records | Set-DataverseRecord -Connection $conn -TableName contact -MaxDegreeOfParallelism 2 -ErrorAction Continue
+            ");
+            ps.AddParameter("conn", mockConnection);
+            ps.Invoke();
+
+            // Assert - Check error streams directly (HadErrors is unreliable with async error queues)
+            ps.Streams.Error.Should().NotBeEmpty("parallel workers should report errors to error stream");
+            ps.Streams.Error.Should().Contain(e => e.Exception.Message.Contains("Simulated transient failure"));
+            
+            // No records should be created since all operations fail
+            var results = Service!.RetrieveMultiple(new QueryExpression("contact") { ColumnSet = new ColumnSet("firstname") });
+            results.Entities.Should().BeEmpty();
         }
 
         [Fact]
@@ -253,12 +267,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             results.Entities.Should().OnlyContain(e => e.GetAttributeValue<string>("firstname").StartsWith("Updated"));
         }
 
-        [Fact(Skip = "Retry logic in parallel mode with batching requires failure simulation - see SetDataverseRecord_ParallelRetriesTests")]
-        public void SetDataverseRecord_Parallel_RetriesInParallelModeWithBatching()
-        {
-            // This test validates retry logic within parallel workers when batching is enabled
-            // Each worker has its own batch processor that handles retries independently
-            // See SetDataverseRecord_ParallelRetriesTests for retry tests with failure simulation
-        }
+        // Note: Retry logic in parallel mode with batching is tested in SetDataverseRecord_ParallelRetriesTests.cs
+        // That test suite uses TransientFailureSimulator to validate retry behavior with:
+        // - SetDataverseRecord_ParallelRetries_RetriesFailedOperationsWithBatching
+        // - SetDataverseRecord_ParallelRetries_RetriesFailedOperationsWithoutBatching
+        // - SetDataverseRecord_ParallelRetries_ExhaustsRetriesAndReportsError
     }
 }

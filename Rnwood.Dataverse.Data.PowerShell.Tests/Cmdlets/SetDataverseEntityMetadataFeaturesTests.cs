@@ -1,5 +1,7 @@
 using FluentAssertions;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
+using System;
+using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using Xunit;
@@ -44,35 +46,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             ps.Streams.Warning.Should().NotContain(w => w.Message.Contains("No changes specified"));
         }
 
-        [Fact(Skip = "SwitchParameter with false value requires PowerShell command-line syntax (-HasActivities:$false) not available via C# API - test in Pester")]
+        [Fact]
         public void SetDataverseEntityMetadata_HasActivitiesFalse_DetectsChanges()
         {
-            // Arrange - TestBase has UpdateEntityRequest interceptor
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseEntityMetadata", typeof(Commands.SetDataverseEntityMetadataCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
+            // Arrange
+            using var ps = CreatePowerShellWithCmdlets();
             var mockConnection = CreateMockConnection("contact");
 
-            // Act - Set HasActivities to false
-            // Note: .AddParameter("HasActivities", false) sets SwitchParameter.IsPresent=false
-            // which is NOT the same as -HasActivities:$false in PowerShell (IsPresent=true, value=false)
-            ps.AddCommand("Set-DataverseEntityMetadata")
-              .AddParameter("Connection", mockConnection)
-              .AddParameter("EntityName", "contact")
-              .AddParameter("HasActivities", false)
-              .AddParameter("Confirm", false);
-
+            // Act - Set HasActivities to false using PowerShell script syntax
+            // Note: -HasActivities:$false sets SwitchParameter with value=false
+            // This cannot be done via .AddParameter() API, requires PowerShell script execution
+            ps.AddScript("Set-DataverseEntityMetadata -Connection $args[0] -EntityName contact -HasActivities:$false -Confirm:$false");
+            ps.AddArgument(mockConnection);
             ps.Invoke();
 
             // Assert - Should not have "No changes specified" warning
             ps.HadErrors.Should().BeFalse();
-            ps.Streams.Warning.Should().NotContain(w => w.Message.Contains("No changes specified"));
+            ps.Streams. Warning.Should().NotContain(w => w.Message.Contains("No changes specified"));
         }
 
         // ===== HasNotes Parameter ===== (2 tests)
@@ -106,30 +96,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             ps.Streams.Warning.Should().NotContain(w => w.Message.Contains("No changes specified"));
         }
 
-        [Fact(Skip = "SwitchParameter with false value requires PowerShell command-line syntax (-HasNotes:$false) not available via C# API - test in Pester")]
+        [ Fact]
         public void SetDataverseEntityMetadata_HasNotesFalse_DetectsChanges()
         {
-            // Arrange - TestBase has UpdateEntityRequest interceptor
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseEntityMetadata", typeof(Commands.SetDataverseEntityMetadataCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
+            // Arrange
+            using var ps = CreatePowerShellWithCmdlets();
             var mockConnection = CreateMockConnection("contact");
 
-            // Act - Set HasNotes to false
-            // Note: .AddParameter("HasNotes", false) sets SwitchParameter.IsPresent=false
-            // which is NOT the same as -HasNotes:$false in PowerShell (IsPresent=true, value=false)
-            ps.AddCommand("Set-DataverseEntityMetadata")
-              .AddParameter("Connection", mockConnection)
-              .AddParameter("EntityName", "contact")
-              .AddParameter("HasNotes", false)
-              .AddParameter("Confirm", false);
-
+            // Act - Set HasNotes to false using PowerShell script syntax
+            // Note: -HasNotes:$false sets SwitchParameter with value=false
+            // This cannot be done via .AddParameter() API, requires PowerShell script execution
+            ps.AddScript("Set-DataverseEntityMetadata -Connection $args[0] -EntityName contact -HasNotes:$false -Confirm:$false");
+            ps.AddArgument(mockConnection);
             ps.Invoke();
 
             // Assert - Should not have "No changes specified" warning

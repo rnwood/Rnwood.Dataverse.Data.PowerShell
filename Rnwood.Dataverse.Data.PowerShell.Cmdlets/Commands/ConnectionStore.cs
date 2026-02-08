@@ -28,7 +28,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Initializes a new instance of the ConnectionStore class.
 		/// </summary>
-		public ConnectionStore()
+	public ConnectionStore() : this(null)
+	{
+	}
+	
+	/// <summary>
+	/// Initializes a new instance of the ConnectionStore class with a custom cache directory.
+	/// </summary>
+	/// <param name="cacheDirectory">Optional custom cache directory path. If null, uses the default platform-appropriate location.</param>
+	public ConnectionStore(string cacheDirectory)
+	{
+		if (cacheDirectory != null)
+		{
+			_cacheDirectory = cacheDirectory;
+		}
+		else
 		{
 			// Use platform-appropriate directory for cache storage
 			string appDataPath;
@@ -45,9 +59,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			
 			_cacheDirectory = Path.Combine(appDataPath, "Rnwood.Dataverse.Data.PowerShell");
-			_cacheFilePath = Path.Combine(_cacheDirectory, CacheFileName);
-			_metadataFilePath = Path.Combine(_cacheDirectory, MetadataFileName);
-			
+		}
+		
 			// Ensure directory exists
 			Directory.CreateDirectory(_cacheDirectory);
 		}

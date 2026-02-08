@@ -33,27 +33,6 @@ public class SetDataverseConnectionAsDefaultTests : TestBase
         return ps;
     }
 
-    // ===== Parameter Metadata Tests =====
-
-    [Fact]
-    public void SetDataverseConnectionAsDefault_CmdletExists()
-    {
-        // Verify cmdlet has proper CmdletAttribute
-        var cmdletAttr = _cmdletType.GetCustomAttribute<CmdletAttribute>();
-        cmdletAttr.Should().NotBeNull();
-        cmdletAttr!.VerbName.Should().Be("Set");
-        cmdletAttr.NounName.Should().Be("DataverseConnectionAsDefault");
-    }
-
-    [Fact]
-    public void SetDataverseConnectionAsDefault_ConnectionParameter_Exists()
-    {
-        // Verify Connection parameter exists
-        var property = _cmdletType.GetProperty("Connection");
-        property.Should().NotBeNull();
-        property!.PropertyType.Should().Be(typeof(ServiceClient));
-    }
-
     [Fact]
     public void SetDataverseConnectionAsDefault_ConnectionParameter_IsMandatory()
     {

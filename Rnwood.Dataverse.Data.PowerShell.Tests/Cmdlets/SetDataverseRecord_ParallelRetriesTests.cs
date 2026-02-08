@@ -39,40 +39,76 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             return ps;
         }
 
-        [Fact(Skip = "Retry testing with interceptors requires changes to interceptor architecture to inject failures after initial setup")]
+        [Fact]
         public void SetDataverseRecord_ParallelRetries_RetriesFailedOperationsWithBatching()
         {
-            // This test validates retry logic in parallel mode with batching enabled
-            // Each parallel worker maintains its own batch processor with retry capability
-            // The current interceptor architecture doesn't support injecting failures
-            // after metadata requests complete, making it difficult to test retry logic
-            // in isolation. This is better tested in E2E tests where real transient
-            // failures can occur naturally.
-            //
-            // To properly test this, we would need:
-            // - An interceptor that counts CreateRequest/UpdateRequest calls specifically
-            // - Fails on first N ExecuteMultiple requests but allows metadata requests
-            // - Which requires distinguishing request types at the interceptor level
-            //
-            // For now, the retry logic is validated via:
-            // - E2E tests with real Dataverse (can experience real transient failures)
-            // - Code review of SetBatchProcessor retry implementation
+            var simulator = new TransientFailureSimulator(1, TransientFailureSimulator.ContainsCreateOrUpdate);
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection(simulator.Intercept, "contact");
+
+            ps.AddScript(@"
+                param($conn)
+                $records = 1..4 | ForEach-Object { @{ firstname = ""RetryB$_""; lastname = ""User$_"" } }
+                $records | Set-DataverseRecord -Connection $conn -TableName contact -MaxDegreeOfParallelism 2 -BatchSize 3 -Retries 1 -InitialRetryDelay 0
+            ");
+            ps.AddArgument(mockConnection);
+
+            var results = ps.Invoke();
+
+            ps.HadErrors.Should().BeFalse(string.Join(" | ", ps.Streams.Error.Select(e => e.ToString())));
+            results.Should().BeEmpty();
+
+            var created = Service!.RetrieveMultiple(new QueryExpression("contact") { ColumnSet = new ColumnSet("firstname") });
+            created.Entities.Should().HaveCount(4);
+            created.Entities.Should().OnlyContain(e => e.GetAttributeValue<string>("firstname").StartsWith("RetryB"));
         }
 
-        [Fact(Skip = "Retry testing with interceptors requires changes to interceptor architecture to inject failures after initial setup")]
+        [Fact]
         public void SetDataverseRecord_ParallelRetries_RetriesFailedOperationsWithoutBatching()
         {
-            // This test validates retry logic in parallel mode with BatchSize=1 (non-batched)
-            // Tests individual request retries across parallel workers
-            // Same limitations as above - interceptor needs to distinguish request types
+            var simulator = new TransientFailureSimulator(1, TransientFailureSimulator.ContainsCreateOrUpdate);
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection(simulator.Intercept, "contact");
+
+            ps.AddScript(@"
+                param($conn)
+                $records = 1..3 | ForEach-Object { @{ firstname = ""RetryNB$_""; lastname = ""User$_"" } }
+                $records | Set-DataverseRecord -Connection $conn -TableName contact -MaxDegreeOfParallelism 2 -BatchSize 1 -Retries 1 -InitialRetryDelay 0
+            ");
+            ps.AddArgument(mockConnection);
+
+            var results = ps.Invoke();
+
+            ps.HadErrors.Should().BeFalse(string.Join(" | ", ps.Streams.Error.Select(e => e.ToString())));
+            results.Should().BeEmpty();
+
+            var created = Service!.RetrieveMultiple(new QueryExpression("contact") { ColumnSet = new ColumnSet("firstname") });
+            created.Entities.Should().HaveCount(3);
+            created.Entities.Should().OnlyContain(e => e.GetAttributeValue<string>("firstname").StartsWith("RetryNB"));
         }
 
-        [Fact(Skip = "Retry testing with interceptors requires changes to interceptor architecture to inject failures after initial setup")]
+        [Fact]
         public void SetDataverseRecord_ParallelRetries_ExhaustsRetriesAndReportsError()
         {
-            // This test validates error reporting when retries are exhausted in parallel mode
-            // Ensures errors from all parallel workers are properly aggregated and reported
-            // Same limitations as above - interceptor needs to distinguish request types
+            var simulator = new TransientFailureSimulator(3, TransientFailureSimulator.ContainsCreateOrUpdate);
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection(simulator.Intercept, "contact");
+
+            ps.AddScript(@"
+                param($conn)
+                $records = 1..2 | ForEach-Object { @{ firstname = ""RetryFail$_""; lastname = ""User$_"" } }
+                $records | Set-DataverseRecord -Connection $conn -TableName contact -MaxDegreeOfParallelism 2 -BatchSize 1 -Retries 1 -InitialRetryDelay 0 -ErrorAction Continue
+            ");
+            ps.AddArgument(mockConnection);
+
+            var results = ps.Invoke();
+
+            ps.HadErrors.Should().BeTrue();
+            ps.Streams.Error.Should().NotBeEmpty();
+            results.Should().BeEmpty();
+
+            var created = Service!.RetrieveMultiple(new QueryExpression("contact") { ColumnSet = new ColumnSet("firstname") });
+            created.Entities.Count.Should().BeLessThan(2);
         }
 
         // Note: The main parallel functionality tests (without retry simulation) 

@@ -121,16 +121,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             results.Should().BeEmpty();
         }
 
-        [Fact(Skip = "Name-based lookups require fullname computation which doesn't work with FakeXrmEasy")]
+        [Fact]
         public void GetDataverseRecord_Name_MultipleNames()
         {
             // Arrange
             using var ps = CreatePowerShellWithCmdlets();
             var mockConnection = CreateMockConnection("contact");
             
-            Service!.Create(new Entity("contact") { ["firstname"] = "John", ["lastname"] = "Doe" });
-            Service.Create(new Entity("contact") { ["firstname"] = "Jane", ["lastname"] = "Smith" });
-            Service.Create(new Entity("contact") { ["firstname"] = "Bob", ["lastname"] = "Johnson" });
+            Service!.Create(new Entity("contact") { ["firstname"] = "John", ["lastname"] = "Doe", ["fullname"] = "John Doe" });
+            Service.Create(new Entity("contact") { ["firstname"] = "Jane", ["lastname"] = "Smith", ["fullname"] = "Jane Smith" });
+            Service.Create(new Entity("contact") { ["firstname"] = "Bob", ["lastname"] = "Johnson", ["fullname"] = "Bob Johnson" });
             
             // Act - Get records by name (fullname is auto-generated from firstname + lastname)
             var targetNames = new[] { "John Doe", "Bob Johnson" };
@@ -147,14 +147,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             results.Should().HaveCount(2);
         }
 
-        [Fact(Skip = "Name-based lookups require fullname computation which doesn't work with FakeXrmEasy")]
+        [Fact]
         public void GetDataverseRecord_Name_SingleName()
         {
             // Arrange
             using var ps = CreatePowerShellWithCmdlets();
             var mockConnection = CreateMockConnection("contact");
             
-            Service!.Create(new Entity("contact") { ["firstname"] = "Unique", ["lastname"] = "Person" });
+            Service!.Create(new Entity("contact") { ["firstname"] = "Unique", ["lastname"] = "Person", ["fullname"] = "Unique Person" });
             
             // Act
             ps.AddCommand("Get-DataverseRecord")

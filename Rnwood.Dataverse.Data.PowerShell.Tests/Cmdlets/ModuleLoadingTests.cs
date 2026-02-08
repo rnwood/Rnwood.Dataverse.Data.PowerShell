@@ -1,39 +1,102 @@
+using FluentAssertions;
 using Xunit;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
+using System.IO;
+using System;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets;
 
 public class ModuleLoadingTests : TestBase
 {
-    [Fact(Skip = "Requires spawning PowerShell process - integration test")]
+    [Fact]
     public void Module_CanBeLoadedSuccessfully_WhenNotAlreadyLoaded()
     {
-        // This test validates that the module can be imported successfully
-        // when SDK assemblies are not already loaded
-        // 
-        // Original Pester test spawned a child PowerShell process:
-        // pwsh -noninteractive -noprofile -command {
-        //     Import-Module Rnwood.Dataverse.Data.PowerShell
-        //     # Verify Microsoft.Xrm.Sdk assembly loaded
-        // }
-        //
-        // This is an integration test that should run in Pester or E2E tests
+        EnsureModulePath();
+
+        var script = @"
+# Module is imported by PowerShellProcessRunner before this script executes
+$module = Get-Module Rnwood.Dataverse.Data.PowerShell
+if (-not $module) { throw 'Module was not imported' }
+
+$sdkAssembly = [AppDomain]::CurrentDomain.GetAssemblies() |
+    Where-Object { $_.GetName().Name -eq 'Microsoft.Xrm.Sdk' } |
+    Select-Object -First 1
+
+if (-not $sdkAssembly) { throw 'Microsoft.Xrm.Sdk assembly not loaded' }
+
+Write-Output 'PASS'
+";
+
+        var result = PowerShellProcessRunner.Run(script);
+        result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
     }
 
-    [Fact(Skip = "Requires spawning PowerShell process - integration test")]
+    [Fact]
     public void Module_CanBeLoadedSuccessfully_WhenSdkAssembliesAlreadyLoaded()
     {
-        // This test validates that the custom AssemblyLoadContext (net8.0)
-        // or AssemblyResolve handler (net462) correctly loads the SDK
-        // assemblies from the module's cmdlets folder even when different
-        // versions are already loaded in the AppDomain
-        //
-        // Original Pester test:
-        // 1. Pre-loaded Microsoft.Xrm.Sdk.dll from module's cmdlets folder
-        // 2. Then imported the module
-        // 3. Verified module loaded successfully without assembly conflicts
-        //
-        // This tests the critical Loader project functionality
-        // This is an integration test that should run in Pester or E2E tests
+        EnsureModulePath();
+
+        var script = @"
+# Module manifest and path are provided by PowerShellProcessRunner
+if (-not (Test-Path $moduleManifest)) { throw ""Module manifest not found at $moduleManifest"" }
+if (-not (Test-Path $modulePath)) { throw ""Module path not found at $modulePath"" }
+
+# Pre-load SDK assembly from module path to simulate preexisting load
+$assemblyPath = Join-Path $modulePath 'cmdlets/net8.0/Microsoft.Xrm.Sdk.dll'
+$resolvedAssemblyPath = (Resolve-Path $assemblyPath).Path
+Add-Type -Path $resolvedAssemblyPath
+
+# Import module after SDK assembly is already loaded
+Import-Module $moduleManifest -Force -ErrorAction Stop
+
+$sdkAssembly = [AppDomain]::CurrentDomain.GetAssemblies() |
+    Where-Object { $_.GetName().Name -eq 'Microsoft.Xrm.Sdk' } |
+    Select-Object -First 1
+
+if (-not $sdkAssembly) { throw 'Microsoft.Xrm.Sdk assembly not loaded after import' }
+if ($sdkAssembly.Location -ne $resolvedAssemblyPath) { throw ""Assembly path mismatch: $($sdkAssembly.Location)"" }
+
+Write-Output 'PASS'
+";
+
+        var result = PowerShellProcessRunner.Run(script, importModule: false);
+        result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
+    }
+
+    private static void EnsureModulePath()
+    {
+        var solutionRoot = FindSolutionRoot();
+        var defaultPath = Path.Combine(solutionRoot, "Rnwood.Dataverse.Data.PowerShell", "bin", "Debug", "netstandard2.0");
+
+        if (!Directory.Exists(defaultPath))
+        {
+            throw new InvalidOperationException($"Expected module output at {defaultPath}. Build the module or set TESTMODULEPATH explicitly.");
+        }
+
+        Environment.SetEnvironmentVariable("TESTMODULEPATH", defaultPath);
+    }
+
+    private static string FindSolutionRoot()
+    {
+        var slnName = "Rnwood.Dataverse.Data.PowerShell.sln";
+        var startDirs = new[]
+        {
+            new DirectoryInfo(Directory.GetCurrentDirectory()),
+            new DirectoryInfo(Path.GetDirectoryName(typeof(ModuleLoadingTests).Assembly.Location)!)
+        };
+
+        foreach (var start in startDirs)
+        {
+            for (var dir = start; dir != null; dir = dir.Parent)
+            {
+                var candidate = Path.Combine(dir.FullName, slnName);
+                if (File.Exists(candidate))
+                {
+                    return dir.FullName;
+                }
+            }
+        }
+
+        throw new InvalidOperationException($"Could not locate solution root containing {slnName} starting from {Directory.GetCurrentDirectory()} and {typeof(ModuleLoadingTests).Assembly.Location}.");
     }
 }

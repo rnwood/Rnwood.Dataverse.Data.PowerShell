@@ -211,22 +211,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             ps.HadErrors.Should().BeFalse();
         }
 
-        [Fact(Skip = "InputObject is mandatory - empty pipeline cannot be tested this way. Cmdlet requires at least one input record.")]
-        public void SetDataverseRecord_RetrievalBatch_HandlesEmptyPipeline()
+        [Fact]
+        public void SetDataverseRecord_RetrievalBatch_EmptyPipeline_DoesNotThrow()
         {
             // Arrange
             using var ps = CreatePowerShellWithCmdlets();
             var mockConnection = CreateMockConnection("contact");
             
-            // Act
-            ps.AddCommand("Set-DataverseRecord")
-              .AddParameter("Connection", mockConnection)
-              .AddParameter("TableName", "contact")
-              .AddParameter("RetrievalBatchSize", (uint)500);
-            ps.Invoke();
+            // Act - Empty array via pipeline (PowerShell processes 0 items, doesn't throw for mandatory pipeline params)
+            ps.AddScript(@"
+                param($connection)
+                @() | Set-DataverseRecord -Connection $connection -TableName contact -RetrievalBatchSize 500 -PassThru
+            ")
+            .AddParameter("connection", mockConnection);
+            var results = ps.Invoke();
             
-            // Assert
-            ps.HadErrors.Should().BeFalse();
+            // Assert - Should process gracefully with no errors and no results
+            ps.HadErrors.Should().BeFalse("empty pipeline should process 0 items without error");
+            results.Should().BeEmpty("no records provided means no output");
         }
 
         [Fact]

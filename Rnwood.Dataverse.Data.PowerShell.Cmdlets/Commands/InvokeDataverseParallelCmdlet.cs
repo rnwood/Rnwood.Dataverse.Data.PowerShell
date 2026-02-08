@@ -78,6 +78,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.ThreadOptions = PSThreadOptions.UseNewThread;
 
+            // Add Set-DataverseThreadLocalConnection cmdlet to the worker runspaces
+            // This is needed for  both module and test scenarios
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseThreadLocalConnection", typeof(SetDataverseThreadLocalConnectionCmdlet), null));
+
             // Build list of module patterns to exclude (always include Pester)
             var excludePatterns = new List<string> { "Pester" };
             if (ExcludeModule != null && ExcludeModule.Length > 0)
@@ -296,11 +301,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 _verboseQueue.Enqueue($"Connection cloning not supported");
             }
 
-            ps.AddScript(@"param($Chunk, $connection ); 
-            Set-DataverseConnectionAsDefault -Connection $connection
+            // Script to set up the worker thread with a cloned connection and execute the user's script block
+            // The Set-DataverseThreadLocalConnection cmdlet is registered in the runspace pool's InitialSessionState
+            ps.AddScript(@"param($Chunk, $connection);
+            Set-DataverseThreadLocalConnection -Connection $connection
+            
+            # Create a variable $_ containing the chunk for the script block
             $psVar = New-Object System.Management.Automation.PSVariable -ArgumentList '_', $Chunk
             $varList = New-Object 'System.Collections.Generic.List[System.Management.Automation.PSVariable]'
             $varList.Add($psVar)
+            
+            # Invoke the user's script block with the $_ variable set to the chunk
             {" + ScriptBlock + @"}.InvokeWithContext($null, $varList)
 ");
             // Convert chunk to array to ensure it's fully materialized before passing to PowerShell

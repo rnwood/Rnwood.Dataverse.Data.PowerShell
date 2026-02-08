@@ -24,7 +24,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         /// </param>
         /// <param name="timeoutSeconds">Maximum time to wait for the script to complete.</param>
         /// <returns>A result containing stdout, stderr, and exit code.</returns>
-        public static PowerShellProcessResult Run(string script, bool usePowerShellCore = true, int timeoutSeconds = 60)
+        public static PowerShellProcessResult Run(string script, bool usePowerShellCore = true, int timeoutSeconds = 60, bool importModule = true)
         {
             var modulePath = GetModulePath();
             
@@ -41,13 +41,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                 manifestPath = psd1Files[0];
             }
             
-            // Build the full script that imports the module and runs the user script
-            var fullScript = $@"
-$ErrorActionPreference = 'Stop'
-$VerbosePreference = 'SilentlyContinue'
-try {{
-    Import-Module '{manifestPath.Replace("'", "''")}' -Force -ErrorAction Stop
-    {script}
+            var manifestLiteral = manifestPath.Replace("'", "''");
+
+            // Build the full script that optionally imports the module before running the user script
+            var prelude = "\n$ErrorActionPreference = 'Stop'\n$VerbosePreference = 'SilentlyContinue'\n";
+            var moduleVariables = $"$moduleManifest = '{manifestLiteral}'\n$modulePath = Split-Path -Parent $moduleManifest\n";
+
+            var importSection = importModule
+                ? $"    Import-Module '{manifestLiteral}' -Force -ErrorAction Stop\n"
+                : string.Empty;
+
+            var fullScript = $@"{prelude}{moduleVariables}try {{
+{importSection}    {script}
 }} catch {{
     Write-Error $_.Exception.Message
     Write-Error $_.ScriptStackTrace

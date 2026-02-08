@@ -3,6 +3,7 @@
     "chat.tools.terminal.autoApprove": {
         "dotnet build": true,
         "dotnet test": true,
-        "dotnet run": true
+        "dotnet run": true,
+        "dotnet clean": true
     }
 }

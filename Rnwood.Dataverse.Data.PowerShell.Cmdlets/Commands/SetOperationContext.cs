@@ -502,6 +502,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         public void CreateCompletion(Entity target, Entity targetCreate, string columnSummary, CreateResponse response)
         {
+            target.Id = response.id;
+            targetCreate.Id = response.id;
             SetIdProperty(InputObject, response.id);
             _writeVerbose(string.Format("Created new record {0}:{1} columns:\n{2}", target.LogicalName, response.id, columnSummary));
 

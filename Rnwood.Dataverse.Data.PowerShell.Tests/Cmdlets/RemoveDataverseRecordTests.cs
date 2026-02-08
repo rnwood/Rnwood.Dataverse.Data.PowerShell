@@ -566,24 +566,77 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         // (which should fail). The current interceptor architecture runs the same interceptor
         // for all requests. These tests are validated via E2E tests with real Dataverse.
 
-        [Fact(Skip = "Retry testing requires interceptor changes to distinguish Delete from metadata requests")]
+        [Fact]
         public void RemoveDataverseRecord_RetriesWholeBatchOnExecuteMultipleFailure()
         {
-            // This test validates:
-            // - Batch-level retry on ExecuteMultiple failure
-            // - Successful retry after transient failure
-            // - All records deleted after retry
-            // Validated via: E2E tests with real Dataverse connection
+            // Arrange: fail the first ExecuteMultiple/Delete then succeed
+            var simulator = new TransientFailureSimulator(1, TransientFailureSimulator.ContainsDelete);
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection(simulator.Intercept, "contact");
+
+            var ids = new List<Guid>();
+            for (int i = 0; i < 3; i++)
+            {
+                var id = Guid.NewGuid();
+                Service!.Create(new Entity("contact") { Id = id, ["firstname"] = $"Retry{i}" });
+                ids.Add(id);
+            }
+
+            ps.AddScript(@"
+                param($ids, $conn)
+                $ids | ForEach-Object {
+                    [pscustomobject]@{ Id = $_; TableName = 'contact' }
+                } | Remove-DataverseRecord -Connection $conn -BatchSize 3 -Retries 1 -InitialRetryDelay 0
+            ");
+            ps.AddArgument(ids.ToArray());
+            ps.AddArgument(mockConnection);
+
+            // Act
+            var results = ps.Invoke();
+
+            // Assert
+            ps.HadErrors.Should().BeFalse(string.Join(" | ", ps.Streams.Error.Select(e => e.ToString())));
+            results.Should().BeEmpty();
+
+            var remaining = Service!.RetrieveMultiple(new QueryExpression("contact") { ColumnSet = new ColumnSet(false) });
+            remaining.Entities.Should().BeEmpty();
         }
 
-        [Fact(Skip = "Retry testing requires interceptor changes to distinguish Delete from metadata requests")]
+        [Fact]
         public void RemoveDataverseRecord_EmitsErrorsWhenBatchRetriesExceeded()
         {
-            // This test validates:
-            // - Error emission when retries exhausted
-            // - All records report errors
-            // - Records remain after failed delete
-            // Validated via: E2E tests with real Dataverse connection
+            // Arrange: fail more times than retries
+            var simulator = new TransientFailureSimulator(3, TransientFailureSimulator.ContainsDelete);
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection(simulator.Intercept, "contact");
+
+            var ids = new List<Guid>();
+            for (int i = 0; i < 2; i++)
+            {
+                var id = Guid.NewGuid();
+                Service!.Create(new Entity("contact") { Id = id, ["firstname"] = $"Fail{i}" });
+                ids.Add(id);
+            }
+
+            ps.AddScript(@"
+                param($ids, $conn)
+                $ids | ForEach-Object {
+                    [pscustomobject]@{ Id = $_; TableName = 'contact' }
+                } | Remove-DataverseRecord -Connection $conn -BatchSize 2 -Retries 1 -InitialRetryDelay 0 -ErrorAction Continue
+            ");
+            ps.AddArgument(ids.ToArray());
+            ps.AddArgument(mockConnection);
+
+            // Act
+            var results = ps.Invoke();
+
+            // Assert: expect errors recorded and contacts still present
+            ps.HadErrors.Should().BeTrue();
+            ps.Streams.Error.Should().NotBeEmpty();
+            results.Should().BeEmpty();
+
+            var remaining = Service!.RetrieveMultiple(new QueryExpression("contact") { ColumnSet = new ColumnSet(false) });
+            remaining.Entities.Should().HaveCount(2);
         }
 
         // ===== Parallel Processing Tests (from Remove-DataverseRecord.Tests.ps1) =====
@@ -699,24 +752,71 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         // interceptor architecture applies the same logic to all requests.
         // These tests are validated via E2E tests with real Dataverse.
 
-        [Fact(Skip = "Retry testing requires interceptor changes to distinguish Delete from metadata requests")]
+        [Fact]
         public void RemoveDataverseRecord_ParallelMode_RetriesFailedDeleteOperationsWithBatching()
         {
-            // This test validates:
-            // - Retry logic within parallel workers with batching enabled
-            // - Each worker maintains its own batch processor with retry capability
-            // - Successful retry after transient failure in parallel batch
-            // Validated via: E2E tests with real Dataverse connection
+            var simulator = new TransientFailureSimulator(1, TransientFailureSimulator.ContainsDelete);
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection(simulator.Intercept, "contact");
+
+            var ids = new List<Guid>();
+            for (int i = 0; i < 6; i++)
+            {
+                var id = Guid.NewGuid();
+                Service!.Create(new Entity("contact") { Id = id, ["firstname"] = $"Par{i}" });
+                ids.Add(id);
+            }
+
+            ps.AddScript(@"
+                param($ids, $conn)
+                $ids | ForEach-Object {
+                    [pscustomobject]@{ Id = $_; TableName = 'contact' }
+                } | Remove-DataverseRecord -Connection $conn -BatchSize 3 -MaxDegreeOfParallelism 2 -Retries 1 -InitialRetryDelay 0
+            ");
+            ps.AddArgument(ids.ToArray());
+            ps.AddArgument(mockConnection);
+
+            var results = ps.Invoke();
+
+            ps.HadErrors.Should().BeFalse(string.Join(" | ", ps.Streams.Error.Select(e => e.ToString())));
+            results.Should().BeEmpty();
+
+            var remaining = Service!.RetrieveMultiple(new QueryExpression("contact") { ColumnSet = new ColumnSet(false) });
+            remaining.Entities.Should().BeEmpty();
         }
 
-        [Fact(Skip = "Retry testing requires interceptor changes to distinguish Delete from metadata requests")]
+        [Fact]
         public void RemoveDataverseRecord_ParallelMode_ExhaustsRetriesAndReportsError()
         {
-            // This test validates:
-            // - Error emission when retries exhausted in parallel mode
-            // - Multiple attempts made (initial + retries)
-            // - Proper error reporting across parallel workers
-            // Validated via: E2E tests with real Dataverse connection
+            var simulator = new TransientFailureSimulator(4, TransientFailureSimulator.ContainsDelete);
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection(simulator.Intercept, "contact");
+
+            var ids = new List<Guid>();
+            for (int i = 0; i < 4; i++)
+            {
+                var id = Guid.NewGuid();
+                Service!.Create(new Entity("contact") { Id = id, ["firstname"] = $"ParFail{i}" });
+                ids.Add(id);
+            }
+
+            ps.AddScript(@"
+                param($ids, $conn)
+                $ids | ForEach-Object {
+                    [pscustomobject]@{ Id = $_; TableName = 'contact' }
+                } | Remove-DataverseRecord -Connection $conn -BatchSize 2 -MaxDegreeOfParallelism 2 -Retries 1 -InitialRetryDelay 0 -ErrorAction Continue
+            ");
+            ps.AddArgument(ids.ToArray());
+            ps.AddArgument(mockConnection);
+
+            var results = ps.Invoke();
+
+            ps.HadErrors.Should().BeTrue();
+            ps.Streams.Error.Should().NotBeEmpty();
+            results.Should().BeEmpty();
+
+            var remaining = Service!.RetrieveMultiple(new QueryExpression("contact") { ColumnSet = new ColumnSet(false) });
+            remaining.Entities.Should().HaveCount(4);
         }
     }
 }
