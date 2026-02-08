@@ -630,13 +630,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Builds a ColumnSet with validation that all requested columns are readable.
         /// Throws an exception with helpful guidance if non-readable columns are detected.
+        /// Always includes the primary ID attribute to ensure the retrieved record has ID info.
         /// </summary>
         private ColumnSet BuildColumnSetWithValidation(string[] columnNames, EntityMetadata entityMetadata)
         {
+            // Always include the primary ID attribute - needed for update operations
+            var columnsWithPrimaryId = columnNames.ToList();
+            if (!string.IsNullOrEmpty(entityMetadata.PrimaryIdAttribute) && 
+                !columnsWithPrimaryId.Contains(entityMetadata.PrimaryIdAttribute, StringComparer.OrdinalIgnoreCase))
+            {
+                columnsWithPrimaryId.Add(entityMetadata.PrimaryIdAttribute);
+            }
+            
             // Check if any of the requested columns are not valid for read
             var nonReadableColumns = new List<string>();
             
-            foreach (var columnName in columnNames)
+            foreach (var columnName in columnsWithPrimaryId)
             {
                 var attributeMetadata = entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == columnName);
                 
@@ -661,7 +670,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 throw new InvalidOperationException(message);
             }
 
-            return new ColumnSet(columnNames);
+            return new ColumnSet(columnsWithPrimaryId.ToArray());
         }
 
     }

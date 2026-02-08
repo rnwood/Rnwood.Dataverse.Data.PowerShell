@@ -308,6 +308,31 @@ jobs:
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
 
+      # Run xUnit tests (infrastructure tests - faster than Pester)
+      - name: Test - xUnit (Infrastructure)
+        shell: pwsh
+        run: |
+          Write-Host "Running xUnit infrastructure tests..."
+          # Run net8.0 tests on all platforms
+          if ("${{ matrix.powershell_version }}" -ne "5") {
+            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net8.0 --logger "console;verbosity=normal"
+            $net8Result = $LASTEXITCODE
+            if ($net8Result -ne 0) {
+              Write-Error "xUnit net8.0 tests failed with exit code $net8Result"
+              exit $net8Result
+            }
+          }
+          # Run net462 tests on Windows only
+          if ("${{ matrix.os }}" -eq "windows-latest") {
+            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net462 --logger "console;verbosity=normal"
+            $net462Result = $LASTEXITCODE
+            if ($net462Result -ne 0) {
+              Write-Error "xUnit net462 tests failed with exit code $net462Result"
+              exit $net462Result
+            }
+          }
+          Write-Host "xUnit infrastructure tests completed successfully"
+
       # Build and pack XrmToolbox Plugin (Windows only - requires .NET Framework 4.8)
       - if: ${{ matrix.os == 'windows-latest' }}
         name: Build and Pack XrmToolbox Plugin

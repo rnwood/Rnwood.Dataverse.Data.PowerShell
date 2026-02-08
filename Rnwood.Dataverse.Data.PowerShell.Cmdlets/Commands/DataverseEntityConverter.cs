@@ -1,6 +1,5 @@
 ﻿
 
-using Castle.Core.Internal;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
@@ -1010,7 +1009,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 throw new FormatException("Could not convert value to entity reference. Id property is not a valid GUID");
             }
 
-            return new EntityReference(tableName, id);
+            // Check for Name property and include it if present
+            var entityRef = new EntityReference(tableName, id);
+            var namePropertyInfo = psObject.Properties.FirstOrDefault(p => p.Name.Equals("Name", StringComparison.OrdinalIgnoreCase));
+            if (namePropertyInfo != null && namePropertyInfo.Value != null)
+            {
+                entityRef.Name = namePropertyInfo.Value.ToString();
+            }
+
+            return entityRef;
         }
 
         /// <summary>

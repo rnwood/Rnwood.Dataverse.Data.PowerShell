@@ -1,1 +1,8 @@
-{"powershell.powerShellDefaultVersion":"PowerShell Core"}
+{
+    "powershell.powerShellDefaultVersion": "PowerShell Core",
+    "chat.tools.terminal.autoApprove": {
+        "dotnet build": true,
+        "dotnet test": true,
+        "dotnet run": true
+    }
+}

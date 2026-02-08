@@ -1,0 +1,80 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net462</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Rnwood.Dataverse.Data.PowerShell.Tests</RootNamespace>
+    <AssemblyTitle>Rnwood.Dataverse.Data.PowerShell.Tests</AssemblyTitle>
+    <Product>Rnwood.Dataverse.Data.PowerShell</Product>
+    <Copyright>Copyright © 2023-2026 Robert Wood and project contributors</Copyright>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  
+  <!-- Suppress common warnings -->
+  <PropertyGroup>
+    <NoWarn>1701;1702;NU1605</NoWarn>
+  </PropertyGroup>
+
+  <!-- Test Framework -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.1" />
+    <PackageReference Include="FakeItEasy" Version="6.2.1" />
+  </ItemGroup>
+  
+  <!-- PowerShell runtime for test execution - enables Cmdlet.Invoke() and PSObject.Properties -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
+  </ItemGroup>
+  
+  <!-- Dataverse SDK -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.10" />
+  </ItemGroup>
+  
+  <!-- FakeXrmEasy for mocking - version depends on target framework -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageReference Include="FakeXrmEasy.v9" Version="3.7.0" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
+    <PackageReference Include="FakeXrmEasy.v9" Version="2.8.0" />
+  </ItemGroup>
+  
+  <!-- Project reference to cmdlets -->
+  <ItemGroup>
+    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj" />
+  </ItemGroup>
+  
+  <!-- Embedded metadata XML files -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\tests\*.xml" Link="Metadata\%(Filename)%(Extension)" />
+  </ItemGroup>
+
+  <!-- Copy metadata files to output for tests that need file access -->
+  <ItemGroup>
+    <None Include="..\tests\*.xml" Link="Metadata\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>
