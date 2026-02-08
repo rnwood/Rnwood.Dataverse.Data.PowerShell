@@ -13,7 +13,7 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 ## SYNTAX
 
 ```
-Invoke-DataverseSql -Sql <String> [-UseTdsEndpoint] [-Timeout <Int32>] [-Parameters <PSObject>]
+Invoke-DataverseSql [-Sql] <String> [-UseTdsEndpoint] [-Timeout <Int32>] [-Parameters <PSObject>]
  [-BatchSize <Int32>] [-MaxDegreeOfParallelism <Int32>] [-BypassCustomPluginExecution] [-UseBulkDelete]
  [-ReturnEntityReferenceAsGuid] [-UseLocalTimezone] [-AdditionalConnections <Hashtable>]
  [-DataSourceName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
@@ -47,6 +47,18 @@ Returns the rows from the SELECT query matching the @lastname parameter which is
 ### Example 2
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Invoke-DataverseSql "SELECT TOP 1 createdon FROM Contact WHERE lastname='Wood'"
+
+createdon
+---------
+28/11/2024 16:28:12
+```
+
+Demonstrates the simplified positional syntax where the SQL query can be specified without the `-Sql` parameter name. The SQL parameter is positional (position 0), allowing for more natural command line usage.
+
+### Example 3
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @(
 @{
 lastname = "Wood"
@@ -64,7 +76,7 @@ Cat2     28/11/2024 16:42:30
 
 Returns the rows from the SELECT query matching the @lastname parameters which are supplied via the pipeline. The query is executed once for each of the pipeline objects.
 
-### Example 3
+### Example 4
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create connections to different environments
@@ -92,7 +104,7 @@ Jane Doe               Jane Doe
 
 Executes a cross-datasource query that joins data from two different Dataverse environments. The AdditionalConnections parameter allows registering named data sources that can be referenced in the SQL query using the syntax `datasource_name.table_name`.
 
-### Example 4
+### Example 5
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create connections with explicit data source names for repeatability
@@ -265,13 +277,15 @@ Accept wildcard characters: False
 ### -Sql
 SQL to execute. See Sql4Cds docs for supported queries. Can contain @parameters.
 
+This parameter is positional (position 0), so you can omit the `-Sql` parameter name and simply provide the query string as the first argument (e.g., `Invoke-DataverseSql "SELECT * FROM contact"`).
+
 ```yaml
 Type: String
 Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: Named
+Position: 0
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
