@@ -788,7 +788,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         [Fact]
         public void RemoveDataverseRecord_ParallelMode_ExhaustsRetriesAndReportsError()
         {
-            var simulator = new TransientFailureSimulator(4, TransientFailureSimulator.ContainsDelete);
+            // Ensure enough simulated failures to cover all parallel attempts (records * (retries+1))
+            var simulator = new TransientFailureSimulator(8, TransientFailureSimulator.ContainsDelete);
             using var ps = CreatePowerShellWithCmdlets();
             var mockConnection = CreateMockConnection(simulator.Intercept, "contact");
 
