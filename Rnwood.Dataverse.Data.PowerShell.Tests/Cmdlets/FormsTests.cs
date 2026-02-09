@@ -5,6 +5,7 @@ using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using FluentAssertions;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Query;
 using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
 using Xunit;
@@ -143,6 +144,16 @@ public class FormsTests : TestBase
         initialSessionState.Commands.Add(new SessionStateCmdletEntry("Get-DataverseFormEventHandler", typeof(GetDataverseFormEventHandlerCmdlet), null));
         initialSessionState.Commands.Add(new SessionStateCmdletEntry("Get-DataverseRecord", typeof(GetDataverseRecordCmdlet), null));
         initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseRecord", typeof(SetDataverseRecordCmdlet), null));
+        
+        // Register write operation cmdlets
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseFormControl", typeof(SetDataverseFormControlCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Remove-DataverseFormControl", typeof(RemoveDataverseFormControlCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseFormTab", typeof(SetDataverseFormTabCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Remove-DataverseFormTab", typeof(RemoveDataverseFormTabCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseFormLibrary", typeof(SetDataverseFormLibraryCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Remove-DataverseFormLibrary", typeof(RemoveDataverseFormLibraryCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseFormEventHandler", typeof(SetDataverseFormEventHandlerCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Remove-DataverseFormEventHandler", typeof(RemoveDataverseFormEventHandlerCmdlet), null));
         
         var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
         runspace.Open();
@@ -803,104 +814,499 @@ public class FormsTests : TestBase
 
     #endregion
 
-    // Set-DataverseFormControl Tests (require write operations - documented but not implemented without E2E)
+    // Set-DataverseFormControl Tests
 
-    [Fact(Skip = "Requires E2E testing - updates systemform.formxml")]
+    [Fact]
     public void SetDataverseFormControl_UpdatesControlProperties()
     {
-        // Tests updating control attributes (visible, disabled, etc.)
-        // This test requires write operations that modify form XML
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Update firstname control to make it disabled and hidden
+        ps.AddCommand("Set-DataverseFormControl")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("TabName", "GeneralTab")
+          .AddParameter("SectionName", "GeneralSection")
+          .AddParameter("DataField", "firstname")
+          .AddParameter("ControlId", "firstname")
+          .AddParameter("Disabled", true)
+          .AddParameter("Visible", false);
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Retrieve updated form
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("disabled=\"true\"");
+        formXml.Should().Contain("visible=\"false\"");
     }
 
-    [Fact(Skip = "Requires E2E testing - updates systemform.formxml")]
+    [Fact]
     public void SetDataverseFormControl_AutoControlType_DetectsTypeFromAttribute()
     {
-        // Tests automatic control type detection based on attribute metadata
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Set control without specifying ControlType (should auto-detect from attribute metadata)
+        ps.AddCommand("Set-DataverseFormControl")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("TabName", "GeneralTab")
+          .AddParameter("SectionName", "GeneralSection")
+          .AddParameter("DataField", "firstname")
+          .AddParameter("ControlId", "firstname_auto");
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Retrieve updated form and verify control was created with appropriate classid
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("id=\"firstname_auto\"");
+        formXml.Should().Contain("datafieldname=\"firstname\"");
     }
 
-    [Fact(Skip = "Requires E2E testing - updates systemform.formxml")]
+    [Fact]
     public void SetDataverseFormControl_Subgrid_CreatesSubgridControl()
     {
-        // Tests creating/updating subgrid controls
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Create a subgrid control (doesn't require DataField)
+        ps.AddCommand("Set-DataverseFormControl")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("TabName", "GeneralTab")
+          .AddParameter("SectionName", "GeneralSection")
+          .AddParameter("ControlId", "contacts_subgrid")
+          .AddParameter("ControlType", "Subgrid");
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Retrieve updated form and verify subgrid control was created
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("id=\"contacts_subgrid\"");
     }
 
-    [Fact(Skip = "Requires E2E testing - updates systemform.formxml")]
+    [Fact]
     public void SetDataverseFormControl_SupportsWhatIf()
     {
-        // Tests -WhatIf parameter
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        var originalFormXml = testForm.GetAttributeValue<string>("formxml");
+        Service!.Create(testForm);
+        
+        // Act - Execute with -WhatIf
+        ps.AddCommand("Set-DataverseFormControl")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("TabName", "GeneralTab")
+          .AddParameter("SectionName", "GeneralSection")
+          .AddParameter("DataField", "firstname")
+          .AddParameter("ControlId", "firstname")
+          .AddParameter("Disabled", true)
+          .AddParameter("WhatIf", true);
+        var results = ps.Invoke();
+        
+        // Assert - Form should NOT be updated
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        var unchangedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        unchangedForm.GetAttributeValue<string>("formxml").Should().Be(originalFormXml);
     }
 
-    // New-DataverseFormControl Tests
+    // Set-DataverseFormControl Tests (New control scenarios)
 
-    [Fact(Skip = "Requires E2E testing - adds control to form")]
-    public void NewDataverseFormControl_CreatesNewControlInSection()
+    [Fact]
+    public void SetDataverseFormControl_CreatesNewControlInSection()
     {
-        // Tests adding new control to specified tab/section
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Create a new control for an attribute not already on the form
+        ps.AddCommand("Set-DataverseFormControl")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("TabName", "AddressTab")
+          .AddParameter("SectionName", "AddressSection")
+          .AddParameter("DataField", "address1_city")
+          .AddParameter("ControlId", "city_control")
+          .AddParameter("PassThru", true);
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        results.Should().HaveCount(1);
+        results[0].BaseObject.ToString().Should().Be("city_control");
+        
+        // Verify control was added to form
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("id=\"city_control\"");
+        formXml.Should().Contain("datafieldname=\"address1_city\"");
     }
 
-    [Fact(Skip = "Requires E2E testing - adds control to form")]
-    public void NewDataverseFormControl_Header_CreatesControlInHeader()
+    [Fact]
+    public void SetDataverseFormControl_Header_CreatesControlInHeader()
     {
-        // Tests adding control to form header
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Create a new control in the header
+        ps.AddCommand("Set-DataverseFormControl")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("TabName", "[Header]")
+          .AddParameter("DataField", "emailaddress1")
+          .AddParameter("ControlId", "header_email")
+          .AddParameter("PassThru", true);
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        results.Should().HaveCount(1);
+        results[0].BaseObject.ToString().Should().Be("header_email");
+        
+        // Verify control was added to header
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("<header");
+        formXml.Should().Contain("id=\"header_email\"");
     }
 
     // Remove-DataverseFormControl Tests
 
-    [Fact(Skip = "Requires E2E testing - removes control from form")]
+    [Fact]
     public void RemoveDataverseFormControl_RemovesControlById()
     {
-        // Tests removing control from form
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Verify control exists
+        var originalForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        originalForm.GetAttributeValue<string>("formxml").Should().Contain("id=\"firstname\"");
+        
+        // Act - Remove the firstname control
+        ps.AddCommand("Remove-DataverseFormControl")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("ControlId", "firstname")
+          .AddParameter("Confirm", false);
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Verify control was removed
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().NotContain("id=\"firstname\"");
     }
 
     // Form Tab Layout Tests
 
-    [Fact(Skip = "Requires E2E testing - modifies form tabs")]
-    public void DataverseFormTab_CanReorderTabs()
+    [Fact]
+    public void SetDataverseFormTab_CanReorderTabs()
     {
-        // Tests reordering tabs in form
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Get original tab order
+        var originalForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var originalXml = originalForm.GetAttributeValue<string>("formxml");
+        originalXml.Should().Contain("name=\"GeneralTab\"");
+        originalXml.Should().Contain("name=\"AddressTab\"");
+        
+        // Act - Add a new tab before GeneralTab to test tab positioning
+        ps.AddCommand("Set-DataverseFormTab")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("Name", "HeaderTab")
+          .AddParameter("Label", "Header Info")
+          .AddParameter("InsertBefore", "GeneralTab");
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Verify new tab was inserted before GeneralTab
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var updatedXml = updatedForm.GetAttributeValue<string>("formxml");
+        var headerTabIndex = updatedXml.IndexOf("name=\"HeaderTab\"");
+        var generalTabIndex = updatedXml.IndexOf("name=\"GeneralTab\"");
+        headerTabIndex.Should().BeLessThan(generalTabIndex);
     }
 
-    [Fact(Skip = "Requires E2E testing - modifies form tabs")]
-    public void DataverseFormTab_CanAddNewTab()
+    [Fact]
+    public void SetDataverseFormTab_CanAddNewTab()
     {
-        // Tests adding new tab to form
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Add a new tab
+        ps.AddCommand("Set-DataverseFormTab")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("Name", "NotesTab")
+          .AddParameter("Label", "Notes & Activities")
+          .AddParameter("PassThru", true);
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        results.Should().HaveCount(1);
+        
+        // Verify tab was added (note: & is HTML-encoded as &amp; in XML)
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("name=\"NotesTab\"");
+        formXml.Should().Contain("Notes &amp; Activities");
     }
 
-    [Fact(Skip = "Requires E2E testing - modifies form tabs")]
-    public void DataverseFormTab_CanRemoveTab()
+    [Fact]
+    public void RemoveDataverseFormTab_CanRemoveTab()
     {
-        // Tests removing tab from form
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Verify tab exists
+        var originalForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        originalForm.GetAttributeValue<string>("formxml").Should().Contain("name=\"AddressTab\"");
+        
+        // Act - Remove AddressTab
+        ps.AddCommand("Remove-DataverseFormTab")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("TabName", "AddressTab")
+          .AddParameter("Confirm", false);
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Verify tab was removed
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().NotContain("name=\"AddressTab\"");
     }
 
     // Form Library and Event Handler Tests - Write operations
 
-    [Fact(Skip = "Requires E2E testing - manages form libraries")]
-    public void DataverseFormLibrary_CanAddJavaScriptLibrary()
+    [Fact]
+    public void SetDataverseFormLibrary_CanAddJavaScriptLibrary()
     {
-        // Tests adding JavaScript library to form
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Add a new library
+        ps.AddCommand("Set-DataverseFormLibrary")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("LibraryName", "new_customscripts.js");
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        results.Should().HaveCount(1);
+        results[0].Properties["Name"].Value.Should().Be("new_customscripts.js");
+        
+        // Verify library was added
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("name=\"new_customscripts.js\"");
     }
 
-    [Fact(Skip = "Requires E2E testing - manages form libraries")]
-    public void DataverseFormLibrary_CanRemoveLibrary()
+    [Fact]
+    public void RemoveDataverseFormLibrary_CanRemoveLibrary()
     {
-        // Tests removing library from form
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Verify library exists
+        var originalForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var originalXml = originalForm.GetAttributeValue<string>("formxml");
+        originalXml.Should().Contain("name=\"new_contactform.js\"");
+        
+        // Act - Remove the library
+        ps.AddCommand("Remove-DataverseFormLibrary")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("LibraryName", "new_contactform.js")
+          .AddParameter("Confirm", false);
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Verify library was removed from formLibraries element
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        // Check that it's not in formLibraries (but may still be referenced elsewhere)
+        formXml.Should().NotContain("<Library name=\"new_contactform.js\"");
     }
 
-    [Fact(Skip = "Requires E2E testing - manages form event handlers")]
-    public void DataverseFormEventHandler_CanAddOnLoadEventHandler()
+    [Fact]
+    public void SetDataverseFormEventHandler_CanAddOnLoadEventHandler()
     {
-        // Tests adding OnLoad event handler
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Add a new OnLoad event handler
+        ps.AddCommand("Set-DataverseFormEventHandler")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("EventName", "onload")
+          .AddParameter("FunctionName", "customOnLoad")
+          .AddParameter("LibraryName", "new_contactform.js");
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        results.Should().HaveCount(1);
+        results[0].Properties["FunctionName"].Value.Should().Be("customOnLoad");
+        
+        // Verify event handler was added
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("functionName=\"customOnLoad\"");
     }
 
-    [Fact(Skip = "Requires E2E testing - manages form event handlers")]
-    public void DataverseFormEventHandler_CanAddControlEventHandler()
+    [Fact]
+    public void SetDataverseFormEventHandler_CanAddControlEventHandler()
     {
-        // Tests adding control-specific event handler (OnChange, etc.)
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Add OnChange event handler to firstname control
+        ps.AddCommand("Set-DataverseFormEventHandler")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("TabName", "GeneralTab")
+          .AddParameter("SectionName", "GeneralSection")
+          .AddParameter("ControlId", "firstname")
+          .AddParameter("EventName", "onchange")
+          .AddParameter("FunctionName", "onFirstNameChange")
+          .AddParameter("LibraryName", "new_contactform.js");
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        results.Should().HaveCount(1);
+        results[0].Properties["ControlId"].Value.Should().Be("firstname");
+        
+        // Verify event handler was added to control
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("functionName=\"onFirstNameChange\"");
     }
 
-    [Fact(Skip = "Requires E2E testing - manages form event handlers")]
-    public void DataverseFormEventHandler_CanRemoveEventHandler()
+    [Fact]
+    public void RemoveDataverseFormEventHandler_CanRemoveEventHandler()
     {
-        // Tests removing event handler from form
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Verify event handler exists
+        var originalForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        originalForm.GetAttributeValue<string>("formxml").Should().Contain("functionName=\"onLoad\"");
+        
+        // Act - Remove the onload event handler (need to specify LibraryName with FunctionName)
+        ps.AddCommand("Remove-DataverseFormEventHandler")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("EventName", "onload")
+          .AddParameter("FunctionName", "onLoad")
+          .AddParameter("LibraryName", "new_contactform.js")
+          .AddParameter("Confirm", false);
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Verify event handler was removed
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().NotContain("functionName=\"onLoad\"");
     }
 }

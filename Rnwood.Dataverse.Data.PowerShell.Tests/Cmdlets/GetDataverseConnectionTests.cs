@@ -492,15 +492,6 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         certPathAttr!.Mandatory.Should().BeTrue("CertificatePath should be required in certificate auth");
     }
 
-    [Fact(Skip = "E2E test - requires real certificate and connection attempt to validate certificate auth")]
-    public void GetDataverseConnection_Certificate_ThrowsError_WhenNeitherPathNorThumbprint()
-    {
-        // This test requires:
-        // 1. Real certificate credentials (path/thumbprint + client ID)
-        // 2. Actual connection attempt to validate certificate authentication
-        // Use E2E tests with real Dataverse environment for this scenario
-    }
-
     // ===== ConnectionString Parameter Tests =====
 
     [Fact]
@@ -555,15 +546,6 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         connStrProp!.PropertyType.Should().Be(typeof(string));
     }
 
-    [Fact(Skip = "E2E test - requires valid Dataverse connection string to test authentication")]
-    public void GetDataverseConnection_ConnectionString_CanUseWithoutUrl()
-    {
-        // This test requires:
-        // 1. Valid Dataverse connection string with credentials
-        // 2. Actual connection attempt to validate connection string parsing and authentication
-        // Use E2E tests with real Dataverse environment for this scenario
-    }
-
     [Fact]
     public void GetDataverseConnection_ConnectionStringParameterSet_NameIsCorrect()
     {
@@ -576,14 +558,5 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         paramSetAttr.Should().NotBeNull();
         paramSetAttr!.ParameterSetName.Should().Contain("connection string", 
             because: "parameter set name should contain 'connection string'");
-    }
-
-    [Fact(Skip = "E2E test - requires valid connection string and stores default connection state")]
-    public void GetDataverseConnection_SetAsDefault_WorksWithConnectionStringParameterSet()
-    {
-        // This test requires:
-        // 1. Valid Dataverse connection string with credentials
-        // 2. Actual connection to create ServiceClient and set as default
-        // Use E2E tests with real Dataverse environment for this scenario
     }
 }

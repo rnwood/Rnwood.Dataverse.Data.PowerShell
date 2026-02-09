@@ -5,6 +5,8 @@ using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using FluentAssertions;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Query;
 using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
 using Xunit;
@@ -611,31 +613,284 @@ public class AppModulesTests : TestBase
     }
 
     // App Module Component Tests
-    // Note: These cmdlets have complex internal logic involving appmoduleidunique attribute
-    // and require precise mock setup that is difficult to replicate without E2E testing.
+    // Note: These tests use a custom interceptor to mock AddAppComponentsRequest and RemoveAppComponentsRequest
+    // and handle the appmoduleidunique attribute retrieval
 
-    [Fact(Skip = "AppModuleComponent cmdlets require appmoduleidunique attribute handling not supported by FakeXrmEasy")]
+    [Fact]
     public void GetDataverseAppModuleComponent_RetrievesComponentsForAppModule()
     {
-        // The Get-DataverseAppModuleComponent cmdlet needs to:
-        // 1. Query appmodule by uniquename to get appmoduleidunique
-        // 2. Then query appmodulecomponent by appmoduleidunique
-        // This requires proper metadata for the appmoduleidunique attribute which isn't
-        // fully supported in the mock infrastructure.
+        // Arrange
+        using var ps = CreatePowerShellWithAppModuleCmdlets();
+        var appModuleId = Guid.NewGuid();
+        var appModuleIdUnique = Guid.NewGuid();
+        var componentObjectId = Guid.NewGuid();
+        var componentId = Guid.NewGuid();
+        
+        // Create interceptor to handle RetrieveUnpublishedMultipleRequest properly
+        var mockConnection = CreateMockConnection(request =>
+        {
+            // No additional interception needed for Get - it's handled by default
+            return null;
+        }, "appmodule", "appmodulecomponent", "savedquery");
+        
+        var appModule = new Entity("appmodule", appModuleId)
+        {
+            ["uniquename"] = "test_app",
+            ["name"] = "Test App",
+            ["appmoduleidunique"] = appModuleIdUnique
+        };
+        
+        var component = new Entity("appmodulecomponent", componentId)
+        {
+            ["appmoduleidunique"] = new EntityReference("appmodule", appModuleIdUnique),
+            ["objectid"] = componentObjectId,
+            ["componenttype"] = new OptionSetValue(26), // View = 26
+            ["isdefault"] = false
+        };
+        
+        Context!.Initialize(new[] { appModule, component });
+        
+        // Act
+        ps.AddCommand("Get-DataverseAppModuleComponent")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("AppModuleUniqueName", "test_app");
+        var results = ps.Invoke();
+
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        results.Should().HaveCount(1);
+        results[0].Properties["Id"].Value.Should().Be(componentId);
+        results[0].Properties["ObjectId"].Value.Should().Be(componentObjectId);
+        results[0].Properties["AppModuleId"].Value.Should().Be(appModuleIdUnique);
     }
 
-    [Fact(Skip = "AppModuleComponent cmdlets use AddAppComponentsRequest with complex internal logic")]
+    [Fact]
     public void SetDataverseAppModuleComponent_AddsComponentToAppModule()
     {
-        // The Set-DataverseAppModuleComponent cmdlet uses AddAppComponentsRequest
-        // which has complex validation logic that varies by component type.
+        // Arrange
+        using var ps = CreatePowerShellWithAppModuleCmdlets();
+        var appModuleId = Guid.NewGuid();
+        var appModuleIdUnique = Guid.NewGuid();
+        var viewId = Guid.NewGuid();
+        
+        // Create interceptor for AddAppComponentsRequest
+        var mockConnection = CreateMockConnection(request =>
+        {
+            var requestTypeName = request.GetType().Name;
+            if (requestTypeName == "AddAppComponentsRequest")
+            {
+                // Extract properties using reflection
+                var appIdProp = request.GetType().GetProperty("AppId");
+                var componentsProp = request.GetType().GetProperty("Components");
+                
+                var appId = (Guid?)appIdProp?.GetValue(request);
+                var components = componentsProp?.GetValue(request) as EntityReferenceCollection;
+                
+                if (appId.HasValue && components != null && Context != null)
+                {
+                    // Find the appmodule to get appmoduleidunique
+                    var appModule = Context.CreateQuery("appmodule")
+                        .FirstOrDefault(e => e.Id == appId.Value);
+                    
+                    if (appModule != null)
+                    {
+                        var appModuleIdUnique = appModule.GetAttributeValue<Guid>("appmoduleidunique");
+                        
+                        // Create appmodulecomponent records for each component
+                        foreach (var component in components)
+                        {
+                            var componentType = GetComponentTypeForEntity(component.LogicalName);
+                            var newComponent = new Entity("appmodulecomponent")
+                            {
+                                Id = Guid.NewGuid(),
+                                ["appmoduleidunique"] = new EntityReference("appmodule", appModuleIdUnique),
+                                ["objectid"] = component.Id,
+                                ["componenttype"] = new OptionSetValue(componentType)
+                            };
+                            Service?.Create(newComponent);
+                        }
+                    }
+                }
+                
+                // Return empty response
+                var responseType = request.GetType().Assembly.GetType("Microsoft.Crm.Sdk.Messages.AddAppComponentsResponse");
+                return (OrganizationResponse?)Activator.CreateInstance(responseType!);
+            }
+            return null;
+        }, "appmodule", "appmodulecomponent", "savedquery");
+        
+        var appModule = new Entity("appmodule", appModuleId)
+        {
+            ["uniquename"] = "test_app",
+            ["name"] = "Test App",
+            ["appmoduleidunique"] = appModuleIdUnique
+        };
+        
+        var view = new Entity("savedquery", viewId)
+        {
+            ["name"] = "Test View"
+        };
+        
+        Context!.Initialize(new[] { appModule, view });
+        
+        // Act - Add a view component to the app module
+        ps.AddCommand("Set-DataverseAppModuleComponent")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("AppModuleId", appModuleId)
+          .AddParameter("ObjectId", viewId)
+          .AddParameter("ComponentType", 26) // View
+          .AddParameter("PassThru", true);
+        var results = ps.Invoke();
+
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        results.Should().HaveCount(1);
+        var createdComponentId = (Guid)results[0].BaseObject;
+        createdComponentId.Should().NotBe(Guid.Empty);
+        
+        // Verify the component was created
+        var component = Context.CreateQuery("appmodulecomponent")
+            .FirstOrDefault(e => e.Id == createdComponentId);
+        component.Should().NotBeNull();
+        component!.GetAttributeValue<Guid>("objectid").Should().Be(viewId);
+        component.GetAttributeValue<EntityReference>("appmoduleidunique").Id.Should().Be(appModuleIdUnique);
     }
 
-    [Fact(Skip = "AppModuleComponent cmdlets require appmoduleidunique attribute handling not supported by FakeXrmEasy")]
+    [Fact]
     public void RemoveDataverseAppModuleComponent_RemovesComponentFromAppModule()
     {
-        // The Remove-DataverseAppModuleComponent cmdlet needs to retrieve the component
-        // and access its appmoduleidunique attribute, which isn't properly supported
-        // in the mock infrastructure.
+        // Arrange
+        using var ps = CreatePowerShellWithAppModuleCmdlets();
+        var appModuleId = Guid.NewGuid();
+        var appModuleIdUnique = Guid.NewGuid();
+        var componentObjectId = Guid.NewGuid();
+        var componentId = Guid.NewGuid();
+        
+        // Pre-create test data first before creating connection
+        var appModule = new Entity("appmodule", appModuleId)
+        {
+            ["uniquename"] = "test_app",
+            ["name"] = "Test App",
+            ["appmoduleidunique"] = appModuleIdUnique
+        };
+        
+        var component = new Entity("appmodulecomponent", componentId)
+        {
+            ["appmoduleidunique"] = new EntityReference("appmodule", appModuleIdUnique),
+            ["objectid"] = componentObjectId,
+            ["componenttype"] = new OptionSetValue(26) // View
+        };
+        
+        // Store reference to the base service before wrapping
+        IOrganizationService? baseService = null;
+        
+        // Create interceptor for RemoveAppComponentsRequest and Retrieve
+        var mockConnection = CreateMockConnection(request =>
+        {
+            var requestTypeName = request.GetType().Name;
+            
+            // Handle Retrieve for appmodulecomponent - add appmoduleidunique if needed
+            if (request is RetrieveRequest retrieveRequest && 
+                retrieveRequest.Target?.LogicalName == "appmodulecomponent" &&
+                Context != null)
+            {
+                // Use LINQ query instead of Service.Retrieve to avoid recursion
+                var entity = Context.CreateQuery("appmodulecomponent")
+                    .FirstOrDefault(e => e.Id == retrieveRequest.Target.Id);
+                    
+                if (entity != null)
+                {
+                    // Clone the entity and ensure appmoduleidunique is present
+                    var result = new Entity(entity.LogicalName, entity.Id);
+                    foreach (var attr in entity.Attributes)
+                    {
+                        result[attr.Key] = attr.Value;
+                    }
+                    
+                    // Ensure appmoduleidunique is present
+                    if (!result.Contains("appmoduleidunique"))
+                    {
+                        result["appmoduleidunique"] = new EntityReference("appmodule", appModuleIdUnique);
+                    }
+                    
+                    var response = new RetrieveResponse();
+                    response.Results["Entity"] = result;
+                    return response;
+                }
+            }
+            
+            if (requestTypeName == "RemoveAppComponentsRequest")
+            {
+                // Extract properties using reflection
+                var appIdProp = request.GetType().GetProperty("AppId");
+                var componentsProp = request.GetType().GetProperty("Components");
+                
+                var appId = (Guid?)appIdProp?.GetValue(request);
+                var components = componentsProp?.GetValue(request) as EntityReferenceCollection;
+                
+                if (appId.HasValue && components != null && Context != null)
+                {
+                    // Find the appmodule to get appmoduleidunique
+                    var appModule = Context.CreateQuery("appmodule")
+                        .FirstOrDefault(e => e.Id == appId.Value);
+                    
+                    if (appModule != null)
+                    {
+                        var appModuleIdUnique = appModule.GetAttributeValue<Guid>("appmoduleidunique");
+                        
+                        // Delete appmodulecomponent records matching the components
+                        foreach (var component in components)
+                        {
+                            var componentsToDelete = Context.CreateQuery("appmodulecomponent")
+                                .Where(e => e.GetAttributeValue<EntityReference>("appmoduleidunique").Id == appModuleIdUnique
+                                         && e.GetAttributeValue<Guid>("objectid") == component.Id)
+                                .ToList();
+                            
+                            foreach (var compToDelete in componentsToDelete)
+                            {
+                                // Delete using Context's delete method directly
+                                Context.DeleteEntity(new EntityReference(compToDelete.LogicalName, compToDelete.Id));
+                            }
+                        }
+                    }
+                }
+                
+                // Return empty response
+                var responseType = request.GetType().Assembly.GetType("Microsoft.Crm.Sdk.Messages.RemoveAppComponentsResponse");
+                return (OrganizationResponse?)Activator.CreateInstance(responseType!);
+            }
+            return null;
+        }, "appmodule", "appmodulecomponent", "savedquery");
+        
+        Context!.Initialize(new[] { appModule, component });
+        
+        // Act - Remove the component
+        ps.AddCommand("Remove-DataverseAppModuleComponent")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("Id", componentId);
+        ps.Invoke();
+
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Verify the component was deleted
+        var deleted = Context.CreateQuery("appmodulecomponent")
+            .FirstOrDefault(e => e.Id == componentId);
+        deleted.Should().BeNull();
+    }
+
+    private static int GetComponentTypeForEntity(string logicalName)
+    {
+        return logicalName switch
+        {
+            "entity" => 1,
+            "savedquery" => 26,
+            "workflow" => 29,
+            "ribboncommand" => 48,
+            "savedqueryvisualization" => 59,
+            "systemform" => 60,
+            "sitemap" => 62,
+            _ => throw new ArgumentException($"Unknown entity type: {logicalName}")
+        };
     }
 }
