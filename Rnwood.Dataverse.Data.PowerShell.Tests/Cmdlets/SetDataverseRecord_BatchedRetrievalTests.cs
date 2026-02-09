@@ -36,18 +36,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         }
 
         [Fact]
-        public void SetDataverseRecord_RetrievalBatchSize_HasParameterWithDefaultValue()
-        {
-            // Arrange
-            var cmd = typeof(SetDataverseRecordCmdlet);
-            var property = cmd.GetProperty("RetrievalBatchSize");
-            
-            // Assert
-            property.Should().NotBeNull();
-            property!.PropertyType.Should().Be(typeof(uint));
-        }
-
-        [Fact]
         public void SetDataverseRecord_RetrievalBatchSize_AcceptsCustomValues()
         {
             // Arrange

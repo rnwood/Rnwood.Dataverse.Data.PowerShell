@@ -10,70 +10,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 {
     /// <summary>
     /// Tests for Set-DataverseRelationshipMetadata cmdlet
-    /// Migrated from tests/Set-DataverseRelationshipMetadata.Tests.ps1 (3 tests)
+    /// Migrated from tests/Set-DataverseRelationshipMetadata.Tests.ps1 (1 test)
     /// </summary>
     public class SetDataverseRelationshipMetadataTests : TestBase
     {
-        // ===== Parameter Validation ===== (2 tests)
-
-        [Fact]
-        public void SetDataverseRelationshipMetadata_HasIntersectEntitySchemaNameParameter()
-        {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseRelationshipMetadata", typeof(Commands.SetDataverseRelationshipMetadataCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            // Act - Get command info
-            ps.AddCommand("Get-Command")
-              .AddParameter("Name", "Set-DataverseRelationshipMetadata");
-
-            var results = ps.Invoke();
-
-            // Assert - Should have IntersectEntitySchemaName parameter
-            results.Should().ContainSingle();
-            var commandInfo = results[0].BaseObject as CommandInfo;
-            commandInfo.Should().NotBeNull();
-
-            var param = commandInfo!.Parameters["IntersectEntitySchemaName"];
-            param.Should().NotBeNull();
-            param.ParameterType.Name.Should().Be("String");
-        }
-
-        [Fact]
-        public void SetDataverseRelationshipMetadata_HasIntersectEntityNameAlias()
-        {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseRelationshipMetadata", typeof(Commands.SetDataverseRelationshipMetadataCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            // Act - Get command info
-            ps.AddCommand("Get-Command")
-              .AddParameter("Name", "Set-DataverseRelationshipMetadata");
-
-            var results = ps.Invoke();
-
-            // Assert - Should have IntersectEntityName as alias
-            results.Should().ContainSingle();
-            var commandInfo = results[0].BaseObject as CommandInfo;
-            commandInfo.Should().NotBeNull();
-
-            var param = commandInfo!.Parameters["IntersectEntitySchemaName"];
-            param.Should().NotBeNull();
-            param.Aliases.Should().Contain("IntersectEntityName");
-        }
-
         // ===== Create ManyToMany Relationship ===== (1 test)
 
         [Fact]

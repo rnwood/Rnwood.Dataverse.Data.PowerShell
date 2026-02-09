@@ -99,17 +99,35 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                 entities = new[] { "contact" };
             }
 
-            // Load metadata for requested entities
+            // Load metadata for requested entities - CLONE to avoid modifying cached metadata
             var metadata = new List<EntityMetadata>();
             foreach (var entityName in entities)
             {
                 var entityMetadata = LoadEntityMetadata(entityName);
                 if (entityMetadata != null)
                 {
-                    metadata.Add(entityMetadata);
+                    // Clone the metadata to prevent tests from modifying the shared cache
+                    metadata.Add(CloneEntityMetadata(entityMetadata));
                 }
             }
-            _loadedMetadata = metadata;
+            return CreateMockConnectionWithCustomMetadata(requestInterceptor, metadata);
+        }
+
+        /// <summary>
+        /// Creates a mock connection with custom metadata.
+        /// Use this when you need to modify entity metadata (e.g., add alternate keys) without affecting other tests.
+        /// </summary>
+        /// <param name="requestInterceptor">
+        /// Optional delegate to intercept requests before FakeXrmEasy handles them.
+        /// Return an OrganizationResponse to short-circuit, or null to let FakeXrmEasy handle it.
+        /// </param>
+        /// <param name="customMetadata">Custom entity metadata collection for this connection</param>
+        /// <returns>A mock ServiceClient</returns>
+        protected ServiceClient CreateMockConnectionWithCustomMetadata(
+            Func<OrganizationRequest, OrganizationResponse?>? requestInterceptor,
+            List<EntityMetadata> customMetadata)
+        {
+            _loadedMetadata = customMetadata;
 
             // Create XrmFakedContext with middleware - same approach as Get-DataverseConnection -Mock
             var context = MiddlewareBuilder
@@ -122,7 +140,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                 .Build();
 
             // Initialize metadata
-            context.InitializeMetadata(metadata);
+            context.InitializeMetadata(customMetadata);
 
             Context = context;
             var baseService = context.GetOrganizationService();
@@ -282,7 +300,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                 }
 
                 // Handle unsupported requests that FakeXrmEasy doesn't support
-                return DefaultInterceptor(request, metadata, _mockUserId, _mockBusinessUnitId, _mockOrganizationId);
+                return DefaultInterceptor(request, customMetadata, _mockUserId, _mockBusinessUnitId, _mockOrganizationId);
             }
 
             // Wrap service layers:
@@ -630,6 +648,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         {
             var serializer = new DataContractSerializer(typeof(EntityMetadata));
             return serializer.ReadObject(stream) as EntityMetadata;
+        }
+
+        /// <summary>
+        /// Creates a deep copy of entity metadata to prevent modifying the shared cache.
+        /// This uses serialization/deserialization to ensure a complete deep copy.
+        /// </summary>
+        protected static EntityMetadata CloneEntityMetadata(EntityMetadata source)
+        {
+            // Use DataContractSerializer for deep cloning
+            var serializer = new DataContractSerializer(typeof(EntityMetadata));
+            using var ms = new MemoryStream();
+            serializer.WriteObject(ms, source);
+            ms.Position = 0;
+            return (EntityMetadata)serializer.ReadObject(ms)!;
         }
 
         private static EntityMetadata BuildSystemUserMetadata()

@@ -585,9 +585,9 @@ public class SolutionsTests : TestBase
         }
         ps.HadErrors.Should().BeFalse();
         results.Should().HaveCount(1);
-        var result = results[0].BaseObject as PSObject;
+        var result = results[0];
         result.Should().NotBeNull();
-        result!.Properties["ImportJobId"]?.Value.Should().NotBeNull();
+        result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
     [Fact]
@@ -620,9 +620,9 @@ public class SolutionsTests : TestBase
         }
         ps.HadErrors.Should().BeFalse();
         results.Should().HaveCount(1);
-        var result = results[0].BaseObject as PSObject;
+        var result = results[0];
         result.Should().NotBeNull();
-        result!.Properties["ImportJobId"]?.Value.Should().NotBeNull();
+        result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
     // Import-DataverseSolution Null Reference Tests (Import-DataverseSolution-NullReferenceException.Tests.ps1 - 2 tests)
@@ -651,9 +651,9 @@ public class SolutionsTests : TestBase
         }
         ps.HadErrors.Should().BeFalse();
         results.Should().HaveCount(1);
-        var result = results[0].BaseObject as PSObject;
+        var result = results[0];
         result.Should().NotBeNull();
-        result!.Properties["ImportJobId"]?.Value.Should().NotBeNull();
+        result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
     [Fact]
@@ -684,9 +684,9 @@ public class SolutionsTests : TestBase
         }
         ps.HadErrors.Should().BeFalse();
         results.Should().HaveCount(1);
-        var result = results[0].BaseObject as PSObject;
+        var result = results[0];
         result.Should().NotBeNull();
-        result!.Properties["ImportJobId"]?.Value.Should().NotBeNull();
+        result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
     // Import-DataverseSolution Holding Solution Tests (Import-DataverseSolution-HoldingSolutionVersionCheck.Tests.ps1 - 3 tests)
@@ -769,9 +769,9 @@ public class SolutionsTests : TestBase
         // Assert
         ps.HadErrors.Should().BeFalse();
         results.Should().HaveCount(1);
-        var result = results[0].BaseObject as PSObject;
+        var result = results[0];
         result.Should().NotBeNull();
-        result!.Properties["ImportJobId"]?.Value.Should().NotBeNull();
+        result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
     // Import-DataverseSolution Component Parameter Filtering Tests (Import-DataverseSolution-ComponentParameterFiltering.Tests.ps1 - 3 tests)
@@ -805,9 +805,9 @@ public class SolutionsTests : TestBase
         // Assert - should not throw, extra parameters are ignored
         ps.HadErrors.Should().BeFalse();
         results.Should().HaveCount(1);
-        var result = results[0].BaseObject as PSObject;
+        var result = results[0];
         result.Should().NotBeNull();
-        result!.Properties["ImportJobId"]?.Value.Should().NotBeNull();
+        result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
     [Fact]
@@ -838,9 +838,9 @@ public class SolutionsTests : TestBase
         // Assert - should not throw, extra parameters are ignored
         ps.HadErrors.Should().BeFalse();
         results.Should().HaveCount(1);
-        var result = results[0].BaseObject as PSObject;
+        var result = results[0];
         result.Should().NotBeNull();
-        result!.Properties["ImportJobId"]?.Value.Should().NotBeNull();
+        result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
     [Fact]
@@ -874,9 +874,9 @@ public class SolutionsTests : TestBase
         // Assert - should not throw, all parameters are ignored
         ps.HadErrors.Should().BeFalse();
         results.Should().HaveCount(1);
-        var result = results[0].BaseObject as PSObject;
+        var result = results[0];
         result.Should().NotBeNull();
-        result!.Properties["ImportJobId"]?.Value.Should().NotBeNull();
+        result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
     // Import-DataverseSolution Case Insensitive Tests (Import-DataverseSolution-CaseInsensitive.Tests.ps1 - ~1 test)
@@ -915,9 +915,9 @@ public class SolutionsTests : TestBase
         // Assert - should match case-insensitively
         ps.HadErrors.Should().BeFalse();
         results.Should().HaveCount(1);
-        var result = results[0].BaseObject as PSObject;
+        var result = results[0];
         result.Should().NotBeNull();
-        result!.Properties["ImportJobId"]?.Value.Should().NotBeNull();
+        result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
     /// <summary>
@@ -1320,3 +1320,4 @@ public class SolutionsTests : TestBase
         return memoryStream.ToArray();
     }
 }
+

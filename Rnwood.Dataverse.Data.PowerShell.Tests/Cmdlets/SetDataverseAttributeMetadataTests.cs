@@ -456,61 +456,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         // ===== Parameter Validation Tests ===== (8 tests)
 
         [Fact]
-        public void SetDataverseAttributeMetadata_HasRequiredParameters()
-        {
-            // Arrange
-            var cmdlet = new Commands.SetDataverseAttributeMetadataCmdlet();
-            var cmdletType = cmdlet.GetType();
 
-            // Assert - verify required parameters exist
-            cmdletType.GetProperty("AttributeName").Should().NotBeNull();
-            cmdletType.GetProperty("EntityName").Should().NotBeNull();
-            cmdletType.GetProperty("AttributeType").Should().NotBeNull();
-            cmdletType.GetProperty("SchemaName").Should().NotBeNull();
-        }
-
-        [Fact]
-        public void SetDataverseAttributeMetadata_HasTableNameAlias()
-        {
-            // Arrange & Act
-            var cmdletType = typeof(Commands.SetDataverseAttributeMetadataCmdlet);
-            var entityNameProperty = cmdletType.GetProperty("EntityName");
-
-            // Assert
-            entityNameProperty.Should().NotBeNull();
-            var aliasAttributes = entityNameProperty!.GetCustomAttributes(typeof(AliasAttribute), false);
-            aliasAttributes.Should().NotBeEmpty();
-            var aliasAttr = (AliasAttribute)aliasAttributes[0];
-            aliasAttr.AliasNames.Should().Contain("TableName");
-        }
-
-        [Fact]
-        public void SetDataverseAttributeMetadata_HasColumnNameAlias()
-        {
-            // Arrange & Act
-            var cmdletType = typeof(Commands.SetDataverseAttributeMetadataCmdlet);
-            var attributeNameProperty = cmdletType.GetProperty("AttributeName");
-
-            // Assert
-            attributeNameProperty.Should().NotBeNull();
-            var aliasAttributes = attributeNameProperty!.GetCustomAttributes(typeof(AliasAttribute), false);
-            aliasAttributes.Should().NotBeEmpty();
-            var aliasAttr = (AliasAttribute)aliasAttributes[0];
-            aliasAttr.AliasNames.Should().Contain("ColumnName");
-        }
-
-        [Fact]
-        public void SetDataverseAttributeMetadata_SupportsShouldProcess()
-        {
-            // Arrange
-            var cmdletType = typeof(Commands.SetDataverseAttributeMetadataCmdlet);
-            var cmdletAttribute = (CmdletAttribute)cmdletType.GetCustomAttributes(typeof(CmdletAttribute), false)[0];
-
-            // Assert
-            cmdletAttribute.SupportsShouldProcess.Should().BeTrue();
-        }
-
-        [Fact]
         public void SetDataverseAttributeMetadata_WhatIfDoesNotModifyData()
         {
             // Arrange

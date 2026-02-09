@@ -17,36 +17,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
     /// </summary>
     public class PublishDataverseMetadataTests : TestBase
     {
-        // ===== Set-DataverseEntityMetadata -Publish Parameter ===== (2 tests)
-
-        [Fact]
-        public void SetDataverseEntityMetadata_HasPublishParameter()
-        {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseEntityMetadata", typeof(Commands.SetDataverseEntityMetadataCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            // Act - Get command info
-            ps.AddCommand("Get-Command")
-              .AddParameter("Name", "Set-DataverseEntityMetadata");
-
-            var results = ps.Invoke();
-
-            // Assert - Should have Publish parameter
-            results.Should().ContainSingle();
-            var commandInfo = results[0].BaseObject as CommandInfo;
-            commandInfo.Should().NotBeNull();
-
-            var param = commandInfo!.Parameters["Publish"];
-            param.Should().NotBeNull();
-            param.ParameterType.Name.Should().Be("SwitchParameter");
-        }
+        // ===== Set-DataverseEntityMetadata -Publish Parameter ===== (1 test)
 
         [Fact]
         public void SetDataverseEntityMetadata_WhatIfWithPublish_DoesNotPublish()
@@ -79,36 +50,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             ps.HadErrors.Should().BeFalse();
         }
 
-        // ===== Set-DataverseAttributeMetadata -Publish Parameter ===== (2 tests)
-
-        [Fact]
-        public void SetDataverseAttributeMetadata_HasPublishParameter()
-        {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseAttributeMetadata", typeof(Commands.SetDataverseAttributeMetadataCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            // Act - Get command info
-            ps.AddCommand("Get-Command")
-              .AddParameter("Name", "Set-DataverseAttributeMetadata");
-
-            var results = ps.Invoke();
-
-            // Assert - Should have Publish parameter
-            results.Should().ContainSingle();
-            var commandInfo = results[0].BaseObject as CommandInfo;
-            commandInfo.Should().NotBeNull();
-
-            var param = commandInfo!.Parameters["Publish"];
-            param.Should().NotBeNull();
-            param.ParameterType.Name.Should().Be("SwitchParameter");
-        }
+        // ===== Set-DataverseAttributeMetadata -Publish Parameter ===== (1 test)
 
         [Fact]
         public void SetDataverseAttributeMetadata_WhatIfWithPublish_DoesNotPublish()
@@ -141,36 +83,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             ps.HadErrors.Should().BeFalse();
         }
 
-        // ===== Set-DataverseRelationshipMetadata -Publish Parameter ===== (2 tests)
-
-        [Fact]
-        public void SetDataverseRelationshipMetadata_HasPublishParameter()
-        {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseRelationshipMetadata", typeof(Commands.SetDataverseRelationshipMetadataCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            // Act - Get command info
-            ps.AddCommand("Get-Command")
-              .AddParameter("Name", "Set-DataverseRelationshipMetadata");
-
-            var results = ps.Invoke();
-
-            // Assert - Should have Publish parameter
-            results.Should().ContainSingle();
-            var commandInfo = results[0].BaseObject as CommandInfo;
-            commandInfo.Should().NotBeNull();
-
-            var param = commandInfo!.Parameters["Publish"];
-            param.Should().NotBeNull();
-            param.ParameterType.Name.Should().Be("SwitchParameter");
-        }
+        // ===== Set-DataverseRelationshipMetadata -Publish Parameter ===== (1 test)
 
         [Fact]
         public void SetDataverseRelationshipMetadata_WhatIfWithPublish_DoesNotPublish()

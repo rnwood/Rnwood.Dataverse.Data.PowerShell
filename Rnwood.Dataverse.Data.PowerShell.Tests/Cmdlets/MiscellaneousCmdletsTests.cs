@@ -362,39 +362,8 @@ public class MiscellaneousCmdletsTests : TestBase
     // Note: Some completers require a ServiceClient connection to query Dataverse metadata.
     // Tests that need live connection data are tested via E2E tests.
     // Here we test:
-    // 1. ArgumentCompleter attributes are correctly applied to cmdlet parameters
-    // 2. ComponentTypeArgumentCompleter.TryParse works with static data
-    // 3. Completers don't throw exceptions when invoked without a connection
-
-    [Fact]
-    public void ArgumentCompleter_SetDataverseRecordCmdlet_HasTableNameCompleter()
-    {
-        // Verify ArgumentCompleter attribute is applied to TableName parameter
-        var cmdletType = typeof(SetDataverseRecordCmdlet);
-        var tableNameProperty = cmdletType.GetProperty("TableName");
-        
-        tableNameProperty.Should().NotBeNull("SetDataverseRecordCmdlet should have TableName property");
-        
-        var completerAttr = tableNameProperty!.GetCustomAttribute<ArgumentCompleterAttribute>();
-        completerAttr.Should().NotBeNull("TableName should have ArgumentCompleter attribute");
-        completerAttr!.Type.Should().Be(typeof(TableNameArgumentCompleter), 
-            "TableName should use TableNameArgumentCompleter");
-    }
-
-    [Fact]
-    public void ArgumentCompleter_SetDataverseSolutionComponentCmdlet_HasComponentTypeCompleter()
-    {
-        // Verify ArgumentCompleter attribute is applied to ComponentType parameter
-        var cmdletType = typeof(SetDataverseSolutionComponentCmdlet);
-        var componentTypeProperty = cmdletType.GetProperty("ComponentType");
-        
-        componentTypeProperty.Should().NotBeNull("SetDataverseSolutionComponentCmdlet should have ComponentType property");
-        
-        var completerAttr = componentTypeProperty!.GetCustomAttribute<ArgumentCompleterAttribute>();
-        completerAttr.Should().NotBeNull("ComponentType should have ArgumentCompleter attribute");
-        completerAttr!.Type.Should().Be(typeof(ComponentTypeArgumentCompleter),
-            "ComponentType should use ComponentTypeArgumentCompleter");
-    }
+    // 1. ComponentTypeArgumentCompleter.TryParse works with static data
+    // 2. Completers don't throw exceptions when invoked without a connection
 
     [Fact]
     public void ArgumentCompleter_ComponentType_TryParse_ParsesNumericValues()

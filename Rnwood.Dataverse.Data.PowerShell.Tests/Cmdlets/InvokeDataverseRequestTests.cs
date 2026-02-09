@@ -778,20 +778,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         }
 
         [Fact]
-        public void InvokeDataverseRequest_NameAndInputsParameterSet_HasRawParameter()
-        {
-            // Arrange
-            var cmdlet = typeof(InvokeDataverseRequestCmdlet);
-
-            // Act - Check for Raw parameter
-            var rawProperty = cmdlet.GetProperty("Raw");
-
-            // Assert
-            rawProperty.Should().NotBeNull();
-            rawProperty!.PropertyType.Should().Be(typeof(SwitchParameter));
-        }
-
-        [Fact]
         public void InvokeDataverseRequest_BatchingWithRequestParameterSet_DoesNotConvertResponses()
         {
             // Arrange

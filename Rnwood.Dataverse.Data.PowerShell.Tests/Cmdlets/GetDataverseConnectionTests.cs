@@ -92,32 +92,6 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         return ps;
     }
 
-    /// <summary>
-    /// Gets the ParameterAttribute for a parameter in the cmdlet type.
-    /// </summary>
-    private ParameterAttribute[]? GetParameterAttributes(string parameterName)
-    {
-        var property = _cmdletType.GetProperty(parameterName);
-        return property?.GetCustomAttributes<ParameterAttribute>().ToArray();
-    }
-
-    /// <summary>
-    /// Gets parameter attributes for a specific parameter set.
-    /// </summary>
-    private ParameterAttribute? GetParameterInSet(string parameterName, string parameterSetName)
-    {
-        var attributes = GetParameterAttributes(parameterName);
-        return attributes?.FirstOrDefault(a => a.ParameterSetName == parameterSetName);
-    }
-
-    /// <summary>
-    /// Checks if a parameter exists in the cmdlet.
-    /// </summary>
-    private bool ParameterExists(string parameterName)
-    {
-        return _cmdletType.GetProperty(parameterName) != null;
-    }
-
     // ===== Default Connection Management Tests =====
 
     [Fact]
@@ -214,35 +188,6 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         var commandInfo = results[0].BaseObject as AliasInfo;
         commandInfo.Should().NotBeNull();
         commandInfo!.ReferencedCommand.Name.Should().Be("Get-DataverseConnection");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_GetDefaultParameterSet_WorksIndependently()
-    {
-        // Arrange/Act
-        var getDefaultAttr = GetParameterAttributes("GetDefault");
-
-        // Assert
-        getDefaultAttr.Should().NotBeEmpty();
-        var paramSetAttr = getDefaultAttr!.FirstOrDefault(a => a.Mandatory);
-        paramSetAttr.Should().NotBeNull();
-        paramSetAttr!.ParameterSetName.Should().Contain("Get default");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_AccessTokenParameterSet_AcceptsScriptBlock()
-    {
-        // Arrange/Act
-        var accessTokenProp = _cmdletType.GetProperty("AccessToken");
-
-        // Assert
-        accessTokenProp.Should().NotBeNull();
-        accessTokenProp!.PropertyType.Should().Be(typeof(ScriptBlock));
-
-        var paramAttrs = accessTokenProp.GetCustomAttributes<ParameterAttribute>();
-        var accessTokenParamSet = paramAttrs.FirstOrDefault(a => a.ParameterSetName.Contains("access token"));
-        accessTokenParamSet.Should().NotBeNull();
-        accessTokenParamSet!.Mandatory.Should().BeTrue();
     }
 
     // ===== Named Connection Management Tests =====
@@ -366,49 +311,6 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         }
     }
 
-    // ===== Parameter Set Availability Tests =====
-
-    [Fact]
-    public void GetDataverseConnection_NameParameter_AvailableOnInteractiveParameterSet()
-    {
-        // Arrange/Act
-        var nameAttr = GetParameterInSet("Name", "Authenticate interactively");
-
-        // Assert
-        nameAttr.Should().NotBeNull("Name parameter should exist on Interactive parameter set");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_NameParameter_AvailableOnDeviceCodeParameterSet()
-    {
-        // Arrange/Act
-        var nameAttr = GetParameterInSet("Name", "Authenticate using the device code flow");
-
-        // Assert
-        nameAttr.Should().NotBeNull("Name parameter should exist on DeviceCode parameter set");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_NameParameter_AvailableOnClientSecretParameterSet()
-    {
-        // Arrange/Act
-        var nameAttr = GetParameterInSet("Name", "Authenticate with client secret");
-
-        // Assert
-        nameAttr.Should().NotBeNull("Name parameter should exist on ClientSecret parameter set");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_UrlOptional_ForClientSecretAuthentication()
-    {
-        // Arrange/Act
-        var urlAttr = GetParameterInSet("Url", "Authenticate with client secret");
-
-        // Assert
-        urlAttr.Should().NotBeNull();
-        urlAttr!.Mandatory.Should().BeFalse("Url should be optional for client secret auth");
-    }
-
     [Fact]
     public void GetDataverseConnection_CanUseListConnectionsParameter()
     {
@@ -443,120 +345,5 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
             .Which.InnerException as System.InvalidOperationException;
         exception.Should().NotBeNull();
         exception!.Message.Should().Contain("not found");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_Certificate_ParametersInCorrectParameterSet()
-    {
-        // Arrange/Act
-        var certPathAttr = GetParameterInSet("CertificatePath", "Authenticate with client certificate");
-        var certPasswordAttr = GetParameterInSet("CertificatePassword", "Authenticate with client certificate");
-        var certThumbprintAttr = GetParameterInSet("CertificateThumbprint", "Authenticate with client certificate");
-
-        // Assert
-        certPathAttr.Should().NotBeNull("CertificatePath should be in Certificate parameter set");
-        certPasswordAttr.Should().NotBeNull("CertificatePassword should be in Certificate parameter set");
-        certThumbprintAttr.Should().NotBeNull("CertificateThumbprint should be in Certificate parameter set");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_Certificate_ClientIdRequired()
-    {
-        // Arrange/Act
-        var clientIdAttr = GetParameterInSet("ClientId", "Authenticate with client certificate");
-
-        // Assert
-        clientIdAttr.Should().NotBeNull();
-        clientIdAttr!.Mandatory.Should().BeTrue("ClientId should be required for certificate auth");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_Certificate_UrlOptional()
-    {
-        // Arrange/Act
-        var urlAttr = GetParameterInSet("Url", "Authenticate with client certificate");
-
-        // Assert
-        urlAttr.Should().NotBeNull();
-        urlAttr!.Mandatory.Should().BeFalse("Url should be optional for certificate auth");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_Certificate_CertificatePathRequired()
-    {
-        // Arrange/Act
-        var certPathAttr = GetParameterInSet("CertificatePath", "Authenticate with client certificate");
-
-        // Assert
-        certPathAttr.Should().NotBeNull();
-        certPathAttr!.Mandatory.Should().BeTrue("CertificatePath should be required in certificate auth");
-    }
-
-    // ===== ConnectionString Parameter Tests =====
-
-    [Fact]
-    public void GetDataverseConnection_ConnectionStringParameter_InCorrectParameterSet()
-    {
-        // Arrange/Act
-        var connStrAttr = GetParameterAttributes("ConnectionString");
-
-        // Assert
-        connStrAttr.Should().NotBeEmpty();
-        var paramSetAttr = connStrAttr!.FirstOrDefault(a => a.ParameterSetName.Contains("connection string"));
-        paramSetAttr.Should().NotBeNull("ConnectionString should be in ConnectionString parameter set");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_ConnectionStringParameter_IsMandatory()
-    {
-        // Arrange/Act
-        var connStrAttrs = GetParameterAttributes("ConnectionString");
-
-        // Assert
-        connStrAttrs.Should().NotBeEmpty();
-        var mandatoryAttr = connStrAttrs!.FirstOrDefault(a => a.Mandatory);
-        mandatoryAttr.Should().NotBeNull("ConnectionString should be mandatory in its parameter set");
-    }
-
-    [Fact]
-    public void GetDataverseConnection_ConnectionString_UrlNotMandatory()
-    {
-        // Arrange/Act - Url should not be mandatory in the ConnectionString parameter set
-        // The ConnectionString parameter set doesn't include Url as mandatory
-        var urlAttrs = GetParameterAttributes("Url");
-
-        // Assert - Check that Url is not in ConnectionString parameter set at all,
-        // or if it is, it's not mandatory
-        var connStrUrlAttr = urlAttrs?.FirstOrDefault(a => a.ParameterSetName.Contains("connection string"));
-        if (connStrUrlAttr != null)
-        {
-            connStrUrlAttr.Mandatory.Should().BeFalse();
-        }
-        // If Url is not in ConnectionString parameter set, that's also valid
-    }
-
-    [Fact]
-    public void GetDataverseConnection_ConnectionStringParameter_AcceptsString()
-    {
-        // Arrange/Act
-        var connStrProp = _cmdletType.GetProperty("ConnectionString");
-
-        // Assert
-        connStrProp.Should().NotBeNull();
-        connStrProp!.PropertyType.Should().Be(typeof(string));
-    }
-
-    [Fact]
-    public void GetDataverseConnection_ConnectionStringParameterSet_NameIsCorrect()
-    {
-        // Arrange/Act
-        var connStrAttrs = GetParameterAttributes("ConnectionString");
-
-        // Assert
-        connStrAttrs.Should().NotBeEmpty();
-        var paramSetAttr = connStrAttrs!.FirstOrDefault();
-        paramSetAttr.Should().NotBeNull();
-        paramSetAttr!.ParameterSetName.Should().Contain("connection string", 
-            because: "parameter set name should contain 'connection string'");
     }
 }

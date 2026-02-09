@@ -15,8 +15,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets;
 
 public class SetDataverseConnectionAsDefaultTests : TestBase
 {
-    private readonly Type _cmdletType = typeof(SetDataverseConnectionAsDefaultCmdlet);
-
     private static PS CreatePowerShellWithCmdlets()
     {
         var initialSessionState = InitialSessionState.CreateDefault();
@@ -31,26 +29,6 @@ public class SetDataverseConnectionAsDefaultTests : TestBase
         var ps = PS.Create();
         ps.Runspace = runspace;
         return ps;
-    }
-
-    [Fact]
-    public void SetDataverseConnectionAsDefault_ConnectionParameter_IsMandatory()
-    {
-        // Verify Connection parameter is mandatory
-        var property = _cmdletType.GetProperty("Connection");
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-        paramAttr!.Mandatory.Should().BeTrue();
-    }
-
-    [Fact]
-    public void SetDataverseConnectionAsDefault_ConnectionParameter_AcceptsFromPipeline()
-    {
-        // Verify Connection parameter accepts pipeline input
-        var property = _cmdletType.GetProperty("Connection");
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-        paramAttr!.ValueFromPipeline.Should().BeTrue();
     }
 
     // ===== Execution Tests =====

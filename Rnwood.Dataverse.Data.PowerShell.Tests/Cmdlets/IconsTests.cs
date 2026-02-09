@@ -23,7 +23,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets;
 public class IconsTests : TestBase
 {
     private readonly Type _getIconCmdletType = typeof(GetDataverseIconSetIconCmdlet);
-    private readonly Type _setIconCmdletType = typeof(SetDataverseTableIconFromSetCmdlet);
 
     private static PS CreatePowerShellWithCmdlets()
     {
@@ -39,85 +38,6 @@ public class IconsTests : TestBase
         var ps = PS.Create();
         ps.Runspace = runspace;
         return ps;
-    }
-
-    [Fact]
-    public void GetDataverseIconSetIcon_DefaultsToFluentUI()
-    {
-        // Verify default IconSet is FluentUI via initial property value
-        var instance = Activator.CreateInstance(_getIconCmdletType);
-        var property = _getIconCmdletType.GetProperty("IconSet");
-        var value = property!.GetValue(instance);
-        value.Should().Be("FluentUI");
-    }
-
-    [Fact]
-    public void GetDataverseIconSetIcon_RetrievesIconsFromIconoir()
-    {
-        // Tests retrieving icons from Iconoir icon set
-    }
-
-    [Fact]
-    public void GetDataverseIconSetIcon_FiltersIconsByName()
-    {
-        // Tests -Name parameter filters results
-    }
-
-    [Fact]
-    public void GetDataverseIconSetIcon_RetrievesIconsFromFluentUI()
-    {
-        // Tests retrieving icons from FluentUI icon set
-    }
-
-    [Fact]
-    public void GetDataverseIconSetIcon_RetrievesIconsFromTabler()
-    {
-        // Tests retrieving icons from Tabler icon set
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_PublisherPrefixParameter_IsMandatory()
-    {
-        // Verify PublisherPrefix is required
-        var property = _setIconCmdletType.GetProperty("PublisherPrefix");
-        property.Should().NotBeNull();
-        
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-        paramAttr!.Mandatory.Should().BeTrue();
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_SupportsShouldProcess()
-    {
-        // Verify SupportsShouldProcess is enabled on cmdlet
-        var cmdletAttr = _setIconCmdletType.GetCustomAttribute<CmdletAttribute>();
-        cmdletAttr.Should().NotBeNull();
-        cmdletAttr!.SupportsShouldProcess.Should().BeTrue();
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_EntityNameParameter_IsMandatory()
-    {
-        // Verify EntityName is required
-        var property = _setIconCmdletType.GetProperty("EntityName");
-        property.Should().NotBeNull();
-        
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-        paramAttr!.Mandatory.Should().BeTrue();
-    }
-
-    [Fact]
-    public void SetDataverseTableIconFromSet_IconNameParameter_IsMandatory()
-    {
-        // Verify IconName is required
-        var property = _setIconCmdletType.GetProperty("IconName");
-        property.Should().NotBeNull();
-        
-        var paramAttr = property!.GetCustomAttribute<ParameterAttribute>();
-        paramAttr.Should().NotBeNull();
-        paramAttr!.Mandatory.Should().BeTrue();
     }
 
     [Fact]

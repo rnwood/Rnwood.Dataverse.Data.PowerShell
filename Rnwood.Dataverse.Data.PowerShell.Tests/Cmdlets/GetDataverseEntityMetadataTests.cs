@@ -1,3 +1,4 @@
+using System;
 using FluentAssertions;
 using Microsoft.Xrm.Sdk.Metadata;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
@@ -14,8 +15,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
     /// Tests for Get-DataverseEntityMetadata cmdlet
     /// Migrated from tests/Get-DataverseMetadata.Tests.ps1 (entity-related tests)
     /// </summary>
-    public class GetDataverseEntityMetadataTests : TestBase
+    public class GetDataverseEntityMetadataTests : TestBase, IDisposable
     {
+        public GetDataverseEntityMetadataTests()
+        {
+            ClearDefaultConnection();
+        }
+
+        public override void Dispose()
+        {
+            ClearDefaultConnection();
+            base.Dispose();
+        }
+
         // ===== Single Entity Retrieval ===== (3 tests)
 
         [Fact]

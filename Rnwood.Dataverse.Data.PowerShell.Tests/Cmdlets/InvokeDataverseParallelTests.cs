@@ -11,9 +11,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 {
     /// <summary>
     /// Tests for Invoke-DataverseParallel cmdlet.
-    /// Note: These tests use thread-local connection storage in DefaultConnectionManager
-    /// which allows worker runspaces to have their own connections without requiring
-    /// Set-DataverseConnectionAsDefault to be available as a cmdlet.
+    /// Note: Worker runspaces require Set-DataverseConnectionAsDefault cmdlet to be registered
+    /// so that the parallel script can set the connection context.
     /// </summary>
     public class InvokeDataverseParallelTests : TestBase
     {
@@ -24,6 +23,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Invoke-DataverseParallel", typeof(InvokeDataverseParallelCmdlet), null));
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();
@@ -38,13 +39,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             // Act - Process in parallel with chunk size 3
             // ScriptBlock doubles each input number
             ps.AddScript(@"
-                param($connection, $input)
-                $input | Invoke-DataverseParallel -Connection $connection -ChunkSize 3 -ScriptBlock {
+                param($connection, $inputData)
+                $inputData | Invoke-DataverseParallel -Connection $connection -ChunkSize 3 -ScriptBlock {
                     $_ | ForEach-Object { $_ * 2 }
                 }
             ")
             .AddParameter("connection", mockConnection)
-            .AddParameter("input", input);
+            .AddParameter("inputData", input);
 
             var results = ps.Invoke();
 
@@ -55,8 +56,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
                 throw new Exception($"PowerShell had errors:{Environment.NewLine}{errorMessages}");
             }
 
+            // Output verbose messages for debugging
+            if (ps.Streams.Verbose.Count > 0)
+            {
+                var verboseMessages = string.Join(Environment.NewLine, ps.Streams.Verbose.Select(v => v.Message));
+                Console.WriteLine($"Verbose messages:{Environment.NewLine}{verboseMessages}");
+            }
+
             // Assert
             ps.HadErrors.Should().BeFalse();
+            Console.WriteLine($"Results count: {results.Count}");
             results.Should().HaveCount(10);
 
             // Order may vary due to parallelism, so sort before comparing
@@ -71,6 +80,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Invoke-DataverseParallel", typeof(InvokeDataverseParallelCmdlet), null));
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();
@@ -83,15 +94,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 
             // Act - Connection is available via thread-local storage in script block
             ps.AddScript(@"
-                param($connection, $input)
-                $input | Invoke-DataverseParallel -Connection $connection -ChunkSize 2 -ScriptBlock {
+                param($connection, $inputData)
+                $inputData | Invoke-DataverseParallel -Connection $connection -ChunkSize 2 -ScriptBlock {
                     $_ | ForEach-Object { ""success-$_"" }
                 }
             ")
             .AddParameter("connection", mockConnection)
-            .AddParameter("input", input);
+            .AddParameter("inputData", input);
 
             var results = ps.Invoke();
+
+            // Output errors for debugging
+            if (ps.HadErrors)
+            {
+                var errorMessages = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => $"{e}: {e.Exception}"));
+                throw new Exception($"PowerShell had errors:{Environment.NewLine}{errorMessages}");
+            }
 
             // Assert
             ps.HadErrors.Should().BeFalse();
@@ -106,6 +124,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Invoke-DataverseParallel", typeof(InvokeDataverseParallelCmdlet), null));
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();
@@ -119,15 +139,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 
             // Act - Script block receives individual items, not chunks
             ps.AddScript(@"
-                param($connection, $input)
-                $input | Invoke-DataverseParallel -Connection $connection -ChunkSize 10 -ScriptBlock {
+                param($connection, $inputData)
+                $inputData | Invoke-DataverseParallel -Connection $connection -ChunkSize 10 -ScriptBlock {
                     $_
                 }
             ")
             .AddParameter("connection", mockConnection)
-            .AddParameter("input", input);
+            .AddParameter("inputData", input);
 
             var results = ps.Invoke();
+
+            // Output errors for debugging
+            if (ps.HadErrors)
+            {
+                var errorMessages = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => $"{e}: {e.Exception}"));
+                throw new Exception($"PowerShell had errors:{Environment.NewLine}{errorMessages}");
+            }
 
             // Assert
             ps.HadErrors.Should().BeFalse();
@@ -141,6 +168,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Invoke-DataverseParallel", typeof(InvokeDataverseParallelCmdlet), null));
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();
@@ -170,6 +199,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Invoke-DataverseParallel", typeof(InvokeDataverseParallelCmdlet), null));
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();
@@ -178,16 +209,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 
             var mockConnection = CreateMockConnection("contact");
 
-            // Act - Single item
+            // Act - Single item with -Verbose to capture diagnostics
             ps.AddScript(@"
                 param($connection)
-                @(42) | Invoke-DataverseParallel -Connection $connection -ChunkSize 5 -ScriptBlock {
+                @(42) | Invoke-DataverseParallel -Connection $connection -ChunkSize 5 -Verbose -ScriptBlock {
                     $_ | ForEach-Object { $_ * 2 }
                 }
             ")
             .AddParameter("connection", mockConnection);
 
             var results = ps.Invoke();
+
+            // Capture and display all streams for diagnostics
+            if (ps.Streams.Verbose.Count > 0)
+            {
+                var verboseOutput = string.Join(Environment.NewLine, ps.Streams.Verbose.Select(v => $"VERBOSE: {v.Message}"));
+                Console.WriteLine(verboseOutput);
+            }
+
+            if (ps.Streams.Warning.Count > 0)
+            {
+                var warningOutput = string.Join(Environment.NewLine, ps.Streams.Warning.Select(w => $"WARNING: {w.Message}"));
+                Console.WriteLine(warningOutput);
+            }
+
+            // Output errors for debugging
+            if (ps.HadErrors)
+            {
+                var errorMessages = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => $"ERROR: {e}: {e.Exception?.Message}" + Environment.NewLine + e.Exception?.StackTrace));
+                Console.WriteLine(errorMessages);
+                throw new Exception($"PowerShell had errors:{Environment.NewLine}{errorMessages}");
+            }
+
+            Console.WriteLine($"Results: {string.Join(", ", results.Select(r => r.BaseObject))}");
 
             // Assert
             ps.HadErrors.Should().BeFalse();

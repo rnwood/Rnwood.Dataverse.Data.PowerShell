@@ -5,6 +5,7 @@ using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using FluentAssertions;
+using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -124,10 +125,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         {
             // Arrange
             using var ps = CreatePowerShellWithCmdlets();
-            var mockConnection = CreateMockConnection(UpsertRequestInterceptor, "contact");
-
-            // Add alternate key metadata to contact entity
-            AddAlternateKeyToMetadata("contact", "emailaddress1_key", new[] { "emailaddress1" });
+            
+            // Create mock connection with alternate key - scoped to this test only
+            var mockConnection = CreateMockConnectionWithAlternateKeys("contact", "emailaddress1_key", 
+                new[] { "emailaddress1" }, UpsertRequestInterceptor);
 
             var newRecord = PSObject.AsPSObject(new
             {
@@ -165,10 +166,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         {
             // Arrange
             using var ps = CreatePowerShellWithCmdlets();
-            var mockConnection = CreateMockConnection(UpsertRequestInterceptor, "contact");
-
-            // Add alternate key metadata to contact entity
-            AddAlternateKeyToMetadata("contact", "emailaddress1_key", new[] { "emailaddress1" });
+            
+            // Create mock connection with alternate key - scoped to this test only
+            var mockConnection = CreateMockConnectionWithAlternateKeys("contact", "emailaddress1_key", 
+                new[] { "emailaddress1" }, UpsertRequestInterceptor);
 
             // Create existing record
             var existingId = Service!.Create(new Entity("contact")
@@ -221,10 +222,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
                 return UpsertRequestInterceptor(request);
             }
 
-            var mockConnection = CreateMockConnection(CapturingInterceptor, "contact");
-
-            // Add alternate key metadata to contact entity
-            AddAlternateKeyToMetadata("contact", "emailaddress1_key", new[] { "emailaddress1" });
+            // Create mock connection with alternate key - scoped to this test only
+            var mockConnection = CreateMockConnectionWithAlternateKeys("contact", "emailaddress1_key", 
+                new[] { "emailaddress1" }, CapturingInterceptor);
 
             var newRecord = PSObject.AsPSObject(new
             {
@@ -265,10 +265,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         {
             // Arrange
             using var ps = CreatePowerShellWithCmdlets();
-            var mockConnection = CreateMockConnection(UpsertRequestInterceptor, "contact");
-
-            // Add alternate key metadata to contact entity
-            AddAlternateKeyToMetadata("contact", "emailaddress1_key", new[] { "emailaddress1" });
+            
+            // Create mock connection with alternate key - scoped to this test only
+            var mockConnection = CreateMockConnectionWithAlternateKeys("contact", "emailaddress1_key", 
+                new[] { "emailaddress1" }, UpsertRequestInterceptor);
 
             // Create one existing record
             Service!.Create(new Entity("contact")
@@ -368,7 +368,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             {
                 ps.Invoke(new[] { newRecord });
             }
-            catch (ArgumentException)
+            catch (CmdletInvocationException ex) when (ex.InnerException is ArgumentException)
             {
                 argumentExceptionThrown = true;
             }
@@ -413,10 +413,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
                 return UpsertRequestInterceptor(request);
             }
 
-            var mockConnection = CreateMockConnection(TrackingInterceptor, "contact");
-
-            // Add alternate key metadata to contact entity
-            AddAlternateKeyToMetadata("contact", "emailaddress1_key", new[] { "emailaddress1" });
+            // Create mock connection with alternate key - scoped to this test only
+            var mockConnection = CreateMockConnectionWithAlternateKeys("contact", "emailaddress1_key", 
+                new[] { "emailaddress1" }, TrackingInterceptor);
 
             var record1 = PSObject.AsPSObject(new
             {
@@ -475,9 +474,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         }
 
         /// <summary>
+        /// Creates a mock connection with alternate key metadata added to the contact entity.
+        /// This ensures alternate key validation is scoped to only this test, not affecting global metadata cache.
+        /// </summary>
+        private ServiceClient CreateMockConnectionWithAlternateKeys(string entityName, string keyName, string[] keyAttributes,
+            Func<OrganizationRequest, OrganizationResponse?>? requestInterceptor = null)
+        {
+            // Load and clone the entity metadata to avoid modifying the shared cache
+            var entityMetadata = LoadEntityMetadata(entityName);
+            if (entityMetadata == null)
+            {
+                throw new InvalidOperationException($"Entity metadata for '{entityName}' not found");
+            }
+
+            // Clone to ensure we don't modify the cached version
+            var clonedMetadata = CloneEntityMetadata(entityMetadata);
+
+            // Create alternate key metadata
+            var alternateKey = new EntityKeyMetadata
+            {
+                LogicalName = keyName,
+                SchemaName = keyName,
+                KeyAttributes = keyAttributes
+            };
+
+            // Add to entity's Keys collection
+            var keysList = clonedMetadata.Keys?.ToList() ?? new List<EntityKeyMetadata>();
+            keysList.Add(alternateKey);
+            
+            // Update metadata - use reflection to set the internal array
+            var keysProperty = typeof(EntityMetadata).GetProperty("Keys");
+            if (keysProperty != null)
+            {
+                keysProperty.SetValue(clonedMetadata, keysList.ToArray());
+            }
+
+            // Create mock connection with custom metadata
+            var customMetadata = new List<EntityMetadata> { clonedMetadata };
+            return CreateMockConnectionWithCustomMetadata(requestInterceptor, customMetadata);
+        }
+
+        /// <summary>
         /// Adds an alternate key to the specified entity's metadata.
         /// This is required for testing alternate key functionality with FakeXrmEasy.
+        /// DEPRECATED: Use CreateMockConnectionWithAlternateKeys instead to avoid modifying global cache.
         /// </summary>
+        [Obsolete("Use CreateMockConnectionWithAlternateKeys() to avoid modifying global metadata cache")]
         private void AddAlternateKeyToMetadata(string entityName, string keyName, string[] keyAttributes)
         {
             var entityMetadata = LoadedMetadata.FirstOrDefault(m => m.LogicalName == entityName);
