@@ -166,8 +166,8 @@ Invokes an arbitrary Dataverse request and returns the response.
 ### [Invoke-DataverseSolutionUpgrade](Invoke-DataverseSolutionUpgrade.md)
 Applies a staged solution upgrade by deleting the original solution and promoting the holding solution.
 
-### [Invoke-DataverseSolutionUpgrade](Invoke-DataverseSolutionUpgrade.md)
-Applies a staged solution upgrade by deleting the original solution and promoting the holding solution.
+### [Invoke-DataverseSql](Invoke-DataverseSql.md)
+Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the pipeline.
 
 ### [Invoke-DataverseXrmToolbox](Invoke-DataverseXrmToolbox.md)
 Invokes an XrmToolbox plugin downloaded from NuGet with the current Dataverse connection injected.

@@ -41,10 +41,25 @@ Write-Output 'PASS'
 if (-not (Test-Path $moduleManifest)) { throw ""Module manifest not found at $moduleManifest"" }
 if (-not (Test-Path $modulePath)) { throw ""Module path not found at $modulePath"" }
 
+# Detect PowerShell edition and select appropriate cmdlets directory
+# Desktop = Windows PowerShell 5.1 (.NET Framework) → net462
+# Core = PowerShell 7+ (.NET Core/8+) → net8.0
+$targetFramework = if ($PSVersionTable.PSEdition -eq 'Core') { 'net8.0' } else { 'net462' }
+Write-Verbose ""Detected PowerShell edition: $($PSVersionTable.PSEdition), using target framework: $targetFramework""
+
 # Pre-load SDK assembly from module path to simulate preexisting load
-$assemblyPath = Join-Path $modulePath 'cmdlets/net8.0/Microsoft.Xrm.Sdk.dll'
+# Note: Add-Type may throw ReflectionTypeLoadException because some types in the SDK
+# have dependencies that aren't loaded yet, but the assembly itself still gets loaded
+# into the AppDomain. We suppress this expected error.
+$assemblyPath = Join-Path $modulePath ""cmdlets/$targetFramework/Microsoft.Xrm.Sdk.dll""
+if (-not (Test-Path $assemblyPath)) { throw ""SDK assembly not found at $assemblyPath"" }
 $resolvedAssemblyPath = (Resolve-Path $assemblyPath).Path
-Add-Type -Path $resolvedAssemblyPath
+try {
+    Add-Type -Path $resolvedAssemblyPath -ErrorAction Stop
+} catch [System.Reflection.ReflectionTypeLoadException] {
+    # Expected error - assembly is still loaded despite some types failing to load
+    Write-Verbose ""ReflectionTypeLoadException caught (expected): $($_.Exception.Message)""
+}
 
 # Import module after SDK assembly is already loaded
 Import-Module $moduleManifest -Force -ErrorAction Stop

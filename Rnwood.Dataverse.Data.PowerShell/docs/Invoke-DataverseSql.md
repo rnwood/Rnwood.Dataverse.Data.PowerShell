@@ -13,7 +13,7 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 ## SYNTAX
 
 ```
-Invoke-DataverseSql -Sql <String> [-UseTdsEndpoint] [-Timeout <Int32>] [-Parameters <PSObject>]
+Invoke-DataverseSql [-Sql] <String> [-UseTdsEndpoint] [-Timeout <Int32>] [-Parameters <PSObject>]
  [-BatchSize <Int32>] [-MaxDegreeOfParallelism <Int32>] [-BypassCustomPluginExecution] [-UseBulkDelete]
  [-ReturnEntityReferenceAsGuid] [-UseLocalTimezone] [-AdditionalConnections <Hashtable>]
  [-DataSourceName <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
@@ -53,9 +53,9 @@ The cmdlet supports querying across multiple Dataverse environments using the `d
 **Why use `-DataSourceName`?**
 Organization unique names differ across environments (dev/test/prod). By setting explicit datasource names, your SQL queries remain portable:
 
-**Without `-DataSourceName`:** Environment-specific — `Invoke-DataverseSql -Sql "SELECT * FROM org12345abc..account"` (Only works in one environment)
+**Without `-DataSourceName`:** Environment-specific - `Invoke-DataverseSql -Sql "SELECT * FROM org12345abc..account"` (Only works in one environment)
 
-**With `-DataSourceName`:** Portable across all environments — `Invoke-DataverseSql -DataSourceName "primary" -Sql "SELECT * FROM primary..account"` (Works everywhere)
+**With `-DataSourceName`:** Portable across all environments - `Invoke-DataverseSql -DataSourceName "primary" -Sql "SELECT * FROM primary..account"` (Works everywhere)
 
 ## EXAMPLES
 
@@ -221,20 +221,20 @@ Hashtable of additional Dataverse connections for cross-datasource queries. Keys
 When specified, these connections can be referenced in SQL queries using `datasourcename..tablename` syntax (double-dot).
 
 **Example:**
-```powershell
+
+
 $additionalConnections = @{
     "secondary" = $secondaryConnection
     "archive" = $archiveConnection
 }
-```
 
 **SQL usage:**
-```sql
+
+
 SELECT a.name, s.email
 FROM primary..account a
 JOIN secondary..contact s ON a.primarycontactid = s.contactid
 LEFT JOIN archive..auditlog al ON a.accountid = al.objectid
-```
 
 ```yaml
 Type: Hashtable
@@ -301,16 +301,16 @@ Use this to assign a stable, environment-independent name for portable SQL queri
 **Why use this:** Organization unique names differ between environments. Setting an explicit datasource name ensures SQL queries remain identical across all environments.
 
 **Example without `-DataSourceName`:**
-```sql
+
+
 -- Environment-specific (breaks when moving between environments)
 SELECT * FROM org12345abc..account  -- Only works in one environment
-```
 
 **Example with `-DataSourceName "primary"`:**
-```sql
+
+
 -- Portable (works in all environments)
 SELECT * FROM primary..account  -- Works everywhere
-```
 
 Used in combination with `-AdditionalConnections` and the `datasourcename..tablename` syntax. 
 
@@ -345,22 +345,22 @@ Accept wildcard characters: False
 Provides values for `@parameters` referenced in the SQL query. Accepts a Hashtable or any PSObject with properties.
 
 **Parameter syntax in SQL:** Use `@paramname` to reference parameters:
-```sql
+
+
 SELECT * FROM contact WHERE lastname = @name AND createdon > @date
-```
 
 **Providing values:**
-```powershell
+
+
 -Parameters @{ name = 'Smith'; date = '2024-01-01' }
-```
 
 **Pipeline usage:** When reading from the pipeline, the query executes once per input object with that object's properties as parameter values:
-```powershell
+
+
 @(
     @{ name = 'Smith'; dept = 'Sales' },
     @{ name = 'Jones'; dept = 'Marketing' }
 ) | Invoke-DataverseSql -Sql "UPDATE contact SET department = @dept WHERE lastname = @name"
-```
 
 ```yaml
 Type: PSObject
@@ -413,9 +413,9 @@ SQL to execute. See Sql4Cds docs for supported queries.
 - `datasourcename..tablename` syntax for cross-datasource queries (requires `-AdditionalConnections`)
 
 The -Sql parameter is positional (position 0), allowing you to omit the parameter name:
-```powershell
+
+
 Invoke-DataverseSql "SELECT * FROM contact WHERE lastname = @name" -Parameters @{ name = 'Smith' }
-```
 
 ```yaml
 Type: String
@@ -520,7 +520,7 @@ Accept wildcard characters: False
 ```
 
 ### CommonParameters
-This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable,  -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
+This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
 ## INPUTS
 
