@@ -17,6 +17,46 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Sitemap
             var script = GetConnectionScript(@"
 $ErrorActionPreference = 'Stop'
 
+<<<<<<< HEAD
+=======
+function Invoke-WithRetry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$ScriptBlock,
+        [int]$MaxRetries = 5,
+        [int]$InitialDelaySeconds = 10
+    )
+
+    $attempt = 0
+    $delay = $InitialDelaySeconds
+
+    while ($attempt -lt $MaxRetries) {
+        try {
+            $attempt++
+            Write-Verbose ""Attempt $attempt of $MaxRetries""
+            & $ScriptBlock
+            return
+        }
+        catch {
+            if ($_.Exception.Message -like '*Cannot start the requested operation*EntityCustomization*') {
+                Write-Warning 'EntityCustomization operation conflict. Waiting 2 minutes...'
+                $attempt--
+                Start-Sleep -Seconds 120
+                continue
+            }
+            
+            if ($attempt -eq $MaxRetries) {
+                throw
+            }
+
+            Write-Warning ""Attempt $attempt failed: $_. Retrying in $delay seconds...""
+            Start-Sleep -Seconds $delay
+            $delay = $delay * 2
+        }
+    }
+}
+
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 try {
     # Generate unique test identifiers to avoid conflicts with parallel CI runs
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
@@ -28,6 +68,10 @@ try {
     # --- CLEANUP: Remove any previously failed test sitemaps ---
     Write-Host 'Cleaning up any existing test sitemaps from previous failed runs...'
     $existingSitemaps = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemap -Connection $connection | Where-Object {
             $_.UniqueName -like 'test_sitemap_*'
         }
@@ -37,6 +81,10 @@ try {
         Write-Host ""  Removing old sitemap: $($existingSitemap.UniqueName) (ID: $($existingSitemap.Id))""
         try {
             Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+                Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
                 Remove-DataverseSitemap -Connection $connection -Id $existingSitemap.Id -IfExists -Confirm:$false
             }
         } catch {
@@ -68,6 +116,10 @@ try {
 ""@
     
     $sitemapId = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseSitemap -Connection $connection -Name $sitemapName -UniqueName $sitemapUniqueName -SitemapXml $sitemapXml -PassThru -Confirm:$false
     }
     
@@ -79,6 +131,10 @@ try {
     # --- TEST 2: Retrieve the created sitemap ---
     Write-Host ""`nTest 2: Retrieving sitemap by UniqueName...""
     $retrievedSitemap = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName
     }
     
@@ -96,6 +152,10 @@ try {
     # --- TEST 3: Retrieve sitemap by ID ---
     Write-Host ""`nTest 3: Retrieving sitemap by ID...""
     $retrievedById = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemap -Connection $connection -Id $sitemapId
     }
     
@@ -113,15 +173,27 @@ try {
     
     # Get current sitemap to retrieve XML
     $currentSitemap = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemap -Connection $connection -Id $sitemapId
     }
     
     # Update name along with XML to ensure proper Dataverse handling
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -SitemapXml $currentSitemap.SitemapXml -Confirm:$false
     }
     
     $updatedSitemap = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemap -Connection $connection -Id $sitemapId
     }
     if ($updatedSitemap.Name -ne $updatedName) {
@@ -134,6 +206,10 @@ try {
     
     # Get all entries
     $allEntries = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId
     }
     if ($allEntries.Count -eq 0) {
@@ -143,6 +219,10 @@ try {
     
     # Get Area entries
     $areaEntries = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area
     }
     if ($areaEntries.Count -eq 0) {
@@ -152,6 +232,10 @@ try {
     
     # Get Group entries
     $groupEntries = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group
     }
     if ($groupEntries.Count -eq 0) {
@@ -161,6 +245,10 @@ try {
     
     # Get SubArea entries
     $subAreaEntries = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea
     }
     if ($subAreaEntries.Count -eq 0) {
@@ -172,6 +260,10 @@ try {
     Write-Host ""`nTest 6: Adding new Area entry...""
     $newAreaId = ""area_new_$testRunId""
     $newAreaEntry = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area ```
         -EntryId $newAreaId ```
         -Titles @{ 1033 = ""New Test Area $testRunId"" } ```
@@ -186,6 +278,10 @@ try {
     
     # Verify new area exists
     $verifyArea = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area -EntryId $newAreaId
     }
     if (-not $verifyArea) {
@@ -197,6 +293,10 @@ try {
     Write-Host ""`nTest 7: Adding Group to new Area...""
     $newGroupId = ""group_new_$testRunId""
     $newGroupEntry = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group ```
         -EntryId $newGroupId ```
         -ParentAreaId $newAreaId ```
@@ -213,6 +313,10 @@ try {
     Write-Host ""`nTest 8: Adding SubArea to new Group...""
     $newSubAreaId = ""subarea_new_$testRunId""
     $newSubAreaEntry = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea ```
         -EntryId $newSubAreaId ```
         -ParentAreaId $newAreaId ```
@@ -231,6 +335,10 @@ try {
     # --- TEST 9: Update an existing entry ---
     Write-Host ""`nTest 9: Updating SubArea entry...""
     $updatedSubAreaEntry = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea ```
         -EntryId $newSubAreaId ```
         -Titles @{ 1033 = ""Updated SubArea $testRunId"" } ```
@@ -243,6 +351,10 @@ try {
     
     # Verify update
     $verifyUpdatedSubArea = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId
     }
     $updatedTitle = $verifyUpdatedSubArea.Titles[1033]
@@ -254,12 +366,20 @@ try {
     # --- TEST 10: Publish sitemap ---
     Write-Host ""`nTest 10: Publishing sitemap...""
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -Publish -Confirm:$false
     }
     Write-Host 'Successfully published sitemap'
     
     # Verify published sitemap is retrievable
     $publishedSitemap = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemap -Connection $connection -Id $sitemapId -Published
     }
     if (-not $publishedSitemap) {
@@ -272,6 +392,10 @@ try {
     
     # Get the current sitemap XML before publish-only operation
     $sitemapBeforePublish = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName
     }
     
@@ -285,12 +409,20 @@ try {
     # This was the original issue: Set-DataverseSitemap -UniqueName 'XYZ' -Publish
     # It should NOT empty the sitemap XML
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName -Publish -Confirm:$false
     }
     Write-Host '  Publish-only operation completed'
     
     # Verify the sitemap XML is NOT empty after publish-only operation
     $sitemapAfterPublish = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName
     }
     
@@ -311,11 +443,19 @@ try {
     # --- TEST 11: Remove SubArea entry ---
     Write-Host ""`nTest 11: Removing SubArea entry...""
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Remove-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId -Confirm:$false
     }
     
     # Verify deletion
     $deletedSubArea = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea -EntryId $newSubAreaId
     }
     if ($deletedSubArea) {
@@ -326,12 +466,20 @@ try {
     # --- CLEANUP: Remove the test sitemap ---
     Write-Host ""`nCleaning up: Removing test sitemap...""
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Remove-DataverseSitemap -Connection $connection -Id $sitemapId -Confirm:$false
     }
     Write-Host 'Successfully removed test sitemap'
     
     # Verify deletion
     $deletedSitemap = Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Get-DataverseSitemap -Connection $connection -Id $sitemapId
     }
     if ($deletedSitemap) {
@@ -367,7 +515,11 @@ catch {
 }
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
+=======
+            var result = RunScript(script, timeoutSeconds: 600);
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("All sitemap tests passed successfully");

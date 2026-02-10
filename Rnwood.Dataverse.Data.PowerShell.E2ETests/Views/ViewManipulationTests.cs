@@ -19,6 +19,41 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Views
             var script = GetConnectionScript(@"
 $ErrorActionPreference = 'Stop'
 
+<<<<<<< HEAD
+=======
+# Retry helper function
+function Invoke-WithRetry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$ScriptBlock,
+        [int]$MaxRetries = 5,
+        [int]$InitialDelaySeconds = 10
+    )
+
+    $attempt = 0
+    $delay = $InitialDelaySeconds
+
+    while ($attempt -lt $MaxRetries) {
+        try {
+            $attempt++
+            Write-Verbose ""Attempt $attempt of $MaxRetries""
+            & $ScriptBlock
+            return
+        }
+        catch {
+            if ($attempt -eq $MaxRetries) {
+                Write-Error ""All $MaxRetries attempts failed. Last error: $_""
+                throw
+            }
+
+            Write-Warning ""Attempt $attempt failed: $_. Retrying in $delay seconds...""
+            Start-Sleep -Seconds $delay
+            $delay = $delay * 2
+        }
+    }
+}
+
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 try {
     # Generate unique test identifiers
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
@@ -138,9 +173,15 @@ try {
 }
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 120);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
     }

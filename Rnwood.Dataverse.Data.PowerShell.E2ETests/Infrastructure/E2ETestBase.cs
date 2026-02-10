@@ -32,6 +32,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
         }
 
         /// <summary>
+<<<<<<< HEAD
         /// Gets the PowerShell statement to import the module.
         /// Uses TESTMODULEPATH environment variable if set (for CI/testing newly built module),
         /// otherwise imports by name (for testing installed module).
@@ -39,16 +40,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
         protected string GetModuleImportStatement()
         {
             var modulePath = Environment.GetEnvironmentVariable("TESTMODULEPATH");
+=======
+        /// Creates a PowerShell script that imports the module and establishes a connection.
+        /// </summary>
+        protected string GetConnectionScript(string additionalScript = "")
+        {
+            // Get module path from environment variable or use default
+            var modulePath = Environment.GetEnvironmentVariable("TESTMODULEPATH");
+            string importStatement;
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             
             if (!string.IsNullOrWhiteSpace(modulePath))
             {
                 // Import from specific path (for testing newly built module)
                 var manifestPath = System.IO.Path.Combine(modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1");
+<<<<<<< HEAD
                 return $"Import-Module '{manifestPath}' -Force -ErrorAction Stop";
+=======
+                importStatement = $"Import-Module '{manifestPath}' -Force -ErrorAction Stop";
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             }
             else
             {
                 // Import by name (for testing installed module)
+<<<<<<< HEAD
                 return "Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop";
             }
         }
@@ -60,12 +75,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
         protected string GetConnectionScript(string additionalScript = "")
         {
             var importStatement = GetModuleImportStatement();
+=======
+                importStatement = "Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop";
+            }
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             
             return $@"
 {importStatement}
 
 $connection = Get-DataverseConnection -Url '{E2ETestsUrl}' -ClientId '{E2ETestsClientId}' -ClientSecret '{E2ETestsClientSecret}' -ErrorAction Stop
 
+<<<<<<< HEAD
 function Write-ErrorDetails {{
     param([Parameter(Mandatory = $true)]$ErrorRecord)
     
@@ -207,6 +227,8 @@ function Invoke-WithRetry {{
     }}
 }}
 
+=======
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 {additionalScript}
 ";
         }
@@ -215,11 +237,18 @@ function Invoke-WithRetry {{
         /// Runs a PowerShell script using PowerShellProcessRunner with importModule set to false
         /// (since E2E test scripts include Import-Module statements themselves).
         /// Uses auto-detection to select the correct PowerShell executable based on target framework.
+<<<<<<< HEAD
         /// Timeout is set to 30 minutes.
         /// </summary>
         protected Tests.Infrastructure.PowerShellProcessResult RunScript(string script)
         {
             return Tests.Infrastructure.PowerShellProcessRunner.Run(script, usePowerShellCore: null, timeoutSeconds: 1800, importModule: false);
+=======
+        /// </summary>
+        protected Tests.Infrastructure.PowerShellProcessResult RunScript(string script, int timeoutSeconds = 60)
+        {
+            return Tests.Infrastructure.PowerShellProcessRunner.Run(script, usePowerShellCore: null, timeoutSeconds: timeoutSeconds, importModule: false);
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         }
     }
 }

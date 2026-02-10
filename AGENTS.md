@@ -5,8 +5,11 @@ Cross-platform PowerShell module for Microsoft Dataverse data manipulation. Targ
 
 ## Critical Development Requirements
 
+<<<<<<< HEAD
 ALWAYS clean up temporary files in the repo. Don't generate reports as files unless asked for.
 
+=======
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 ### 🔴 MANDATORY: Use the Real Dataverse Environment
 
 **Before making ANY code changes or adding features:**
@@ -82,6 +85,10 @@ dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.Po
 [Fact]
 public async Task YourNewFeature_Should_WorkCorrectly()
 {
+<<<<<<< HEAD
+=======
+    Skip.If(SkipE2ETests, "E2E tests require credentials");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     
     var testScript = GetConnectionScript($@"
         # Your PowerShell test code here
@@ -207,6 +214,10 @@ dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.Po
 **Important Notes:**
 - ALWAYS set `$env:TESTMODULEPATH` before running tests
 - E2E tests spawn child PowerShell processes to test module loading
+<<<<<<< HEAD
+=======
+- Tests will be skipped if environment variables are not set
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 - Use targeted test execution to save time during development
 
 ## Project Architecture & Key Files
@@ -320,6 +331,10 @@ The solution contains 8 projects:
 - Uses PowerShellProcessRunner to execute PowerShell scripts in child processes
 - Tests actual cmdlet behavior against real Dataverse instances
 - Requires E2ETESTS_URL, E2ETESTS_CLIENTID, E2ETESTS_CLIENTSECRET environment variables
+<<<<<<< HEAD
+=======
+- Tests are skipped if credentials not provided
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 
 ### Projects 6-8: XrmToolbox Plugin Projects
 
@@ -478,6 +493,10 @@ docs: update installation instructions
 - Inherit from `TestBase` (infrastructure tests) or `E2ETestBase` (E2E tests)
 - Use descriptive test names: `FeatureName_Should_BehaviorExpected`
 - Follow existing test patterns in the test projects
+<<<<<<< HEAD
+=======
+- Use `Skip.If(SkipE2ETests, "reason")` for E2E tests requiring credentials
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 - Infrastructure tests: Use FakeXrmEasy for mocking
 - E2E tests: Use PowerShellProcessRunner for executing PowerShell scripts
 

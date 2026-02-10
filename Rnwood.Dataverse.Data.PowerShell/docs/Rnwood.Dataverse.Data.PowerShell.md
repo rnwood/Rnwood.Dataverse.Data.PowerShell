@@ -166,8 +166,8 @@ Invokes an arbitrary Dataverse request and returns the response.
 ### [Invoke-DataverseSolutionUpgrade](Invoke-DataverseSolutionUpgrade.md)
 Applies a staged solution upgrade by deleting the original solution and promoting the holding solution.
 
-### [Invoke-DataverseSql](Invoke-DataverseSql.md)
-Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the pipeline.
+### [Invoke-DataverseSolutionUpgrade](Invoke-DataverseSolutionUpgrade.md)
+Applies a staged solution upgrade by deleting the original solution and promoting the holding solution.
 
 ### [Invoke-DataverseXrmToolbox](Invoke-DataverseXrmToolbox.md)
 Invokes an XrmToolbox plugin downloaded from NuGet with the current Dataverse connection injected.
@@ -366,6 +366,9 @@ Adds or updates a solution component in an unmanaged solution, with automatic ha
 
 ### [Set-DataverseTableIconFromSet](Set-DataverseTableIconFromSet.md)
 Sets a table's vector icon by downloading an icon from an online icon set and creating/updating a web resource.
+
+### [Set-DataverseThreadLocalConnection](Set-DataverseThreadLocalConnection.md)
+{{ Fill in the Synopsis }}
 
 ### [Set-DataverseView](Set-DataverseView.md)
 Creates or updates Dataverse views (savedquery and userquery entities) with flexible column and filter configuration.

@@ -24,6 +24,11 @@ $VerbosePreference = 'Continue'
 try {
     Write-Host '=== Dynamic Plugin Assembly E2E Test ==='
     
+<<<<<<< HEAD
+=======
+    $connection.EnableAffinityCookie = $true
+    
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     # Generate unique test identifiers
     $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 6)
@@ -37,6 +42,7 @@ try {
     
     # Create test entity
     Write-Host 'Step 2: Creating test entity...'
+<<<<<<< HEAD
     Invoke-WithRetry {
         Set-DataverseEntityMetadata -Connection $connection `
             -EntityName $testEntityName `
@@ -47,10 +53,22 @@ try {
             -OwnershipType UserOwned `
             -Confirm:$false
     }
+=======
+    Set-DataverseEntityMetadata -Connection $connection `
+        -EntityName $testEntityName `
+        -SchemaName (""new_E2EDynPlugin_${timestamp}_${testRunId}"") `
+        -DisplayName 'E2E Dynamic Plugin Test' `
+        -DisplayCollectionName 'E2E Dynamic Plugin Tests' `
+        -PrimaryAttributeSchemaName 'new_name' `
+        -OwnershipType UserOwned `
+        -Confirm:$false
+    
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     Write-Host '✓ Test entity created'
     
     # Add description field
     Write-Host 'Step 3: Adding description field...'
+<<<<<<< HEAD
     Invoke-WithRetry {
         Set-DataverseAttributeMetadata -Connection $connection `
             -EntityName $testEntityName `
@@ -61,6 +79,17 @@ try {
             -MaxLength 2000 `
             -Confirm:$false
     }
+=======
+    Set-DataverseAttributeMetadata -Connection $connection `
+        -EntityName $testEntityName `
+        -AttributeName 'new_description' `
+        -SchemaName 'new_Description' `
+        -AttributeType Memo `
+        -DisplayName 'Description' `
+        -MaxLength 2000 `
+        -Confirm:$false
+    
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     Write-Host '✓ Description field added'
     Start-Sleep -Seconds 10
     
@@ -93,6 +122,7 @@ namespace TestDynamicPlugins
 
     # Create dynamic plugin assembly
     Write-Host 'Step 4: Creating dynamic plugin assembly...'
+<<<<<<< HEAD
     $assembly = Invoke-WithRetry {
         Set-DataverseDynamicPluginAssembly `
             -Connection $connection `
@@ -101,6 +131,15 @@ namespace TestDynamicPlugins
             -Version '1.0.0.0' `
             -PassThru
     }
+=======
+    $assembly = Set-DataverseDynamicPluginAssembly `
+        -Connection $connection `
+        -SourceCode $pluginSourceV1 `
+        -Name $assemblyName `
+        -Version '1.0.0.0' `
+        -PassThru
+    
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     $assemblyId = $assembly.Id
     Write-Host ""✓ Created plugin assembly: $assemblyId""
     
@@ -123,6 +162,7 @@ namespace TestDynamicPlugins
         -FilterValues @{ sdkmessageid = $createMessage.sdkmessageid; primaryobjecttypecode = $testEntityName } `
         -Columns sdkmessagefilterid | Select-Object -First 1
     
+<<<<<<< HEAD
     $stepId = Invoke-WithRetry {
         Set-DataversePluginStep `
             -Connection $connection `
@@ -134,6 +174,18 @@ namespace TestDynamicPlugins
             -Mode Synchronous `
             -PassThru | Select-Object -ExpandProperty Id
     }
+=======
+    $stepId = Set-DataversePluginStep `
+        -Connection $connection `
+        -Name 'Test Dynamic Plugin Step' `
+        -PluginTypeId $pluginType.Id `
+        -SdkMessageId $createMessage.sdkmessageid `
+        -SdkMessageFilterId $messageFilter.sdkmessagefilterid `
+        -Stage PreOperation `
+        -Mode Synchronous `
+        -PassThru | Select-Object -ExpandProperty Id
+    
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     Write-Host ""✓ Registered plugin step: $stepId""
     Start-Sleep -Seconds 5
     
@@ -184,6 +236,7 @@ namespace TestDynamicPlugins
 }
 ""@
 
+<<<<<<< HEAD
     $assemblyV2 = Invoke-WithRetry {
         Set-DataverseDynamicPluginAssembly `
             -Connection $connection `
@@ -192,6 +245,15 @@ namespace TestDynamicPlugins
             -Version '2.0.0.0' `
             -PassThru
     }
+=======
+    $assemblyV2 = Set-DataverseDynamicPluginAssembly `
+        -Connection $connection `
+        -SourceCode $pluginSourceV2 `
+        -Name $assemblyName `
+        -Version '2.0.0.0' `
+        -PassThru
+    
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     Write-Host '✓ Updated plugin assembly to version 2.0.0.0'
     Start-Sleep -Seconds 5
     
@@ -228,6 +290,7 @@ namespace TestDynamicPlugins
     
     # Cleanup
     Write-Host 'Step 13: Cleaning up...'
+<<<<<<< HEAD
     Invoke-WithRetry {
         Remove-DataversePluginStep -Connection $connection -Id $stepId -Confirm:$false -ErrorAction SilentlyContinue
         Remove-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId -Confirm:$false -ErrorAction SilentlyContinue
@@ -235,19 +298,37 @@ namespace TestDynamicPlugins
         Remove-DataversePluginAssembly -Connection $connection -Id $assemblyId -Confirm:$false -ErrorAction SilentlyContinue
         Remove-DataverseEntityMetadata -Connection $connection -EntityName $testEntityName -Confirm:$false -ErrorAction SilentlyContinue
     }
+=======
+    Remove-DataversePluginStep -Connection $connection -Id $stepId -Confirm:$false -ErrorAction SilentlyContinue
+    Remove-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId -Confirm:$false -ErrorAction SilentlyContinue
+    Remove-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId2 -Confirm:$false -ErrorAction SilentlyContinue
+    Remove-DataversePluginAssembly -Connection $connection -Id $assemblyId -Confirm:$false -ErrorAction SilentlyContinue
+    Remove-DataverseEntityMetadata -Connection $connection -EntityName $testEntityName -Confirm:$false -ErrorAction SilentlyContinue
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     
     Write-Host ''
     Write-Host '=== ALL TESTS PASSED ===' -ForegroundColor Green
     Write-Host 'Success'
 } catch {
+<<<<<<< HEAD
     Write-ErrorDetails $_
+=======
+    Write-Host ""ERROR: $($_.Exception.Message)"" -ForegroundColor Red
+    Write-Host $_.ScriptStackTrace
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     throw
 }
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 300);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("ALL TESTS PASSED");
         }
     }

@@ -46,9 +46,12 @@
     <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Tests\Rnwood.Dataverse.Data.PowerShell.Tests.csproj" />
   </ItemGroup>
 
+<<<<<<< HEAD
   <!-- xUnit Configuration -->
   <ItemGroup>
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+=======
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 </Project>

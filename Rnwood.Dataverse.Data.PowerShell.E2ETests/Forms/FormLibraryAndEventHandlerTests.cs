@@ -21,7 +21,50 @@ $ErrorActionPreference = 'Stop'
 $ConfirmPreference = 'None'
 $VerbosePreference = 'Continue'
 
+<<<<<<< HEAD
 try {
+=======
+function Invoke-WithRetry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$ScriptBlock,
+        [int]$MaxRetries = 5,
+        [int]$InitialDelaySeconds = 10
+    )
+
+    $attempt = 0
+    $delay = $InitialDelaySeconds
+
+    while ($attempt -lt $MaxRetries) {
+        try {
+            $attempt++
+            Write-Verbose ""Attempt $attempt of $MaxRetries""
+            & $ScriptBlock
+            return
+        }
+        catch {
+            if ($_.Exception.Message -like '*Cannot start the requested operation*EntityCustomization*') {
+                Write-Warning 'EntityCustomization operation conflict detected. Waiting 2 minutes before retry...'
+                $attempt--
+                Start-Sleep -Seconds 120
+                continue
+            }
+            
+            if ($attempt -eq $MaxRetries) {
+                Write-Error ""All $MaxRetries attempts failed. Last error: $_""
+                throw
+            }
+
+            Write-Warning ""Attempt $attempt failed: $_. Retrying in $delay seconds...""
+            Start-Sleep -Seconds $delay
+            $delay = $delay * 2
+        }
+    }
+}
+
+try {
+    $connection.EnableAffinityCookie = $true
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
     $entityName = 'contact'
     
@@ -74,6 +117,10 @@ try {
     
     Write-Host 'Step 3: Adding libraries to form...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         $script:library1 = Set-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName1 -Confirm:$false
         $script:library2 = Set-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName2 -Confirm:$false
     }
@@ -81,6 +128,10 @@ try {
     
     Write-Host 'Step 4: Adding form-level event handler...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseFormEventHandler -Connection $connection `
             -FormId $formId `
             -EventName 'onload' `
@@ -92,6 +143,10 @@ try {
     
     Write-Host 'Step 5: Cleanup - Removing form handler...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Remove-DataverseFormEventHandler -Connection $connection `
             -FormId $formId `
             -EventName 'onload' `
@@ -103,6 +158,10 @@ try {
     
     Write-Host 'Step 6: Cleanup - Removing libraries...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Remove-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName1 -Confirm:$false
         Remove-DataverseFormLibrary -Connection $connection -FormId $formId -LibraryName $webResourceName2 -Confirm:$false
     }
@@ -110,6 +169,10 @@ try {
     
     Write-Host 'Step 7: Cleanup - Deleting test web resources...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Remove-DataverseWebResource -Connection $connection -Id $webResourceId1 -Confirm:$false
         Remove-DataverseWebResource -Connection $connection -Id $webResourceId2 -Confirm:$false
     }
@@ -123,7 +186,11 @@ catch {
 }
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
+=======
+            var result = RunScript(script, timeoutSeconds: 600);
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("SUCCESS");

@@ -40,9 +40,15 @@ Write-Host 'Plugin assembly query test passed'
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -75,9 +81,15 @@ Write-Host 'Plugin type query test passed'
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 180);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -120,9 +132,15 @@ Write-Host 'Plugin step query test passed'
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 180);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -161,9 +179,15 @@ Write-Host 'All enum types and values are correct'
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
     }

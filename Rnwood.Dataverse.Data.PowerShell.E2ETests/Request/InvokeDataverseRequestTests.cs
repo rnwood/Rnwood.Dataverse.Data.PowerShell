@@ -31,9 +31,15 @@ Write-Host ""✓ WhoAmI request succeeded with UserId: $($response.UserId)""
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -58,9 +64,15 @@ Write-Host ""✓ WhoAmI request succeeded with UserId: $($response.Results['User
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -80,9 +92,15 @@ Write-Host '✓ WhoAmI request with -Raw succeeded'
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -92,6 +110,11 @@ Write-Host 'Success'
 
 
             var script = GetConnectionScript(@"
+<<<<<<< HEAD
+=======
+$connection.EnableAffinityCookie = $true
+
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path 'WhoAmI'
 
 if (-not $response.UserId) {
@@ -102,9 +125,15 @@ Write-Host '✓ REST API with simple resource name succeeded'
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -114,6 +143,11 @@ Write-Host 'Success'
 
 
             var script = GetConnectionScript(@"
+<<<<<<< HEAD
+=======
+$connection.EnableAffinityCookie = $true
+
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 $errorThrown = $false
 try {
     $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path '/api/data/v9.2/systemusers'
@@ -136,9 +170,15 @@ if (-not $errorThrown) {
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -148,6 +188,11 @@ Write-Host 'Success'
 
 
             var script = GetConnectionScript(@"
+<<<<<<< HEAD
+=======
+$connection.EnableAffinityCookie = $true
+
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path 'WhoAmI?test=value/with/slashes'
 
 if (-not $response.UserId) {
@@ -158,9 +203,15 @@ Write-Host '✓ Forward slash in query string is correctly allowed'
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -170,6 +221,11 @@ Write-Host 'Success'
 
 
             var script = GetConnectionScript(@"
+<<<<<<< HEAD
+=======
+$connection.EnableAffinityCookie = $true
+
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path 'WhoAmI'
 
 if (-not $response.UserId) {
@@ -180,9 +236,15 @@ Write-Host '✓ REST API custom action call succeeded'
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -206,9 +268,15 @@ Write-Host '✓ Batch request processing succeeded'
 Write-Host 'Success'
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+=======
+            var result = RunScript(script, timeoutSeconds: 60);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             result.StandardOutput.Should().Contain("Success");
         }
     }

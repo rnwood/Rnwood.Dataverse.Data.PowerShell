@@ -20,6 +20,11 @@ $ConfirmPreference = 'None'
 $VerbosePreference = 'Continue'
 
 try {
+<<<<<<< HEAD
+=======
+    $connection.EnableAffinityCookie = $true
+    
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     Write-Host '========================================='
     Write-Host 'Testing Organization Table Columns'
     Write-Host '========================================='
@@ -129,7 +134,11 @@ catch {
 }
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
+=======
+            var result = RunScript(script, timeoutSeconds: 300);
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("SUCCESS");

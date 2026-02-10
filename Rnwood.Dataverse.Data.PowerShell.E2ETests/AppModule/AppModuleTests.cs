@@ -27,6 +27,7 @@ try {
     Write-Host ""Using test appmodule unique name: $appModuleUniqueName""
     
     Write-Host 'Creating new appmodule...'
+<<<<<<< HEAD
     $appModuleId = Invoke-WithRetry {
         Set-DataverseAppModule -Connection $connection `
             -UniqueName $appModuleUniqueName `
@@ -34,6 +35,14 @@ try {
             -Description 'Test AppModule for E2E testing' `
             -PassThru -Confirm:$false
     }
+=======
+    $appModuleId = Set-DataverseAppModule -Connection $connection `
+        -UniqueName $appModuleUniqueName `
+        -Name $appModuleName `
+        -Description 'Test AppModule for E2E testing' `
+        -PassThru -Confirm:$false
+    
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     if (-not $appModuleId) {
         throw 'Failed to create appmodule - no ID returned'
     }
@@ -51,9 +60,13 @@ try {
     Write-Host 'Successfully retrieved appmodule'
     
     Write-Host 'Cleanup - Removing appmodule...'
+<<<<<<< HEAD
     Invoke-WithRetry {
         Remove-DataverseAppModule -Connection $connection -Id $appModuleId -Confirm:$false
     }
+=======
+    Remove-DataverseAppModule -Connection $connection -Id $appModuleId -Confirm:$false
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     Write-Host '✓ AppModule deleted'
     
     Write-Host 'SUCCESS: All appmodule operations completed successfully'
@@ -64,7 +77,11 @@ catch {
 }
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
+=======
+            var result = RunScript(script, timeoutSeconds: 300);
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("SUCCESS");

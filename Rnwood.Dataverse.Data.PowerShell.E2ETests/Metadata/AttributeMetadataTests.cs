@@ -21,7 +21,49 @@ $ErrorActionPreference = 'Stop'
 $ConfirmPreference = 'None'
 $VerbosePreference = 'Continue'
 
+<<<<<<< HEAD
 try {
+=======
+function Invoke-WithRetry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$ScriptBlock,
+        [int]$MaxRetries = 5,
+        [int]$InitialDelaySeconds = 10
+    )
+    
+    $attempt = 0
+    $delay = $InitialDelaySeconds
+    
+    while ($attempt -lt $MaxRetries) {
+        try {
+            $attempt++
+            Write-Verbose ""Attempt $attempt of $MaxRetries""
+            & $ScriptBlock
+            return
+        }
+        catch {
+            if ($_.Exception.Message -like '*Cannot start the requested operation*EntityCustomization*') {
+                Write-Warning 'EntityCustomization operation conflict. Waiting 2 minutes...'
+                $attempt--
+                Start-Sleep -Seconds 120
+                continue
+            }
+            
+            if ($attempt -eq $MaxRetries) {
+                throw
+            }
+            
+            Write-Warning ""Attempt $attempt failed: $_. Retrying in $delay seconds...""
+            Start-Sleep -Seconds $delay
+            $delay = $delay * 2
+        }
+    }
+}
+
+try {
+    $connection.EnableAffinityCookie = $true
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmm')
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
     $entityName = ""new_attrtest_${timestamp}_$testRunId""
@@ -41,6 +83,10 @@ try {
     
     Write-Host 'Creating string attribute...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Set-DataverseAttributeMetadata -Connection $connection `
             -EntityName $entityName `
             -AttributeName 'new_teststring' `
@@ -54,6 +100,10 @@ try {
     
     Write-Host 'Cleanup - Removing test entity...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
     }
     Write-Host '✓ Test entity deleted'
@@ -66,7 +116,11 @@ catch {
 }
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
+=======
+            var result = RunScript(script, timeoutSeconds: 600);
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("SUCCESS");

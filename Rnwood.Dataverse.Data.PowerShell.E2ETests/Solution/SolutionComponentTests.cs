@@ -21,9 +21,65 @@ $ErrorActionPreference = 'Stop'
 $ConfirmPreference = 'None'
 $VerbosePreference = 'Continue'
 
+<<<<<<< HEAD
 try {
     # Wait for any existing operations to complete before starting test
     Write-Host 'Pre-check: Ensuring no pending operations...'
+=======
+# Retry helper function with exponential backoff
+function Invoke-WithRetry {
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$ScriptBlock,
+        [int]$MaxRetries = 5,
+        [int]$InitialDelaySeconds = 10
+    )
+    
+    $attempt = 0
+    $delay = $InitialDelaySeconds
+    
+    while ($attempt -lt $MaxRetries) {
+        try {
+            $attempt++
+            Write-Verbose ""Attempt $attempt of $MaxRetries""
+            & $ScriptBlock
+            return
+        }
+        catch {
+            # Check for CustomizationLockException - this has multiple possible patterns
+            $errorMessage = $_.Exception.Message
+            $isCustomizationLock = $errorMessage -like '*CustomizationLockException*' `
+                -or $errorMessage -like '*Cannot start another*EntityCustomization*' `
+                -or $errorMessage -like '*Cannot start the requested operation*EntityCustomization*' `
+                -or $errorMessage -like '*previous*EntityCustomization*running*'
+            
+            if ($isCustomizationLock) {
+                Write-Warning ""EntityCustomization operation conflict detected: $errorMessage""
+                Write-Warning 'Waiting 2 minutes before retry (will not count toward max retries)...'
+                $attempt--
+                Start-Sleep -Seconds 120
+                continue
+            }
+            
+            if ($attempt -eq $MaxRetries) {
+                Write-Error ""All $MaxRetries attempts failed. Last error: $_""
+                throw
+            }
+            
+            Write-Warning ""Attempt $attempt failed: $_. Retrying in $delay seconds...""
+            Start-Sleep -Seconds $delay
+            $delay = $delay * 2
+        }
+    }
+}
+
+try {
+    $connection.EnableAffinityCookie = $true
+
+    # Wait for any existing operations to complete before starting test
+    Write-Host 'Pre-check: Ensuring no pending operations...'
+    Wait-DataversePublish -Connection $connection -MaxWaitSeconds 300 -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
     Start-Sleep -Seconds 5
 
     $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmm')
@@ -39,6 +95,10 @@ try {
     
     Write-Host 'Step 1: Creating test solution...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         
         $existingSolution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName -ErrorAction SilentlyContinue
         if ($existingSolution) {
@@ -71,6 +131,10 @@ try {
     
     Write-Host 'Step 2: Creating test entity...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         
         Set-DataverseEntityMetadata -Connection $connection `
             -EntityName $entityName `
@@ -90,6 +154,10 @@ try {
     Write-Host '✓ Test entity created'
     
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         $entityMetadata = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
         $script:entityObjectId = $entityMetadata.MetadataId
     }
@@ -97,6 +165,10 @@ try {
     
     Write-Host 'Step 3: Adding entity to solution with Behavior 0 (Include Subcomponents)...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         
         $result = Set-DataverseSolutionComponent -Connection $connection `
             -SolutionName $solutionName `
@@ -117,6 +189,10 @@ try {
     
     Write-Host 'Step 4: Verifying component exists in solution...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
         
         $entityComponent = $components | Where-Object { $_.ObjectId -eq $entityName }
@@ -136,12 +212,20 @@ try {
     
     Write-Host 'Step 5: Cleanup - Removing test solution...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Remove-DataverseSolution -Connection $connection -UniqueName $solutionName -Confirm:$false
     }
     Write-Host '✓ Test solution deleted'
     
     Write-Host 'Step 6: Cleanup - Removing test entity...'
     Invoke-WithRetry {
+<<<<<<< HEAD
+=======
+        Wait-DataversePublish -Connection $connection -Verbose
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
     }
     Write-Host '✓ Test entity deleted'
@@ -154,7 +238,11 @@ catch {
 }
 ");
 
+<<<<<<< HEAD
             var result = RunScript(script);
+=======
+            var result = RunScript(script, timeoutSeconds: 600);
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("SUCCESS");

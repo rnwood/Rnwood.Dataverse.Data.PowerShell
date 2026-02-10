@@ -13,6 +13,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Processes input objects in parallel using chunked batches with cloned Dataverse connections.
+    /// 
+    /// KNOWN LIMITATION: ServiceClient.Clone() may fail with "Fault While initializing client - RefreshInstanceDetails" 
+    /// when using Azure AD client secret authentication. When cloning fails, the cmdlet falls back to using the shared 
+    /// original connection. This works for mock connections but may have issues with real connections depending on the
+    /// authentication method used. Interactive and username/password authentication may work better with cloning.
     /// </summary>
     [Cmdlet(VerbsLifecycle.Invoke, "DataverseParallel")]
     [OutputType(typeof(PSObject))]
@@ -304,7 +309,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     cloneAttempted = true;
                     try
                     {
+<<<<<<< HEAD
                         var clonedConnection = DataverseConnectionExtensions.CloneConnection(Connection);
+=======
+                        var clonedConnection = Connection.Clone();
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
                         
                         // Force initialization of the cloned connection to detect issues early
                         // ServiceClient uses lazy initialization, so we need to trigger it
@@ -326,7 +335,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                                 ex.Message.Contains("On-Premises Connections are not supported") ||
                                                 ex.InnerException is NotImplementedException)
                     {
+<<<<<<< HEAD
                         // On-premises connections don't support cloning
+=======
+                        // Mock connections and on-premises connections don't support cloning
+>>>>>>> df047b13 (tests: migrate e2e tests to xunit)
                         _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Connection cloning not supported, using shared connection");
                         connectionToUse = Connection;
                     }
