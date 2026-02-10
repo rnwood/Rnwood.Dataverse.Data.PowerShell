@@ -12,10 +12,18 @@ Sets a table's vector icon by downloading an icon from an online icon set and cr
 
 ## SYNTAX
 
+### FromIconSet (Default)
 ```
 Set-DataverseTableIconFromSet [-EntityName] <String> [[-IconSet] <String>] [-IconName] <String>
  [-PublisherPrefix] <String> [-Publish] [-PassThru] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
+### FromContent
+```
+Set-DataverseTableIconFromSet [-EntityName] <String> -IconContent <String> [-PublisherPrefix] <String>
+ [-Publish] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -135,12 +143,27 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
+### -IconContent
+SVG content of the icon to set
+
+```yaml
+Type: String
+Parameter Sets: FromContent
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -IconName
 Name of the icon to set (e.g., 'user', 'settings'). Use `Get-DataverseIconSetIcon` to browse available icons.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: FromIconSet
 Aliases:
 
 Required: True
@@ -160,7 +183,7 @@ Default value: `FluentUI`
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: FromIconSet
 Aliases:
 Accepted values: FluentUI, Iconoir, Tabler
 

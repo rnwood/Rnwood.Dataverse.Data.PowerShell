@@ -94,12 +94,6 @@ Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>] [
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
-### Return a mock connection
-```
-Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [-RequestInterceptor <ScriptBlock>] -Url <Uri>
- [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
 ### Authenticate with access token script block
 ```
 Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] -AccessToken <ScriptBlock> [-Timeout <UInt32>]
@@ -619,21 +613,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Mock
-Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.
-
-```yaml
-Type: EntityMetadata[]
-Parameter Sets: Return a mock connection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Name
 Name to save this connection under for later retrieval. Allows you to persist and reuse connections.
 
@@ -698,21 +677,6 @@ Accept wildcard characters: False
 Type: ActionPreference
 Parameter Sets: (All)
 Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -RequestInterceptor
-ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: Return a mock connection
-Aliases:
 
 Required: False
 Position: Named
@@ -790,18 +754,6 @@ Parameter Sets: Authenticate with username and password, Authenticate with clien
 Aliases:
 
 Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: Uri
-Parameter Sets: Return a mock connection
-Aliases:
-
-Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -15,7 +15,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Sets a table's vector icon by downloading an icon from an online icon set and creating/updating a web resource.
     /// </summary>
-    [Cmdlet(VerbsCommon.Set, "DataverseTableIconFromSet", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
+    [Cmdlet(VerbsCommon.Set, "DataverseTableIconFromSet", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium, DefaultParameterSetName = "FromIconSet")]
     [OutputType(typeof(PSObject))]
     public class SetDataverseTableIconFromSetCmdlet : OrganizationServiceCmdlet
     {
@@ -32,15 +32,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the icon set to retrieve the icon from.
         /// </summary>
-        [Parameter(Position = 1, HelpMessage = "Icon set to retrieve the icon from")]
+        [Parameter(Position = 1, ParameterSetName = "FromIconSet", HelpMessage = "Icon set to retrieve the icon from")]
         [ValidateSet("FluentUI", "Iconoir", "Tabler")]
         public string IconSet { get; set; } = "FluentUI";
 
         /// <summary>
         /// Gets or sets the name of the icon to set.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 2, HelpMessage = "Name of the icon to set (e.g., 'user', 'settings')")]
+        [Parameter(Mandatory = true, Position = 2, ParameterSetName = "FromIconSet", HelpMessage = "Name of the icon to set (e.g., 'user', 'settings')")]
         public string IconName { get; set; }
+
+        /// <summary>
+        /// Gets or sets the SVG content of the icon to set (alternative to downloading from icon set).
+        /// </summary>
+        [Parameter(Mandatory = true, ParameterSetName = "FromContent", HelpMessage = "SVG content of the icon to set")]
+        public string IconContent { get; set; }
 
         /// <summary>
         /// Gets or sets the publisher prefix to use for the web resource name.
@@ -69,12 +75,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             try
             {
-                // Download the icon
-                WriteVerbose($"Downloading icon '{IconName}' from {IconSet}");
-                var iconContent = DownloadIconAsync().GetAwaiter().GetResult();
+                // Get icon content - either download or use provided content
+                string iconContent;
+                string webResourceName;
 
-                // Create web resource name
-                var webResourceName = $"{PublisherPrefix}_/icons/{IconSet.Replace(" ", "_")}/{IconName.ToLower().Replace(" ", "_")}.svg";
+                if (ParameterSetName == "FromContent")
+                {
+                    WriteVerbose($"Using provided icon content");
+                    iconContent = IconContent;
+                    // For custom content, use a generic name since we don't have IconSet/IconName
+                    webResourceName = $"{PublisherPrefix}_/icons/custom/icon.svg";
+                }
+                else
+                {
+                    // Download the icon
+                    WriteVerbose($"Downloading icon '{IconName}' from {IconSet}");
+                    iconContent = DownloadIconAsync().GetAwaiter().GetResult();
+                    // Create web resource name
+                    webResourceName = $"{PublisherPrefix}_/icons/{IconSet.Replace(" ", "_")}/{IconName.ToLower().Replace(" ", "_")}.svg";
+                }
+
                 WriteVerbose($"Web resource name: {webResourceName}");
 
                 // Create or update the web resource

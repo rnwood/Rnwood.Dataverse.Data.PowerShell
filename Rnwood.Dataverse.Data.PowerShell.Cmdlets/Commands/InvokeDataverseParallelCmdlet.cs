@@ -78,6 +78,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.ThreadOptions = PSThreadOptions.UseNewThread;
 
+            // Add Set-DataverseConnectionAsDefault cmdlet to the worker runspaces
+            // This is required for the worker script to set the connection
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
+
             // Build list of module patterns to exclude (always include Pester)
             var excludePatterns = new List<string> { "Pester" };
             if (ExcludeModule != null && ExcludeModule.Length > 0)
@@ -195,6 +200,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _cancellationTokenSource.Cancel();
             _outputWriterTask.Wait();
 
+            // Final drain after output writer completes to catch any items
+            // enqueued between the last DrainQueues and the writer finishing
+            DrainQueues();
+
             // Clean up runspace pool
             if (_runspacePool != null)
             {
@@ -296,13 +305,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 _verboseQueue.Enqueue($"Connection cloning not supported");
             }
 
-            ps.AddScript(@"param($Chunk, $connection ); 
+            var workerScript = @"param($Chunk, $connection ); 
             Set-DataverseConnectionAsDefault -Connection $connection
             $psVar = New-Object System.Management.Automation.PSVariable -ArgumentList '_', $Chunk
             $varList = New-Object 'System.Collections.Generic.List[System.Management.Automation.PSVariable]'
             $varList.Add($psVar)
             {" + ScriptBlock + @"}.InvokeWithContext($null, $varList)
-");
+";
+            _verboseQueue.Enqueue($"Worker script for chunk {currentChunkNum}: {workerScript}");
+            ps.AddScript(workerScript);
             // Convert chunk to array to ensure it's fully materialized before passing to PowerShell
             var chunkArray = chunk.ToArray();
 
@@ -315,8 +326,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var taskInfo = new TaskInfo
             {
                 PowerShell = ps,
-                OutputCollection = outputCollection,
-                ChunkNumber = currentChunkNum,
+                OutputCollection = outputCollection,            ChunkNumber = currentChunkNum,
                 RecordCount = chunk.Count
             };
 

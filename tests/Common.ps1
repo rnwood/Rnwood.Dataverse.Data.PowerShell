@@ -202,8 +202,44 @@ function global:getMockConnection([ScriptBlock]$RequestInterceptor = $null, [str
         }
     }
    
-    # Create the connection (no caching for test isolation)
-    $mockService = Get-DataverseConnection -url https://fake.crm.dynamics.com/ -mock $metadata -RequestInterceptor $combinedInterceptor
+    # Create the FakeXrmEasy mock connection directly (no longer using cmdlet's -Mock option)
+    Add-Type -AssemblyName "FakeItEasy"
+    
+    # Build FakeXrmEasy context using assemblies from test project
+    $builder = [FakeXrmEasy.Middleware.MiddlewareBuilder]::New()
+    $builder = $builder.AddCrud()
+    $fakeXrmEasyMsgs = [System.Reflection.Assembly]::LoadFrom("$env:TESTMODULEPATH\FakeXrmEasy.Messages.dll")
+    $builder = $builder.AddFakeMessageExecutors($fakeXrmEasyMsgs)
+    $builder = $builder.UseMessages()
+    $builder = $builder.UseCrud()
+    $builder = $builder.SetLicense([FakeXrmEasy.Abstractions.Enums.FakeXrmEasyLicense]::RPL_1_5)
+    
+    $xrmContext = $builder.Build()
+    $xrmContext.InitializeMetadata($metadata)
+    
+    # Get organization service
+    $orgService = $xrmContext.GetOrganizationService()
+    
+    # Wrap with request interceptor if provided
+    if ($combinedInterceptor) {
+        # Load cmdlets assembly to access MockOrganizationServiceWithScriptBlock
+        Add-Type -Path "$env:TESTMODULEPATH\Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll"
+        $orgService = New-Object Rnwood.Dataverse.Data.PowerShell.Commands.MockOrganizationServiceWithScriptBlock($orgService, $combinedInterceptor)
+    }
+    
+    # Create ServiceClient via reflection (same as old -Mock implementation)
+    $httpClient = New-Object System.Net.Http.HttpClient
+    $version = New-Object Version(9, 2)
+    $fakeLogger = [FakeItEasy.A]::Fake([Microsoft.Extensions.Logging.ILogger])
+    
+    $constructor = [Microsoft.PowerPlatform.Dataverse.Client.ServiceClient].GetConstructor(
+        [System.Reflection.BindingFlags]::NonPublic -bor [System.Reflection.BindingFlags]::Instance,
+        $null,
+        @([Microsoft.Xrm.Sdk.IOrganizationService], [System.Net.Http.HttpClient], [string], [Version], [Microsoft.Extensions.Logging.ILogger]),
+        $null
+    )
+    
+    $mockService = $constructor.Invoke(@($orgService, $httpClient, "https://fake.crm.dynamics.com", $version, $fakeLogger))
     return $mockService
 }
 

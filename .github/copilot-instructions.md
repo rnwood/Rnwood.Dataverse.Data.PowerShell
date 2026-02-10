@@ -204,15 +204,39 @@ $config.Filter.FullName = '*Get-DataverseRecord - Basic*' # Basic Get tests
 - `tests/updatemetadata.ps1` - Script to regenerate contact.xml from real environment
 - `e2e-tests/Module.Tests.ps1` - Connects to real Dataverse with client secret, queries systemuser table, runs SQL
 
+### Project 4: Rnwood.Dataverse.Data.PowerShell.Tests/ (xUnit)
+**Purpose:** C# xUnit tests for infrastructure/internal classes (multi-targeting net8.0;net462)
+**Key Files:**
+- `Rnwood.Dataverse.Data.PowerShell.Tests.csproj` - xUnit test project with FakeXrmEasy for Dataverse mocking
+- `Infrastructure/TestBase.cs` - Base class with CreateMockConnection(), LoadEntityMetadata() for FakeXrmEasy setup
+- `Infrastructure/CmdletInvoker.cs` - Stub file documenting why PowerShell cmdlet invocation doesn't work in xUnit
+- `Cmdlets/GetDataverseRecordBasicTests.cs` - Infrastructure tests verifying FakeXrmEasy mock connection works
+
+**Testing Architecture:**
+- **xUnit tests (Rnwood.Dataverse.Data.PowerShell.Tests/)**: Fast C# tests for infrastructure logic and internal classes
+  - Uses FakeXrmEasy to mock IOrganizationService - WORKS PERFECTLY
+  - Does NOT support PowerShell cmdlet invocation (Microsoft.PowerShell.SDK only provides reference assemblies, not runtime)
+- **Pester tests (tests/)**: PowerShell tests for cmdlet behavior and integration
+  - Tests actual cmdlet invocation with mock connections
+  - Can test parameter sets, pipeline behavior, PowerShell-specific features
+- **E2E tests (e2e-tests/)**: Real Dataverse environment tests with credentials
+
+**Run xUnit tests:**
+```powershell
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net8.0
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net462  # Windows only
+```
+
 ## CI/CD Pipeline (.github/workflows/publish.yml)
 **Matrix:** os=[ubuntu-latest, windows-latest] × powershell_version=['5', '7.4.11', 'latest'] × publish=[true/false once]  
 **Steps:**
 1. Checkout, install PowerShell version
 2. Build: Determines version based on conventional commits, builds main project, copies to out/
-3. Test (pwsh): Sets $env:TESTMODULEPATH, installs Pester, runs tests, checks $LASTEXITCODE
-4. Test (powershell on Windows PS5): Same as above but with powershell.exe
-5. E2E Test: Sets E2ETESTS_* env vars from secrets, runs e2e-tests
-6. Publish (if matrix.publish && release): Runs Publish-Module to PowerShell Gallery
+3. Test (xUnit): Runs dotnet test for infrastructure tests (net8.0 on all platforms, net462 on Windows)
+4. Test (pwsh): Sets $env:TESTMODULEPATH, installs Pester, runs tests, checks $LASTEXITCODE
+5. Test (powershell on Windows PS5): Same as above but with powershell.exe
+6. E2E Test: Sets E2ETESTS_* env vars from secrets, runs e2e-tests
+7. Publish (if matrix.publish && release): Runs Publish-Module to PowerShell Gallery
 
 ## Versioning Strategy
 The project uses **Conventional Commits** to automatically determine version numbers:

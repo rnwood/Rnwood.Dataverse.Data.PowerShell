@@ -1,14 +1,5 @@
 ﻿using Azure.Core;
 using Azure.Identity;
-using FakeItEasy;
-using FakeXrmEasy.Core;
-using FakeXrmEasy.Middleware;
-using FakeXrmEasy;
-using FakeXrmEasy.Abstractions;
-using FakeXrmEasy.Abstractions.Enums;
-using FakeXrmEasy.Middleware.Crud;
-using FakeXrmEasy.Middleware.Messages;
-using FakeXrmEasy.FakeMessageExecutors;
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -58,8 +49,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private const string PARAMSET_DEFAULTAZURECREDENTIAL = "Authenticate with DefaultAzureCredential";
         private const string PARAMSET_MANAGEDIDENTITY = "Authenticate with ManagedIdentityCredential";
         private const string PARAMSET_ACCESSTOKEN = "Authenticate with access token script block";
-
-        private const string PARAMSET_MOCK = "Return a mock connection";
         private const string PARAMSET_GETDEFAULT = "Get default connection";
         private const string PARAMSET_LOADNAMED = "Load a saved named connection";
         private const string PARAMSET_LISTNAMED = "List saved named connections";
@@ -119,17 +108,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = true, ParameterSetName = PARAMSET_LISTNAMED, HelpMessage = "Lists all saved named connections.")]
         public SwitchParameter ListConnections { get; set; }
 
-        /// <summary>
-        /// Gets or sets the entity metadata for creating a mock connection.
-        /// </summary>
-        [Parameter(Mandatory = true, ParameterSetName = PARAMSET_MOCK, HelpMessage = "Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.")]
-        public EntityMetadata[] Mock { get; set; }
 
-        /// <summary>
-        /// Gets or sets the ScriptBlock to intercept requests for testing purposes.
-        /// </summary>
-        [Parameter(Mandatory = false, ParameterSetName = PARAMSET_MOCK, HelpMessage = "ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.")]
-        public ScriptBlock RequestInterceptor { get; set; }
 
         /// <summary>
         /// Gets or sets the client ID to use for authentication.
@@ -151,7 +130,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_USERNAMEPASSWORD, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_DEFAULTAZURECREDENTIAL, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_MANAGEDIDENTITY, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com. If not specified, you will be prompted to select from available environments.")]
-        [Parameter(Mandatory = true, ParameterSetName = PARAMSET_MOCK, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
         [Parameter(Mandatory = false, ParameterSetName = PARAMSET_ACCESSTOKEN, HelpMessage = "URL of the Dataverse environment to connect to. For example https://myorg.crm11.dynamics.com")]
         public Uri Url { get; set; }
 
@@ -449,51 +427,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 switch (ParameterSetName)
                 {
-                    case PARAMSET_MOCK:
-
-                        var swMock = System.Diagnostics.Stopwatch.StartNew();
-                        WriteVerbose($"[PERF] Starting mock connection setup at {swMock.Elapsed.TotalSeconds}s");
-
-                        var swBuilder = System.Diagnostics.Stopwatch.StartNew();
-                        IXrmFakedContext xrmFakeContext = MiddlewareBuilder
-                        .New()
-                        .AddCrud()
-                        .AddFakeMessageExecutors(Assembly.GetAssembly(typeof(FakeXrmEasy.FakeMessageExecutors.RetrieveEntityRequestExecutor)))
-                        .UseMessages()
-                        .UseCrud()
-                        .SetLicense(FakeXrmEasyLicense.RPL_1_5)
-                        .Build();
-                        swBuilder.Stop();
-                        WriteVerbose($"[PERF] MiddlewareBuilder completed in {swBuilder.Elapsed.TotalSeconds}s");
-
-                        var swInit = System.Diagnostics.Stopwatch.StartNew();
-                        xrmFakeContext.InitializeMetadata(Mock);
-                        swInit.Stop();
-                        WriteVerbose($"[PERF] InitializeMetadata completed in {swInit.Elapsed.TotalSeconds}s (total: {swMock.Elapsed.TotalSeconds}s)");
-
-                        // Wrap the fake service with a thread-safe proxy since FakeXrmEasy is not thread-safe
-                        var swGetService = System.Diagnostics.Stopwatch.StartNew();
-                        var fakeService = xrmFakeContext.GetOrganizationService();
-                        IOrganizationService threadSafeService = new ThreadSafeOrganizationServiceProxy(fakeService);
-                        swGetService.Stop();
-                        WriteVerbose($"[PERF] GetOrganizationService + ThreadSafeProxy completed in {swGetService.Elapsed.TotalSeconds}s (total: {swMock.Elapsed.TotalSeconds}s)");
-
-                        // If RequestInterceptor is provided, wrap with script block interceptor
-                        if (RequestInterceptor != null)
-                        {
-                            threadSafeService = new MockOrganizationServiceWithScriptBlock(threadSafeService, RequestInterceptor);
-                        }
-
-                        var swConstructor = System.Diagnostics.Stopwatch.StartNew();
-                        ConstructorInfo contructor = typeof(ServiceClient).GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) }, null);
-                        result = (ServiceClient)contructor.Invoke(new object[] { threadSafeService, new HttpClient(GetFakeHttpHandler()), "https://fakeorg.crm.dynamics.com", new Version(9, 2), A.Fake<ILogger>() });
-                        swConstructor.Stop();
-                        WriteVerbose($"[PERF] ServiceClient constructor completed in {swConstructor.Elapsed.TotalSeconds}s (total: {swMock.Elapsed.TotalSeconds}s)");
-
-                        swMock.Stop();
-                        WriteVerbose($"[PERF] Total mock connection setup completed in {swMock.Elapsed.TotalSeconds}s");
-                        break;
-
                     case PARAMSET_CONNECTIONSTRING:
                         result = new ServiceClient(ConnectionString);
                         break;
@@ -980,24 +913,6 @@ Url + "/api/data/v9.2/");
             }
 
             return authority;
-        }
-
-        private static HttpMessageHandler GetFakeHttpHandler()
-        {
-            return new FakeHttpMessageHandler();
-        }
-
-        class FakeHttpMessageHandler : HttpMessageHandler
-        {
-            protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
-            {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    return Task.FromCanceled<HttpResponseMessage>(cancellationToken);
-                }
-
-                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
-            }
         }
 
         private async Task<string> GetTokenWithClientSecret(IConfidentialClientApplication app, string url)
