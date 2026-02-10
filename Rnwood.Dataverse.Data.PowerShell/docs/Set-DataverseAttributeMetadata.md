@@ -423,6 +423,7 @@ Cascade behavior for Assign: NoCascade, Cascade, Active, UserOwned, RemoveLink (
 Type: String
 Parameter Sets: (All)
 Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned, RemoveLink
 
 Required: False
 Position: Named
@@ -438,6 +439,7 @@ Cascade behavior for Delete: NoCascade, RemoveLink, Restrict, Cascade (Lookup on
 Type: String
 Parameter Sets: (All)
 Aliases:
+Accepted values: NoCascade, RemoveLink, Restrict, Cascade
 
 Required: False
 Position: Named
@@ -453,6 +455,7 @@ Cascade behavior for Merge: NoCascade, Cascade (Lookup only)
 Type: String
 Parameter Sets: (All)
 Aliases:
+Accepted values: NoCascade, Cascade
 
 Required: False
 Position: Named
@@ -468,6 +471,7 @@ Cascade behavior for Reparent: NoCascade, Cascade, Active, UserOwned, RemoveLink
 Type: String
 Parameter Sets: (All)
 Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned, RemoveLink
 
 Required: False
 Position: Named
@@ -483,6 +487,7 @@ Cascade behavior for Share: NoCascade, Cascade, Active, UserOwned (Lookup only)
 Type: String
 Parameter Sets: (All)
 Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned
 
 Required: False
 Position: Named
@@ -498,6 +503,7 @@ Cascade behavior for Unshare: NoCascade, Cascade, Active, UserOwned (Lookup only
 Type: String
 Parameter Sets: (All)
 Aliases:
+Accepted values: NoCascade, Cascade, Active, UserOwned
 
 Required: False
 Position: Named

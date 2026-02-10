@@ -1,175 +1,112 @@
-# End-to-End Tests
+# End-to-End Tests (Legacy Directory)
 
-This directory contains end-to-end tests that run against a real Dataverse environment. These tests validate the module's functionality in a live environment.
+**NOTE:** The PowerShell-based Pester E2E tests that were previously in this directory have been migrated to xUnit C# tests and **removed**. This directory is retained for historical reference but no longer contains active test files.
 
-## Prerequisites
+## Current E2E Testing
 
-E2E tests require:
+All E2E tests are now located in **`Rnwood.Dataverse.Data.PowerShell.E2ETests/`** as xUnit C# tests. These tests run against real Dataverse environments using PowerShellProcessRunner to execute PowerShell scripts in child processes.
+
+### Why the Migration?
+
+The project migrated from PowerShell Pester tests to xUnit C# tests for:
+- **Better integration** with CI/CD pipelines
+- **Consistent testing framework** (both infrastructure and E2E tests use xUnit)
+- **Improved reliability** with PowerShellProcessRunner for module loading tests
+- **Better IDE support** for debugging and test execution
+- **Faster test discovery** and execution
+
+## Running E2E Tests
+
+### Prerequisites
+
 1. Access to a Dataverse environment
-2. An application registration with client ID and client secret
+2. Application registration with client ID and client secret
 3. Appropriate permissions in the Dataverse environment
 
-## Environment Setup
+### Environment Setup
 
-Set the following environment variables before running e2e tests:
+Set the following environment variables before running E2E tests:
 
 ```powershell
 $env:E2ETESTS_URL = "https://yourorg.crm.dynamics.com"
 $env:E2ETESTS_CLIENTID = "your-client-id"
 $env:E2ETESTS_CLIENTSECRET = "your-client-secret"
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 ```
-
-## Running E2E Tests
 
 ### Run All E2E Tests
 
 ```powershell
-# From repository root
-Invoke-Pester -Output Detailed -Path e2e-tests
+# From repository root (WARNING: Takes 10+ minutes)
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj `
+    -f net8.0 `
+    --logger "console;verbosity=normal"
 ```
 
-### Run Specific Test File
+### Run Targeted E2E Tests (Recommended)
+
+Running targeted tests is **much faster** than running the full suite:
 
 ```powershell
-# Run only module tests
-Invoke-Pester -Output Detailed -Path e2e-tests/Module.Tests.ps1
+# Run specific test class (10-60 seconds)
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj `
+    -f net8.0 `
+    --filter "FullyQualifiedName~ModuleBasicTests" `
+    --logger "console;verbosity=normal"
 
-# Run only form manipulation tests
-Invoke-Pester -Output Detailed -Path e2e-tests/FormManipulation.Tests.ps1
-
-# Run only form library and event handler tests
-Invoke-Pester -Output Detailed -Path e2e-tests/FormLibraryAndEventHandler.Tests.ps1
-
-# Run only view manipulation tests
-Invoke-Pester -Output Detailed -Path e2e-tests/View.Tests.ps1
+# Run specific test method
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj `
+    -f net8.0 `
+    --filter "FullyQualifiedName~ModuleBasicTests.ConnectionWithClientSecret_Should_ConnectSuccessfully" `
+    --logger "console;verbosity=normal"
 ```
 
-## Test Files
+### Available Test Classes
 
-### View.Tests.ps1
-E2E test for view (savedquery/userquery) manipulation:
+E2E tests are organized by feature area:
 
-**Test Coverage:**
-- Creating views with FetchXML (Set-DataverseView)
-- Retrieving views by ID (Get-DataverseView)
-- Updating view columns with empty layoutxml (bug fix scenario)
-- Verifying layoutxml generation and updates
-- Adding columns to existing views
-- Updating view name and description
-- Removing views (Remove-DataverseView)
-- Comprehensive validation at each step
-
-**Features:**
-- Uses unique test identifiers to avoid conflicts with concurrent runs
-- Tests the bug fix for empty layoutxml scenario
-- Validates column updates and layoutxml generation
-- Tests complete CRUD cycle for views
-- Proper cleanup of all created views
-- Detailed logging of all operations
-
-**Cleanup Behavior:**
-The test automatically cleans up:
-1. **Before test**: Removes any leftover views matching pattern `E2E Test View %`
-2. **After test**: Removes all created views
-
-### FormLibraryAndEventHandler.Tests.ps1
-E2E test for form script library and event handler management:
-
-**Test Coverage:**
-- Adding JavaScript libraries to forms (Set-DataverseFormLibrary)
-- Retrieving libraries from forms (Get-DataverseFormLibrary)
-- Removing libraries from forms (Remove-DataverseFormLibrary)
-- Adding form-level event handlers (Set-DataverseFormEventHandler)
-- Retrieving event handlers (Get-DataverseFormEventHandler)
-- Removing event handlers (Remove-DataverseFormEventHandler)
-- Web resource creation and cleanup
-- Comprehensive validation at each step
-
-**Features:**
-- Uses unique test identifiers to avoid conflicts
-- Creates test web resources for validation
-- Tests complete CRUD cycle for libraries and handlers
-- Proper cleanup of all created resources
-- Detailed logging of all operations
-
-**Cleanup Behavior:**
-The test automatically cleans up:
-1. All added libraries are removed after testing
-2. All added event handlers are removed after testing
-3. All test web resources are deleted
-
-### Module.Tests.ps1
-General module functionality tests including:
-- Connection establishment
-- Basic record queries
-- SQL queries
-- Help system validation
-- Parallel processing with Invoke-DataverseParallel
-
-### FormManipulation.Tests.ps1
-Comprehensive form manipulation test that exercises all form-related cmdlets:
-
-**Test Coverage:**
-- Form creation (Set-DataverseForm)
-- Form retrieval and verification (Get-DataverseForm)
-- Tab creation, updates, and removal (Set-DataverseFormTab, Get-DataverseFormTab, Remove-DataverseFormTab)
-- Section creation and removal (Set-DataverseFormSection, Get-DataverseFormSection, Remove-DataverseFormSection)
-- Control creation, updates, and removal (Set-DataverseFormControl, Get-DataverseFormControl, Remove-DataverseFormControl)
-- Publishing after all modifications (Set-DataverseForm -Publish tests the -Publish parameter)
-- Multi-column tab layouts (OneColumn, TwoColumns, ThreeColumns)
-- Different control types (Standard, Lookup, Email)
-- Control properties (IsRequired, Disabled)
-
-**Features:**
-- Uses unique test identifiers to avoid conflicts with concurrent test runs
-- Includes pre-cleanup to remove leftover forms from previous failed runs
-- Comprehensive validation at each step
-- Detailed logging of all operations
-- Proper cleanup of all created resources
-
-**Cleanup Behavior:**
-The form manipulation test automatically cleans up:
-1. **Before test**: Removes any leftover forms matching pattern `E2ETestForm-%`
-2. **After test**: Removes all created controls, sections, tabs, and forms
-
-This ensures the test can run reliably even if previous runs failed or were interrupted.
-
-## Expected Test Duration
-
-- **Module.Tests.ps1**: ~30-60 seconds (depending on network and environment)
-- **FormManipulation.Tests.ps1**: ~60-120 seconds (includes form metadata operations)
-- **FormLibraryAndEventHandler.Tests.ps1**: ~60-90 seconds (includes web resource and form operations)
-
-## Notes
-
-- E2E tests spawn child PowerShell processes to test module loading in isolation
-- Tests use the built module from `Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0/`
-- Tests create temporary copies of the module to avoid file locking issues
-- Form manipulation test creates forms on the `account` entity
-- All test artifacts are cleaned up automatically
+- **Module/ModuleBasicTests.cs** - Basic module functionality, connection, queries
+- **Sql/InvokeDataverseSqlTests.cs** - SQL query cmdlet tests
+- **Views/ViewManipulationTests.cs** - View CRUD operations
+- **Forms/FormLibraryAndEventHandlerTests.cs** - Form customization tests
+- **Forms/FormManipulationTests.cs** - Form structure modification tests
+- **Plugin/PluginManagementTests.cs** - Plugin management tests
+- **Metadata/** - Entity, attribute, relationship metadata tests
+- **Solution/SolutionComponentTests.cs** - Solution component tests
+- **EnvironmentVariable/** - Environment variable tests
+- **FileData/** - File data tests
+- **OrganizationSettings/** - Organization settings tests
+- **RecordAccess/** - Record access/sharing tests
+- **Sitemap/** - Sitemap tests
 
 ## Troubleshooting
 
+### Tests are Skipped
+
+E2E tests are automatically skipped if environment variables are not set. Verify:
+```powershell
+$env:E2ETESTS_URL
+$env:E2ETESTS_CLIENTID
+$env:E2ETESTS_CLIENTSECRET
+$env:TESTMODULEPATH
+```
+
 ### Authentication Errors
-- Verify your client ID and client secret are correct
+
+- Verify client ID and client secret are correct
 - Ensure the app registration has appropriate permissions in Dataverse
 - Check that the URL is correct and accessible
 
-### Form Creation Failures
-- Ensure your user/app has permissions to create and modify forms
-- Verify the `account` entity exists in your environment
-- Check that form management operations are not blocked by security roles
+### Module Not Found
 
-### Leftover Test Data
-The form manipulation test includes automatic cleanup of leftover data from previous runs. If you need to manually clean up:
-
+Ensure the module is built before running tests:
 ```powershell
-# List test forms
-Get-DataverseRecord -Connection $connection -TableName systemform -FilterValues @{
-    "name:Like" = "E2ETestForm-%"
-    "objecttypecode" = "account"
-} -Columns formid, name
-
-# Delete specific form by ID
-Remove-DataverseForm -Connection $connection -Id $formId -Confirm:$false
+dotnet build -c Debug
+$env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 ```
+
+## See Also
+
+- **AGENTS.md** - Comprehensive development guide, test patterns, and best practices
+- **Rnwood.Dataverse.Data.PowerShell.E2ETests/** - Current E2E test source code
+- **Rnwood.Dataverse.Data.PowerShell.Tests/** - Infrastructure tests (faster, mock-based)

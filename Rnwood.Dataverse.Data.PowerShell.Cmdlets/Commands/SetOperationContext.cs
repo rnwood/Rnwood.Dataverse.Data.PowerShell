@@ -399,7 +399,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
                         existingRecordQuery.AddAttributeValue(entityMetadata.PrimaryIdAttribute, Id);
-                        existingRecordQuery.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+                        existingRecordQuery.ColumnSet = target.LogicalName.Equals("calendar", StringComparison.OrdinalIgnoreCase) ? new ColumnSet(true) : BuildColumnSetWithValidation(target.Attributes.Select(a => a.Key).ToArray(), entityMetadata);
 
                         var record = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
                         if (record != null)
@@ -436,7 +436,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             matchOnQuery.AddAttributeValue(matchOnColumn, queryValue);
                         }
 
-                        matchOnQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+                        matchOnQuery.ColumnSet = BuildColumnSetWithValidation(target.Attributes.Select(a => a.Key).ToArray(), entityMetadata);
 
                         var matchedRecords = Connection.RetrieveMultiple(matchOnQuery).Entities;
 
@@ -486,7 +486,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 QueryByAttribute existingRecordQuery = new QueryByAttribute(TableName);
                 existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity1IntersectAttribute, entity1Value.Value);
                 existingRecordQuery.AddAttributeValue(manyToManyRelationshipMetadata.Entity2IntersectAttribute, entity2Value.Value);
-                existingRecordQuery.ColumnSet = new ColumnSet(target.Attributes.Select(a => a.Key).ToArray());
+                existingRecordQuery.ColumnSet = BuildColumnSetWithValidation(target.Attributes.Select(a => a.Key).ToArray(), entityMetadata);
 
                 var record = Connection.RetrieveMultiple(existingRecordQuery).Entities.FirstOrDefault();
                 if (record != null)
@@ -1226,6 +1226,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             PendingFileUploads.Clear();
+        }
+
+        /// <summary>
+        /// Builds a ColumnSet with validation that all requested columns are readable.
+        /// Throws an exception with helpful guidance if non-readable columns are detected.
+        /// Always includes the primary ID attribute to ensure the retrieved record has ID info.
+        /// </summary>
+        private ColumnSet BuildColumnSetWithValidation(string[] columnNames, EntityMetadata entityMetadata)
+        {
+            // Always include the primary ID attribute - needed for update operations
+            var columnsWithPrimaryId = columnNames.ToList();
+            if (!string.IsNullOrEmpty(entityMetadata.PrimaryIdAttribute) && 
+                !columnsWithPrimaryId.Contains(entityMetadata.PrimaryIdAttribute, StringComparer.OrdinalIgnoreCase))
+            {
+                columnsWithPrimaryId.Add(entityMetadata.PrimaryIdAttribute);
+            }
+            
+            // Check if any of the requested columns are not valid for read
+            var nonReadableColumns = new List<string>();
+            
+            foreach (var columnName in columnsWithPrimaryId)
+            {
+                var attributeMetadata = entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == columnName);
+                
+                // If the column is not valid for read, add it to the list
+                if (attributeMetadata != null && !attributeMetadata.IsValidForRead.GetValueOrDefault())
+                {
+                    nonReadableColumns.Add(columnName);
+                }
+            }
+
+            // If any non-readable columns were found, throw a clear error message
+            if (nonReadableColumns.Any())
+            {
+                var columnList = string.Join(", ", nonReadableColumns.Select(c => $"'{c}'"));
+                var message = $"Cannot retrieve existing record for comparison because the following column(s) are not valid for read: {columnList}. " +
+                              $"Entity: {entityMetadata.LogicalName}. " +
+                              $"To update records with non-readable columns, use one of these alternatives: " +
+                              $"-UpdateAllColumns (skip retrieval and update all provided columns), " +
+                              $"-NoUpdate (only create new records), " +
+                              $"or -CreateOnly (create new records without checking for existing records).";
+                
+                throw new InvalidOperationException(message);
+            }
+
+            return new ColumnSet(columnsWithPrimaryId.ToArray());
         }
     }
 }

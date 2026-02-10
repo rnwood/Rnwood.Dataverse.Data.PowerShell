@@ -29,8 +29,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
     /// <remarks>
     /// Note: PowerShell cmdlet invocation is NOT available in xUnit tests because
     /// Microsoft.PowerShell.SDK only provides reference assemblies, not runtime assemblies.
-    /// Use this base class for testing internal cmdlet logic via FakeXrmEasy,
-    /// and use Pester tests (tests/ directory) for full cmdlet integration testing.
+    /// Use this base class for testing internal cmdlet logic via FakeXrmEasy.
+    /// For full cmdlet integration testing, use E2E tests in Rnwood.Dataverse.Data.PowerShell.E2ETests/
+    /// which use PowerShellProcessRunner to execute cmdlets in child PowerShell processes.
     /// </remarks>
     public abstract class TestBase : IDisposable
     {

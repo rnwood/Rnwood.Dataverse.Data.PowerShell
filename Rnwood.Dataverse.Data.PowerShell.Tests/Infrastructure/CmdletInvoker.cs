@@ -21,7 +21,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
     /// 
     /// For testing cmdlets with mocks, use:
     /// - Direct unit tests for internal classes (tested via TestBase/FakeXrmEasy)
-    /// - Pester tests for full cmdlet integration (existing tests/ directory)
+    /// - E2E tests using PowerShellProcessRunner (Rnwood.Dataverse.Data.PowerShell.E2ETests/)
     /// </remarks>
     public class CmdletInvoker : IDisposable
     {
@@ -45,7 +45,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         /// <summary>
         /// Attempts to invoke a cmdlet. Currently not supported due to PowerShell SDK limitations.
         /// </summary>
-        /// <exception cref="NotSupportedException">Always thrown - use Pester tests or direct unit tests instead.</exception>
+        /// <exception cref="NotSupportedException">Always thrown - use E2E tests or direct unit tests instead.</exception>
         public CmdletResult<T> Invoke<T>(string cmdletName, IDictionary<string, object?> parameters)
         {
             // NOTE: PowerShell hosting doesn't work because Microsoft.PowerShell.SDK only contains
@@ -54,7 +54,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             throw new NotSupportedException(
                 "PowerShell cmdlet invocation is not supported in xUnit tests due to SDK limitations. " +
                 "Use direct unit tests for internal classes (FakeXrmEasy works), " +
-                "or Pester tests (tests/ directory) for cmdlet integration testing.");
+                "or E2E tests (Rnwood.Dataverse.Data.PowerShell.E2ETests/) for cmdlet integration testing.");
         }
 
         public void Dispose()
