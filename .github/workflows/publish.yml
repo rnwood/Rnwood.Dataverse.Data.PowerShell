@@ -12,6 +12,10 @@ on:
 jobs:
   test:
     timeout-minutes: 60  # Fail fast if job exceeds 60 minutes
+    permissions:
+      contents: read
+      checks: write  # Required for test-reporter action to create check runs
+      pull-requests: read  # Required for test-reporter action to read PR info
     strategy:
       matrix:
         include:
