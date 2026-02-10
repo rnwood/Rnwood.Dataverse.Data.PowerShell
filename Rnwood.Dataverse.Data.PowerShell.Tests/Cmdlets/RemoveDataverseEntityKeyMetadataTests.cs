@@ -107,8 +107,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.Commands.Add(new SessionStateCmdletEntry(
                 "Remove-DataverseEntityKeyMetadata", typeof(Commands.RemoveDataverseEntityKeyMetadataCmdlet), null));
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Set-DataverseConnectionAsDefault", typeof(Commands.SetDataverseConnectionAsDefaultCmdlet), null));
 
             using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
             runspace.Open();
@@ -117,11 +115,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 
             var mockConnection = CreateMockConnection();
 
-            // Set default connection
-            ps.AddCommand("Set-DataverseConnectionAsDefault")
-              .AddParameter("Connection", mockConnection);
-            ps.Invoke();
-            ps.Commands.Clear();
+            // Set default connection via static helper (avoids runspace execution context issues with AsyncLocal)
+            SetDataverseConnectionAsDefaultCmdlet.SetDefault(mockConnection);
 
             // Act - Delete without explicit connection
             ps.AddCommand("Remove-DataverseEntityKeyMetadata")

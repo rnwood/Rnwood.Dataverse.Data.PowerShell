@@ -19,30 +19,14 @@ public class GetDataverseWhoAmITests : TestBase, IDisposable
 {
     public GetDataverseWhoAmITests()
     {
-        ClearDefaultConnection();
-    }
+            SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
+        }
 
-    public override void Dispose()
-    {
-        ClearDefaultConnection();
-        base.Dispose();
-    }
-
-    private static void ClearDefaultConnection()
-    {
-        var managerType = typeof(GetDataverseConnectionCmdlet).Assembly
-            .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
-        var clearMethod = managerType?.GetMethod("ClearDefaultConnection", BindingFlags.Public | BindingFlags.Static);
-        clearMethod?.Invoke(null, null);
-    }
-
-    private static void SetDefaultConnection(ServiceClient connection)
-    {
-        var managerType = typeof(GetDataverseConnectionCmdlet).Assembly
-            .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
-        var prop = managerType?.GetProperty("DefaultConnection", BindingFlags.Public | BindingFlags.Static);
-        prop?.SetValue(null, connection);
-    }
+        public override void Dispose()
+        {
+            SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
+            base.Dispose();
+        }
 
     private static PS CreatePowerShellWithCmdlets()
     {
@@ -100,7 +84,7 @@ public class GetDataverseWhoAmITests : TestBase, IDisposable
         var mockConnection = CreateMockConnection("contact");
 
         // Set default connection via reflection (avoids test parallelization interference)
-        SetDefaultConnection(mockConnection);
+        SetDataverseConnectionAsDefaultCmdlet.SetDefault(mockConnection);
 
         // Act - invoke Get-DataverseWhoAmI without -Connection parameter
         ps.AddCommand("Get-DataverseWhoAmI");

@@ -20,38 +20,17 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
     public GetDataverseConnectionTests()
     {
         // Clear default connection before each test
-        ClearDefaultConnection();
+        SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
     }
 
     public override void Dispose()
     {
         // Clean up default connection after each test
-        ClearDefaultConnection();
+        SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
         base.Dispose();
     }
 
-    /// <summary>
-    /// Clears the default connection via reflection.
-    /// </summary>
-    private static void ClearDefaultConnection()
-    {
-        var managerType = typeof(GetDataverseConnectionCmdlet).Assembly
-            .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
-        var clearMethod = managerType?.GetMethod("ClearDefaultConnection", BindingFlags.Public | BindingFlags.Static);
-        clearMethod?.Invoke(null, null);
-    }
 
-    /// <summary>
-    /// Sets the default connection via reflection.
-    /// </summary>
-    private static void SetDefaultConnection(ServiceClient connection)
-    {
-
-        var managerType = typeof(GetDataverseConnectionCmdlet).Assembly
-            .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
-        var prop = managerType?.GetProperty("DefaultConnection", BindingFlags.Public | BindingFlags.Static);
-        prop?.SetValue(null, connection);
-    }
 
     /// <summary>
     /// Gets the default connection via reflection.
@@ -102,9 +81,8 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         using var ps = CreatePowerShellWithCmdlets();
         var mockConnection = CreateMockConnection("contact");
 
-        // Act - Set connection as default using SetAsDefault via reflection
-        // (We can't use -Mock since that parameter doesn't exist in the cmdlet)
-        SetDefaultConnection(mockConnection);
+        // Act - Set connection as default via cmdlet helper
+        SetDataverseConnectionAsDefaultCmdlet.SetDefault(mockConnection);
 
         // Verify via GetDefault parameter
         ps.AddCommand("Get-DataverseConnection")
@@ -122,7 +100,7 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
     {
         // Arrange
         using var ps = CreatePowerShellWithCmdlets();
-        ClearDefaultConnection();
+        SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
 
         // Act
         ps.AddCommand("Get-DataverseConnection")
@@ -142,7 +120,7 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
         // Arrange
         using var ps = CreatePowerShellWithCmdlets();
         var mockConnection = CreateMockConnection("contact");
-        SetDefaultConnection(mockConnection);
+        SetDataverseConnectionAsDefaultCmdlet.SetDefault(mockConnection);
 
         // Act - Call Get-DataverseWhoAmI without Connection parameter
         ps.AddCommand("Get-DataverseWhoAmI");
@@ -158,7 +136,7 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
     {
         // Arrange
         using var ps = CreatePowerShellWithCmdlets();
-        ClearDefaultConnection();
+        SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
 
         // Act - Call Get-DataverseRecord without Connection parameter and no default
         ps.AddCommand("Get-DataverseRecord")

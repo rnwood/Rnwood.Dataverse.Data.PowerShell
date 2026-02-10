@@ -44,6 +44,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager.UseThreadLocalConnection = true;
         }
 
+
         // Fixed identity values for WhoAmIRequest (consistent per test)
         private readonly Guid _mockUserId = Guid.NewGuid();
         private readonly Guid _mockBusinessUnitId = Guid.NewGuid();
@@ -967,7 +968,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         public virtual void Dispose()
         {
             // Clear thread-local and process default connections to avoid leakage between tests
-            Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager.ClearDefaultConnection();
+            Rnwood.Dataverse.Data.PowerShell.Commands.SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
 
             Service = null;
             Context = null;
