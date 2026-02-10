@@ -313,9 +313,16 @@ jobs:
         shell: pwsh
         run: |
           Write-Host "Running xUnit infrastructure tests..."
+          # Set TESTMODULEPATH for tests that need to load the module
+          $env:TESTMODULEPATH=(Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell").Path
+          Write-Host "TESTMODULEPATH set to: $env:TESTMODULEPATH"
+          
+          # Create test results directory
+          New-Item -ItemType Directory -Force -Path TestResults | Out-Null
+          
           # Run net8.0 tests on all platforms
           if ("${{ matrix.powershell_version }}" -ne "5") {
-            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net8.0 --logger "console;verbosity=normal"
+            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net8.0.trx" --results-directory TestResults
             $net8Result = $LASTEXITCODE
             if ($net8Result -ne 0) {
               Write-Error "xUnit net8.0 tests failed with exit code $net8Result"
@@ -324,7 +331,7 @@ jobs:
           }
           # Run net462 tests on Windows only
           if ("${{ matrix.os }}" -eq "windows-latest") {
-            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net462 --logger "console;verbosity=normal"
+            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net462 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net462.trx" --results-directory TestResults
             $net462Result = $LASTEXITCODE
             if ($net462Result -ne 0) {
               Write-Error "xUnit net462 tests failed with exit code $net462Result"
@@ -332,6 +339,16 @@ jobs:
             }
           }
           Write-Host "xUnit infrastructure tests completed successfully"
+      
+      # Publish xUnit test results to GitHub
+      - name: Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: xUnit Tests (${{ matrix.os }}, PS ${{ matrix.powershell_version }})
+          path: TestResults/*.trx
+          reporter: dotnet-trx
+          fail-on-error: false
 
       # Build and pack XrmToolbox Plugin (Windows only - requires .NET Framework 4.8)
       - if: ${{ matrix.os == 'windows-latest' }}
