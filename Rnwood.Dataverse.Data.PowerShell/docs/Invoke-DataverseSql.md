@@ -31,10 +31,8 @@ If applicable (e.g. for UPDATE), the affected row count is written to verbose ou
 The cmdlet supports parameterized queries using the `@paramname` syntax. Parameters help avoid SQL injection and improve query readability.
 
 Use the `-Parameters` parameter to provide values as a hashtable or PSObject:
-```powershell
-Invoke-DataverseSql -Sql "SELECT * FROM contact WHERE lastname = @name AND createdon > @date" `
-    -Parameters @{ name = 'Smith'; date = '2024-01-01' }
-```
+
+    Invoke-DataverseSql -Sql "SELECT * FROM contact WHERE lastname = @name AND createdon > @date" -Parameters @{ name = 'Smith'; date = '2024-01-01' }
 
 When piping objects to the cmdlet, each object's properties become available as parameters, and the query executes once per input object.
 
@@ -52,16 +50,12 @@ The cmdlet supports querying across multiple Dataverse environments using the `d
 - Use `-DataSourceName` to override the primary connection's name
 - Use `-AdditionalConnections` to register named secondary connections
 
-**Why use `-DataSourceName`?**  
+**Why use `-DataSourceName`?**
 Organization unique names differ across environments (dev/test/prod). By setting explicit datasource names, your SQL queries remain portable:
 
-```powershell
-# Without -DataSourceName: Environment-specific
-Invoke-DataverseSql -Sql "SELECT * FROM org12345abc..account"  # Only works in one environment
+**Without `-DataSourceName`:** Environment-specific — `Invoke-DataverseSql -Sql "SELECT * FROM org12345abc..account"` (Only works in one environment)
 
-# With -DataSourceName: Portable across all environments
-Invoke-DataverseSql -DataSourceName "primary" -Sql "SELECT * FROM primary..account"  # Works everywhere
-```
+**With `-DataSourceName`:** Portable across all environments — `Invoke-DataverseSql -DataSourceName "primary" -Sql "SELECT * FROM primary..account"` (Works everywhere)
 
 ## EXAMPLES
 

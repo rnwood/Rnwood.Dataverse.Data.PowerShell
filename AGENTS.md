@@ -5,6 +5,8 @@ Cross-platform PowerShell module for Microsoft Dataverse data manipulation. Targ
 
 ## Critical Development Requirements
 
+ALWAYS clean up temporary files in the repo. Don't generate reports as files unless asked for.
+
 ### 🔴 MANDATORY: Use the Real Dataverse Environment
 
 **Before making ANY code changes or adding features:**
