@@ -24,8 +24,6 @@ $VerbosePreference = 'Continue'
 try {
     Write-Host '=== Dynamic Plugin Assembly E2E Test ==='
     
-    $connection.EnableAffinityCookie = $true
-    
     # Generate unique test identifiers
     $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 6)

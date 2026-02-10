@@ -20,8 +20,6 @@ $ConfirmPreference = 'None'
 $VerbosePreference = 'Continue'
 
 try {
-    $connection.EnableAffinityCookie = $true
-    
     Write-Host '========================================='
     Write-Host 'Testing Organization Table Columns'
     Write-Host '========================================='

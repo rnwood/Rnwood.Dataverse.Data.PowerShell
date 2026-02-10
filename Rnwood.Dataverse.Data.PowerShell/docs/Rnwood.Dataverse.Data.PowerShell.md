@@ -367,9 +367,6 @@ Adds or updates a solution component in an unmanaged solution, with automatic ha
 ### [Set-DataverseTableIconFromSet](Set-DataverseTableIconFromSet.md)
 Sets a table's vector icon by downloading an icon from an online icon set and creating/updating a web resource.
 
-### [Set-DataverseThreadLocalConnection](Set-DataverseThreadLocalConnection.md)
-{{ Fill in the Synopsis }}
-
 ### [Set-DataverseView](Set-DataverseView.md)
 Creates or updates Dataverse views (savedquery and userquery entities) with flexible column and filter configuration.
 
@@ -378,7 +375,4 @@ Creates or updates web resources in a Dataverse environment.
 
 ### [Test-DataverseRecordAccess](Test-DataverseRecordAccess.md)
 Tests the access rights a security principal (user or team) has for a specific record.
-
-### [Wait-DataversePublish](Wait-DataversePublish.md)
-Waits for a Dataverse publish operation to complete.
 

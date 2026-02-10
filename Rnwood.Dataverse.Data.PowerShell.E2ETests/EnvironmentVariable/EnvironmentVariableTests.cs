@@ -43,7 +43,6 @@ function Remove-TestEnvironmentVariable {
 }
 
 try {
-    $connection.EnableAffinityCookie = $true
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
     $schemaName = ""new_e2eenvvar_$testRunId""
     

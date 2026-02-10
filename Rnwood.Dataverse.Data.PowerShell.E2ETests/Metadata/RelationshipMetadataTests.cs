@@ -21,45 +21,7 @@ $ErrorActionPreference = 'Stop'
 $ConfirmPreference = 'None'
 $VerbosePreference = 'Continue'
 
-function Invoke-WithRetry {
-    param(
-        [Parameter(Mandatory = $true)]
-        [scriptblock]$ScriptBlock,
-        [int]$MaxRetries = 5,
-        [int]$InitialDelaySeconds = 10
-    )
-    
-    $attempt = 0
-    $delay = $InitialDelaySeconds
-    
-    while ($attempt -lt $MaxRetries) {
-        try {
-            $attempt++
-            Write-Verbose ""Attempt $attempt of $MaxRetries""
-            & $ScriptBlock
-            return
-        }
-        catch {
-            if ($_.Exception.Message -like '*Cannot start the requested operation*EntityCustomization*') {
-                Write-Warning 'EntityCustomization operation conflict. Waiting 2 minutes...'
-                $attempt--
-                Start-Sleep -Seconds 120
-                continue
-            }
-            
-            if ($attempt -eq $MaxRetries) {
-                throw
-            }
-            
-            Write-Warning ""Attempt $attempt failed: $_. Retrying in $delay seconds...""
-            Start-Sleep -Seconds $delay
-            $delay = $delay * 2
-        }
-    }
-}
-
 try {
-    $connection.EnableAffinityCookie = $true
     $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmm')
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
     $entity1Name = ""new_reltest1_${timestamp}_$testRunId""
@@ -89,7 +51,6 @@ try {
     
     Write-Host 'Cleanup - Removing test entities...'
     Invoke-WithRetry {
-        Wait-DataversePublish -Connection $connection
         Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity1Name -Confirm:$false
         Remove-DataverseEntityMetadata -Connection $connection -EntityName $entity2Name -Confirm:$false
     }

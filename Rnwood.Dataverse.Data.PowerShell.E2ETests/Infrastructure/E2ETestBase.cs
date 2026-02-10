@@ -33,6 +33,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
 
         /// <summary>
         /// Creates a PowerShell script that imports the module and establishes a connection.
+        /// Includes a centralized Invoke-WithRetry function for handling transient errors.
         /// </summary>
         protected string GetConnectionScript(string additionalScript = "")
         {
@@ -56,6 +57,37 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
 {importStatement}
 
 $connection = Get-DataverseConnection -Url '{E2ETestsUrl}' -ClientId '{E2ETestsClientId}' -ClientSecret '{E2ETestsClientSecret}' -ErrorAction Stop
+
+function Invoke-WithRetry {{
+    param(
+        [Parameter(Mandatory = $true)]
+        [scriptblock]$ScriptBlock,
+        [int]$MaxRetries = 20,
+        [int]$DelaySeconds = 10
+    )
+
+    $attempt = 0
+
+    while ($attempt -lt $MaxRetries) {{
+        try {{
+            $attempt++
+            Write-Verbose ""Attempt $attempt of $MaxRetries""
+            & $ScriptBlock
+            return
+        }}
+        catch {{
+            
+            if ($attempt -eq $MaxRetries) {{
+                Write-Error ""All $MaxRetries attempts failed. Last error: $_""
+                throw
+            }}
+
+            Write-Warning ""Attempt $attempt failed: $_. Retrying in $DelaySeconds seconds...""
+            Start-Sleep -Seconds $DelaySeconds
+
+        }}
+    }}
+}}
 
 {additionalScript}
 ";

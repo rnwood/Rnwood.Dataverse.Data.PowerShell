@@ -92,8 +92,6 @@ Write-Host 'Success'
 
 
             var script = GetConnectionScript(@"
-$connection.EnableAffinityCookie = $true
-
 $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path 'WhoAmI'
 
 if (-not $response.UserId) {
@@ -116,8 +114,6 @@ Write-Host 'Success'
 
 
             var script = GetConnectionScript(@"
-$connection.EnableAffinityCookie = $true
-
 $errorThrown = $false
 try {
     $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path '/api/data/v9.2/systemusers'
@@ -152,8 +148,6 @@ Write-Host 'Success'
 
 
             var script = GetConnectionScript(@"
-$connection.EnableAffinityCookie = $true
-
 $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path 'WhoAmI?test=value/with/slashes'
 
 if (-not $response.UserId) {
@@ -176,8 +170,6 @@ Write-Host 'Success'
 
 
             var script = GetConnectionScript(@"
-$connection.EnableAffinityCookie = $true
-
 $response = Invoke-DataverseRequest -Connection $connection -Method Get -Path 'WhoAmI'
 
 if (-not $response.UserId) {

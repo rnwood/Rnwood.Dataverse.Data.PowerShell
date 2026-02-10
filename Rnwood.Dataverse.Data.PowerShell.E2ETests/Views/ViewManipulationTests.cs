@@ -19,38 +19,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Views
             var script = GetConnectionScript(@"
 $ErrorActionPreference = 'Stop'
 
-# Retry helper function
-function Invoke-WithRetry {
-    param(
-        [Parameter(Mandatory = $true)]
-        [scriptblock]$ScriptBlock,
-        [int]$MaxRetries = 5,
-        [int]$InitialDelaySeconds = 10
-    )
-
-    $attempt = 0
-    $delay = $InitialDelaySeconds
-
-    while ($attempt -lt $MaxRetries) {
-        try {
-            $attempt++
-            Write-Verbose ""Attempt $attempt of $MaxRetries""
-            & $ScriptBlock
-            return
-        }
-        catch {
-            if ($attempt -eq $MaxRetries) {
-                Write-Error ""All $MaxRetries attempts failed. Last error: $_""
-                throw
-            }
-
-            Write-Warning ""Attempt $attempt failed: $_. Retrying in $delay seconds...""
-            Start-Sleep -Seconds $delay
-            $delay = $delay * 2
-        }
-    }
-}
-
 try {
     # Generate unique test identifiers
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)

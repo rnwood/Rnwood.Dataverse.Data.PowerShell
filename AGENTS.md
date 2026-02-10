@@ -82,7 +82,6 @@ dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.Po
 [Fact]
 public async Task YourNewFeature_Should_WorkCorrectly()
 {
-    Skip.If(SkipE2ETests, "E2E tests require credentials");
     
     var testScript = GetConnectionScript($@"
         # Your PowerShell test code here
@@ -208,7 +207,6 @@ dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.Po
 **Important Notes:**
 - ALWAYS set `$env:TESTMODULEPATH` before running tests
 - E2E tests spawn child PowerShell processes to test module loading
-- Tests will be skipped if environment variables are not set
 - Use targeted test execution to save time during development
 
 ## Project Architecture & Key Files
@@ -322,7 +320,6 @@ The solution contains 8 projects:
 - Uses PowerShellProcessRunner to execute PowerShell scripts in child processes
 - Tests actual cmdlet behavior against real Dataverse instances
 - Requires E2ETESTS_URL, E2ETESTS_CLIENTID, E2ETESTS_CLIENTSECRET environment variables
-- Tests are skipped if credentials not provided
 
 ### Projects 6-8: XrmToolbox Plugin Projects
 
@@ -481,7 +478,6 @@ docs: update installation instructions
 - Inherit from `TestBase` (infrastructure tests) or `E2ETestBase` (E2E tests)
 - Use descriptive test names: `FeatureName_Should_BehaviorExpected`
 - Follow existing test patterns in the test projects
-- Use `Skip.If(SkipE2ETests, "reason")` for E2E tests requiring credentials
 - Infrastructure tests: Use FakeXrmEasy for mocking
 - E2E tests: Use PowerShellProcessRunner for executing PowerShell scripts
 

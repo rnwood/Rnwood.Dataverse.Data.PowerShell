@@ -46,6 +46,7 @@ public class GetDataverseConnectionTests : TestBase, IDisposable
     /// </summary>
     private static void SetDefaultConnection(ServiceClient connection)
     {
+
         var managerType = typeof(GetDataverseConnectionCmdlet).Assembly
             .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
         var prop = managerType?.GetProperty("DefaultConnection", BindingFlags.Public | BindingFlags.Static);
