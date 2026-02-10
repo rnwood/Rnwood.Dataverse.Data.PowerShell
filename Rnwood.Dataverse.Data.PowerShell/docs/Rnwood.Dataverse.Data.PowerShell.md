@@ -364,6 +364,9 @@ Adds or updates a solution component in an unmanaged solution, with automatic ha
 ### [Set-DataverseTableIconFromSet](Set-DataverseTableIconFromSet.md)
 Sets a table's vector icon by downloading an icon from an online icon set and creating/updating a web resource.
 
+### [Set-DataverseThreadLocalConnection](Set-DataverseThreadLocalConnection.md)
+{{ Fill in the Synopsis }}
+
 ### [Set-DataverseView](Set-DataverseView.md)
 Creates or updates Dataverse views (savedquery and userquery entities) with flexible column and filter configuration.
 
