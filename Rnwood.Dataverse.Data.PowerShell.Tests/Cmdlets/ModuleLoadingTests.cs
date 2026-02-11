@@ -80,6 +80,18 @@ Write-Output 'PASS'
 
     private static void EnsureModulePath()
     {
+        // Check if TESTMODULEPATH is already set (e.g., by CI)
+        var existingPath = Environment.GetEnvironmentVariable("TESTMODULEPATH");
+        if (!string.IsNullOrEmpty(existingPath))
+        {
+            if (!Directory.Exists(existingPath))
+            {
+                throw new InvalidOperationException($"TESTMODULEPATH is set to {existingPath}, but directory does not exist.");
+            }
+            return; // Already set, nothing to do
+        }
+        
+        // Not set - try to find it using solution root
         var solutionRoot = FindSolutionRoot();
         var defaultPath = Path.Combine(solutionRoot, "Rnwood.Dataverse.Data.PowerShell", "bin", "Debug", "netstandard2.0");
 

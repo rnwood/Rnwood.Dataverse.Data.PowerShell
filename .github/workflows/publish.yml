@@ -328,7 +328,7 @@ jobs:
           # Track whether any tests were executed
           $testsExecuted = $false
           
-          # Run net8.0 tests on all platforms
+          # Run net8.0 tests for PS latest or PS7
           if ("${{ matrix.powershell_version }}" -ne "5") {
             $testsExecuted = $true
             dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net8.0.trx" --results-directory TestResults
@@ -340,8 +340,8 @@ jobs:
               exit $net8Result
             }
           }
-          # Run net462 tests on Windows only
-          if ("${{ matrix.os }}" -eq "windows-latest") {
+          # Run net462 tests on PS5
+          if ("${{ matrix.powershell_version }}" -eq "5") {
             $testsExecuted = $true
             dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net462 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net462.trx" --results-directory TestResults
             $net462Result = $LASTEXITCODE
@@ -475,7 +475,7 @@ jobs:
           # Track whether any tests were executed
           $testsExecuted = $false
           
-          # Run net8.0 E2E tests on all platforms except PS 5
+          # Run net8.0 E2E tests on PS latest or PS7
           if ("${{ matrix.powershell_version }}" -ne "5") {
             $testsExecuted = $true
             dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E
@@ -486,8 +486,8 @@ jobs:
               exit $net8Result
             }
           }
-          # Run net462 E2E tests on Windows only
-          if ("${{ matrix.os }}" -eq "windows-latest") {
+          # Run net462 E2E tests on PS5
+          if ("${{ matrix.powershell_version }}" -eq "5") {
             $testsExecuted = $true
             dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net462 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net462.trx" --results-directory TestResults/E2E
             $net462Result = $LASTEXITCODE
