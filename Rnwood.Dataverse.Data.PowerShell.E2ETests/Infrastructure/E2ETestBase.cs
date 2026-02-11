@@ -70,14 +70,28 @@ function Write-ErrorDetails {{
     param([Parameter(Mandatory = $true)]$ErrorRecord)
     
     Write-Host '========================================' -ForegroundColor Red
-    Write-Host 'ERROR DETAILS' -ForegroundColor Red
+    Write-Host 'COMPREHENSIVE ERROR DETAILS' -ForegroundColor Red
     Write-Host '========================================' -ForegroundColor Red
+    
+    # Output EVERYTHING from the error record
+    Write-Host 'Full Error Record:' -ForegroundColor Cyan
+    Write-Host ($ErrorRecord | Format-List * -Force | Out-String) -ForegroundColor White
+    
+    Write-Host '========================================' -ForegroundColor Red
+    Write-Host 'Exception Details:' -ForegroundColor Cyan
     Write-Host ""Exception Type: $($ErrorRecord.Exception.GetType().FullName)"" -ForegroundColor Red
     Write-Host ""Message: $($ErrorRecord.Exception.Message)"" -ForegroundColor Red
     
+    # Output full exception details
+    Write-Host 'Full Exception Object:' -ForegroundColor Cyan
+    Write-Host ($ErrorRecord.Exception | Format-List * -Force | Out-String) -ForegroundColor White
+    
     if ($ErrorRecord.Exception.InnerException) {{
+        Write-Host '========================================' -ForegroundColor Red
         Write-Host ""Inner Exception: $($ErrorRecord.Exception.InnerException.GetType().FullName)"" -ForegroundColor Red
         Write-Host ""Inner Message: $($ErrorRecord.Exception.InnerException.Message)"" -ForegroundColor Red
+        Write-Host 'Full Inner Exception Object:' -ForegroundColor Cyan
+        Write-Host ($ErrorRecord.Exception.InnerException | Format-List * -Force | Out-String) -ForegroundColor White
         
         # Check for nested inner exceptions (e.g., AggregateException)
         $currentInner = $ErrorRecord.Exception.InnerException
@@ -87,27 +101,54 @@ function Write-ErrorDetails {{
             $currentInner = $currentInner.InnerException
             Write-Host ""  Inner Exception (depth $depth): $($currentInner.GetType().FullName)"" -ForegroundColor Red
             Write-Host ""  Message: $($currentInner.Message)"" -ForegroundColor Red
+            Write-Host ($currentInner | Format-List * -Force | Out-String) -ForegroundColor White
         }}
     }}
     
+    Write-Host '========================================' -ForegroundColor Red
     Write-Host ""Script Line: $($ErrorRecord.InvocationInfo.ScriptLineNumber)"" -ForegroundColor Red
     Write-Host ""Position: $($ErrorRecord.InvocationInfo.PositionMessage)"" -ForegroundColor Red
+    
     Write-Host '========================================' -ForegroundColor Red
     Write-Host 'Stack Trace:' -ForegroundColor Yellow
     Write-Host $ErrorRecord.ScriptStackTrace -ForegroundColor Yellow
-    Write-Host '========================================' -ForegroundColor Red
     
-    # For AggregateException, show all inner exceptions
+    Write-Host '========================================' -ForegroundColor Red
+    Write-Host 'Invocation Info:' -ForegroundColor Cyan
+    Write-Host ($ErrorRecord.InvocationInfo | Format-List * -Force | Out-String) -ForegroundColor White
+    
+    # For AggregateException, show all inner exceptions in detail
     if ($ErrorRecord.Exception -is [System.AggregateException]) {{
-        Write-Host 'AggregateException Inner Exceptions:' -ForegroundColor Magenta
+        Write-Host '========================================' -ForegroundColor Red
+        Write-Host 'AggregateException Inner Exceptions (Detailed):' -ForegroundColor Magenta
         $aggEx = [System.AggregateException]$ErrorRecord.Exception
         $i = 0
         foreach ($inner in $aggEx.InnerExceptions) {{
             $i++
-            Write-Host ""  [$i] $($inner.GetType().FullName): $($inner.Message)"" -ForegroundColor Magenta
+            Write-Host ""  ========== Inner Exception [$i] =========="" -ForegroundColor Magenta
+            Write-Host ""  Type: $($inner.GetType().FullName)"" -ForegroundColor Magenta
+            Write-Host ""  Message: $($inner.Message)"" -ForegroundColor Magenta
+            Write-Host ""  Full Details:"" -ForegroundColor Magenta
+            Write-Host ($inner | Format-List * -Force | Out-String) -ForegroundColor White
+            
+            # Check for inner exception within aggregate exception items
+            if ($inner.InnerException) {{
+                Write-Host ""  Has Inner Exception: $($inner.InnerException.GetType().FullName)"" -ForegroundColor Magenta
+                Write-Host ""  Inner Message: $($inner.InnerException.Message)"" -ForegroundColor Magenta
+                Write-Host ($inner.InnerException | Format-List * -Force | Out-String) -ForegroundColor White
+            }}
         }}
-        Write-Host '========================================' -ForegroundColor Red
     }}
+    
+    Write-Host '========================================' -ForegroundColor Red
+    Write-Host 'Error Stream Output:' -ForegroundColor Cyan
+    if ($Error -and $Error.Count -gt 0) {{
+        Write-Host ""Recent errors in `$Error variable (last 5):"" -ForegroundColor Yellow
+        $Error | Select-Object -First 5 | ForEach-Object {{
+            Write-Host ""  - $($_.Exception.GetType().FullName): $($_.Exception.Message)"" -ForegroundColor Yellow
+        }}
+    }}
+    Write-Host '========================================' -ForegroundColor Red
 }}
 
 function Invoke-WithRetry {{
