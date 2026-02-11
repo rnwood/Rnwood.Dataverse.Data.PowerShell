@@ -240,8 +240,7 @@ namespace TestDynamicPlugins
     Write-Host '=== ALL TESTS PASSED ===' -ForegroundColor Green
     Write-Host 'Success'
 } catch {
-    Write-Host ""ERROR: $($_.Exception.Message)"" -ForegroundColor Red
-    Write-Host $_.ScriptStackTrace
+    Write-ErrorDetails $_
     throw
 }
 ");

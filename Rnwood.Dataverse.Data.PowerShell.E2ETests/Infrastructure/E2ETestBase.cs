@@ -66,6 +66,50 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
 
 $connection = Get-DataverseConnection -Url '{E2ETestsUrl}' -ClientId '{E2ETestsClientId}' -ClientSecret '{E2ETestsClientSecret}' -ErrorAction Stop
 
+function Write-ErrorDetails {{
+    param([Parameter(Mandatory = $true)]$ErrorRecord)
+    
+    Write-Host '========================================' -ForegroundColor Red
+    Write-Host 'ERROR DETAILS' -ForegroundColor Red
+    Write-Host '========================================' -ForegroundColor Red
+    Write-Host ""Exception Type: $($ErrorRecord.Exception.GetType().FullName)"" -ForegroundColor Red
+    Write-Host ""Message: $($ErrorRecord.Exception.Message)"" -ForegroundColor Red
+    
+    if ($ErrorRecord.Exception.InnerException) {{
+        Write-Host ""Inner Exception: $($ErrorRecord.Exception.InnerException.GetType().FullName)"" -ForegroundColor Red
+        Write-Host ""Inner Message: $($ErrorRecord.Exception.InnerException.Message)"" -ForegroundColor Red
+        
+        # Check for nested inner exceptions (e.g., AggregateException)
+        $currentInner = $ErrorRecord.Exception.InnerException
+        $depth = 1
+        while ($currentInner.InnerException -and $depth -lt 5) {{
+            $depth++
+            $currentInner = $currentInner.InnerException
+            Write-Host ""  Inner Exception (depth $depth): $($currentInner.GetType().FullName)"" -ForegroundColor Red
+            Write-Host ""  Message: $($currentInner.Message)"" -ForegroundColor Red
+        }}
+    }}
+    
+    Write-Host ""Script Line: $($ErrorRecord.InvocationInfo.ScriptLineNumber)"" -ForegroundColor Red
+    Write-Host ""Position: $($ErrorRecord.InvocationInfo.PositionMessage)"" -ForegroundColor Red
+    Write-Host '========================================' -ForegroundColor Red
+    Write-Host 'Stack Trace:' -ForegroundColor Yellow
+    Write-Host $ErrorRecord.ScriptStackTrace -ForegroundColor Yellow
+    Write-Host '========================================' -ForegroundColor Red
+    
+    # For AggregateException, show all inner exceptions
+    if ($ErrorRecord.Exception -is [System.AggregateException]) {{
+        Write-Host 'AggregateException Inner Exceptions:' -ForegroundColor Magenta
+        $aggEx = [System.AggregateException]$ErrorRecord.Exception
+        $i = 0
+        foreach ($inner in $aggEx.InnerExceptions) {{
+            $i++
+            Write-Host ""  [$i] $($inner.GetType().FullName): $($inner.Message)"" -ForegroundColor Magenta
+        }}
+        Write-Host '========================================' -ForegroundColor Red
+    }}
+}}
+
 function Invoke-WithRetry {{
     param(
         [Parameter(Mandatory = $true)]
@@ -103,18 +147,20 @@ function Invoke-WithRetry {{
                     Start-Sleep -Seconds $retryDelay
                     continue
                 }} else {{
-                    Write-Error ""CustomizationLockException persisted for $maxMinutes minutes. Giving up. Last error: $errorMessage""
+                    Write-Host ""CustomizationLockException persisted for $maxMinutes minutes. Giving up."" -ForegroundColor Red
+                    Write-ErrorDetails $_
                     throw
                 }}
             }}
             
             # For other errors, use standard retry logic
             if ($attempt -eq $MaxRetries) {{
-                Write-Error ""All $MaxRetries attempts failed. Last error: $_""
+                Write-Host ""All $MaxRetries attempts failed."" -ForegroundColor Red
+                Write-ErrorDetails $_
                 throw
             }}
 
-            Write-Warning ""Attempt $attempt failed: $_. Retrying in $DelaySeconds seconds...""
+            Write-Warning ""Attempt $attempt failed: $errorMessage. Retrying in $DelaySeconds seconds...""
             Start-Sleep -Seconds $DelaySeconds
         }}
     }}
