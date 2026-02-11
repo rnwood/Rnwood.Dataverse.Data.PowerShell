@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Rnwood.Dataverse.Data.PowerShell.Cmdlets.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
@@ -121,7 +122,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         {
             // Arrange
             using var ps = CreatePowerShellWithCmdlets();
-            var mockConnection = CreateMockConnection();
+            var mockConnection = CreateMockConnection("contact");
 
             // Set default connection via static helper
             SetDataverseConnectionAsDefaultCmdlet.SetDefault(mockConnection);
