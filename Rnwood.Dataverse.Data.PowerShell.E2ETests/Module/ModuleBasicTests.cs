@@ -14,8 +14,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Module
         [Fact]
         public void AllCmdletsHaveHelpAvailable()
         {
-            var script = @"
-Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
+            var script = $@"
+{GetModuleImportStatement()}
 
 $cmdlets = Get-Command -Module Rnwood.Dataverse.Data.PowerShell
 Write-Host ""Testing help for $($cmdlets.Count) cmdlets""
@@ -44,8 +44,8 @@ Write-Host 'Success: All cmdlets have help available'
         [Fact]
         public void HelpContentReflectsHelpFilesWithExpectedStructure()
         {
-            var script = @"
-Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
+            var script = $@"
+{GetModuleImportStatement()}
 
 # Test a sample of important cmdlets to ensure help structure is correct
 $testCmdlets = @(
@@ -111,8 +111,8 @@ Write-Host 'Success: All tested cmdlets have proper help structure'
         [Fact]
         public void HelpFilesExistInEnGBDirectory()
         {
-            var script = @"
-Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
+            var script = $@"
+{GetModuleImportStatement()}
 
 # Check that the module directory has the en-GB help files
 $modulePath = (Get-Module Rnwood.Dataverse.Data.PowerShell).ModuleBase

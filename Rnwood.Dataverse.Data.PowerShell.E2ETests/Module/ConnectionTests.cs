@@ -8,6 +8,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Module
     /// <summary>
     /// Tests for basic Dataverse connection functionality.
     /// </summary>
+    [CrossPlatformTest]
     public class ConnectionTests : E2ETestBase
     {
         [Fact]

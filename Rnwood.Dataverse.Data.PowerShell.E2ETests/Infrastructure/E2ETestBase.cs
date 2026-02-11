@@ -32,26 +32,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
         }
 
         /// <summary>
-        /// Creates a PowerShell script that imports the module and establishes a connection.
-        /// Includes a centralized Invoke-WithRetry function for handling transient errors.
+        /// Gets the PowerShell statement to import the module.
+        /// Uses TESTMODULEPATH environment variable if set (for CI/testing newly built module),
+        /// otherwise imports by name (for testing installed module).
         /// </summary>
-        protected string GetConnectionScript(string additionalScript = "")
+        protected string GetModuleImportStatement()
         {
-            // Get module path from environment variable or use default
             var modulePath = Environment.GetEnvironmentVariable("TESTMODULEPATH");
-            string importStatement;
             
             if (!string.IsNullOrWhiteSpace(modulePath))
             {
                 // Import from specific path (for testing newly built module)
                 var manifestPath = System.IO.Path.Combine(modulePath, "Rnwood.Dataverse.Data.PowerShell.psd1");
-                importStatement = $"Import-Module '{manifestPath}' -Force -ErrorAction Stop";
+                return $"Import-Module '{manifestPath}' -Force -ErrorAction Stop";
             }
             else
             {
                 // Import by name (for testing installed module)
-                importStatement = "Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop";
+                return "Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop";
             }
+        }
+
+        /// <summary>
+        /// Creates a PowerShell script that imports the module and establishes a connection.
+        /// Includes a centralized Invoke-WithRetry function for handling transient errors.
+        /// </summary>
+        protected string GetConnectionScript(string additionalScript = "")
+        {
+            var importStatement = GetModuleImportStatement();
             
             return $@"
 {importStatement}
@@ -67,6 +75,7 @@ function Invoke-WithRetry {{
     )
 
     $attempt = 0
+    $startTime = Get-Date
 
     while ($attempt -lt $MaxRetries) {{
         try {{
@@ -76,7 +85,32 @@ function Invoke-WithRetry {{
             return
         }}
         catch {{
+            $errorMessage = $_.Exception.Message
+            $stackTrace = $_.ScriptStackTrace + ""`n"" + $_.Exception.StackTrace
             
+            # Check if this is a CustomizationLockException that should be retried for up to 30 minutes
+            $isCustomizationLock = $errorMessage -match 'CustomizationLockException' -or 
+                                   $errorMessage -match 'Cannot start another.*because there is a previous.*running' -or
+                                   $errorMessage -match 'solution installation or removal failed'
+            $hasInternalAcquire = $stackTrace -match 'InternalAcquireOrExecuteInLock'
+            
+            if ($isCustomizationLock -and $hasInternalAcquire) {{
+                $elapsedMinutes = ((Get-Date) - $startTime).TotalMinutes
+                $maxMinutes = 30
+                
+                if ($elapsedMinutes -lt $maxMinutes) {{
+                    $retryDelay = 30  # Use 30-second delay for lock exceptions
+                    Write-Warning ""CustomizationLockException detected (elapsed: $([int]$elapsedMinutes)m / ${{maxMinutes}}m). Retrying in $retryDelay seconds...""
+                    Write-Warning ""Error: $errorMessage""
+                    Start-Sleep -Seconds $retryDelay
+                    continue
+                }} else {{
+                    Write-Error ""CustomizationLockException persisted for $maxMinutes minutes. Giving up. Last error: $errorMessage""
+                    throw
+                }}
+            }}
+            
+            # For other errors, use standard retry logic
             if ($attempt -eq $MaxRetries) {{
                 Write-Error ""All $MaxRetries attempts failed. Last error: $_""
                 throw
@@ -84,7 +118,6 @@ function Invoke-WithRetry {{
 
             Write-Warning ""Attempt $attempt failed: $_. Retrying in $DelaySeconds seconds...""
             Start-Sleep -Seconds $DelaySeconds
-
         }}
     }}
 }}

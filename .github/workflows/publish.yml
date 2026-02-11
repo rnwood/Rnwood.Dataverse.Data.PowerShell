@@ -475,10 +475,23 @@ jobs:
           # Track whether any tests were executed
           $testsExecuted = $false
           
+          # Determine test filter based on OS
+          # On windows-latest: run all tests
+          # On other platforms: run only CrossPlatformTest tests
+          $testFilter = ""
+          if ("${{ matrix.os }}" -ne "windows-latest") {
+            $testFilter = "--filter `"Category=CrossPlatform`""
+            Write-Host "Non-Windows platform detected - running only CrossPlatformTest tests"
+          } else {
+            Write-Host "Windows platform detected - running all E2E tests"
+          }
+          
           # Run net8.0 E2E tests on PS latest or PS7
           if ("${{ matrix.powershell_version }}" -ne "5") {
             $testsExecuted = $true
-            dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E
+            $testCommand = "dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger `"console;verbosity=normal`" --logger `"trx;LogFileName=e2e-test-results-net8.0.trx`" --results-directory TestResults/E2E $testFilter"
+            Write-Host "Executing: $testCommand"
+            Invoke-Expression $testCommand
             $net8Result = $LASTEXITCODE
             Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=true"
             if ($net8Result -ne 0) {
@@ -489,7 +502,9 @@ jobs:
           # Run net462 E2E tests on PS5
           if ("${{ matrix.powershell_version }}" -eq "5") {
             $testsExecuted = $true
-            dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net462 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net462.trx" --results-directory TestResults/E2E
+            $testCommand = "dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net462 --logger `"console;verbosity=normal`" --logger `"trx;LogFileName=e2e-test-results-net462.trx`" --results-directory TestResults/E2E $testFilter"
+            Write-Host "Executing: $testCommand"
+            Invoke-Expression $testCommand
             $net462Result = $LASTEXITCODE
             Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=true"
             if ($net462Result -ne 0) {
