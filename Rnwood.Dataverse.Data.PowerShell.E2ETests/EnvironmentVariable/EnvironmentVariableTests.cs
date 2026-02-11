@@ -32,13 +32,17 @@ function Remove-TestEnvironmentVariable {
     )
     
     try {
-        Get-DataverseRecord -Connection $Connection -TableName environmentvariablevalue -FilterValues @{ environmentvariabledefinitionid = $DefinitionId } -Columns environmentvariablevalueid -ErrorAction SilentlyContinue | ForEach-Object {
-            Remove-DataverseRecord -Connection $Connection -TableName environmentvariablevalue -Id $_.Id -Confirm:$false -ErrorAction SilentlyContinue
+        Invoke-WithRetry {
+            Get-DataverseRecord -Connection $Connection -TableName environmentvariablevalue -FilterValues @{ environmentvariabledefinitionid = $DefinitionId } -Columns environmentvariablevalueid -ErrorAction SilentlyContinue | ForEach-Object {
+                Remove-DataverseRecord -Connection $Connection -TableName environmentvariablevalue -Id $_.Id -Confirm:$false -ErrorAction SilentlyContinue
+            }
         }
     } catch { }
     
     try {
-        Remove-DataverseEnvironmentVariableDefinition -Connection $Connection -SchemaName $SchemaName -Confirm:$false -ErrorAction SilentlyContinue
+        Invoke-WithRetry {
+            Remove-DataverseEnvironmentVariableDefinition -Connection $Connection -SchemaName $SchemaName -Confirm:$false -ErrorAction SilentlyContinue
+        }
     } catch { }
 }
 
@@ -47,13 +51,14 @@ try {
     $schemaName = ""new_e2eenvvar_$testRunId""
     
     Write-Host 'Creating environment variable definition...'
-    $definition = Set-DataverseEnvironmentVariableDefinition -Connection $connection `
-        -SchemaName $schemaName `
-        -DisplayName ""E2E Test EnvVar $testRunId"" `
-        -Type String `
-        -PassThru `
-        -Confirm:$false
-    
+    $definition = Invoke-WithRetry {
+        Set-DataverseEnvironmentVariableDefinition -Connection $connection `
+            -SchemaName $schemaName `
+            -DisplayName ""E2E Test EnvVar $testRunId"" `
+            -Type String `
+            -PassThru `
+            -Confirm:$false
+    }
     if (-not $definition) {
         throw 'Failed to create environment variable definition'
     }
@@ -61,10 +66,12 @@ try {
     Write-Host ""✓ Environment variable definition created (ID: $definitionId)""
     
     Write-Host 'Setting environment variable value...'
-    Set-DataverseEnvironmentVariableValue -Connection $connection `
-        -DefinitionSchemaName $schemaName `
-        -Value 'TestValue123' `
-        -Confirm:$false
+    Invoke-WithRetry {
+        Set-DataverseEnvironmentVariableValue -Connection $connection `
+            -DefinitionSchemaName $schemaName `
+            -Value 'TestValue123' `
+            -Confirm:$false
+    }
     Write-Host '✓ Environment variable value set'
     
     Write-Host 'Cleanup - Removing environment variable...'

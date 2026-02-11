@@ -27,12 +27,13 @@ try {
     Write-Host ""Using test appmodule unique name: $appModuleUniqueName""
     
     Write-Host 'Creating new appmodule...'
-    $appModuleId = Set-DataverseAppModule -Connection $connection `
-        -UniqueName $appModuleUniqueName `
-        -Name $appModuleName `
-        -Description 'Test AppModule for E2E testing' `
-        -PassThru -Confirm:$false
-    
+    $appModuleId = Invoke-WithRetry {
+        Set-DataverseAppModule -Connection $connection `
+            -UniqueName $appModuleUniqueName `
+            -Name $appModuleName `
+            -Description 'Test AppModule for E2E testing' `
+            -PassThru -Confirm:$false
+    }
     if (-not $appModuleId) {
         throw 'Failed to create appmodule - no ID returned'
     }
@@ -50,7 +51,9 @@ try {
     Write-Host 'Successfully retrieved appmodule'
     
     Write-Host 'Cleanup - Removing appmodule...'
-    Remove-DataverseAppModule -Connection $connection -Id $appModuleId -Confirm:$false
+    Invoke-WithRetry {
+        Remove-DataverseAppModule -Connection $connection -Id $appModuleId -Confirm:$false
+    }
     Write-Host '✓ AppModule deleted'
     
     Write-Host 'SUCCESS: All appmodule operations completed successfully'

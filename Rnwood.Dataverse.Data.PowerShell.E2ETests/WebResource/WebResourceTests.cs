@@ -29,7 +29,9 @@ Move-Item $tempFile $tempJsFile -Force
 ""console.log('E2E test');"" | Out-File -FilePath $tempJsFile -NoNewline -Encoding utf8
 
 # Test: Create web resource from file
-Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile -DisplayName 'E2E Test Resource' -PublisherPrefix 'test' -PassThru | Out-Null
+Invoke-WithRetry {
+    Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile -DisplayName 'E2E Test Resource' -PublisherPrefix 'test' -PassThru | Out-Null
+}
 Write-Host ""Created web resource: $webResourceName""
 
 # Test: Retrieve by name
@@ -40,13 +42,17 @@ if (-not $retrieved) {
 
 # Test: Update web resource
 ""console.log('E2E test updated');"" | Out-File -FilePath $tempJsFile -NoNewline -Encoding utf8
-Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile | Out-Null
+Invoke-WithRetry {
+    Set-DataverseWebResource -Connection $connection -Name $webResourceName -Path $tempJsFile | Out-Null
+}
 
 # Cleanup
 Remove-Item $tempJsFile -Force -ErrorAction SilentlyContinue
 
 # Delete web resource
-Remove-DataverseWebResource -Connection $connection -Name $webResourceName -Confirm:$false | Out-Null
+Invoke-WithRetry {
+    Remove-DataverseWebResource -Connection $connection -Name $webResourceName -Confirm:$false | Out-Null
+}
 
 Write-Host 'Success: Web resource operations completed'
 ");
@@ -77,7 +83,9 @@ Write-Host ""Creating test files in: $tempFolder""
 
 # Upload folder
 Write-Host 'Uploading web resources from folder'
-Set-DataverseWebResource -Connection $connection -Folder $tempFolder -PublisherPrefix $testPrefix -FileFilter '*.*' | Out-Null
+Invoke-WithRetry {
+    Set-DataverseWebResource -Connection $connection -Folder $tempFolder -PublisherPrefix $testPrefix -FileFilter '*.*' | Out-Null
+}
 
 # Verify uploads
 $uploaded = Get-DataverseWebResource -Connection $connection -Name ""${testPrefix}_*""
@@ -87,8 +95,10 @@ if ($uploaded.Count -lt 3) {
 
 # Cleanup web resources
 Write-Host 'Cleaning up web resources'
-Get-DataverseWebResource -Connection $connection -Name ""${testPrefix}_*"" | 
-    Remove-DataverseWebResource -Connection $connection -Confirm:$false | Out-Null
+Invoke-WithRetry {
+    Get-DataverseWebResource -Connection $connection -Name ""${testPrefix}_*"" | 
+        Remove-DataverseWebResource -Connection $connection -Confirm:$false | Out-Null
+}
 
 # Cleanup temp folder
 Remove-Item $tempFolder -Recurse -Force -ErrorAction SilentlyContinue

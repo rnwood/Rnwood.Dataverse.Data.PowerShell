@@ -37,28 +37,30 @@ try {
     
     # Create test entity
     Write-Host 'Step 2: Creating test entity...'
-    Set-DataverseEntityMetadata -Connection $connection `
-        -EntityName $testEntityName `
-        -SchemaName (""new_E2EDynPlugin_${timestamp}_${testRunId}"") `
-        -DisplayName 'E2E Dynamic Plugin Test' `
-        -DisplayCollectionName 'E2E Dynamic Plugin Tests' `
-        -PrimaryAttributeSchemaName 'new_name' `
-        -OwnershipType UserOwned `
-        -Confirm:$false
-    
+    Invoke-WithRetry {
+        Set-DataverseEntityMetadata -Connection $connection `
+            -EntityName $testEntityName `
+            -SchemaName (""new_E2EDynPlugin_${timestamp}_${testRunId}"") `
+            -DisplayName 'E2E Dynamic Plugin Test' `
+            -DisplayCollectionName 'E2E Dynamic Plugin Tests' `
+            -PrimaryAttributeSchemaName 'new_name' `
+            -OwnershipType UserOwned `
+            -Confirm:$false
+    }
     Write-Host '✓ Test entity created'
     
     # Add description field
     Write-Host 'Step 3: Adding description field...'
-    Set-DataverseAttributeMetadata -Connection $connection `
-        -EntityName $testEntityName `
-        -AttributeName 'new_description' `
-        -SchemaName 'new_Description' `
-        -AttributeType Memo `
-        -DisplayName 'Description' `
-        -MaxLength 2000 `
-        -Confirm:$false
-    
+    Invoke-WithRetry {
+        Set-DataverseAttributeMetadata -Connection $connection `
+            -EntityName $testEntityName `
+            -AttributeName 'new_description' `
+            -SchemaName 'new_Description' `
+            -AttributeType Memo `
+            -DisplayName 'Description' `
+            -MaxLength 2000 `
+            -Confirm:$false
+    }
     Write-Host '✓ Description field added'
     Start-Sleep -Seconds 10
     
@@ -91,13 +93,14 @@ namespace TestDynamicPlugins
 
     # Create dynamic plugin assembly
     Write-Host 'Step 4: Creating dynamic plugin assembly...'
-    $assembly = Set-DataverseDynamicPluginAssembly `
-        -Connection $connection `
-        -SourceCode $pluginSourceV1 `
-        -Name $assemblyName `
-        -Version '1.0.0.0' `
-        -PassThru
-    
+    $assembly = Invoke-WithRetry {
+        Set-DataverseDynamicPluginAssembly `
+            -Connection $connection `
+            -SourceCode $pluginSourceV1 `
+            -Name $assemblyName `
+            -Version '1.0.0.0' `
+            -PassThru
+    }
     $assemblyId = $assembly.Id
     Write-Host ""✓ Created plugin assembly: $assemblyId""
     
@@ -120,16 +123,17 @@ namespace TestDynamicPlugins
         -FilterValues @{ sdkmessageid = $createMessage.sdkmessageid; primaryobjecttypecode = $testEntityName } `
         -Columns sdkmessagefilterid | Select-Object -First 1
     
-    $stepId = Set-DataversePluginStep `
-        -Connection $connection `
-        -Name 'Test Dynamic Plugin Step' `
-        -PluginTypeId $pluginType.Id `
-        -SdkMessageId $createMessage.sdkmessageid `
-        -SdkMessageFilterId $messageFilter.sdkmessagefilterid `
-        -Stage PreOperation `
-        -Mode Synchronous `
-        -PassThru | Select-Object -ExpandProperty Id
-    
+    $stepId = Invoke-WithRetry {
+        Set-DataversePluginStep `
+            -Connection $connection `
+            -Name 'Test Dynamic Plugin Step' `
+            -PluginTypeId $pluginType.Id `
+            -SdkMessageId $createMessage.sdkmessageid `
+            -SdkMessageFilterId $messageFilter.sdkmessagefilterid `
+            -Stage PreOperation `
+            -Mode Synchronous `
+            -PassThru | Select-Object -ExpandProperty Id
+    }
     Write-Host ""✓ Registered plugin step: $stepId""
     Start-Sleep -Seconds 5
     
@@ -180,13 +184,14 @@ namespace TestDynamicPlugins
 }
 ""@
 
-    $assemblyV2 = Set-DataverseDynamicPluginAssembly `
-        -Connection $connection `
-        -SourceCode $pluginSourceV2 `
-        -Name $assemblyName `
-        -Version '2.0.0.0' `
-        -PassThru
-    
+    $assemblyV2 = Invoke-WithRetry {
+        Set-DataverseDynamicPluginAssembly `
+            -Connection $connection `
+            -SourceCode $pluginSourceV2 `
+            -Name $assemblyName `
+            -Version '2.0.0.0' `
+            -PassThru
+    }
     Write-Host '✓ Updated plugin assembly to version 2.0.0.0'
     Start-Sleep -Seconds 5
     
@@ -223,11 +228,13 @@ namespace TestDynamicPlugins
     
     # Cleanup
     Write-Host 'Step 13: Cleaning up...'
-    Remove-DataversePluginStep -Connection $connection -Id $stepId -Confirm:$false -ErrorAction SilentlyContinue
-    Remove-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId -Confirm:$false -ErrorAction SilentlyContinue
-    Remove-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId2 -Confirm:$false -ErrorAction SilentlyContinue
-    Remove-DataversePluginAssembly -Connection $connection -Id $assemblyId -Confirm:$false -ErrorAction SilentlyContinue
-    Remove-DataverseEntityMetadata -Connection $connection -EntityName $testEntityName -Confirm:$false -ErrorAction SilentlyContinue
+    Invoke-WithRetry {
+        Remove-DataversePluginStep -Connection $connection -Id $stepId -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-DataverseRecord -Connection $connection -TableName $testEntityName -Id $recordId2 -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-DataversePluginAssembly -Connection $connection -Id $assemblyId -Confirm:$false -ErrorAction SilentlyContinue
+        Remove-DataverseEntityMetadata -Connection $connection -EntityName $testEntityName -Confirm:$false -ErrorAction SilentlyContinue
+    }
     
     Write-Host ''
     Write-Host '=== ALL TESTS PASSED ===' -ForegroundColor Green
