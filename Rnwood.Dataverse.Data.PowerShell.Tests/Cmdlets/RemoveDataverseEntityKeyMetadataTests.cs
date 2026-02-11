@@ -1,5 +1,5 @@
 using FluentAssertions;
-using Rnwood.Dataverse.Data.PowerShell.Cmdlets.Commands;
+using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
