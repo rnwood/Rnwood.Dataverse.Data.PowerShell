@@ -57,8 +57,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             var fullScript = $@"{prelude}{moduleVariables}try {{
 {importSection}    {script}
 }} catch {{
-    Write-Error $_.Exception.Message
-    Write-Error $_.ScriptStackTrace
+    # Output detailed exception information including inner exceptions
+    $ex = $_.Exception
+    Write-Error ""Exception: $($ex.GetType().FullName)""
+    Write-Error ""Message: $($ex.Message)""
+    
+    # For AggregateException, output all inner exceptions
+    if ($ex -is [System.AggregateException]) {{
+        $aggEx = [System.AggregateException]$ex
+        Write-Error ""AggregateException contains $($aggEx.InnerExceptions.Count) inner exception(s):""
+        $i = 0
+        foreach ($innerEx in $aggEx.InnerExceptions) {{
+            $i++
+            Write-Error ""  Inner Exception $i : $($innerEx.GetType().FullName)""
+            Write-Error ""  Message: $($innerEx.Message)""
+            if ($innerEx.InnerException) {{
+                Write-Error ""    InnerException: $($innerEx.InnerException.GetType().FullName): $($innerEx.InnerException.Message)""
+            }}
+        }}
+    }}
+    
+    # Output any inner exception
+    if ($ex.InnerException) {{
+        Write-Error ""InnerException: $($ex.InnerException.GetType().FullName)""
+        Write-Error ""InnerException Message: $($ex.InnerException.Message)""
+    }}
+    
+    Write-Error ""ScriptStackTrace: $($_.ScriptStackTrace)""
     exit 1
 }}
 ";
