@@ -5,8 +5,8 @@
 All E2E tests have been run individually to identify failures and ensure proper serial execution configuration.
 
 **Total Test Classes:** 24
-**Passed:** 21
-**Skipped:** 3 (due to environmental/infrastructure issues)
+**Passed:** 22 (after firewall fix)
+**Skipped:** 1 (timeout issue)
 
 ## Configuration Changes
 
@@ -18,29 +18,29 @@ Added `Rnwood.Dataverse.Data.PowerShell.E2ETests/xunit.runner.json` with the fol
 
 This ensures tests run one at a time both locally and in CI/CD pipeline.
 
-## Skipped Tests
+## Resolved Tests
 
-### 1. InvokeDataverseRequestTests (3 tests)
-**Reason:** DNS resolution failure for `org60220130.api.crm11.dynamics.com`
+### ✅ InvokeDataverseRequestTests (3 tests) - FIXED
+**Previously:** DNS resolution failure for `org60220130.api.crm11.dynamics.com`
 
-Skipped tests:
-- `CanInvokeRestApiWithSimpleResourceName`
-- `AllowsForwardSlashInQueryString`
-- `CanInvokeCustomActionUsingRestParameterSet`
+Fixed tests:
+- `CanInvokeRestApiWithSimpleResourceName` ✓
+- `AllowsForwardSlashInQueryString` ✓
+- `CanInvokeCustomActionUsingRestParameterSet` ✓
 
-**Root Cause:** The API endpoint `org60220130.api.crm11.dynamics.com` does not resolve via DNS. The main endpoint `org60220130.crm11.dynamics.com` works fine, but the API subdomain is REFUSED by DNS servers.
+**Resolution:** Firewall updated to allow access to API endpoint. All tests now pass.
 
-**Recommendation:** These tests need to be fixed when the API endpoint DNS is properly configured, or the tests should be updated to use a different approach.
+### ✅ SolutionComponentTests (1 test) - FIXED
+**Previously:** Same DNS resolution failure for `org60220130.api.crm11.dynamics.com`
 
-### 2. SolutionComponentTests (1 test)
-**Reason:** Same DNS resolution failure for `org60220130.api.crm11.dynamics.com`
+Fixed test:
+- `CanAddReadUpdateAndManageSolutionComponents` ✓
 
-Skipped test:
-- `CanAddReadUpdateAndManageSolutionComponents`
+**Resolution:** Firewall updated. Test now passes (execution time: ~2.5 minutes).
 
-**Root Cause:** Solution component operations appear to use the API endpoint which is not resolving.
+## Remaining Skipped Tests
 
-### 3. FormManipulationTests (1 test)
+### 1. FormManipulationTests (1 test)
 **Reason:** Test timeout (>10 minutes)
 
 Skipped test:
@@ -50,7 +50,7 @@ Skipped test:
 
 **Recommendation:** Investigate why this test takes so long and either optimize it or split it into smaller tests.
 
-## Passing Tests (21 test classes)
+## Passing Tests (22 test classes)
 
 1. ModuleBasicTests ✓
 2. ConnectionTests ✓
@@ -73,6 +73,8 @@ Skipped test:
 19. OptionSetMetadataTests ✓
 20. RelationshipMetadataTests ✓
 21. EntityKeyMetadataTests ✓
+22. **InvokeDataverseRequestTests** ✓ (all 8 tests including 3 previously skipped)
+23. **SolutionComponentTests** ✓ (previously skipped)
 
 ## CI/CD Integration
 
@@ -82,18 +84,13 @@ The following CI workflow steps already use `dotnet test` which will respect the
 - Infrastructure tests (net8.0 and net462)
 - E2E tests (net8.0 and net462 when applicable)
 
-## Next Steps
-
-1. **Fix DNS Issue:** Work with infrastructure team to resolve DNS for `org60220130.api.crm11.dynamics.com` or update tests to not require this endpoint
-2. **Investigate FormManipulationTests timeout:** Debug why this test takes >10 minutes
-3. **Monitor serial execution in CI:** Verify that tests run serially in the next CI run and don't cause race conditions
-
 ## Test Execution Time
 
 Individual test execution times varied:
 - Fast tests: 10-60 seconds (most module/connection tests)
 - Medium tests: 1-3 minutes (metadata, request tests)
-- Slow tests: 3-8 minutes (plugin, solution, form tests)
-- Timeout: >10 minutes (FormManipulationTests)
+- Slow tests: 2-8 minutes (plugin, solution, form tests)
+- Timeout: >10 minutes (FormManipulationTests - still under investigation)
 
 Total time to run all passing tests serially: Approximately 30-45 minutes
+
