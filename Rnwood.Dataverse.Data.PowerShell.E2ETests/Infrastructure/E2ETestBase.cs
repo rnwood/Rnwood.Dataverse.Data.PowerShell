@@ -86,15 +86,13 @@ function Invoke-WithRetry {{
         }}
         catch {{
             $errorMessage = $_.Exception.Message
-            $stackTrace = $_.ScriptStackTrace + ""`n"" + $_.Exception.StackTrace
             
             # Check if this is a CustomizationLockException that should be retried for up to 30 minutes
             $isCustomizationLock = $errorMessage -match 'CustomizationLockException' -or 
                                    $errorMessage -match 'Cannot start another.*because there is a previous.*running' -or
                                    $errorMessage -match 'solution installation or removal failed'
-            $hasInternalAcquire = $stackTrace -match 'InternalAcquireOrExecuteInLock'
             
-            if ($isCustomizationLock -and $hasInternalAcquire) {{
+            if ($isCustomizationLock) {{
                 $elapsedMinutes = ((Get-Date) - $startTime).TotalMinutes
                 $maxMinutes = 30
                 
