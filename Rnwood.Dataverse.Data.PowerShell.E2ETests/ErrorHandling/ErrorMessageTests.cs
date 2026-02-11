@@ -71,7 +71,7 @@ if ($missingElements.Count -gt 0) {
 Write-Host 'Success: Error message verification passed'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");

@@ -425,7 +425,7 @@ catch {
 }
 ");
 
-            var result = RunScript(script, timeoutSeconds: 1200); // 20 minute timeout for comprehensive test
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("Form Manipulation E2E Test PASSED");

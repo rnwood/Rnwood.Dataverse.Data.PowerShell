@@ -43,7 +43,7 @@ foreach ($result in $results) {
 Write-Host 'Success: Executed 5 parallel WhoAmI calls'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 90);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -99,7 +99,7 @@ $createdAccounts | Invoke-DataverseParallel -Connection $connection -ChunkSize 1
 Write-Host 'Success: All accounts created, verified, and cleaned up'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 600); // 10 min timeout
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");

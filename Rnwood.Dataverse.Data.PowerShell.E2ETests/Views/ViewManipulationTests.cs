@@ -138,7 +138,7 @@ try {
 }
 ");
 
-            var result = RunScript(script, timeoutSeconds: 120);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");

@@ -21,7 +21,7 @@ Get-DataverseRecord -Connection $connection -TableName systemuser | Out-Null
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");

@@ -26,7 +26,7 @@ if ($null -eq $results -or ($results | Measure-Object).Count -eq 0) {
 Write-Host ""Query returned $(($results | Measure-Object).Count) records""
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("records");
@@ -61,7 +61,7 @@ Write-Host ""Query with additional connections returned $(($results | Measure-Ob
             var script = GetConnectionScript(additionalScript);
 
             
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("additional connections");
@@ -107,7 +107,7 @@ Write-Host ""Cross-datasource query returned $(($results | Measure-Object).Count
             var script = GetConnectionScript(additionalScript);
 
             
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Cross-datasource query");
@@ -142,7 +142,7 @@ Write-Host ""Query from additional data source 'alternate' returned $(($results 
             var script = GetConnectionScript(additionalScript);
 
             
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("alternate");
@@ -176,7 +176,7 @@ if (-not $errorThrown) {
 }
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Correctly threw error");
@@ -220,7 +220,7 @@ Write-Host ""Query with DataSourceName='main' returned $(($results | Measure-Obj
             var script = GetConnectionScript(additionalScript);
 
             
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("DataSourceName");

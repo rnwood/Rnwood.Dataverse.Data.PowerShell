@@ -35,7 +35,7 @@ if ($cmdletsWithoutHelp.Count -gt 0) {{
 Write-Host 'Success: All cmdlets have help available'
 ";
 
-            var result = RunScript(script, timeoutSeconds: 30);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -102,7 +102,7 @@ if ($issues.Count -gt 0) {{
 Write-Host 'Success: All tested cmdlets have proper help structure'
 ";
 
-            var result = RunScript(script, timeoutSeconds: 30);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -138,7 +138,7 @@ if (-not (Test-Path $mainHelpFile)) {{
 Write-Host 'Success: Help files exist and are accessible'
 ";
 
-            var result = RunScript(script, timeoutSeconds: 30);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");

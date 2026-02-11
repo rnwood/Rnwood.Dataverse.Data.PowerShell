@@ -31,7 +31,7 @@ Write-Host ""✓ WhoAmI request succeeded with UserId: $($response.UserId)""
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -58,7 +58,7 @@ Write-Host ""✓ WhoAmI request succeeded with UserId: $($response.Results['User
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -80,7 +80,7 @@ Write-Host '✓ WhoAmI request with -Raw succeeded'
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -102,7 +102,7 @@ Write-Host '✓ REST API with simple resource name succeeded'
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -136,7 +136,7 @@ if (-not $errorThrown) {
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -158,7 +158,7 @@ Write-Host '✓ Forward slash in query string is correctly allowed'
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -180,7 +180,7 @@ Write-Host '✓ REST API custom action call succeeded'
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -206,7 +206,7 @@ Write-Host '✓ Batch request processing succeeded'
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");

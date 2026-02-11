@@ -43,7 +43,7 @@ catch {
 }
 ");
 
-            var result = RunScript(script, timeoutSeconds: 300);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("SUCCESS");

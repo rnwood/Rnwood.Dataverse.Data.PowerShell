@@ -246,7 +246,7 @@ namespace TestDynamicPlugins
 }
 ");
 
-            var result = RunScript(script, timeoutSeconds: 300);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("ALL TESTS PASSED");

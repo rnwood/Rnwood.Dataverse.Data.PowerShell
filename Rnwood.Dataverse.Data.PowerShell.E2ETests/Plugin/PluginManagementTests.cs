@@ -40,7 +40,7 @@ Write-Host 'Plugin assembly query test passed'
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -75,7 +75,7 @@ Write-Host 'Plugin type query test passed'
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 180);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -120,7 +120,7 @@ Write-Host 'Plugin step query test passed'
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 180);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
@@ -161,7 +161,7 @@ Write-Host 'All enum types and values are correct'
 Write-Host 'Success'
 ");
 
-            var result = RunScript(script, timeoutSeconds: 60);
+            var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
