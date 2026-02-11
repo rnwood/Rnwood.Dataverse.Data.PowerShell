@@ -13,6 +13,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
     /// </summary>
     public class RemoveDataverseEntityKeyMetadataTests : TestBase
     {
+        private static PS CreatePowerShellWithCmdlets()
+        {
+            var initialSessionState = InitialSessionState.CreateDefault();
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Remove-DataverseEntityKeyMetadata", typeof(Commands.RemoveDataverseEntityKeyMetadataCmdlet), null));
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseConnectionAsDefault", typeof(Commands.SetDataverseConnectionAsDefaultCmdlet), null));
+
+            var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+            runspace.Open();
+
+            var ps = PS.Create();
+            ps.Runspace = runspace;
+            return ps;
+        }
+
         // ===== Delete Key ===== (3 tests)
 
         [Fact]
@@ -104,18 +120,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         public void RemoveDataverseEntityKeyMetadata_WorksWithDefaultConnection()
         {
             // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Remove-DataverseEntityKeyMetadata", typeof(Commands.RemoveDataverseEntityKeyMetadataCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
+            using var ps = CreatePowerShellWithCmdlets();
             var mockConnection = CreateMockConnection();
 
-            // Set default connection via static helper (avoids runspace execution context issues with AsyncLocal)
+            // Set default connection via static helper
             SetDataverseConnectionAsDefaultCmdlet.SetDefault(mockConnection);
 
             // Act - Delete without explicit connection

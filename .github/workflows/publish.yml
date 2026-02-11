@@ -314,6 +314,7 @@ jobs:
 
       # Run xUnit tests (infrastructure tests)
       - name: Test
+        id: run-tests
         shell: pwsh
         run: |
           Write-Host "Running xUnit infrastructure tests..."
@@ -323,11 +324,17 @@ jobs:
           
           # Create test results directory
           New-Item -ItemType Directory -Force -Path TestResults | Out-Null
+
+          # Track whether any tests were executed
+          $testsExecuted = $false
           
           # Run net8.0 tests on all platforms
           if ("${{ matrix.powershell_version }}" -ne "5") {
-            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net8.0.trx" --results-directory TestResults
+            $testsExecuted = $true
+            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net8.0.trx" --results-directory TestResults
             $net8Result = $LASTEXITCODE
+            # Record that tests ran so publishers can run even if this step fails
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=true"
             if ($net8Result -ne 0) {
               Write-Error "xUnit net8.0 tests failed with exit code $net8Result"
               exit $net8Result
@@ -335,19 +342,26 @@ jobs:
           }
           # Run net462 tests on Windows only
           if ("${{ matrix.os }}" -eq "windows-latest") {
-            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net462 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net462.trx" --results-directory TestResults
+            $testsExecuted = $true
+            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net462 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net462.trx" --results-directory TestResults
             $net462Result = $LASTEXITCODE
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=true"
             if ($net462Result -ne 0) {
               Write-Error "xUnit net462 tests failed with exit code $net462Result"
               exit $net462Result
             }
           }
-          Write-Host "xUnit infrastructure tests completed successfully"
+          if (-not $testsExecuted) {
+            # No tests executed in this matrix cell
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=false"
+          } else {
+            Write-Host "xUnit infrastructure tests completed successfully"
+          }
       
       # Publish xUnit test results to GitHub
       - name: Publish Test Results
         uses: dorny/test-reporter@v1
-        if: always()
+        if: ${{ always() && steps.run-tests.outputs.tests_executed == 'true' }}
         with:
           name: xUnit Tests (${{ matrix.os }}, PS ${{ matrix.powershell_version }})
           path: TestResults/*.trx
@@ -458,10 +472,15 @@ jobs:
           # Create test results directory
           New-Item -ItemType Directory -Force -Path TestResults/E2E | Out-Null
           
+          # Track whether any tests were executed
+          $testsExecuted = $false
+          
           # Run net8.0 E2E tests on all platforms except PS 5
           if ("${{ matrix.powershell_version }}" -ne "5") {
+            $testsExecuted = $true
             dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E
             $net8Result = $LASTEXITCODE
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=true"
             if ($net8Result -ne 0) {
               Write-Error "xUnit E2E net8.0 tests failed with exit code $net8Result"
               exit $net8Result
@@ -469,19 +488,25 @@ jobs:
           }
           # Run net462 E2E tests on Windows only
           if ("${{ matrix.os }}" -eq "windows-latest") {
+            $testsExecuted = $true
             dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net462 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net462.trx" --results-directory TestResults/E2E
             $net462Result = $LASTEXITCODE
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=true"
             if ($net462Result -ne 0) {
               Write-Error "xUnit E2E net462 tests failed with exit code $net462Result"
               exit $net462Result
             }
           }
-          Write-Host "xUnit E2E tests completed successfully"
+          if (-not $testsExecuted) {
+            Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=false"
+          } else {
+            Write-Host "xUnit E2E tests completed successfully"
+          }
       
       # Publish E2E test results to GitHub
       - name: Publish E2E Test Results
         uses: dorny/test-reporter@v1
-        if: always()
+        if: ${{ always() && steps.test-e2e.outputs.tests_executed == 'true' }}
         with:
           name: E2E Tests (${{ matrix.os }}, PS ${{ matrix.powershell_version }})
           path: TestResults/E2E/*.trx
