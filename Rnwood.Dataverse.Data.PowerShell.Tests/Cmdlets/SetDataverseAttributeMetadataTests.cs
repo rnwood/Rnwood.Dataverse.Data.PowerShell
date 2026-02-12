@@ -531,17 +531,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 
             // Assert - should execute without error
             // StatusOptionMetadata objects should be created instead of OptionMetadata
-            try
-            {
-                var results = ps.Invoke();
-                results.Should().BeEmpty();
-                ps.HadErrors.Should().BeFalse();
-            }
-            catch (Exception ex)
-            {
-                // FakeXrmEasy may not support the operation
-                ex.Message.Should().Match("*not*supported*");
-            }
+            var results = ps.Invoke();
+            results.Should().BeEmpty();
+            ps.HadErrors.Should().BeFalse();
         }
     }
 }
