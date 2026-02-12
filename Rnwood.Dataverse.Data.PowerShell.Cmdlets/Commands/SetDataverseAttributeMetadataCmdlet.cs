@@ -162,7 +162,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the options for picklist attributes.
         /// </summary>
-        [Parameter(HelpMessage = "Array of hashtables defining options: @(@{Value=1; Label='Option 1'}, @{Value=2; Label='Option 2'})")]
+        [Parameter(HelpMessage = "Array of hashtables defining options: @(@{Value=1; Label='Option 1'}, @{Value=2; Label='Option 2'}). For statuscode attributes, include State: @{Value=1; Label='Draft'; State=0}")]
         public Hashtable[] Options { get; set; }
 
         // Lookup-specific properties
@@ -792,9 +792,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         continue;
                     }
 
-                    var optionMetadata = value.HasValue 
-                        ? new OptionMetadata(new Label(label, _baseLanguageCode), value.Value)
-                        : new OptionMetadata(new Label(label, _baseLanguageCode), null);
+                    OptionMetadata optionMetadata;
+                    
+                    // Check if this is a status option with State property
+                    if (option.ContainsKey("State") && option["State"] != null)
+                    {
+                        var state = Convert.ToInt32(option["State"]);
+                        var statusOption = new StatusOptionMetadata
+                        {
+                            Value = value,
+                            Label = new Label(label, _baseLanguageCode),
+                            State = state
+                        };
+                        optionMetadata = statusOption;
+                    }
+                    else
+                    {
+                        optionMetadata = value.HasValue 
+                            ? new OptionMetadata(new Label(label, _baseLanguageCode), value.Value)
+                            : new OptionMetadata(new Label(label, _baseLanguageCode), null);
+                    }
 
                     optionSet.Options.Add(optionMetadata);
                 }
@@ -1148,6 +1165,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 PicklistAttributeMetadata picklistAttr = existingAttribute as PicklistAttributeMetadata;
                 MultiSelectPicklistAttributeMetadata multiPicklistAttr = existingAttribute as MultiSelectPicklistAttributeMetadata;
+                StatusAttributeMetadata statusAttr = existingAttribute as StatusAttributeMetadata;
                 LookupAttributeMetadata lookupAttr = existingAttribute as LookupAttributeMetadata;
                 
                 if (picklistAttr != null || multiPicklistAttr != null)
@@ -1171,6 +1189,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             ErrorCategory.InvalidOperation,
                             null));
                     }
+                }
+                else if (statusAttr != null)
+                {
+                    // StatusAttributeMetadata allows updating options with State property
+                    if (MyInvocation.BoundParameters.ContainsKey(nameof(OptionSetName)))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change OptionSetName for statuscode attributes."),
+                            "ImmutableOptionSetName",
+                            ErrorCategory.InvalidOperation,
+                            OptionSetName));
+                    }
+                    
+                    // Options are allowed for statuscode - will be handled in UpdateTypeSpecificProperties
                 }
                 else if (lookupAttr != null)
                 {
@@ -1302,6 +1334,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     OptionSet = picklistAttr.OptionSet
                 };
             }
+            else if (existing is StatusAttributeMetadata statusAttr)
+            {
+                cloned = new StatusAttributeMetadata
+                {
+                    OptionSet = statusAttr.OptionSet
+                };
+            }
             else if (existing is LookupAttributeMetadata lookupAttr)
             {
                 // Lookup attributes can have their display name, description, and required level updated
@@ -1409,6 +1448,56 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     moneyAttr.Precision = Precision.Value;
                     hasChanges = true;
                 }
+            }
+            else if (attribute is StatusAttributeMetadata statusAttr && Options != null && Options.Length > 0)
+            {
+                // Update statuscode options with State property
+                var optionSet = new OptionSetMetadata
+                {
+                    IsGlobal = false,
+                    OptionSetType = OptionSetType.Picklist
+                };
+
+                foreach (var option in Options)
+                {
+                    var value = option["Value"] != null ? Convert.ToInt32(option["Value"]) : (int?)null;
+                    var label = option["Label"] as string;
+
+                    if (string.IsNullOrWhiteSpace(label))
+                    {
+                        continue;
+                    }
+
+                    if (!value.HasValue)
+                    {
+                        WriteWarning($"Skipping option '{label}' - Value is required for statuscode options");
+                        continue;
+                    }
+
+                    // State is required for statuscode options
+                    if (!option.ContainsKey("State") || option["State"] == null)
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new ArgumentException($"State property is required for statuscode option '{label}' (Value={value.Value}). Example: @{{Value=1; Label='Draft'; State=0}}"),
+                            "StateRequired",
+                            ErrorCategory.InvalidArgument,
+                            option));
+                        return hasChanges;
+                    }
+
+                    var state = Convert.ToInt32(option["State"]);
+                    var statusOption = new StatusOptionMetadata
+                    {
+                        Value = value,
+                        Label = new Label(label, _baseLanguageCode),
+                        State = state
+                    };
+
+                    optionSet.Options.Add(statusOption);
+                }
+
+                statusAttr.OptionSet = optionSet;
+                hasChanges = true;
             }
 
             return hasChanges;
