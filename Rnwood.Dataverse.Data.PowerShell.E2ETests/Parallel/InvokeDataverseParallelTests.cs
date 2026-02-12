@@ -49,7 +49,7 @@ Write-Host 'Success: Executed 5 parallel WhoAmI calls'
             result.StandardOutput.Should().Contain("Success");
         }
 
-        [Fact(Skip = "Known Issue: ServiceClient.Clone() fails with 'Fault While initializing client' when used with Azure AD client secret authentication in parallel scenarios. Requires investigation - see InvokeDataverseParallelCmdlet.cs")]
+        [Fact] // Temporarily removed Skip to test the actual behavior
         public void InvokeDataverseParallelCanCreateUpdateAndVerifyManyAccounts()
         {
 
