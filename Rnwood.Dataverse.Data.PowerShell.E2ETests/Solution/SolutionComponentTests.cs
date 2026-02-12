@@ -37,11 +37,11 @@ try {
     $solutionName = ""e2esolcomp_${timestamp}_$testRunId""
     $solutionDisplayName = ""E2E Solution Component Test $testRunId""
     $publisherPrefix = 'e2e'
-    $entityName = ""new_e2esolent_${timestamp}_$testRunId""
-    $entitySchemaName = ""new_E2ESolEnt_${timestamp}_$testRunId""
+    # Use standard 'account' entity instead of creating a custom entity
+    $entityName = 'account'
     
     Write-Host ""Test solution: $solutionName""
-    Write-Host ""Test entity: $entityName""
+    Write-Host ""Using standard entity: $entityName""
     
     $stepStartTime = Get-Date
     Write-Host 'Step 1: Creating test solution...'
@@ -78,32 +78,13 @@ try {
     Write-Host ""[TIMING] Step 1 completed in $stepDuration seconds""
     
     $stepStartTime = Get-Date
-    Write-Host 'Step 2: Creating test entity...'
-    Invoke-WithRetry {
-        
-        Set-DataverseEntityMetadata -Connection $connection `
-            -EntityName $entityName `
-            -SchemaName $entitySchemaName `
-            -DisplayName 'E2E Solution Test Entity' `
-            -DisplayCollectionName 'E2E Solution Test Entities' `
-            -PrimaryAttributeSchemaName 'new_name' `
-            -OwnershipType UserOwned `
-            -Confirm:$false
-        
-        # Entity creation can trigger long-running customization operations
-        # Wait longer to ensure the operation completes
-        Write-Verbose 'Entity created. Waiting 30 seconds for customization operations to complete...'
-        Start-Sleep -Seconds 30
-    }
-    
-    Write-Host '✓ Test entity created'
-    
+    Write-Host 'Step 2: Getting entity metadata...'
     Invoke-WithRetry {
         $entityMetadata = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
         $script:entityObjectId = $entityMetadata.MetadataId
     }
     $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
-    Write-Host ""  Entity ObjectId: $($script:entityObjectId)""
+    Write-Host ""✓ Entity ObjectId retrieved: $($script:entityObjectId)""
     Write-Host ""[TIMING] Step 2 completed in $stepDuration seconds""
     
     $stepStartTime = Get-Date
@@ -159,15 +140,6 @@ try {
     $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
     Write-Host '✓ Test solution deleted'
     Write-Host ""[TIMING] Step 5 completed in $stepDuration seconds""
-    
-    $stepStartTime = Get-Date
-    Write-Host 'Step 6: Cleanup - Removing test entity...'
-    Invoke-WithRetry {
-        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
-    }
-    $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
-    Write-Host '✓ Test entity deleted'
-    Write-Host ""[TIMING] Step 6 completed in $stepDuration seconds""
     
     $testDuration = ((Get-Date) - $testStartTime).TotalSeconds
     Write-Host ""[TIMING] Total test duration: $testDuration seconds""
