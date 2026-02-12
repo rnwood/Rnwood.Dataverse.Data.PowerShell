@@ -314,6 +314,30 @@ PS C:\> $c = Get-DataverseConnection -FromPac -Profile "MyDevProfile"
 
 Connects to Dataverse using a specific named PAC CLI profile. The profile name must match one of the profiles created with `pac auth create --name <profilename>`. Alternatively, you can specify the index of the profile (e.g., "0" for the first profile).
 
+### Example 24: Disable affinity cookie for maximum performance
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "3004eb1e-7a00-45e0-a1dc-6703735eac18" -ClientSecret "itsasecret" -DisableAffinityCookie
+```
+
+Connects to MYORG with affinity cookie disabled for maximum performance. This allows each call to Dataverse to be routed to any available server node, which can improve performance in parallel operations. However, this may result in eventual consistency issues where recently created or updated data may not be immediately visible on subsequent requests.
+
+### Example 25: Using parallelization without DisableAffinityCookie (will show warning)
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive
+PS C:\> Get-DataverseRecord -Connection $c -TableName account -Top 1000 | Set-DataverseRecord -Connection $c -TableName account -MaxDegreeOfParallelism 4
+WARNING: Using parallelization with affinity cookie enabled may reduce performance. Consider using Get-DataverseConnection with -DisableAffinityCookie for better parallel performance. Note: Disabling affinity cookie may result in eventual consistency issues.
+```
+
+When using parallelization with MaxDegreeOfParallelism > 1, the cmdlets will emit a warning if affinity cookie is enabled (the default). This is because affinity cookie prefers routing all requests to the same server node, which can reduce parallel performance.
+
+### Example 26: Using parallelization with DisableAffinityCookie (optimal for performance)
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive -DisableAffinityCookie
+PS C:\> Get-DataverseRecord -Connection $c -TableName account -Top 1000 | Set-DataverseRecord -Connection $c -TableName account -MaxDegreeOfParallelism 4
+```
+
+When using parallelization with DisableAffinityCookie, the cmdlets will NOT emit a warning. Each parallel worker can be routed to any available server node, maximizing throughput. Note that this may result in eventual consistency where data updated by one worker may not be immediately visible to another worker.
+
 ## PARAMETERS
 
 ### -AccessToken
