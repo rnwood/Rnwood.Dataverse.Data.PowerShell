@@ -32,16 +32,31 @@ Writes all contacts to the folder `data/contacts`.
 
 ## PARAMETERS
 
-### -OutputPath
-Path to write output to
+### -Connection
+Dataverse connection to use for downloading files. Required if records contain DataverseFileReference properties.
 
 ```yaml
-Type: String
+Type: Object
 Parameter Sets: (All)
 Aliases:
 
-Required: True
-Position: 1
+Required: False
+Position: 3
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -idproperties
+Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 4
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -62,46 +77,16 @@ Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
-### -Connection
-Dataverse connection to use for downloading files. Required if records contain DataverseFileReference properties.
+### -OutputPath
+Path to write output to
 
 ```yaml
-Type: Object
+Type: String
 Parameter Sets: (All)
 Aliases:
 
-Required: False
-Position: 3
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -withdeletions
-Output a list of deletions (records that were there last time, but are no longer present in the inputs) to `deletions` subfolder of output
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -idproperties
-Specifies the list of properties that will be used to generate a unique name for each file. By default this is "Id".
-
-```yaml
-Type: String[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 4
+Required: True
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -118,6 +103,21 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -withdeletions
+Output a list of deletions (records that were there last time, but are no longer present in the inputs) to `deletions` subfolder of output
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
