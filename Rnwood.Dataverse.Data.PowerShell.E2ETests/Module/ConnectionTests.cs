@@ -67,7 +67,7 @@ Get-DataverseRecord -Connection $connection -TableName systemuser -Top 10 |
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardError.Should().Contain("Using parallelization with affinity cookie enabled may reduce performance");
+            result.StandardOutput.Should().Contain("Using parallelization with affinity cookie enabled may reduce performance");
         }
 
         [Fact]
@@ -82,7 +82,7 @@ Get-DataverseRecord -Connection $connection -TableName systemuser -Top 10 |
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardError.Should().NotContain("Using parallelization with affinity cookie enabled may reduce performance");
+            result.StandardOutput.Should().NotContain("Using parallelization with affinity cookie enabled may reduce performance");
         }
     }
 }
