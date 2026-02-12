@@ -479,11 +479,11 @@ jobs:
           # On windows-latest: run all tests
           # On other platforms: run only CrossPlatformTest tests
           $testFilter = ""
-          if ("${{ matrix.os }}" -ne "windows-latest") {
+          if ("${{ matrix.os }}" -ne "windows-latest" -or "${{ matrix.powershell_version }}" -ne "latest") {
             $testFilter = "--filter `"Category=CrossPlatform`""
             Write-Host "Non-Windows platform detected - running only CrossPlatformTest tests"
           } else {
-            Write-Host "Windows platform detected - running all E2E tests"
+            Write-Host "Windows, PS latest platform detected - running all E2E tests"
           }
           
           # Run net8.0 E2E tests on PS latest or PS7

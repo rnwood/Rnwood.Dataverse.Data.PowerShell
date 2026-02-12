@@ -42,6 +42,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         static TestBase()
         {
             Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager.UseThreadLocalConnection = true;
+            
+            // Configure the clone extension to use our wrapper registry for mock connections
+            Rnwood.Dataverse.Data.PowerShell.Commands.DataverseConnectionExtensions.GetCloneableWrapper = 
+                (serviceClient) => {
+                    if (WrapperRegistry.TryGetWrapper(serviceClient, out var wrapper))
+                    {
+                        return wrapper;
+                    }
+                    return null;
+                };
         }
 
 
@@ -316,9 +326,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             var threadSafeService = new ThreadSafeOrganizationService(baseService);
             Service = new MockOrganizationServiceWithInterceptor(threadSafeService, CombinedInterceptor);
 
-            // Create ServiceClient wrapper using factory
-            // This ServiceClient does not support Clone(), so Invoke-DataverseParallel
-            // will fall back to using the original connection (which is now thread-safe)
+            // Create CloneableMockServiceClient that supports cloning for parallel operations
             var httpClient = new HttpClient(new FakeHttpMessageHandler());
             Connection = MockServiceClientFactory.Create(
                 Service,
