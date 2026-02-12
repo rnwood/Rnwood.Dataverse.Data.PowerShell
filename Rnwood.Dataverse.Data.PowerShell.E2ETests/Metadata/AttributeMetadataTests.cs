@@ -81,7 +81,7 @@ $ConfirmPreference = 'None'
 $VerbosePreference = 'Continue'
 
 try {
-    $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmm')
+    $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
     $entityName = ""new_statustest_${timestamp}_$testRunId""
     
