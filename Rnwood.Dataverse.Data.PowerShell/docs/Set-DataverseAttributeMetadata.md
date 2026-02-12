@@ -512,6 +512,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
@@ -770,6 +785,25 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -OptionSetName
+Name of an existing global option set to use for Picklist or MultiSelectPicklist attributes.
+
+If specified, the attribute will use the global option set. If not specified, you must provide `-Options` to create a local option set.
+
+**Note**: This property is immutable after creation. To update option values, use `Set-DataverseOptionSetMetadata`.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Options
 Array of hashtables defining options for Picklist or MultiSelectPicklist attributes with local option sets.
 
@@ -783,25 +817,6 @@ Example: `@(@{Value=1; Label='Small'}, @{Value=2; Label='Large'})`
 
 ```yaml
 Type: Hashtable[]
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -OptionSetName
-Name of an existing global option set to use for Picklist or MultiSelectPicklist attributes.
-
-If specified, the attribute will use the global option set. If not specified, you must provide `-Options` to create a local option set.
-
-**Note**: This property is immutable after creation. To update option values, use `Set-DataverseOptionSetMetadata`.
-
-```yaml
-Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -841,21 +856,6 @@ For **Decimal/Double** attributes: Choose precision based on your data requireme
 Type: Int32
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
 
 Required: False
 Position: Named
@@ -998,13 +998,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: cf
+Aliases: wi
 
 Required: False
 Position: Named
@@ -1013,13 +1013,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases: wi
+Aliases: proga
 
 Required: False
 Position: Named

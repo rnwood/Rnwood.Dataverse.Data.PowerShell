@@ -204,6 +204,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             entityMetadataFactory = new EntityMetadataFactory(Connection);
             entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
+            // Warn if affinity cookie is enabled (default) when using parallelization
+            if (MaxDegreeOfParallelism > 1 && Connection != null && Connection.EnableAffinityCookie)
+            {
+                WriteWarning("Using parallelization with affinity cookie enabled may reduce performance. Consider using Get-DataverseConnection with -DisableAffinityCookie for better parallel performance. Note: Disabling affinity cookie may result in eventual consistency issues.");
+            }
+
             // Initialize retrieval batch processor
             _retrievalBatchProcessor = new RetrievalBatchProcessor(
                 Connection,

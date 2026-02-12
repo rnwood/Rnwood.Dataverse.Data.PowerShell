@@ -249,6 +249,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter]
         public Guid? TenantId { get; set; }
 
+        /// <summary>
+        /// Gets or sets a value indicating whether to disable affinity cookie for maximum performance.
+        /// </summary>
+        [Parameter(Mandatory = false, HelpMessage = "Disables the affinity cookie to maximize performance at the cost of potential data consistency issues. By default, affinity cookie is enabled to ensure connections prefer a specific server node for better consistency. Only disable this if you need maximum performance and understand the tradeoffs with eventual consistency.")]
+        public SwitchParameter DisableAffinityCookie { get; set; }
+
         // Cancellation token source that is cancelled when the user hits Ctrl+C (StopProcessing)
         private CancellationTokenSource _userCancellationCts;
 
@@ -862,6 +868,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         throw new NotImplementedException(ParameterSetName);
                 }
 
+                // Configure affinity cookie if requested
+                if (DisableAffinityCookie && result != null)
+                {
+                    result.EnableAffinityCookie = false;
+                    WriteVerbose("Affinity cookie disabled for maximum performance. Note: This may result in eventual consistency issues.");
+                }
 
                 // Set as default if requested
                 if (SetAsDefault)

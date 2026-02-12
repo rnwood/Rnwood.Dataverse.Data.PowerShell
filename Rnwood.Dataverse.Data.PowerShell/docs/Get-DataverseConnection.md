@@ -19,21 +19,21 @@ See the examples for this pattern below.
 ### Get default connection
 ```
 Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with username and password
 ```
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>]
- -Username <String> -Password <String> [-Timeout <UInt32>] [-TenantId <Guid>]
+ -Username <String> -Password <String> [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
 ```
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
- -ClientSecret <String> [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ -ClientSecret <String> [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client certificate
@@ -41,75 +41,77 @@ Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -Cli
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
  -CertificatePath <String> [-CertificatePassword <String>] [-CertificateThumbprint <String>]
  [-CertificateStoreLocation <StoreLocation>] [-CertificateStoreName <StoreName>] [-Timeout <UInt32>]
- [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate interactively
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-Interactive] [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-Interactive] [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-DeviceCode] [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DeviceCode] [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with DefaultAzureCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-DefaultAzureCredential]
- [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Authenticate with ManagedIdentityCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-ManagedIdentity]
- [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Load a saved named connection
 ```
 Get-DataverseConnection [-SetAsDefault] -Name <String> [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Delete a saved named connection
 ```
 Get-DataverseConnection [-SetAsDefault] -Name <String> [-DeleteConnection] [-Timeout <UInt32>]
- [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Clear all saved connections
 ```
 Get-DataverseConnection [-SetAsDefault] [-ClearAllConnections] [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### List saved named connections
 ```
 Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with access token script block
 ```
 Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] -AccessToken <ScriptBlock> [-Timeout <UInt32>]
- [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with Dataverse SDK connection string.
 ```
 Get-DataverseConnection [-SetAsDefault] -ConnectionString <String> [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Load connection from PAC CLI profile
 ```
 Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -523,6 +525,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -DisableAffinityCookie
+Disables the affinity cookie to maximize performance at the cost of potential data consistency issues. By default, affinity cookie is enabled to ensure connections prefer a specific server node for better consistency. Only disable this if you need maximum performance and understand the tradeoffs with eventual consistency.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -FromPac
 Load connection from a Power Platform CLI (PAC) authentication profile. This uses the authentication profiles created with `pac auth create` and leverages the cached tokens from PAC CLI. The environment URL is determined from the profile's selected organization (set via `pac org select`).
 
@@ -670,21 +687,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SaveCredentials
 WARNING: Saves the client secret with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.
 
@@ -779,6 +781,21 @@ Accept wildcard characters: False
 Type: String
 Parameter Sets: Authenticate interactively, Authenticate using the device code flow
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
