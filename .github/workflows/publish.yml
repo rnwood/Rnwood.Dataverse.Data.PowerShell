@@ -472,7 +472,6 @@ jobs:
           # Create test results directory
           New-Item -ItemType Directory -Force -Path TestResults/E2E | Out-Null
           
-<<<<<<< HEAD
           # Track whether any tests were executed
           $testsExecuted = $false
           
@@ -495,18 +494,11 @@ jobs:
             Invoke-Expression $testCommand
             $net8Result = $LASTEXITCODE
             Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=true"
-=======
-          # Run net8.0 E2E tests on all platforms except PS 5
-          if ("${{ matrix.powershell_version }}" -ne "5") {
-            dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E
-            $net8Result = $LASTEXITCODE
->>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             if ($net8Result -ne 0) {
               Write-Error "xUnit E2E net8.0 tests failed with exit code $net8Result"
               exit $net8Result
             }
           }
-<<<<<<< HEAD
           # Run net462 E2E tests on PS5
           if ("${{ matrix.powershell_version }}" -eq "5") {
             $testsExecuted = $true
@@ -515,35 +507,21 @@ jobs:
             Invoke-Expression $testCommand
             $net462Result = $LASTEXITCODE
             Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=true"
-=======
-          # Run net462 E2E tests on Windows only
-          if ("${{ matrix.os }}" -eq "windows-latest") {
-            dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net462 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net462.trx" --results-directory TestResults/E2E
-            $net462Result = $LASTEXITCODE
->>>>>>> df047b13 (tests: migrate e2e tests to xunit)
             if ($net462Result -ne 0) {
               Write-Error "xUnit E2E net462 tests failed with exit code $net462Result"
               exit $net462Result
             }
           }
-<<<<<<< HEAD
           if (-not $testsExecuted) {
             Add-Content -Path $env:GITHUB_OUTPUT -Value "tests_executed=false"
           } else {
             Write-Host "xUnit E2E tests completed successfully"
           }
-=======
-          Write-Host "xUnit E2E tests completed successfully"
->>>>>>> df047b13 (tests: migrate e2e tests to xunit)
       
       # Publish E2E test results to GitHub
       - name: Publish E2E Test Results
         uses: dorny/test-reporter@v1
-<<<<<<< HEAD
         if: ${{ always() && steps.test-e2e.outputs.tests_executed == 'true' }}
-=======
-        if: always()
->>>>>>> df047b13 (tests: migrate e2e tests to xunit)
         with:
           name: E2E Tests (${{ matrix.os }}, PS ${{ matrix.powershell_version }})
           path: TestResults/E2E/*.trx
