@@ -21,9 +21,9 @@ Set-DataverseOptionSetMetadata [-Name] <String> [-DisplayName <String>] [-Descri
 
 ### EntityAttribute
 ```
-Set-DataverseOptionSetMetadata [-EntityName] <String> [-AttributeName] <String>
- -Options <Hashtable[]> [-NoRemoveMissingOptions] [-PassThru] [-Publish] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseOptionSetMetadata [-EntityName] <String> [-AttributeName] <String> [-DisplayName <String>]
+ [-Description <String>] -Options <Hashtable[]> [-NoRemoveMissingOptions] [-PassThru] [-Publish]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -136,7 +136,7 @@ The description of the global option set. Only applies to global option sets.
 
 ```yaml
 Type: String
-Parameter Sets: Global
+Parameter Sets: (All)
 Aliases:
 
 Required: False
@@ -151,7 +151,7 @@ The display name of the global option set. Only applies to global option sets.
 
 ```yaml
 Type: String
-Parameter Sets: Global
+Parameter Sets: (All)
 Aliases:
 
 Required: False

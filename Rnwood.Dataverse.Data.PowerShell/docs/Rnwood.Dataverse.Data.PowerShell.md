@@ -320,7 +320,7 @@ Creates or updates a section in a Dataverse form tab.
 Creates or updates a tab on a Dataverse form with support for column layouts.
 
 ### [Set-DataverseOptionSetMetadata](Set-DataverseOptionSetMetadata.md)
-Creates or updates a global option set in Dataverse.
+Creates or updates a global or local option set in Dataverse.
 
 ### [Set-DataverseOrganizationSettings](Set-DataverseOrganizationSettings.md)
 Updates organization settings in the single organization record in a Dataverse environment.
