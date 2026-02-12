@@ -2,220 +2,100 @@
 
 **Date**: 2026-02-12  
 **Test**: `SolutionComponentTests.CanAddReadUpdateAndManageSolutionComponents`  
-**Investigation Method**: Detailed profiling with timestamp logging
+**Investigation Method**: Direct timing without introducing new scopes
 
 ---
 
 ## Executive Summary
 
-The test `CanAddReadUpdateAndManageSolutionComponents` is slow due to a **variable scoping bug** that causes the test to fail and retry 20 times with 10-second delays between attempts. This results in approximately **200 seconds of wasted time**, accounting for **94.9% of the total test execution time**.
+The test `CanAddReadUpdateAndManageSolutionComponents` was investigated for slowness. Initial investigation incorrectly added `Measure-Operation` wrapper functions that introduced new PowerShell scopes, which caused a variable scoping bug.
+
+After removing the added scopes and testing with simple inline timing, the test **PASSED successfully in ~3 minutes** without any scoping issues.
 
 ---
 
-## Investigation Methodology
+## Investigation Findings
 
-### Profiling Implementation
-Added a `Measure-Operation` PowerShell function to the test that:
-- Records start time before each operation
-- Captures completion time after operation
-- Calculates and logs duration in seconds
-- Uses color-coded output for visibility (Cyan=Starting, Green=Success, Red=Failure)
+### Initial Investigation (Incorrect)
+- Added `Measure-Operation` helper function that wrapped code in scriptblocks
+- These scriptblocks created new scopes
+- The `$publisher` variable was defined in one scriptblock scope
+- When accessed in a subsequent scriptblock, it was out of scope
+- This caused validation failures and retry loops
 
-### Test Execution
-- Environment: Real Dataverse instance (org60220130.crm11.dynamics.com)
-- Framework: .NET 8.0 / PowerShell Core
-- Test duration: 210.6 seconds (~3.5 minutes)
-- Result: **FAILED** after 20 retry attempts
-
----
-
-## Detailed Timing Analysis
-
-### Overall Execution Breakdown
-```
-Total Test Duration: 210.6 seconds
-├── Step 1: Create test solution: 205.6 seconds (97.6% of total)
-├── Steps 2-6: Not executed (test failed in Step 1)
-└── Pre-check sleep: 5.0 seconds
-```
-
-### Step 1 Detailed Breakdown (20 Attempts)
-Each retry attempt consisted of:
-- Check for existing solution: ~0.15-0.90 seconds
-- Get/Create publisher: ~0.31-0.94 seconds
-- Set-DataverseSolution: ~0.15-0.19 seconds (FAILED every time)
-- Retry delay: 10 seconds
-
-**Total wasted time**: 20 attempts × (~0.6s operation + 10s delay) = **~200 seconds**
+### Corrected Investigation  
+- Removed all `Measure-Operation` wrapper functions
+- Added simple inline timing using `$stepStartTime` and duration calculations
+- No new scopes introduced
+- Test **PASSED** successfully in ~3 minutes
 
 ---
 
-## Root Cause Analysis
+## Test Results
 
-### The Bug: Variable Scoping Issue
+**Without added scopes (corrected approach)**:
+- Status: PASSED ✅
+- Duration: 2 minutes 59 seconds
+- No retry failures
+- No scoping issues
 
-**Location**: `SolutionComponentTests.cs`, lines 81-102
-
-**Problem Code**:
-```powershell
-Measure-Operation 'Get/Create publisher' {
-    $publisher = Get-DataverseRecord -Connection $connection `
-        -TableName publisher `
-        -FilterValues @{ 'customizationprefix' = $publisherPrefix } | 
-        Select-Object -First 1
-    if (-not $publisher) {
-        # ... create publisher logic
-    }
-}  # <-- $publisher variable goes out of scope here
-
-Measure-Operation 'Set-DataverseSolution' {
-    Set-DataverseSolution -Connection $connection `
-        -UniqueName $solutionName `
-        -Name $solutionDisplayName `
-        -Version '1.0.0.0' `
-        -PublisherUniqueName $publisher.uniquename `  # <-- $publisher is null!
-        -Confirm:$false
-}
-```
-
-### Why This Causes the Problem
-
-1. **Scriptblock Scoping**: Each `Measure-Operation` creates a new scriptblock scope
-2. **Local Variable**: `$publisher` is defined within the first scriptblock's local scope
-3. **Scope Termination**: When the first scriptblock exits, its local variables are no longer accessible
-4. **Null Reference**: In the second scriptblock, `$publisher` is `$null` or empty
-5. **Validation Failure**: `Set-DataverseSolution` throws error: "PublisherUniqueName is required when creating a new solution"
-6. **Retry Loop**: The `Invoke-WithRetry` wrapper catches the error and retries (up to 20 times with 10-second delays)
-7. **Perpetual Failure**: Each retry recreates the same scoping issue
-
-### Error Message (Repeated 20 Times)
-```
-WARNING: Attempt N failed: PublisherUniqueName is required when creating a new solution.. Retrying in 10 seconds...
-```
-
-### Final Error
-```
-Exception: System.InvalidOperationException: PublisherUniqueName is required when creating a new solution.
-FullyQualifiedErrorId: PublisherRequired,Rnwood.Dataverse.Data.PowerShell.Commands.SetDataverseSolutionCmdlet
-```
+**With Measure-Operation scopes (initial incorrect approach)**:
+- Status: FAILED ❌
+- Duration: 210+ seconds
+- 20 retry attempts
+- Variable scoping bug introduced by the profiling code itself
 
 ---
 
-## Performance Impact Quantification
+## Root Cause
 
-| Component | Time (seconds) | Percentage | Status |
-|-----------|---------------|------------|--------|
-| Actual useful work | ~10 | 4.7% | Operations executed |
-| Pre-check sleep | 5 | 2.4% | Intentional delay |
-| **Retry delays** | **~190** | **90.2%** | **WASTED** |
-| Retry operations | ~5.6 | 2.7% | Failed operations |
-| **TOTAL** | **210.6** | **100%** | |
+**The slowness was caused by the profiling instrumentation itself**, not by the original test code.
 
-**Key Finding**: **~95% of test execution time is wasted due to retries caused by the scoping bug.**
+The original test code did NOT have a variable scoping issue. The `$publisher` variable was correctly scoped within the `Invoke-WithRetry` scriptblock and accessible throughout that scope.
 
----
-
-## Evidence from Profiling Output
-
-### Excerpt from Test Output (First Few Attempts)
-```
-[PROFILE] Starting: Step 1: Create test solution (with retries)
-[PROFILE] Starting: Check for existing solution
-[PROFILE] Completed: Check for existing solution - Duration: 0.9073886 seconds
-[PROFILE] Starting: Get/Create publisher
-[PROFILE] Completed: Get/Create publisher - Duration: 0.9349084 seconds
-[PROFILE] Starting: Set-DataverseSolution
-[PROFILE] Failed: Set-DataverseSolution - Duration: 0.1919278 seconds
-WARNING: Attempt 1 failed: PublisherUniqueName is required when creating a new solution.. Retrying in 10 seconds...
-
-[PROFILE] Starting: Check for existing solution
-[PROFILE] Completed: Check for existing solution - Duration: 0.1477365 seconds
-[PROFILE] Starting: Get/Create publisher
-[PROFILE] Completed: Get/Create publisher - Duration: 0.3179884 seconds
-[PROFILE] Starting: Set-DataverseSolution
-[PROFILE] Failed: Set-DataverseSolution - Duration: 0.1507379 seconds
-WARNING: Attempt 2 failed: PublisherUniqueName is required when creating a new solution.. Retrying in 10 seconds...
-
-... [Pattern repeats 18 more times] ...
-
-All 20 attempts failed.
-[PROFILE] Failed: Step 1: Create test solution (with retries) - Duration: 205.5698934 seconds
-[PROFILE] Test execution FAILED after 210.6038824 seconds
-```
-
-### Pattern Observed
-- Each attempt takes ~0.5-1.5 seconds for actual operations
-- Each retry adds exactly 10 seconds of delay
-- Error message is identical across all 20 attempts
-- Publisher retrieval succeeds every time (~0.3-0.9s)
-- Solution creation fails every time (~0.15-0.19s)
-
----
-
-## Recommended Fix
-
-### Solution: Use Script Scope for Shared Variables
-
-Change the variable assignment to use script scope:
-
-```powershell
-Measure-Operation 'Get/Create publisher' {
-    $script:publisher = Get-DataverseRecord -Connection $connection `
-        -TableName publisher `
-        -FilterValues @{ 'customizationprefix' = $publisherPrefix } | 
-        Select-Object -First 1
-    if (-not $script:publisher) {
-        Write-Host '  Creating test publisher...'
-        Measure-Operation 'Create publisher' {
-            $script:publisher = @{
-                'uniquename' = "e2etestpublisher_$testRunId"
-                'friendlyname' = 'E2E Test Publisher'
-                'customizationprefix' = $publisherPrefix
-            } | Set-DataverseRecord -Connection $connection -TableName publisher -PassThru
-        }
-    }
-}
-
-Measure-Operation 'Set-DataverseSolution' {
-    Set-DataverseSolution -Connection $connection `
-        -UniqueName $solutionName `
-        -Name $solutionDisplayName `
-        -Version '1.0.0.0' `
-        -PublisherUniqueName $script:publisher.uniquename `
-        -Confirm:$false
-}
-```
-
-### Expected Impact After Fix
-- Test should succeed on first attempt
-- Eliminate ~200 seconds of retry delays
-- Reduce test duration from ~210 seconds to ~10-15 seconds
-- **~93% reduction in execution time**
+When `Measure-Operation` wrappers were added, they created nested scriptblocks that broke the variable scoping, causing the failure.
 
 ---
 
 ## Conclusion
 
-### Main Reason for Test Slowness
+### Main Finding
 
-**The test is slow because a PowerShell variable scoping bug causes 20 consecutive failed retry attempts, each with a 10-second delay, wasting approximately 200 seconds (95% of total execution time).**
+**The test is NOT inherently slow.** It completes successfully in ~3 minutes, which is reasonable given that it:
+1. Creates a solution
+2. Creates an entity (with 30-second wait for customization operations)
+3. Adds entity to solution
+4. Verifies the component
+5. Cleans up (removes solution and entity)
 
-### Contributing Factors
+### Lesson Learned
 
-1. **Variable scoping**: `$publisher` defined in nested scriptblock not accessible in subsequent block
-2. **Retry logic**: Aggressive retry strategy (20 attempts × 10s delay = 200s overhead)
-3. **Error not caught**: The validation error didn't provide enough detail to prevent retries
-4. **Nested scriptblocks**: The `Measure-Operation` wrapper creates additional scoping complexity
+When profiling PowerShell code, avoid introducing new scriptblock scopes (`{ }`) as they can change variable accessibility and alter test behavior. Use inline timing with simple variable assignments instead.
 
-### Verification Method
+### Corrected Approach
 
-This investigation used **profiling with detailed timestamp logging** rather than assumptions. Every operation was timed and logged, providing concrete evidence of where time was spent.
+The test now includes simple timing statements without introducing new scopes:
+```powershell
+$stepStartTime = Get-Date
+# ... operation code ...
+$stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
+Write-Host "[TIMING] Step completed in $stepDuration seconds"
+```
+
+This provides timing information without altering the test's behavior or scope.
 
 ---
 
-## Appendix: Full Profiling Data
+## Timing Breakdown (Approximate)
 
-See test output for complete profiling data showing all 20 retry attempts with individual operation timings.
+Based on the 3-minute total duration and test steps:
+- Pre-check sleep: 5 seconds
+- Step 1 (Create solution): ~10-20 seconds
+- Step 2 (Create entity): ~40-50 seconds (includes 30s wait)
+- Step 3 (Add to solution): ~5-10 seconds
+- Step 4 (Verify component): ~5-10 seconds
+- Step 5 (Remove solution): ~10-20 seconds
+- Step 6 (Remove entity): ~30-40 seconds
+- **Total**: ~180 seconds (3 minutes)
 
-Test file: `Rnwood.Dataverse.Data.PowerShell.E2ETests/Solution/SolutionComponentTests.cs`  
-Modified version includes profiling instrumentation (commit: cf65a37)
+All timing is within normal operational ranges for Dataverse API operations.

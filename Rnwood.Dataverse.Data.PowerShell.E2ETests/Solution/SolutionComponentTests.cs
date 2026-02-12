@@ -21,38 +21,16 @@ $ErrorActionPreference = 'Stop'
 $ConfirmPreference = 'None'
 $VerbosePreference = 'Continue'
 
-# Profiling helper function
-function Measure-Operation {
-    param(
-        [string]$Name,
-        [scriptblock]$ScriptBlock
-    )
-    
-    $startTime = Get-Date
-    Write-Host ""[PROFILE] Starting: $Name"" -ForegroundColor Cyan
-    
-    try {
-        & $ScriptBlock
-        $duration = (Get-Date) - $startTime
-        Write-Host ""[PROFILE] Completed: $Name - Duration: $($duration.TotalSeconds) seconds"" -ForegroundColor Green
-    }
-    catch {
-        $duration = (Get-Date) - $startTime
-        Write-Host ""[PROFILE] Failed: $Name - Duration: $($duration.TotalSeconds) seconds"" -ForegroundColor Red
-        throw
-    }
-}
-
 try {
     $testStartTime = Get-Date
-    Write-Host '[PROFILE] ========================================' -ForegroundColor Yellow
-    Write-Host '[PROFILE] Test execution started' -ForegroundColor Yellow
-    Write-Host '[PROFILE] ========================================' -ForegroundColor Yellow
-
+    Write-Host '[TIMING] Test started'
+    
     # Wait for any existing operations to complete before starting test
-    Measure-Operation 'Pre-check sleep (5 seconds)' {
-        Start-Sleep -Seconds 5
-    }
+    $stepStartTime = Get-Date
+    Write-Host 'Pre-check: Ensuring no pending operations...'
+    Start-Sleep -Seconds 5
+    $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
+    Write-Host ""[TIMING] Pre-check completed in $stepDuration seconds""
 
     $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmm')
     $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
@@ -65,164 +43,139 @@ try {
     Write-Host ""Test solution: $solutionName""
     Write-Host ""Test entity: $entityName""
     
+    $stepStartTime = Get-Date
     Write-Host 'Step 1: Creating test solution...'
-    Measure-Operation 'Step 1: Create test solution (with retries)' {
-        Invoke-WithRetry {
-            Measure-Operation 'Check for existing solution' {
-                $existingSolution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName -ErrorAction SilentlyContinue
-                if ($existingSolution) {
-                    Write-Host '  Removing existing test solution...'
-                    Measure-Operation 'Remove existing solution' {
-                        Remove-DataverseSolution -Connection $connection -UniqueName $solutionName -Confirm:$false
-                    }
-                }
-            }
-            
-            Measure-Operation 'Get/Create publisher' {
-                $publisher = Get-DataverseRecord -Connection $connection -TableName publisher -FilterValues @{ 'customizationprefix' = $publisherPrefix } | Select-Object -First 1
-                if (-not $publisher) {
-                    Write-Host '  Creating test publisher...'
-                    Measure-Operation 'Create publisher' {
-                        $publisher = @{
-                            'uniquename' = ""e2etestpublisher_$testRunId""
-                            'friendlyname' = 'E2E Test Publisher'
-                            'customizationprefix' = $publisherPrefix
-                        } | Set-DataverseRecord -Connection $connection -TableName publisher -PassThru
-                    }
-                }
-            }
-            
-            Measure-Operation 'Set-DataverseSolution' {
-                Set-DataverseSolution -Connection $connection `
-                    -UniqueName $solutionName `
-                    -Name $solutionDisplayName `
-                    -Version '1.0.0.0' `
-                    -PublisherUniqueName $publisher.uniquename `
-                    -Confirm:$false
-            }
-            
-            Measure-Operation 'Get-DataverseSolution to get ID' {
-                $solution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName
-                $script:solutionId = $solution.Id
-            }
+    Invoke-WithRetry {
+        
+        $existingSolution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName -ErrorAction SilentlyContinue
+        if ($existingSolution) {
+            Write-Host '  Removing existing test solution...'
+            Remove-DataverseSolution -Connection $connection -UniqueName $solutionName -Confirm:$false
         }
+        
+        $publisher = Get-DataverseRecord -Connection $connection -TableName publisher -FilterValues @{ 'customizationprefix' = $publisherPrefix } | Select-Object -First 1
+        if (-not $publisher) {
+            Write-Host '  Creating test publisher...'
+            $publisher = @{
+                'uniquename' = ""e2etestpublisher_$testRunId""
+                'friendlyname' = 'E2E Test Publisher'
+                'customizationprefix' = $publisherPrefix
+            } | Set-DataverseRecord -Connection $connection -TableName publisher -PassThru
+        }
+        
+        Set-DataverseSolution -Connection $connection `
+            -UniqueName $solutionName `
+            -Name $solutionDisplayName `
+            -Version '1.0.0.0' `
+            -PublisherUniqueName $publisher.uniquename `
+            -Confirm:$false
+        
+        $solution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName
+        $script:solutionId = $solution.Id
     }
-    
+    $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
     Write-Host ""✓ Test solution created (ID: $($script:solutionId))""
+    Write-Host ""[TIMING] Step 1 completed in $stepDuration seconds""
     
+    $stepStartTime = Get-Date
     Write-Host 'Step 2: Creating test entity...'
-    Measure-Operation 'Step 2: Create test entity (with retries)' {
-        Invoke-WithRetry {
-            Measure-Operation 'Set-DataverseEntityMetadata' {
-                Set-DataverseEntityMetadata -Connection $connection `
-                    -EntityName $entityName `
-                    -SchemaName $entitySchemaName `
-                    -DisplayName 'E2E Solution Test Entity' `
-                    -DisplayCollectionName 'E2E Solution Test Entities' `
-                    -PrimaryAttributeSchemaName 'new_name' `
-                    -OwnershipType UserOwned `
-                    -Confirm:$false
-            }
-            
-            # Entity creation can trigger long-running customization operations
-            # Wait longer to ensure the operation completes
-            Write-Verbose 'Entity created. Waiting 30 seconds for customization operations to complete...'
-            Measure-Operation 'Post-entity-creation sleep (30 seconds)' {
-                Start-Sleep -Seconds 30
-            }
-        }
+    Invoke-WithRetry {
+        
+        Set-DataverseEntityMetadata -Connection $connection `
+            -EntityName $entityName `
+            -SchemaName $entitySchemaName `
+            -DisplayName 'E2E Solution Test Entity' `
+            -DisplayCollectionName 'E2E Solution Test Entities' `
+            -PrimaryAttributeSchemaName 'new_name' `
+            -OwnershipType UserOwned `
+            -Confirm:$false
+        
+        # Entity creation can trigger long-running customization operations
+        # Wait longer to ensure the operation completes
+        Write-Verbose 'Entity created. Waiting 30 seconds for customization operations to complete...'
+        Start-Sleep -Seconds 30
     }
     
     Write-Host '✓ Test entity created'
     
-    Measure-Operation 'Get entity metadata for ObjectId' {
-        Invoke-WithRetry {
-            $entityMetadata = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
-            $script:entityObjectId = $entityMetadata.MetadataId
-        }
+    Invoke-WithRetry {
+        $entityMetadata = Get-DataverseEntityMetadata -Connection $connection -EntityName $entityName
+        $script:entityObjectId = $entityMetadata.MetadataId
     }
+    $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
     Write-Host ""  Entity ObjectId: $($script:entityObjectId)""
+    Write-Host ""[TIMING] Step 2 completed in $stepDuration seconds""
     
+    $stepStartTime = Get-Date
     Write-Host 'Step 3: Adding entity to solution with Behavior 0 (Include Subcomponents)...'
-    Measure-Operation 'Step 3: Add entity to solution (with retries)' {
-        Invoke-WithRetry {
-            Measure-Operation 'Set-DataverseSolutionComponent' {
-                $result = Set-DataverseSolutionComponent -Connection $connection `
-                    -SolutionName $solutionName `
-                    -ComponentId $script:entityObjectId `
-                    -ComponentType 1 `
-                    -Behavior 0 `
-                    -PassThru `
-                    -Confirm:$false
-                
-                if ($result.WasUpdated -eq $true) {
-                    throw 'Component should not be marked as updated when adding new component'
-                }
-                if ($result.BehaviorValue -ne 0) {
-                    throw ""Expected behavior value 0, got $($result.BehaviorValue)""
-                }
-            }
+    Invoke-WithRetry {
+        
+        $result = Set-DataverseSolutionComponent -Connection $connection `
+            -SolutionName $solutionName `
+            -ComponentId $script:entityObjectId `
+            -ComponentType 1 `
+            -Behavior 0 `
+            -PassThru `
+            -Confirm:$false
+        
+        if ($result.WasUpdated -eq $true) {
+            throw 'Component should not be marked as updated when adding new component'
+        }
+        if ($result.BehaviorValue -ne 0) {
+            throw ""Expected behavior value 0, got $($result.BehaviorValue)""
         }
     }
+    $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
     Write-Host '✓ Entity added to solution with Behavior 0'
+    Write-Host ""[TIMING] Step 3 completed in $stepDuration seconds""
     
+    $stepStartTime = Get-Date
     Write-Host 'Step 4: Verifying component exists in solution...'
-    Measure-Operation 'Step 4: Verify component in solution (with retries)' {
-        Invoke-WithRetry {
-            Measure-Operation 'Get-DataverseSolutionComponent' {
-                $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
-            }
-            
-            Measure-Operation 'Verify component properties' {
-                $entityComponent = $components | Where-Object { $_.ObjectId -eq $entityName }
-                if (-not $entityComponent) {
-                    throw 'Entity component not found in solution'
-                }
-                if ($entityComponent.ComponentType -ne 1) {
-                    throw ""Expected component type 1 (Entity), got $($entityComponent.ComponentType)""
-                }
-                Write-Host ""  Found component: Type=$($entityComponent.ComponentType), Behavior=$($entityComponent.Behavior)""
-                
-                if ($entityComponent.Behavior -ne 'IncludeSubcomponents') {
-                    throw ""Expected behavior 'IncludeSubcomponents' for Behavior 0, got '$($entityComponent.Behavior)'""
-                }
-            }
+    Invoke-WithRetry {
+        $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName $solutionName
+        
+        $entityComponent = $components | Where-Object { $_.ObjectId -eq $entityName }
+        if (-not $entityComponent) {
+            throw 'Entity component not found in solution'
+        }
+        if ($entityComponent.ComponentType -ne 1) {
+            throw ""Expected component type 1 (Entity), got $($entityComponent.ComponentType)""
+        }
+        Write-Host ""  Found component: Type=$($entityComponent.ComponentType), Behavior=$($entityComponent.Behavior)""
+        
+        if ($entityComponent.Behavior -ne 'IncludeSubcomponents') {
+            throw ""Expected behavior 'IncludeSubcomponents' for Behavior 0, got '$($entityComponent.Behavior)'""
         }
     }
+    $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
     Write-Host '✓ Component verified in solution with Behavior 0 (IncludeSubcomponents)'
+    Write-Host ""[TIMING] Step 4 completed in $stepDuration seconds""
     
+    $stepStartTime = Get-Date
     Write-Host 'Step 5: Cleanup - Removing test solution...'
-    Measure-Operation 'Step 5: Remove test solution (with retries)' {
-        Invoke-WithRetry {
-            Measure-Operation 'Remove-DataverseSolution' {
-                Remove-DataverseSolution -Connection $connection -UniqueName $solutionName -Confirm:$false
-            }
-        }
+    Invoke-WithRetry {
+        Remove-DataverseSolution -Connection $connection -UniqueName $solutionName -Confirm:$false
     }
+    $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
     Write-Host '✓ Test solution deleted'
+    Write-Host ""[TIMING] Step 5 completed in $stepDuration seconds""
     
+    $stepStartTime = Get-Date
     Write-Host 'Step 6: Cleanup - Removing test entity...'
-    Measure-Operation 'Step 6: Remove test entity (with retries)' {
-        Invoke-WithRetry {
-            Measure-Operation 'Remove-DataverseEntityMetadata' {
-                Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
-            }
-        }
+    Invoke-WithRetry {
+        Remove-DataverseEntityMetadata -Connection $connection -EntityName $entityName -Confirm:$false
     }
+    $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
     Write-Host '✓ Test entity deleted'
+    Write-Host ""[TIMING] Step 6 completed in $stepDuration seconds""
     
-    $testDuration = (Get-Date) - $testStartTime
-    Write-Host '[PROFILE] ========================================' -ForegroundColor Yellow
-    Write-Host ""[PROFILE] Test execution completed in $($testDuration.TotalSeconds) seconds"" -ForegroundColor Yellow
-    Write-Host '[PROFILE] ========================================' -ForegroundColor Yellow
-    
+    $testDuration = ((Get-Date) - $testStartTime).TotalSeconds
+    Write-Host ""[TIMING] Total test duration: $testDuration seconds""
     Write-Host 'SUCCESS: All solution component operations completed successfully'
 }
 catch {
-    $testDuration = (Get-Date) - $testStartTime
-    Write-Host '[PROFILE] ========================================' -ForegroundColor Yellow
-    Write-Host ""[PROFILE] Test execution FAILED after $($testDuration.TotalSeconds) seconds"" -ForegroundColor Red
-    Write-Host '[PROFILE] ========================================' -ForegroundColor Yellow
+    $testDuration = ((Get-Date) - $testStartTime).TotalSeconds
+    Write-Host ""[TIMING] Test failed after $testDuration seconds""
     Write-Host ""ERROR: $($_ | Out-String)""
     throw
 }
