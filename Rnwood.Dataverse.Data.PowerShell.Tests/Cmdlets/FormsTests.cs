@@ -850,6 +850,37 @@ public class FormsTests : TestBase
     }
 
     [Fact]
+    public void SetDataverseFormControl_UpdateByControlId_WithoutDataField_ShouldSucceed()
+    {
+        // Arrange
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnection("systemform", "contact");
+        
+        var formId = Guid.NewGuid();
+        var testForm = CreateTestForm(formId, "TestForm", "contact");
+        Service!.Create(testForm);
+        
+        // Act - Update firstname control using only ControlId (without DataField parameter)
+        // This is the scenario from the bug report
+        ps.AddCommand("Set-DataverseFormControl")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("FormId", formId)
+          .AddParameter("TabName", "GeneralTab")
+          .AddParameter("SectionName", "GeneralSection")
+          .AddParameter("ControlId", "firstname")
+          .AddParameter("Labels", new System.Collections.Hashtable { { 1033, "Updated Label" } });
+        var results = ps.Invoke();
+        
+        // Assert
+        ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        
+        // Retrieve updated form and verify label was updated
+        var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+        var formXml = updatedForm.GetAttributeValue<string>("formxml");
+        formXml.Should().Contain("Updated Label");
+    }
+
+    [Fact]
     public void SetDataverseFormControl_AutoControlType_DetectsTypeFromAttribute()
     {
         // Arrange

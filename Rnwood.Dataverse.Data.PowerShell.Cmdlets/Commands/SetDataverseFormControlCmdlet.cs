@@ -355,9 +355,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
-                // Standard parameter set - determine control type if not provided and validate metadata
-                finalControlType = DetermineAndValidateControlType();
-
+                // Standard parameter set - first determine if we're updating or creating
                 // Determine control ID and check if exists
                 if (!string.IsNullOrEmpty(ControlId))
                 {
@@ -380,6 +378,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         existingCell = tempExistingCell;
                         isUpdate = true;
                         controlId = ControlId;
+                        
+                        // When updating, extract DataField from existing control if not provided
+                        if (string.IsNullOrEmpty(DataField))
+                        {
+                            DataField = existingControl.Attribute("datafieldname")?.Value;
+                            WriteVerbose($"DEBUG: Extracted DataField '{DataField}' from existing control");
+                        }
                     }
                 }
                 else if (!string.IsNullOrEmpty(DataField))
@@ -406,6 +411,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
                 // else: No ControlId and no DataField (special controls) - will create new
+
+                // Now determine control type - pass isUpdate flag so validation can be skipped for updates without DataField
+                finalControlType = DetermineAndValidateControlType(isUpdate);
 
                 if (!isUpdate)
                 {
@@ -505,7 +513,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Determines the appropriate control type based on attribute metadata if not specified, and validates that the metadata exists.
         /// </summary>
-        private string DetermineAndValidateControlType()
+        /// <param name="isUpdate">True if this is an update operation, false if creating new control</param>
+        private string DetermineAndValidateControlType(bool isUpdate)
         {
             // Check if this is a special control type that doesn't require a DataField
             if (!string.IsNullOrEmpty(ControlType) && IsSpecialControlType(ControlType))
@@ -515,8 +524,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return ControlType;
             }
 
+            // When updating, DataField may have been extracted from existing control
+            // Only require it when creating new controls
             if (string.IsNullOrEmpty(DataField))
             {
+                if (isUpdate)
+                {
+                    // For updates, if DataField is still empty after extraction attempt, 
+                    // this might be a special control, so we'll skip validation
+                    WriteVerbose("Updating control without DataField - assuming special control type");
+                    return ControlType ?? "Standard";
+                }
+                
                 throw new ArgumentException("DataField is required for attribute-bound controls (Standard, Lookup, OptionSet, DateTime, Boolean, Email, Memo, Money, Notes, Data). For special controls (Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch), specify ControlType parameter.");
             }
 
