@@ -11,7 +11,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Sitemap
     /// </summary>
     public class SitemapTests : E2ETestBase
     {
-        [Fact(Skip = "Sitemap cmdlets have known issues - sitemap XML not saving correctly. See original Pester test which is also skipped.")]
+        [Fact]
         public void CanPerformFullLifecycleOfSitemapManipulationIncludingEntries()
         {
             var script = GetConnectionScript(@"
