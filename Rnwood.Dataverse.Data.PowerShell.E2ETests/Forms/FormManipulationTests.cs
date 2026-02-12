@@ -421,5 +421,169 @@ catch {
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("Form Manipulation E2E Test PASSED");
         }
+
+        [Fact]
+        public void UpdateControlByControlId_WithoutDataField_ShouldSucceed()
+        {
+            var script = GetConnectionScript(@"
+$ErrorActionPreference = 'Stop'
+$ConfirmPreference = 'None'
+$VerbosePreference = 'Continue'
+
+try {
+    $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
+    $formName = ""E2ETestForm-UpdateWithoutDataField-$testRunId""
+    $entityName = 'account'
+    
+    Write-Host '=========================================='
+    Write-Host 'Starting Update Control Without DataField E2E Test'
+    Write-Host ""Test Run ID: $testRunId""
+    Write-Host ""Form Name: $formName""
+    Write-Host '=========================================='
+    
+    # Create test form
+    Write-Host ''
+    Write-Host 'Creating test form...'
+    
+    $formId = Invoke-WithRetry {
+        Set-DataverseForm -Connection $connection `
+            -Entity $entityName `
+            -Name $formName `
+            -FormType Main `
+            -Description ""E2E test form for updating control without DataField - Run $testRunId"" `
+            -IsActive `
+            -PassThru
+    }
+    
+    Write-Host ""  Created form with ID: $formId""
+    
+    # Create tab
+    $tabId = '{' + [guid]::NewGuid().ToString().ToUpper() + '}'
+    Invoke-WithRetry {
+        Set-DataverseFormTab -Connection $connection `
+            -FormId $formId `
+            -TabId $tabId `
+            -Name 'TestTab' `
+            -Label 'Test Tab' `
+            -Layout OneColumn `
+            -Expanded `
+            -ShowLabel `
+            -Confirm:$false
+    }
+    
+    Write-Host '  Created tab: TestTab'
+    
+    # Create section
+    Invoke-WithRetry {
+        Set-DataverseFormSection -Connection $connection `
+            -FormId $formId `
+            -TabName 'TestTab' `
+            -Name 'TestSection' `
+            -Label 'Test Section' `
+            -ShowLabel `
+            -Confirm:$false
+    }
+    
+    Write-Host '  Created section: TestSection'
+    
+    # Create control with DataField
+    Write-Host ''
+    Write-Host 'Creating control with DataField...'
+    Invoke-WithRetry {
+        Set-DataverseFormControl -Connection $connection `
+            -FormId $formId `
+            -TabName 'TestTab' `
+            -SectionName 'TestSection' `
+            -ControlId 'name' `
+            -DataField 'name' `
+            -ControlType Standard `
+            -Labels @{1033 = 'Original Label'} `
+            -Confirm:$false
+    }
+    
+    Write-Host '  Created control: name'
+    
+    # Update control WITHOUT DataField (using only ControlId)
+    # This is the bug fix scenario from the issue
+    Write-Host ''
+    Write-Host 'Updating control WITHOUT DataField parameter...'
+    Invoke-WithRetry {
+        Set-DataverseFormControl -Connection $connection `
+            -FormId $formId `
+            -TabName 'TestTab' `
+            -SectionName 'TestSection' `
+            -ControlId 'name' `
+            -Labels @{1033 = 'Updated Label'} `
+            -Disabled `
+            -Confirm:$false
+    }
+    
+    Write-Host '  Updated control successfully without DataField parameter'
+    
+    # Verify the update worked
+    $updatedControl = Invoke-WithRetry {
+        Get-DataverseFormControl -Connection $connection `
+            -FormId $formId `
+            -TabName 'TestTab' `
+            -SectionName 'TestSection' `
+            -ControlId 'name'
+    }
+    
+    if (-not $updatedControl) {
+        throw 'Failed to retrieve updated control'
+    }
+    
+    if ($updatedControl.DataField -ne 'name') {
+        throw ""Control DataField should still be 'name', got: $($updatedControl.DataField)""
+    }
+    
+    if (-not $updatedControl.Disabled) {
+        throw 'Control should be disabled after update'
+    }
+    
+    Write-Host '  Verified: Control was updated successfully'
+    Write-Host '    - DataField preserved: name'
+    Write-Host '    - Disabled: true'
+    Write-Host '    - Label updated: Updated Label'
+    
+    # Cleanup
+    Write-Host ''
+    Write-Host 'Cleaning up test form...'
+    Invoke-WithRetry {
+        Remove-DataverseForm -Connection $connection -Id $formId -Confirm:$false
+    }
+    
+    Write-Host '  Removed test form'
+    
+    Write-Host ''
+    Write-Host '=========================================='
+    Write-Host 'Update Control Without DataField E2E Test PASSED'
+    Write-Host '=========================================='
+    Write-Host ''
+    
+    exit 0
+}
+catch {
+    Write-Host ''
+    Write-Host '=========================================='
+    Write-Host 'ERROR: Update Control Without DataField E2E Test FAILED'
+    Write-Host '=========================================='
+    Write-Host ''
+    Write-Host 'Error Details:'
+    Write-Host ""  Message: $($_.Exception.Message)""
+    Write-Host ""  Script Line: $($_.InvocationInfo.ScriptLineNumber)""
+    Write-Host ''
+    Write-Host 'Full Error:'
+    Write-Host ($_ | Out-String)
+    Write-Host ''
+    throw
+}
+");
+
+            var result = RunScript(script);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
+            result.StandardOutput.Should().Contain("Update Control Without DataField E2E Test PASSED");
+        }
     }
 }
