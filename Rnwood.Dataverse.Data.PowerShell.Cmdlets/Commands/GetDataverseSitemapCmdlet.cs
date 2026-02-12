@@ -47,7 +47,140 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose("Querying sitemaps from Dataverse environment...");
 
-            // Build query
+            // Optimization: When retrieving by ID or UniqueName and not forcing Published, use RetrieveUnpublishedRequest
+            // for better support of unpublished sitemap XML (similar to forms)
+            if (string.IsNullOrEmpty(Name))
+            {
+                Guid? sitemapId = Id;
+                
+                // If retrieving by UniqueName, first find the sitemap ID
+                if (!sitemapId.HasValue && !string.IsNullOrEmpty(UniqueName))
+                {
+                    WriteVerbose($"Looking up sitemap by unique name: {UniqueName}");
+                    var lookupQuery = new QueryExpression("sitemap")
+                    {
+                        ColumnSet = new ColumnSet("sitemapid"),
+                        Criteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("sitemapnameunique", ConditionOperator.Equal, UniqueName)
+                            }
+                        },
+                        TopCount = 1
+                    };
+                    
+                    EntityCollection results;
+                    if (!Published.IsPresent)
+                    {
+                        var retrieveUnpublishedMultipleRequest = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest
+                        {
+                            Query = lookupQuery
+                        };
+                        var unpublishedResponse = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                        results = unpublishedResponse.EntityCollection;
+                        
+                        if (results.Entities.Count == 0)
+                        {
+                            // Try published
+                            results = Connection.RetrieveMultiple(lookupQuery);
+                        }
+                    }
+                    else
+                    {
+                        results = Connection.RetrieveMultiple(lookupQuery);
+                    }
+                    
+                    if (results.Entities.Count > 0)
+                    {
+                        sitemapId = results.Entities[0].Id;
+                    }
+                }
+                
+                // If we have a sitemap ID, retrieve it using RetrieveUnpublishedRequest
+                if (sitemapId.HasValue)
+                {
+                Entity sitemap;
+                
+                if (!Published.IsPresent)
+                {
+                    WriteVerbose($"Retrieving unpublished sitemap by ID: {sitemapId.Value}");
+                    try
+                    {
+                        var retrieveUnpublishedRequest = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedRequest
+                        {
+                            Target = new EntityReference("sitemap", sitemapId.Value),
+                            ColumnSet = new ColumnSet(
+                                "sitemapid",
+                                "sitemapname",
+                                "sitemapnameunique",
+                                "sitemapxml",
+                                "createdby",
+                                "createdon",
+                                "modifiedby",
+                                "modifiedon",
+                                "solutionid"
+                            )
+                        };
+                        var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                        sitemap = response.Entity;
+                    }
+                    catch (System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault> ex)
+                    {
+                        if (QueryHelpers.IsNotFoundException(ex))
+                        {
+                            // Try published version as fallback
+                            WriteVerbose($"Sitemap not found in unpublished layer, trying published version...");
+                            sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(
+                                "sitemapid",
+                                "sitemapname",
+                                "sitemapnameunique",
+                                "sitemapxml",
+                                "createdby",
+                                "createdon",
+                                "modifiedby",
+                                "modifiedon",
+                                "solutionid"
+                            ));
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                }
+                else
+                {
+                    WriteVerbose($"Retrieving published sitemap by ID: {sitemapId.Value}");
+                    sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(
+                        "sitemapid",
+                        "sitemapname",
+                        "sitemapnameunique",
+                        "sitemapxml",
+                        "createdby",
+                        "createdon",
+                        "modifiedby",
+                        "modifiedon",
+                        "solutionid"
+                    ));
+                }
+
+                var sitemapInfo = new SitemapInfo
+                {
+                    Id = sitemap.Id,
+                    Name = sitemap.GetAttributeValue<string>("sitemapname"),
+                    UniqueName = sitemap.GetAttributeValue<string>("sitemapnameunique"),
+                    SitemapXml = sitemap.GetAttributeValue<string>("sitemapxml"),
+                    CreatedOn = sitemap.GetAttributeValue<DateTime?>("createdon"),
+                    ModifiedOn = sitemap.GetAttributeValue<DateTime?>("modifiedon")
+                };
+
+                WriteObject(sitemapInfo);
+                return;
+                }
+            }
+
+            // Build query for other cases
             var query = new QueryExpression("sitemap")
             {
                 ColumnSet = new ColumnSet(
