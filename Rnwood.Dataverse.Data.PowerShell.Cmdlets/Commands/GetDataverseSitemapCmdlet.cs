@@ -110,17 +110,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         var retrieveUnpublishedRequest = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedRequest
                         {
                             Target = new EntityReference("sitemap", sitemapId.Value),
-                            ColumnSet = new ColumnSet(
-                                "sitemapid",
-                                "sitemapname",
-                                "sitemapnameunique",
-                                "sitemapxml",
-                                "createdby",
-                                "createdon",
-                                "modifiedby",
-                                "modifiedon",
-                                "solutionid"
-                            )
+                            ColumnSet = new ColumnSet(true) // Use all columns to ensure sitemapxml is retrieved
                         };
                         var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
                         sitemap = response.Entity;
@@ -131,17 +121,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             // Try published version as fallback
                             WriteVerbose($"Sitemap not found in unpublished layer, trying published version...");
-                            sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(
-                                "sitemapid",
-                                "sitemapname",
-                                "sitemapnameunique",
-                                "sitemapxml",
-                                "createdby",
-                                "createdon",
-                                "modifiedby",
-                                "modifiedon",
-                                "solutionid"
-                            ));
+                            sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true)); // Use all columns
                         }
                         else
                         {
@@ -152,17 +132,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 else
                 {
                     WriteVerbose($"Retrieving published sitemap by ID: {sitemapId.Value}");
-                    sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(
-                        "sitemapid",
-                        "sitemapname",
-                        "sitemapnameunique",
-                        "sitemapxml",
-                        "createdby",
-                        "createdon",
-                        "modifiedby",
-                        "modifiedon",
-                        "solutionid"
-                    ));
+                    sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true)); // Use all columns
                 }
 
                 var sitemapInfo = new SitemapInfo
