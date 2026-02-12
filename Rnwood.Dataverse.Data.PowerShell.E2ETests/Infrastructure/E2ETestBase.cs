@@ -162,7 +162,7 @@ function Invoke-WithRetry {{
     $attempt = 0
     $startTime = Get-Date
 
-    while ($attempt -lt $MaxRetries) {{
+    while ($true) {{
         try {{
             $attempt++
             Write-Verbose ""Attempt $attempt of $MaxRetries""
@@ -170,7 +170,7 @@ function Invoke-WithRetry {{
             return
         }}
         catch {{
-            $errorMessage = $_.Exception.Message
+            $errorMessage = $_.ToString()
             
             # Check if this is a CustomizationLockException that should be retried for up to 30 minutes
             $isCustomizationLock = $errorMessage -match 'CustomizationLockException' -or 

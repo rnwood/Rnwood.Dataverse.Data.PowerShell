@@ -41,7 +41,10 @@ try {
     
     Write-Host 'Cleanup - Removing global option set...'
     Invoke-WithRetry {
-        Remove-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName -Confirm:$false
+        $existingOptionSet = Get-DataverseOptionSetMetadata -Connection $connection | Where-Object { $_.Name -eq $optionSetName }
+        if ($null -ne $existingOptionSet) {
+            Remove-DataverseOptionSetMetadata -Connection $connection -Name $optionSetName -Confirm:$false
+        }
     }
     Write-Host '✓ Global option set deleted'
     
