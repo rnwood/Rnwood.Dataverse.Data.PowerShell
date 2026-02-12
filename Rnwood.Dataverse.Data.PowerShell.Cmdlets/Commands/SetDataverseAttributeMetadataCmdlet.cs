@@ -1452,11 +1452,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else if (attribute is StatusAttributeMetadata statusAttr && Options != null && Options.Length > 0)
             {
                 // Update statuscode options with State property
-                var optionSet = new OptionSetMetadata
+                // We need to work with the existing OptionSet to preserve its properties
+                if (statusAttr.OptionSet == null)
                 {
-                    IsGlobal = false,
-                    OptionSetType = OptionSetType.Picklist
-                };
+                    statusAttr.OptionSet = new OptionSetMetadata
+                    {
+                        IsGlobal = false,
+                        OptionSetType = OptionSetType.Picklist
+                    };
+                }
+                
+                // Clear existing options and add new ones
+                statusAttr.OptionSet.Options.Clear();
 
                 foreach (var option in Options)
                 {
@@ -1493,10 +1500,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         State = state
                     };
 
-                    optionSet.Options.Add(statusOption);
+                    statusAttr.OptionSet.Options.Add(statusOption);
                 }
 
-                statusAttr.OptionSet = optionSet;
                 hasChanges = true;
             }
 
