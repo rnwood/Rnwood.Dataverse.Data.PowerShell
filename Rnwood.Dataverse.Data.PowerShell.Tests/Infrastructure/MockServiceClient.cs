@@ -10,15 +10,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 {
     /// <summary>
     /// Factory for creating mock ServiceClient instances.
-    /// The created ServiceClient instances can be wrapped in MockDataverseConnection
-    /// to support cloning for parallel operations.
+    /// The created ServiceClient instances are CloneableMockServiceClient which support cloning
+    /// for parallel operations.
     /// </summary>
     internal static class MockServiceClientFactory
     {
-        private static ConstructorInfo? _constructor;
-
         /// <summary>
-        /// Creates a new ServiceClient using the internal constructor.
+        /// Creates a new CloneableMockServiceClient that supports cloning.
         /// The service parameter should be wrapped with ThreadSafeOrganizationService for parallel operations.
         /// </summary>
         public static ServiceClient Create(
@@ -28,38 +26,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             Version sdkVersion,
             ILogger logger)
         {
-            if (_constructor == null)
-            {
-                _constructor = typeof(ServiceClient).GetConstructor(
-                    BindingFlags.NonPublic | BindingFlags.Instance,
-                    null,
-                    new[] { typeof(IOrganizationService), typeof(HttpClient), typeof(string), typeof(Version), typeof(ILogger) },
-                    null);
-
-                if (_constructor == null)
-                {
-                    throw new InvalidOperationException("Could not find ServiceClient internal constructor");
-                }
-            }
-
-            var client = (ServiceClient)_constructor.Invoke(new object[] { service, httpClient, instanceUri, sdkVersion, logger });
-            
-            // Try to set additional properties that SQL4Cds and other components may need
-            // Use reflection to set all possible fields that might store the URI
-            var uri = new Uri(instanceUri);
-            
-            // Try properties first
-            SetPrivateProperty(client, "ConnectedOrgUniqueName", "fakeorg");
-            SetPrivateProperty(client, "ConnectedOrgFriendlyName", "Fake Organization");
-            SetPrivateProperty(client, "ConnectedOrgVersion", sdkVersion);
-            
-            // Try to set URI-related fields directly since the property is read-only
-            TrySetUriField(client, uri);
-            
-            return client;
+            return CloneableMockServiceClient.Create(service, httpClient, instanceUri, sdkVersion, logger);
         }
         
-        private static void TrySetUriField(ServiceClient client, Uri uri)
+        internal static void TrySetUriField(ServiceClient client, Uri uri)
         {
             // Try common field name patterns for storing the connected org URI
             var fieldNames = new[]
@@ -121,7 +91,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             // or the field pattern has changed in a newer version of ServiceClient
         }
 
-        private static void SetPrivateProperty(object obj, string propertyName, object value)
+        internal static void SetPrivateProperty(object obj, string propertyName, object value)
         {
             var property = obj.GetType().GetProperty(propertyName, 
                 BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);

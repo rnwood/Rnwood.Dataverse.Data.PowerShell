@@ -1,43 +1,41 @@
 using System;
-using System.Collections.Concurrent;
 using Microsoft.PowerPlatform.Dataverse.Client;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Provides extension methods and utilities for working with Dataverse connections.
+    /// Provides extension methods for cloning Dataverse connections.
     /// </summary>
     public static class DataverseConnectionExtensions
     {
-        // Registry to track IDataverseConnection wrappers for ServiceClient instances
-        private static readonly ConcurrentDictionary<ServiceClient, IDataverseConnection> _connectionRegistry 
-            = new ConcurrentDictionary<ServiceClient, IDataverseConnection>();
+        // Internal hook for test infrastructure to provide custom clone implementations
+        internal static Func<ServiceClient, ICloneableServiceClient> GetCloneableWrapper { get; set; }
 
         /// <summary>
-        /// Registers a ServiceClient with its IDataverseConnection wrapper.
-        /// This allows the connection to be cloned properly even if it's a mock connection.
-        /// </summary>
-        public static void RegisterConnection(ServiceClient serviceClient, IDataverseConnection connection)
-        {
-            _connectionRegistry[serviceClient] = connection;
-        }
-
-        /// <summary>
-        /// Attempts to clone a ServiceClient, using the registered IDataverseConnection if available.
+        /// Attempts to clone a ServiceClient. If the connection implements ICloneableServiceClient,
+        /// uses the custom clone logic. Otherwise, uses the standard Clone() method.
         /// </summary>
         /// <param name="serviceClient">The ServiceClient to clone</param>
-        /// <returns>A cloned ServiceClient, or throws if cloning is not supported</returns>
+        /// <returns>A cloned ServiceClient</returns>
         public static ServiceClient CloneConnection(ServiceClient serviceClient)
         {
-            // First check if this is a registered connection with custom clone support
-            if (_connectionRegistry.TryGetValue(serviceClient, out var connection))
+            // Check if this connection implements custom clone logic directly
+            if (serviceClient is ICloneableServiceClient cloneable)
             {
-                var cloned = connection.Clone();
-                return cloned.ServiceClient;
+                return cloneable.CloneServiceClient();
+            }
+
+            // Check if test infrastructure registered a wrapper for this connection
+            if (GetCloneableWrapper != null)
+            {
+                var wrapper = GetCloneableWrapper(serviceClient);
+                if (wrapper != null)
+                {
+                    return wrapper.CloneServiceClient();
+                }
             }
 
             // Otherwise, use the standard Clone() method
-            // This may throw NotImplementedException for mock connections that aren't registered
             return serviceClient.Clone();
         }
 

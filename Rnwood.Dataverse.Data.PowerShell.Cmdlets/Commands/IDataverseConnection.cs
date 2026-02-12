@@ -3,20 +3,15 @@ using Microsoft.PowerPlatform.Dataverse.Client;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Interface for Dataverse connections that support cloning.
-    /// This abstraction allows mock connections to provide custom Clone() implementations.
+    /// Interface for ServiceClient instances that support custom cloning logic.
+    /// This is primarily used for mock connections in tests.
     /// </summary>
-    public interface IDataverseConnection
+    public interface ICloneableServiceClient
     {
         /// <summary>
-        /// Gets the underlying ServiceClient instance.
+        /// Creates a clone of this ServiceClient for use in parallel operations.
         /// </summary>
-        ServiceClient ServiceClient { get; }
-
-        /// <summary>
-        /// Creates a clone of this connection for use in parallel operations.
-        /// </summary>
-        /// <returns>A new connection instance that can be used concurrently</returns>
-        IDataverseConnection Clone();
+        /// <returns>A new ServiceClient instance that can be used concurrently</returns>
+        ServiceClient CloneServiceClient();
     }
 }

@@ -19,7 +19,6 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
-using Rnwood.Dataverse.Data.PowerShell.Commands;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 {
@@ -43,6 +42,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         static TestBase()
         {
             Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager.UseThreadLocalConnection = true;
+            
+            // Configure the clone extension to use our wrapper registry for mock connections
+            Rnwood.Dataverse.Data.PowerShell.Commands.DataverseConnectionExtensions.GetCloneableWrapper = 
+                (serviceClient) => {
+                    if (WrapperRegistry.TryGetWrapper(serviceClient, out var wrapper))
+                    {
+                        return wrapper;
+                    }
+                    return null;
+                };
         }
 
 
@@ -317,28 +326,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             var threadSafeService = new ThreadSafeOrganizationService(baseService);
             Service = new MockOrganizationServiceWithInterceptor(threadSafeService, CombinedInterceptor);
 
-            // Create ServiceClient wrapper using factory
+            // Create CloneableMockServiceClient that supports cloning for parallel operations
             var httpClient = new HttpClient(new FakeHttpMessageHandler());
-            var instanceUri = "https://fakeorg.crm.dynamics.com";
-            var sdkVersion = new Version(9, 2);
-            var logger = A.Fake<ILogger>();
-            
             Connection = MockServiceClientFactory.Create(
                 Service,
                 httpClient,
-                instanceUri,
-                sdkVersion,
-                logger);
-
-            // Register the mock connection so it can be cloned properly in parallel operations
-            var mockConnection = new MockDataverseConnection(
-                Connection,
-                Service,
-                httpClient,
-                instanceUri,
-                sdkVersion,
-                logger);
-            DataverseConnectionExtensions.RegisterConnection(Connection, mockConnection);
+                "https://fakeorg.crm.dynamics.com",
+                new Version(9, 2),
+                A.Fake<ILogger>());
 
             return Connection;
         }
