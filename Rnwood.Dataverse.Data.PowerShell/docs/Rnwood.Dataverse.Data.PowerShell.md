@@ -220,6 +220,9 @@ Removes a section from a Dataverse form tab.
 ### [Remove-DataverseFormTab](Remove-DataverseFormTab.md)
 Removes a tab from a Dataverse form.
 
+### [Remove-DataverseOptionSetMetadata](Remove-DataverseOptionSetMetadata.md)
+Deletes a global option set from Dataverse.
+
 ### [Remove-DataversePluginAssembly](Remove-DataversePluginAssembly.md)
 Removes a plugin assembly from a Dataverse environment.
 
@@ -372,7 +375,4 @@ Creates or updates web resources in a Dataverse environment.
 
 ### [Test-DataverseRecordAccess](Test-DataverseRecordAccess.md)
 Tests the access rights a security principal (user or team) has for a specific record.
-
-### [Wait-DataversePublish](Wait-DataversePublish.md)
-Waits for a Dataverse publish operation to complete.
 

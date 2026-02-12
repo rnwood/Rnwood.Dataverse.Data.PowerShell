@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.Power
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.PowerShell.Tests", "Rnwood.Dataverse.Data.PowerShell.Tests\Rnwood.Dataverse.Data.PowerShell.Tests.csproj", "{B11A1CDA-3323-4046-A620-FE7FB0464DF4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.PowerShell.E2ETests", "Rnwood.Dataverse.Data.PowerShell.E2ETests\Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj", "{C22E3EDA-4444-5057-B731-FF8FC0575E2F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -111,6 +113,18 @@ Global
 		{B11A1CDA-3323-4046-A620-FE7FB0464DF4}.Release|x64.Build.0 = Release|Any CPU
 		{B11A1CDA-3323-4046-A620-FE7FB0464DF4}.Release|x86.ActiveCfg = Release|Any CPU
 		{B11A1CDA-3323-4046-A620-FE7FB0464DF4}.Release|x86.Build.0 = Release|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Debug|x64.Build.0 = Debug|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Debug|x86.Build.0 = Debug|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Release|x64.ActiveCfg = Release|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Release|x64.Build.0 = Release|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Release|x86.ActiveCfg = Release|Any CPU
+		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

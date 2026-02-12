@@ -7,7 +7,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 {
     /// <summary>
     /// A wrapper around IOrganizationService that allows intercepting requests with a C# delegate.
-    /// This is the xUnit equivalent of MockOrganizationServiceWithScriptBlock used in Pester tests.
+    /// This enables testing cmdlets that make SDK calls with dynamic mock responses.
     /// </summary>
     public class MockOrganizationServiceWithInterceptor : IOrganizationService
     {

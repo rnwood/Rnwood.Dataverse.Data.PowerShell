@@ -7,6 +7,7 @@ using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using System.Reflection;
 using Microsoft.PowerPlatform.Dataverse.Client;
+using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Xunit;
 using PS = System.Management.Automation.PowerShell;
 
@@ -20,12 +21,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
     {
         public GetDataverseAttributeMetadataTests()
         {
-            ClearDefaultConnection();
+            SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
         }
 
         public override void Dispose()
         {
-            ClearDefaultConnection();
+            SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
             base.Dispose();
         }
 
@@ -116,7 +117,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 
             try
             {
-                SetDefaultConnection(mockConnection);
+                SetDataverseConnectionAsDefaultCmdlet.SetDefault(mockConnection);
 
                 // Act - call without -Connection
                 ps.AddCommand("Get-DataverseAttributeMetadata")
@@ -135,25 +136,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             }
             finally
             {
-                ClearDefaultConnection();
+                SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
             }
         }
 
-        private static void ClearDefaultConnection()
-        {
-            var managerType = typeof(Commands.GetDataverseConnectionCmdlet).Assembly
-                .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
-            var clearMethod = managerType?.GetMethod("ClearDefaultConnection", BindingFlags.Public | BindingFlags.Static);
-            clearMethod?.Invoke(null, null);
-        }
 
-        private static void SetDefaultConnection(ServiceClient connection)
-        {
-            var managerType = typeof(Commands.GetDataverseConnectionCmdlet).Assembly
-                .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
-            var prop = managerType?.GetProperty("DefaultConnection", BindingFlags.Public | BindingFlags.Static);
-            prop?.SetValue(null, connection);
-        }
 
         // ===== All Attributes Retrieval ===== (2 tests)
 

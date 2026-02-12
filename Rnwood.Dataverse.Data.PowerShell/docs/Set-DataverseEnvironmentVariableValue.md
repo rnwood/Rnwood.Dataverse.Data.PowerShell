@@ -120,7 +120,7 @@ Schema name of the environment variable to set the value for (for single paramet
 ```yaml
 Type: String
 Parameter Sets: Single
-Aliases:
+Aliases: DefinitionSchemaName
 
 Required: True
 Position: 0

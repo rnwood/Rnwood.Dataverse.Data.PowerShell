@@ -29,8 +29,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
     /// <remarks>
     /// Note: PowerShell cmdlet invocation is NOT available in xUnit tests because
     /// Microsoft.PowerShell.SDK only provides reference assemblies, not runtime assemblies.
-    /// Use this base class for testing internal cmdlet logic via FakeXrmEasy,
-    /// and use Pester tests (tests/ directory) for full cmdlet integration testing.
+    /// Use this base class for testing internal cmdlet logic via FakeXrmEasy.
+    /// For full cmdlet integration testing, use E2E tests in Rnwood.Dataverse.Data.PowerShell.E2ETests/
+    /// which use PowerShellProcessRunner to execute cmdlets in child PowerShell processes.
     /// </remarks>
     public abstract class TestBase : IDisposable
     {
@@ -38,6 +39,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         private static readonly object MetadataCacheLock = new();
         private List<EntityMetadata>? _loadedMetadata;
         
+        static TestBase()
+        {
+            Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager.UseThreadLocalConnection = true;
+        }
+
+
         // Fixed identity values for WhoAmIRequest (consistent per test)
         private readonly Guid _mockUserId = Guid.NewGuid();
         private readonly Guid _mockBusinessUnitId = Guid.NewGuid();
@@ -960,6 +967,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 
         public virtual void Dispose()
         {
+            // Clear thread-local and process default connections to avoid leakage between tests
+            Rnwood.Dataverse.Data.PowerShell.Commands.SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
+
             Service = null;
             Context = null;
             Connection = null;

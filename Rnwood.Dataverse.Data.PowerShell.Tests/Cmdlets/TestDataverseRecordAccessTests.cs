@@ -18,29 +18,13 @@ public class TestDataverseRecordAccessTests : TestBase, IDisposable
 {
     public TestDataverseRecordAccessTests()
     {
-        ClearDefaultConnection();
+        SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
     }
 
     public override void Dispose()
     {
-        ClearDefaultConnection();
+        SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
         base.Dispose();
-    }
-
-    private static void ClearDefaultConnection()
-    {
-        var managerType = typeof(GetDataverseConnectionCmdlet).Assembly
-            .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
-        var clearMethod = managerType?.GetMethod("ClearDefaultConnection", BindingFlags.Public | BindingFlags.Static);
-        clearMethod?.Invoke(null, null);
-    }
-
-    private static void SetDefaultConnection(ServiceClient connection)
-    {
-        var managerType = typeof(GetDataverseConnectionCmdlet).Assembly
-            .GetType("Rnwood.Dataverse.Data.PowerShell.Commands.DefaultConnectionManager");
-        var prop = managerType?.GetProperty("DefaultConnection", BindingFlags.Public | BindingFlags.Static);
-        prop?.SetValue(null, connection);
     }
 
     private static PS CreatePowerShellWithCmdlets()
@@ -166,7 +150,7 @@ public class TestDataverseRecordAccessTests : TestBase, IDisposable
         var whoAmI = (WhoAmIResponse)Service.Execute(new WhoAmIRequest());
 
         // Set default connection via reflection (avoids test parallelization interference)
-        SetDefaultConnection(mockConnection);
+        SetDataverseConnectionAsDefaultCmdlet.SetDefault(mockConnection);
 
         // Act - invoke Test-DataverseRecordAccess without -Connection parameter
         ps.AddCommand("Test-DataverseRecordAccess")

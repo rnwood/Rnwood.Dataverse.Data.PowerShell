@@ -13,6 +13,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
     /// Processes input objects in parallel using chunked batches with cloned Dataverse connections.
+    /// 
+    /// KNOWN LIMITATION: ServiceClient.Clone() may fail with "Fault While initializing client - RefreshInstanceDetails" 
+    /// when using Azure AD client secret authentication. When cloning fails, the cmdlet falls back to using the shared 
+    /// original connection. This works for mock connections but may have issues with real connections depending on the
+    /// authentication method used. Interactive and username/password authentication may work better with cloning.
     /// </summary>
     [Cmdlet(VerbsLifecycle.Invoke, "DataverseParallel")]
     [OutputType(typeof(PSObject))]
@@ -56,6 +61,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private CancellationTokenSource _cancellationTokenSource;
         private Task _outputWriterTask;
         private object _tasksLock = new object();
+        private object _connectionCloneLock = new object(); // Serialize connection cloning to avoid initialization race conditions
         private ConcurrentQueue<PSObject> _outputObjectQueue = new ConcurrentQueue<PSObject>();
         private ConcurrentQueue<ErrorRecord> _errorQueue = new ConcurrentQueue<ErrorRecord>();
         private ConcurrentQueue<string> _verboseQueue = new ConcurrentQueue<string>();
@@ -290,19 +296,59 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             ps.RunspacePool = _runspacePool;
 
             // Try to clone the connection for this runspace
-            ServiceClient connectionToUse;
-            try
+            // Serialize connection cloning to avoid ServiceClient initialization race conditions
+            ServiceClient connectionToUse = Connection; // Default to original connection
+            bool cloneAttempted = false;
+            
+            // Only attempt cloning for the first chunk to test if it works
+            // If cloning fails, all subsequent chunks will use the original shared connection
+            if (_chunkNumber == 1)
             {
-                connectionToUse = Connection.Clone();
+                lock (_connectionCloneLock)
+                {
+                    cloneAttempted = true;
+                    try
+                    {
+                        var clonedConnection = Connection.Clone();
+                        
+                        // Force initialization of the cloned connection to detect issues early
+                        // ServiceClient uses lazy initialization, so we need to trigger it
+                        try
+                        {
+                            var isReady = clonedConnection.IsReady;
+                            _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Cloned connection initialized successfully (IsReady={isReady})");
+                            connectionToUse = clonedConnection;
+                        }
+                        catch (Exception initEx)
+                        {
+                            _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Cloned connection initialization failed: {initEx.Message}. Falling back to shared connection.");
+                            _warningQueue.Enqueue($"Connection cloning not supported for this environment ({initEx.Message}). All workers will share the original connection.");
+                            clonedConnection.Dispose();
+                            connectionToUse = Connection;
+                        }
+                    }
+                    catch (Exception ex) when (ex is NotImplementedException ||
+                                                ex.Message.Contains("On-Premises Connections are not supported") ||
+                                                ex.InnerException is NotImplementedException)
+                    {
+                        // Mock connections and on-premises connections don't support cloning
+                        _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Connection cloning not supported, using shared connection");
+                        connectionToUse = Connection;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Clone failed - use original connection
+                        _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Clone failed: {ex.Message}. Using shared connection.");
+                        _warningQueue.Enqueue($"Connection cloning failed ({ex.Message}). All workers will share the original connection.");
+                        connectionToUse = Connection;
+                    }
+                }
             }
-            catch (Exception ex) when (ex is NotImplementedException ||
-                                        ex.Message.Contains("On-Premises Connections are not supported") ||
-                                        ex.InnerException is NotImplementedException)
+            else
             {
-                // Mock connections don't support cloning - use the original connection
-                // With thread-safe proxy, this is now safe for mock connections
+                // For chunks after the first, use original connection (cloning likely failed on first chunk)
+                _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Using shared connection");
                 connectionToUse = Connection;
-                _verboseQueue.Enqueue($"Connection cloning not supported");
             }
 
             var workerScript = @"param($Chunk, $connection ); 

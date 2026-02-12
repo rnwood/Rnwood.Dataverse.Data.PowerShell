@@ -31,7 +31,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// SQL to execute. See Sql4Cds docs.
 		/// </summary>
-		[Parameter(Mandatory = true, Position = 0, HelpMessage = "SQL to execute. See Sql4Cds docs.", ValueFromRemainingArguments = true)]
+		[Parameter(Mandatory = true, Position = 0, HelpMessage = "SQL to execute. Use @paramname for parameters. Use datasourcename..tablename syntax for cross-datasource queries.", ValueFromRemainingArguments = true)]
 		public string Sql { get; set; }
 		/// <summary>
 		/// Uses the TDS endpoint for supported queries. See Sql4Cds docs
@@ -46,7 +46,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Specifies the values to use as parameters for the query. When reading from the pipelines, each input object will execute the query once.
 		/// </summary>
-		[Parameter(ValueFromPipeline = true, HelpMessage ="Specifies the values to use as parameters for the query. When reading from the pipelines, each input object will execute the query once.")]
+		[Parameter(ValueFromPipeline = true, HelpMessage ="Specifies values for @parameters in SQL query. Use hashtable or PSObject. Can be piped to execute query multiple times with different values.")]
 		public PSObject Parameters { get; set; }
 		/// <summary>
 		/// Sets the max batch size. See Sql4Cds docs
@@ -81,12 +81,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Additional data sources to register with Sql4Cds, allowing queries across multiple connections. Hashtable where keys are data source names and values are ServiceClient connections.
 		/// </summary>
-		[Parameter(HelpMessage = "Additional data sources to register with Sql4Cds, allowing queries across multiple connections. Hashtable where keys are data source names and values are ServiceClient connections.")]
+		[Parameter(HelpMessage = "Hashtable of additional connections for cross-datasource queries. Keys become datasource names. Reference in SQL using datasourcename..tablename syntax (double-dot).")]
 		public Hashtable AdditionalConnections { get; set; }
 		/// <summary>
 		/// Specifies the name for the primary data source. If not specified, defaults to the organization unique name. Use this parameter to ensure consistent data source names across different environments for repeatable queries.
 		/// </summary>
-		[Parameter(HelpMessage = "Specifies the name for the primary data source. If not specified, defaults to the organization unique name. Use this parameter to ensure consistent data source names across different environments for repeatable queries.")]
+		[Parameter(HelpMessage = "Overrides primary datasource name (default: org unique name). Makes queries portable across environments. Use with datasourcename..tablename syntax.")]
 		public string DataSourceName { get; set; }
 
 		/// <summary>
@@ -114,7 +114,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			// This ensures consistent naming across different environments for repeatable queries
 			if (!string.IsNullOrEmpty(DataSourceName))
 			{
+				WriteVerbose($"Overriding primary datasource name from '{dataSource.Name}' to '{DataSourceName}'");
 				dataSource.Name = DataSourceName;
+			}
+			else
+			{
+				WriteVerbose($"Using default datasource name '{dataSource.Name}' from connection");
 			}
 
 			// Create connection using the DataSource with AccessTokenProvider configured
@@ -122,6 +127,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			{
 				[dataSource.Name] = dataSource
 			};
+			
+			WriteVerbose($"Registered primary datasource with name: '{dataSource.Name}'");
+			WriteVerbose($"DataSources dictionary has {dataSources.Count} entries");
+			foreach (var ds in dataSources)
+			{
+				WriteVerbose($"  - Key: '{ds.Key}', Value.Name: '{ds.Value.Name}'");
+			}
 
 			// Add any additional connections provided by the user
 			if (AdditionalConnections != null)
@@ -129,17 +141,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				foreach (DictionaryEntry entry in AdditionalConnections)
 				{
 					string name = entry.Key.ToString();
-					if (entry.Value is ServiceClient additionalServiceClient)
+					
+					ServiceClient additionalServiceClient = null;
+					IOrganizationService additionalOrgService = null;
+					
+					// Handle PSObject wrapping from PowerShell
+					if (entry.Value is PSObject psObject)
+					{
+						if (psObject.BaseObject is ServiceClient sc)
+						{
+							additionalServiceClient = sc;
+						}
+						else if (psObject.BaseObject is IOrganizationService orgSvc)
+						{
+							additionalOrgService = orgSvc;
+						}
+					}
+					else if (entry.Value is ServiceClient sc)
+					{
+						additionalServiceClient = sc;
+					}
+					else if (entry.Value is IOrganizationService orgSvc)
+					{
+						additionalOrgService = orgSvc;
+					}
+					
+					if (additionalServiceClient != null)
 					{
 						var additionalDataSource = new DataSource(additionalServiceClient);
 						additionalDataSource.Name = name;
+						
+						WriteVerbose($"Registered additional datasource with name: '{name}'");
 						
 						// Set AccessTokenProvider for TDS endpoint support
 						additionalDataSource.AccessTokenProvider = () => GetAccessToken(additionalServiceClient);
 						
 						dataSources[name] = additionalDataSource;
 					}
-					else if (entry.Value is IOrganizationService additionalOrgService)
+					else if (additionalOrgService != null)
 					{
 						var additionalDataSource = new DataSource(additionalOrgService);
 						additionalDataSource.Name = name;
@@ -154,9 +193,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					}
 					else
 					{
-						throw new ArgumentException($"AdditionalConnections value for key '{name}' must be a ServiceClient or IOrganizationService instance.");
+						// Include type information in error message for debugging
+						string actualType = entry.Value?.GetType()?.FullName ?? "null";
+						string baseObjectType = (entry.Value is PSObject pso) ? (pso.BaseObject?.GetType()?.FullName ?? "null") : "N/A";
+						throw new ArgumentException($"AdditionalConnections value for key '{name}' must be a ServiceClient or IOrganizationService instance. Actual type: {actualType}, BaseObject type: {baseObjectType}");
 					}
 				}
+			}
+			
+			WriteVerbose($"After adding additional connections, DataSources dictionary has {dataSources.Count} entries");
+			foreach (var ds in dataSources)
+			{
+				WriteVerbose($"  - Key: '{ds.Key}', Value.Name: '{ds.Value.Name}'");
 			}
 			
 			_sqlConnection = new Sql4CdsConnection(dataSources);

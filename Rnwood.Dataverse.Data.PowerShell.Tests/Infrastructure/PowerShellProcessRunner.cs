@@ -2,14 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 {
     /// <summary>
     /// Helper class for running PowerShell scripts in a child process with the full module loaded.
-    /// This is used for tests that require the complete PowerShell module environment,
-    /// similar to how Pester tests spawned child processes.
+    /// This is used by E2E tests to validate cmdlets in a complete PowerShell environment.
     /// </summary>
     public static class PowerShellProcessRunner
     {
@@ -19,12 +20,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         /// </summary>
         /// <param name="script">The PowerShell script to execute.</param>
         /// <param name="usePowerShellCore">
+        /// If null (default), auto-detects based on target framework: pwsh.exe for net8.0, powershell.exe for net462.
         /// If true, uses pwsh.exe (PowerShell Core). If false, uses powershell.exe (Windows PowerShell).
-        /// Default is true for cross-platform compatibility.
+        /// Can be overridden with TESTPOWERSHELL_EXECUTABLE environment variable (set to "pwsh" or "powershell").
         /// </param>
         /// <param name="timeoutSeconds">Maximum time to wait for the script to complete.</param>
         /// <returns>A result containing stdout, stderr, and exit code.</returns>
-        public static PowerShellProcessResult Run(string script, bool usePowerShellCore = true, int timeoutSeconds = 60, bool importModule = true)
+        public static PowerShellProcessResult Run(string script, bool? usePowerShellCore = null, int timeoutSeconds = 60, bool importModule = true)
         {
             var modulePath = GetModulePath();
             
@@ -44,7 +46,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             var manifestLiteral = manifestPath.Replace("'", "''");
 
             // Build the full script that optionally imports the module before running the user script
-            var prelude = "\n$ErrorActionPreference = 'Stop'\n$VerbosePreference = 'SilentlyContinue'\n";
+            // Stream 6 redirection (6>&1) ensures Write-Host output is captured to stdout
+            var prelude = "\n$ErrorActionPreference = 'Stop'\n$VerbosePreference = 'SilentlyContinue'\n$InformationPreference = 'Continue'\n";
             var moduleVariables = $"$moduleManifest = '{manifestLiteral}'\n$modulePath = Split-Path -Parent $moduleManifest\n";
 
             var importSection = importModule
@@ -54,8 +57,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             var fullScript = $@"{prelude}{moduleVariables}try {{
 {importSection}    {script}
 }} catch {{
-    Write-Error $_.Exception.Message
-    Write-Error $_.ScriptStackTrace
+    # Output detailed exception information including inner exceptions
+    $ex = $_.Exception
+    Write-Error ""Exception: $($ex.GetType().FullName)""
+    Write-Error ""Message: $($ex.Message)""
+    
+    # For AggregateException, output all inner exceptions
+    if ($ex -is [System.AggregateException]) {{
+        $aggEx = [System.AggregateException]$ex
+        Write-Error ""AggregateException contains $($aggEx.InnerExceptions.Count) inner exception(s):""
+        $i = 0
+        foreach ($innerEx in $aggEx.InnerExceptions) {{
+            $i++
+            Write-Error ""  Inner Exception $i : $($innerEx.GetType().FullName)""
+            Write-Error ""  Message: $($innerEx.Message)""
+            if ($innerEx.InnerException) {{
+                Write-Error ""    InnerException: $($innerEx.InnerException.GetType().FullName): $($innerEx.InnerException.Message)""
+            }}
+        }}
+    }}
+    
+    # Output any inner exception
+    if ($ex.InnerException) {{
+        Write-Error ""InnerException: $($ex.InnerException.GetType().FullName)""
+        Write-Error ""InnerException Message: $($ex.InnerException.Message)""
+    }}
+    
+    Write-Error ""ScriptStackTrace: $($_.ScriptStackTrace)""
     exit 1
 }}
 ";
@@ -66,7 +94,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             {
                 File.WriteAllText(tempScriptPath, fullScript, Encoding.UTF8);
                 
-                var executable = usePowerShellCore ? "pwsh" : "powershell";
+                var executable = DeterminePowerShellExecutable(usePowerShellCore);
                 var arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{tempScriptPath}\"";
 
                 var startInfo = new ProcessStartInfo
@@ -120,6 +148,133 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             {
                 // Clean up temp script file
                 try { File.Delete(tempScriptPath); } catch { /* Ignore cleanup errors */ }
+            }
+        }
+
+        /// <summary>
+        /// Determines which PowerShell executable to use based on target framework and environment.
+        /// </summary>
+        /// <param name="usePowerShellCore">
+        /// Optional override: true for pwsh, false for powershell, null for auto-detection.
+        /// </param>
+        /// <returns>The PowerShell executable name ("pwsh" or "powershell").</returns>
+        private static string DeterminePowerShellExecutable(bool? usePowerShellCore)
+        {
+            // Check for environment variable override first
+            var envOverride = Environment.GetEnvironmentVariable("TESTPOWERSHELL_EXECUTABLE");
+            if (!string.IsNullOrWhiteSpace(envOverride))
+            {
+                envOverride = envOverride.Trim().ToLowerInvariant();
+                if (envOverride == "pwsh" || envOverride == "pwsh.exe")
+                {
+                    return "pwsh";
+                }
+                else if (envOverride == "powershell" || envOverride == "powershell.exe")
+                {
+                    return "powershell";
+                }
+                // If invalid value, fall through to default logic
+            }
+
+            // If explicitly specified, use that value
+            if (usePowerShellCore.HasValue)
+            {
+                return usePowerShellCore.Value ? "pwsh" : "powershell";
+            }
+
+            // Auto-detect based on target framework
+            var targetFramework = GetTargetFramework();
+            bool shouldUsePwsh;
+
+            if (targetFramework.StartsWith("net4", StringComparison.OrdinalIgnoreCase) || 
+                targetFramework.StartsWith(".NETFramework", StringComparison.OrdinalIgnoreCase))
+            {
+                // .NET Framework (net462) - use Windows PowerShell
+                shouldUsePwsh = false;
+            }
+            else
+            {
+                // .NET Core/8+ (net8.0) - use PowerShell Core
+                shouldUsePwsh = true;
+            }
+
+            // On non-Windows platforms, pwsh is the only option
+            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                if (!shouldUsePwsh)
+                {
+                    throw new PlatformNotSupportedException(
+                        "Windows PowerShell (powershell.exe) is only available on Windows. " +
+                        "On Linux/macOS, PowerShell Core (pwsh) must be used. " +
+                        "Set TESTPOWERSHELL_EXECUTABLE=pwsh or run tests with net8.0 target framework.");
+                }
+                return "pwsh";
+            }
+
+            // On Windows, verify the executable exists
+            var executable = shouldUsePwsh ? "pwsh" : "powershell";
+            
+            // For pwsh, check if it's installed (it's not in Windows by default)
+            if (shouldUsePwsh && !IsPowershellCoreAvailable())
+            {
+                throw new FileNotFoundException(
+                    $"PowerShell Core (pwsh.exe) is required for net8.0 tests but was not found. " +
+                    $"Please install PowerShell 7+ from https://aka.ms/powershell-release?tag=stable " +
+                    $"or set TESTPOWERSHELL_EXECUTABLE=powershell to use Windows PowerShell instead.");
+            }
+
+            return executable;
+        }
+
+        /// <summary>
+        /// Gets the target framework of the currently executing assembly.
+        /// </summary>
+        private static string GetTargetFramework()
+        {
+            // Get the target framework from the executing assembly's attribute
+            var assembly = typeof(PowerShellProcessRunner).Assembly;
+            var attribute = assembly.GetCustomAttributes(typeof(System.Runtime.Versioning.TargetFrameworkAttribute), false)
+                .FirstOrDefault() as System.Runtime.Versioning.TargetFrameworkAttribute;
+            
+            if (attribute != null && !string.IsNullOrEmpty(attribute.FrameworkName))
+            {
+                return attribute.FrameworkName;
+            }
+            
+            // Fallback to current runtime framework
+            return AppDomain.CurrentDomain.SetupInformation.TargetFrameworkName 
+                   ?? System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription;
+        }
+
+        /// <summary>
+        /// Checks if PowerShell Core (pwsh) is available in the system PATH.
+        /// </summary>
+        private static bool IsPowershellCoreAvailable()
+        {
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "pwsh",
+                    Arguments = "-Version",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    return false;
+                }
+                
+                process.WaitForExit(5000);
+                return process.ExitCode == 0;
+            }
+            catch
+            {
+                return false;
             }
         }
 

@@ -1,171 +1,173 @@
 {
-  "version": "2.0.0",
-  "tasks": [
-    {
-      "label": "Build (dotnet build)",
-      "type": "shell",
-      "command": "dotnet",
-      "args": [
-        "build",
-        "${workspaceFolder}/Rnwood.Dataverse.Data.PowerShell.sln",
-        "-c",
-        "Debug"
-      ],
-      "group": {
-        "kind": "build",
-        "isDefault": true
-      },
-      "presentation": {
-        "reveal": "silent"
-      },
-      "problemMatcher": "$msCompile"
-    },
-    {
-      "label": "Switch workspace to Windows PowerShell",
-      "type": "process",
-      "command": "pwsh.exe",
-      "args": [
-        "-NoProfile",
-        "-Command",
-        "Set-Content -LiteralPath '${workspaceFolder}/.vscode/settings.json' -Value '{\"powershell.powerShellDefaultVersion\":\"Windows PowerShell\"}' -Encoding UTF8"
-      ],
-      "presentation": {
-        "echo": false,
-        "reveal": "silent",
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Switch workspace to PowerShell Core",
-      "type": "process",
-      "command": "pwsh.exe",
-      "args": [
-        "-NoProfile",
-        "-Command",
-        "Set-Content -LiteralPath '${workspaceFolder}/.vscode/settings.json' -Value '{\"powershell.powerShellDefaultVersion\":\"PowerShell Core\"}' -Encoding UTF8"
-      ],
-      "presentation": {
-        "echo": false,
-        "reveal": "silent",
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Prepare: Desktop launch",
-      "dependsOn": [
-        "Build (dotnet build)",
-        "Switch workspace to Windows PowerShell"
-      ],
-      "dependsOrder": "sequence",
-      "problemMatcher": []
-    },
-    {
-      "label": "Prepare: Core launch",
-      "dependsOn": [
-        "Build (dotnet build)",
-        "Switch workspace to PowerShell Core"
-      ],
-      "dependsOrder": "sequence",
-      "problemMatcher": []
-    },
-    {
-      "label": "Run test.ps1 (PowerShell Core - external)",
-      "type": "shell",
-      "command": "cmd",
-      "args": [
-        "/c",
-        "start",
-        "\"\"",
-        "pwsh.exe",
-        "-NoExit",
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}\\test.ps1"
-      ],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Run test.ps1 (PowerShell Desktop - external)",
-      "type": "shell",
-      "command": "cmd",
-      "args": [
-        "/c",
-        "start",
-        "\"\"",
-        "powershell.exe",
-        "-NoExit",
-        "-NoProfile",
-        "-File",
-        "${workspaceFolder}\\test.ps1"
-      ],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "new"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Download XrmToolbox",
-      "type": "shell",
-      "command": "powershell.exe",
-      "args": [
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "${workspaceFolder}\\scripts\\Download-XrmToolbox.ps1",
-        "-OutputPath",
-        "${workspaceFolder}\\.xrmtoolbox"
-      ],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    },
-    {
-      "label": "Build XrmToolbox Plugin",
-      "type": "shell",
-      "command": "dotnet",
-      "args": [
-        "build",
-        "${workspaceFolder}/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj",
-        "-c",
-        "Debug"
-      ],
-      "group": "build",
-      "presentation": {
-        "reveal": "silent"
-      },
-      "problemMatcher": "$msCompile"
-    },
-    {
-      "label": "Start XrmToolbox with Plugin",
-      "type": "shell",
-      "command": "powershell.exe",
-      "args": [
-        "-ExecutionPolicy",
-        "Bypass",
-        "-File",
-        "${workspaceFolder}\\scripts\\Start-XrmToolbox.ps1",
-        "-BuildConfiguration",
-        "Debug"
-      ],
-      "dependsOn": ["Build XrmToolbox Plugin"],
-      "presentation": {
-        "echo": true,
-        "reveal": "always",
-        "panel": "shared"
-      },
-      "problemMatcher": []
-    }
-  ]
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build (dotnet build)",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"${workspaceFolder}/Rnwood.Dataverse.Data.PowerShell.sln",
+				"-c",
+				"Debug"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"presentation": {
+				"reveal": "silent"
+			},
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "Switch workspace to Windows PowerShell",
+			"type": "process",
+			"command": "pwsh.exe",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Set-Content -LiteralPath '${workspaceFolder}/.vscode/settings.json' -Value '{\"powershell.powerShellDefaultVersion\":\"Windows PowerShell\"}' -Encoding UTF8"
+			],
+			"presentation": {
+				"echo": false,
+				"reveal": "silent",
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Switch workspace to PowerShell Core",
+			"type": "process",
+			"command": "pwsh.exe",
+			"args": [
+				"-NoProfile",
+				"-Command",
+				"Set-Content -LiteralPath '${workspaceFolder}/.vscode/settings.json' -Value '{\"powershell.powerShellDefaultVersion\":\"PowerShell Core\"}' -Encoding UTF8"
+			],
+			"presentation": {
+				"echo": false,
+				"reveal": "silent",
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Prepare: Desktop launch",
+			"dependsOn": [
+				"Build (dotnet build)",
+				"Switch workspace to Windows PowerShell"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "Prepare: Core launch",
+			"dependsOn": [
+				"Build (dotnet build)",
+				"Switch workspace to PowerShell Core"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "Run test.ps1 (PowerShell Core - external)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"start",
+				"\"\"",
+				"pwsh.exe",
+				"-NoExit",
+				"-NoProfile",
+				"-File",
+				"${workspaceFolder}\\test.ps1"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Run test.ps1 (PowerShell Desktop - external)",
+			"type": "shell",
+			"command": "cmd",
+			"args": [
+				"/c",
+				"start",
+				"\"\"",
+				"powershell.exe",
+				"-NoExit",
+				"-NoProfile",
+				"-File",
+				"${workspaceFolder}\\test.ps1"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "new"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Download XrmToolbox",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}\\scripts\\Download-XrmToolbox.ps1",
+				"-OutputPath",
+				"${workspaceFolder}\\.xrmtoolbox"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		},
+		{
+			"label": "Build XrmToolbox Plugin",
+			"type": "shell",
+			"command": "dotnet",
+			"args": [
+				"build",
+				"${workspaceFolder}/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj",
+				"-c",
+				"Debug"
+			],
+			"group": "build",
+			"presentation": {
+				"reveal": "silent"
+			},
+			"problemMatcher": "$msCompile"
+		},
+		{
+			"label": "Start XrmToolbox with Plugin",
+			"type": "shell",
+			"command": "powershell.exe",
+			"args": [
+				"-ExecutionPolicy",
+				"Bypass",
+				"-File",
+				"${workspaceFolder}\\scripts\\Start-XrmToolbox.ps1",
+				"-BuildConfiguration",
+				"Debug"
+			],
+			"dependsOn": [
+				"Build XrmToolbox Plugin"
+			],
+			"presentation": {
+				"echo": true,
+				"reveal": "always",
+				"panel": "shared"
+			},
+			"problemMatcher": []
+		}
+	]
 }
