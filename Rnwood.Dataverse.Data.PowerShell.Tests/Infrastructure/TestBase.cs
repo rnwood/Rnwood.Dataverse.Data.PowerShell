@@ -317,15 +317,29 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             Service = new MockOrganizationServiceWithInterceptor(threadSafeService, CombinedInterceptor);
 
             // Create ServiceClient wrapper using factory
-            // This ServiceClient does not support Clone(), so Invoke-DataverseParallel
-            // will fall back to using the original connection (which is now thread-safe)
             var httpClient = new HttpClient(new FakeHttpMessageHandler());
+            var instanceUri = "https://fakeorg.crm.dynamics.com";
+            var sdkVersion = new Version(9, 2);
+            var logger = A.Fake<ILogger>();
+            
             Connection = MockServiceClientFactory.Create(
                 Service,
                 httpClient,
-                "https://fakeorg.crm.dynamics.com",
-                new Version(9, 2),
-                A.Fake<ILogger>());
+                instanceUri,
+                sdkVersion,
+                logger);
+
+            // Register the mock connection so it can be cloned properly in parallel operations
+            var mockConnection = new MockDataverseConnection(
+                Connection,
+                Service,
+                httpClient,
+                instanceUri,
+                sdkVersion,
+                logger);
+            Rnwood.Dataverse.Data.PowerShell.Commands.DataverseConnectionExtensions.RegisterConnection(
+                Connection,
+                mockConnection);
 
             return Connection;
         }

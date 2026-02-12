@@ -159,14 +159,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Clone the connection for this worker
                 try
                 {
-                    workerConnection = _connection.Clone();
+                    workerConnection = DataverseConnectionExtensions.CloneConnection(_connection);
                     _verboseQueue.Enqueue("Created cloned connection for parallel worker");
                 }
                 catch (Exception ex) when (ex is NotImplementedException ||
                                             ex.Message.Contains("On-Premises Connections are not supported") ||
                                             ex.InnerException is NotImplementedException)
                 {
-                    // Mock connections don't support cloning - use the original connection
+                    // On-premises connections don't support cloning - use the original connection
                     workerConnection = _connection;
                     _verboseQueue.Enqueue("Connection cloning not supported, using shared connection");
                 }

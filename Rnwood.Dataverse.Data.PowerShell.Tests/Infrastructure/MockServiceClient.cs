@@ -10,8 +10,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 {
     /// <summary>
     /// Factory for creating mock ServiceClient instances.
-    /// The created ServiceClient does not support Clone(), which causes Invoke-DataverseParallel
-    /// to fall back to using the original connection with thread-safe synchronization.
+    /// The created ServiceClient instances can be wrapped in MockDataverseConnection
+    /// to support cloning for parallel operations.
     /// </summary>
     internal static class MockServiceClientFactory
     {
