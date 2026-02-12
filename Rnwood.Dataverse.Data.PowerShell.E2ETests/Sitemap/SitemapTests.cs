@@ -107,10 +107,27 @@ try {
     }
     Write-Host 'Successfully retrieved sitemap by ID'
     
-    # --- TEST 4: Skip update test due to Dataverse limitation ---
-    Write-Host ""`nTest 4: Skipping update test - known Dataverse limitation with unpublished sitemap XML""
-    Write-Host ""  (Dataverse does not return sitemapxml properly for unpublished sitemaps created via SDK)""
-    $updatedName = $sitemapName  # Use original name for subsequent tests
+    # --- TEST 4: Update the sitemap ---
+    Write-Host ""`nTest 4: Updating sitemap...""
+    $updatedName = ""Updated $sitemapName""
+    
+    # Get current sitemap to retrieve XML
+    $currentSitemap = Invoke-WithRetry {
+        Get-DataverseSitemap -Connection $connection -Id $sitemapId
+    }
+    
+    # Update name along with XML to ensure proper Dataverse handling
+    Invoke-WithRetry {
+        Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -SitemapXml $currentSitemap.SitemapXml -Confirm:$false
+    }
+    
+    $updatedSitemap = Invoke-WithRetry {
+        Get-DataverseSitemap -Connection $connection -Id $sitemapId
+    }
+    if ($updatedSitemap.Name -ne $updatedName) {
+        throw ""Sitemap name update failed. Expected: $updatedName, Got: $($updatedSitemap.Name)""
+    }
+    Write-Host ""Successfully updated sitemap name to: $updatedName""
     
     # --- TEST 5: Retrieve sitemap entries ---
     Write-Host ""`nTest 5: Retrieving sitemap entries...""
@@ -155,10 +172,10 @@ try {
     Write-Host ""`nTest 6: Adding new Area entry...""
     $newAreaId = ""area_new_$testRunId""
     $newAreaEntry = Invoke-WithRetry {
-        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area `
-        -EntryId $newAreaId `
-        -Titles @{ 1033 = ""New Test Area $testRunId"" } `
-        -Icon ""/_imgs/area_icon.png"" `
+        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area ```
+        -EntryId $newAreaId ```
+        -Titles @{ 1033 = ""New Test Area $testRunId"" } ```
+        -Icon ""/_imgs/area_icon.png"" ```
         -PassThru -Confirm:$false
     }
     
@@ -180,10 +197,10 @@ try {
     Write-Host ""`nTest 7: Adding Group to new Area...""
     $newGroupId = ""group_new_$testRunId""
     $newGroupEntry = Invoke-WithRetry {
-        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group `
-        -EntryId $newGroupId `
-        -ParentAreaId $newAreaId `
-        -Titles @{ 1033 = ""New Test Group $testRunId"" } `
+        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group ```
+        -EntryId $newGroupId ```
+        -ParentAreaId $newAreaId ```
+        -Titles @{ 1033 = ""New Test Group $testRunId"" } ```
         -PassThru -Confirm:$false
     }
     
@@ -196,13 +213,13 @@ try {
     Write-Host ""`nTest 8: Adding SubArea to new Group...""
     $newSubAreaId = ""subarea_new_$testRunId""
     $newSubAreaEntry = Invoke-WithRetry {
-        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
-        -EntryId $newSubAreaId `
-        -ParentAreaId $newAreaId `
-        -ParentGroupId $newGroupId `
-        -Entity ""account"" `
-        -Titles @{ 1033 = ""New Test SubArea $testRunId"" } `
-        -Icon ""/_imgs/subarea_icon.png"" `
+        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea ```
+        -EntryId $newSubAreaId ```
+        -ParentAreaId $newAreaId ```
+        -ParentGroupId $newGroupId ```
+        -Entity ""account"" ```
+        -Titles @{ 1033 = ""New Test SubArea $testRunId"" } ```
+        -Icon ""/_imgs/subarea_icon.png"" ```
         -PassThru -Confirm:$false
     }
     
@@ -214,9 +231,9 @@ try {
     # --- TEST 9: Update an existing entry ---
     Write-Host ""`nTest 9: Updating SubArea entry...""
     $updatedSubAreaEntry = Invoke-WithRetry {
-        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
-        -EntryId $newSubAreaId `
-        -Titles @{ 1033 = ""Updated SubArea $testRunId"" } `
+        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea ```
+        -EntryId $newSubAreaId ```
+        -Titles @{ 1033 = ""Updated SubArea $testRunId"" } ```
         -PassThru -Confirm:$false
     }
     
@@ -237,7 +254,7 @@ try {
     # --- TEST 10: Publish sitemap ---
     Write-Host ""`nTest 10: Publishing sitemap...""
     Invoke-WithRetry {
-        Set-DataverseSitemap -Connection $connection -Id $sitemapId -Publish -Confirm:$false
+        Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -Publish -Confirm:$false
     }
     Write-Host 'Successfully published sitemap'
     
@@ -250,12 +267,46 @@ try {
     }
     Write-Host 'Verified published sitemap is retrievable'
     
-    # --- TEST 10a: Acknowledge Dataverse limitation ---
-    Write-Host ""`nTest 10a: Skipping XML preservation test - known Dataverse limitation""
-    Write-Host ""  Original issue: Publishing sitemap without providing XML should preserve XML""
-    Write-Host ""  Root cause: Dataverse does not return sitemapxml for unpublished sitemaps via SDK""
-    Write-Host ""  This is a platform limitation, not a cmdlet bug""
-    Write-Host ""  Workaround: Always maintain and provide sitemap XML when updating unpublished sitemaps""
+    # --- TEST 10a: Verify original issue - Publish by UniqueName without other parameters ---
+    Write-Host ""`nTest 10a: Testing original issue - Publish sitemap by UniqueName only (no Name, no SitemapXml)...""
+    
+    # Get the current sitemap XML before publish-only operation
+    $sitemapBeforePublish = Invoke-WithRetry {
+        Get-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName
+    }
+    
+    if ([string]::IsNullOrWhiteSpace($sitemapBeforePublish.SitemapXml)) {
+        throw 'Sitemap XML is already empty before test'
+    }
+    
+    $originalSitemapXml = $sitemapBeforePublish.SitemapXml
+    Write-Host ""  Original sitemap XML length: $($originalSitemapXml.Length) characters""
+    
+    # This was the original issue: Set-DataverseSitemap -UniqueName 'XYZ' -Publish
+    # It should NOT empty the sitemap XML
+    Invoke-WithRetry {
+        Set-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName -Publish -Confirm:$false
+    }
+    Write-Host '  Publish-only operation completed'
+    
+    # Verify the sitemap XML is NOT empty after publish-only operation
+    $sitemapAfterPublish = Invoke-WithRetry {
+        Get-DataverseSitemap -Connection $connection -UniqueName $sitemapUniqueName
+    }
+    
+    if ([string]::IsNullOrWhiteSpace($sitemapAfterPublish.SitemapXml)) {
+        throw 'REGRESSION: Sitemap XML became empty after publish-only operation! This is the original issue (bug #277).'
+    }
+    
+    Write-Host ""  Sitemap XML after publish: $($sitemapAfterPublish.SitemapXml.Length) characters""
+    
+    if ($sitemapAfterPublish.SitemapXml -ne $originalSitemapXml) {
+        Write-Warning '  Sitemap XML changed after publish (this may be expected due to Dataverse normalization)'
+    } else {
+        Write-Host '  Sitemap XML unchanged - correct behavior'
+    }
+    
+    Write-Host 'Successfully verified original issue fix - sitemap XML not emptied by publish-only operation'
     
     # --- TEST 11: Remove SubArea entry ---
     Write-Host ""`nTest 11: Removing SubArea entry...""
