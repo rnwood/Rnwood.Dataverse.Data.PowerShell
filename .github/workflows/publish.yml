@@ -479,7 +479,7 @@ jobs:
           # On windows-latest: run all tests
           # On other platforms: run only CrossPlatformTest tests
           $testFilter = ""
-          if ("${{ matrix.os }}" -ne "windows-latest" or "${{ matrix.powershell_version }}" -ne "latest") {
+          if ("${{ matrix.os }}" -ne "windows-latest" -or "${{ matrix.powershell_version }}" -ne "latest") {
             $testFilter = "--filter `"Category=CrossPlatform`""
             Write-Host "Non-Windows platform detected - running only CrossPlatformTest tests"
           } else {
