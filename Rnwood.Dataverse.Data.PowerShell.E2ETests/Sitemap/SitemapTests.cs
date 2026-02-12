@@ -116,9 +116,9 @@ try {
         Get-DataverseSitemap -Connection $connection -Id $sitemapId
     }
     
-    # Update name along with XML to ensure proper Dataverse handling
+    # Update name along with XML and publish (required for changes to take effect)
     Invoke-WithRetry {
-        Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -SitemapXml $currentSitemap.SitemapXml -Confirm:$false
+        Set-DataverseSitemap -Connection $connection -Id $sitemapId -Name $updatedName -SitemapXml $currentSitemap.SitemapXml -Publish -Confirm:$false
     }
     
     $updatedSitemap = Invoke-WithRetry {
@@ -172,10 +172,10 @@ try {
     Write-Host ""`nTest 6: Adding new Area entry...""
     $newAreaId = ""area_new_$testRunId""
     $newAreaEntry = Invoke-WithRetry {
-        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area ```
-        -EntryId $newAreaId ```
-        -Titles @{ 1033 = ""New Test Area $testRunId"" } ```
-        -Icon ""/_imgs/area_icon.png"" ```
+        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Area `
+        -EntryId $newAreaId `
+        -Titles @{ 1033 = ""New Test Area $testRunId"" } `
+        -Icon ""/_imgs/area_icon.png"" `
         -PassThru -Confirm:$false
     }
     
@@ -197,10 +197,10 @@ try {
     Write-Host ""`nTest 7: Adding Group to new Area...""
     $newGroupId = ""group_new_$testRunId""
     $newGroupEntry = Invoke-WithRetry {
-        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group ```
-        -EntryId $newGroupId ```
-        -ParentAreaId $newAreaId ```
-        -Titles @{ 1033 = ""New Test Group $testRunId"" } ```
+        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -Group `
+        -EntryId $newGroupId `
+        -ParentAreaId $newAreaId `
+        -Titles @{ 1033 = ""New Test Group $testRunId"" } `
         -PassThru -Confirm:$false
     }
     
@@ -213,13 +213,13 @@ try {
     Write-Host ""`nTest 8: Adding SubArea to new Group...""
     $newSubAreaId = ""subarea_new_$testRunId""
     $newSubAreaEntry = Invoke-WithRetry {
-        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea ```
-        -EntryId $newSubAreaId ```
-        -ParentAreaId $newAreaId ```
-        -ParentGroupId $newGroupId ```
-        -Entity ""account"" ```
-        -Titles @{ 1033 = ""New Test SubArea $testRunId"" } ```
-        -Icon ""/_imgs/subarea_icon.png"" ```
+        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
+        -EntryId $newSubAreaId `
+        -ParentAreaId $newAreaId `
+        -ParentGroupId $newGroupId `
+        -Entity ""account"" `
+        -Titles @{ 1033 = ""New Test SubArea $testRunId"" } `
+        -Icon ""/_imgs/subarea_icon.png"" `
         -PassThru -Confirm:$false
     }
     
@@ -231,9 +231,9 @@ try {
     # --- TEST 9: Update an existing entry ---
     Write-Host ""`nTest 9: Updating SubArea entry...""
     $updatedSubAreaEntry = Invoke-WithRetry {
-        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea ```
-        -EntryId $newSubAreaId ```
-        -Titles @{ 1033 = ""Updated SubArea $testRunId"" } ```
+        Set-DataverseSitemapEntry -Connection $connection -SitemapId $sitemapId -SubArea `
+        -EntryId $newSubAreaId `
+        -Titles @{ 1033 = ""Updated SubArea $testRunId"" } `
         -PassThru -Confirm:$false
     }
     
