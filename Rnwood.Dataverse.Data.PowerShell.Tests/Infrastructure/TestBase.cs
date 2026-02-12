@@ -19,6 +19,7 @@ using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
+using Rnwood.Dataverse.Data.PowerShell.Commands;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 {
@@ -337,9 +338,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                 instanceUri,
                 sdkVersion,
                 logger);
-            Rnwood.Dataverse.Data.PowerShell.Commands.DataverseConnectionExtensions.RegisterConnection(
-                Connection,
-                mockConnection);
+            DataverseConnectionExtensions.RegisterConnection(Connection, mockConnection);
 
             return Connection;
         }

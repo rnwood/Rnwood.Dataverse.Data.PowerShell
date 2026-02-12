@@ -7,7 +7,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     /// <summary>
     /// Provides extension methods and utilities for working with Dataverse connections.
     /// </summary>
-    internal static class DataverseConnectionExtensions
+    public static class DataverseConnectionExtensions
     {
         // Registry to track IDataverseConnection wrappers for ServiceClient instances
         private static readonly ConcurrentDictionary<ServiceClient, IDataverseConnection> _connectionRegistry 
