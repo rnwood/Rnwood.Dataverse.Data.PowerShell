@@ -531,8 +531,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (isUpdate)
                 {
                     // For updates, if DataField is still empty after extraction attempt, 
-                    // this might be a special control, so we'll skip validation
-                    WriteVerbose("Updating control without DataField - assuming special control type");
+                    // this might be a special control (e.g., Subgrid, WebResource) or DataField extraction failed
+                    WriteVerbose("Updating control without DataField - may be a special control or DataField extraction failed");
                     return ControlType ?? "Standard";
                 }
                 
