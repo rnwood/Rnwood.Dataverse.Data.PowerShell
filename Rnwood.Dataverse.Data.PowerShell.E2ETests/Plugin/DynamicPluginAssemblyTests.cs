@@ -240,15 +240,14 @@ namespace TestDynamicPlugins
     Write-Host '=== ALL TESTS PASSED ===' -ForegroundColor Green
     Write-Host 'Success'
 } catch {
-    Write-Host ""ERROR: $($_.Exception.Message)"" -ForegroundColor Red
-    Write-Host $_.ScriptStackTrace
+    Write-ErrorDetails $_
     throw
 }
 ");
 
             var result = RunScript(script);
 
-            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("ALL TESTS PASSED");
         }
     }

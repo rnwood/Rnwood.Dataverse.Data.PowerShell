@@ -46,4 +46,9 @@
     <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Tests\Rnwood.Dataverse.Data.PowerShell.Tests.csproj" />
   </ItemGroup>
 
+  <!-- xUnit Configuration -->
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

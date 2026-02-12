@@ -45,7 +45,7 @@ Write-Host 'Success: Executed 5 parallel WhoAmI calls'
 
             var result = RunScript(script);
 
-            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -101,7 +101,7 @@ Write-Host 'Success: All accounts created, verified, and cleaned up'
 
             var result = RunScript(script);
 
-            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
         }
     }

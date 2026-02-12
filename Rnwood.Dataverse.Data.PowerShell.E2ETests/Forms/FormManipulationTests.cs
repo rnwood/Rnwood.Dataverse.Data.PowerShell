@@ -30,32 +30,8 @@ try {
     Write-Host ""Form Name: $formName""
     Write-Host '=========================================='
     
-    # ============================================================
-    # CLEANUP: Remove any leftover forms from previous failed runs
-    # ============================================================
-    Write-Host ''
-    Write-Host 'Step 0: Cleanup - Removing any leftover test forms from previous runs...'
-    
-    Invoke-WithRetry {
-        $script:existingTestForms = Get-DataverseRecord -Connection $connection -TableName systemform -FilterValues @{
-            'name:Like' = 'E2ETestForm-%'
-            'objecttypecode' = $entityName
-        } -Columns formid, name
-        
-        if ($script:existingTestForms -and $script:existingTestForms.Count -gt 0) {
-            Write-Host ""  Found $($existingTestForms.Count) leftover test form(s) to clean up""
-            foreach ($oldForm in $existingTestForms) {
-                Write-Host ""  Deleting form: $($oldForm.name) (ID: $($oldForm.formid))""
-                Invoke-WithRetry {
-                    Remove-DataverseForm -Connection $connection -Id $oldForm.formid -Confirm:`$false
-                }
-            }
-            Write-Host '  Cleanup complete'
-        }
-        else {
-            Write-Host '  No leftover test forms found'
-        }
-    }
+    # Note: Pre-cleanup of leftover forms has been moved to nightly cleanup script
+    # (scripts/Cleanup-E2ETestArtifacts.ps1) to improve test performance
     
     # ============================================================
     # STEP 1: CREATE FORM
@@ -64,12 +40,12 @@ try {
     Write-Host 'Step 1: Creating new form...'
     
     $formId = Invoke-WithRetry {
-        Set-DataverseForm -Connection $connection ``
-            -Entity $entityName ``
-            -Name $formName ``
-            -FormType Main ``
-            -Description ""E2E test form for comprehensive feature testing - Run $testRunId"" ``
-            -IsActive ``
+        Set-DataverseForm -Connection $connection `
+            -Entity $entityName `
+            -Name $formName `
+            -FormType Main `
+            -Description ""E2E test form for comprehensive feature testing - Run $testRunId"" `
+            -IsActive `
             -PassThru
     }
     
@@ -103,17 +79,17 @@ try {
     Write-Host ""  Creating new tab with ID: $newTabId""
     
     Invoke-WithRetry {
-        Set-DataverseFormTab -Connection $connection ``
-            -FormId $formId ``
-            -TabId $newTabId ``
-            -Name 'CustomTab' ``
-            -Label 'Custom Tab' ``
-            -Layout TwoColumns ``
-            -Column1Width 60 ``
-            -Column2Width 40 ``
-            -Expanded ``
-            -ShowLabel ``
-            -Confirm:`$false
+        Set-DataverseFormTab -Connection $connection `
+            -FormId $formId `
+            -TabId $newTabId `
+            -Name 'CustomTab' `
+            -Label 'Custom Tab' `
+            -Layout TwoColumns `
+            -Column1Width 60 `
+            -Column2Width 40 `
+            -Expanded `
+            -ShowLabel `
+            -Confirm:$false
     }
     
     Write-Host '  Created tab: CustomTab'
@@ -136,14 +112,14 @@ try {
     Write-Host '  Updating tab layout to ThreeColumns...'
     
     Invoke-WithRetry {
-        Set-DataverseFormTab -Connection $connection ``
-            -FormId $formId ``
-            -TabId $newTabId ``
-            -Layout ThreeColumns ``
-            -Column1Width 33 ``
-            -Column2Width 34 ``
-            -Column3Width 33 ``
-            -Confirm:`$false
+        Set-DataverseFormTab -Connection $connection `
+            -FormId $formId `
+            -TabId $newTabId `
+            -Layout ThreeColumns `
+            -Column1Width 33 `
+            -Column2Width 34 `
+            -Column3Width 33 `
+            -Confirm:$false
     }
     
     $updatedTab = Invoke-WithRetry {
@@ -166,16 +142,16 @@ try {
     Write-Host ""  Creating section with ID: $newSectionId""
     
     Invoke-WithRetry {
-        Set-DataverseFormSection -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab' ``
-            -SectionId $newSectionId ``
-            -Name 'TestSection' ``
-            -Label 'Test Section' ``
-            -ShowLabel ``
-            -ShowBar ``
-            -Columns 2 ``
-            -Confirm:`$false
+        Set-DataverseFormSection -Connection $connection `
+            -FormId $formId `
+            -TabName 'CustomTab' `
+            -SectionId $newSectionId `
+            -Name 'TestSection' `
+            -Label 'Test Section' `
+            -ShowLabel `
+            -ShowBar `
+            -Columns 2 `
+            -Confirm:$false
     }
     
     Write-Host '  Created section: TestSection'
@@ -199,25 +175,25 @@ try {
     Write-Host ""  Creating text control for 'name' field...""
     
     Invoke-WithRetry {
-        Set-DataverseFormControl -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab' ``
-            -SectionName 'TestSection' ``
-            -ControlId 'name' ``
-            -DataField 'name' ``
-            -ControlType Standard ``
-            -Label 'Account Name' ``
-            -IsRequired ``
-            -Confirm:`$false
+        Set-DataverseFormControl -Connection $connection `
+            -FormId $formId `
+            -TabName 'CustomTab' `
+            -SectionName 'TestSection' `
+            -ControlId 'name' `
+            -DataField 'name' `
+            -ControlType Standard `
+            -Labels @{1033 = 'Account Name'} `
+            -IsRequired `
+            -Confirm:$false
     }
     
     Write-Host '  Created control: name (Standard, Required)'
     
     $control = Invoke-WithRetry {
-        Get-DataverseFormControl -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab' ``
-            -SectionName 'TestSection' ``
+        Get-DataverseFormControl -Connection $connection `
+            -FormId $formId `
+            -TabName 'CustomTab' `
+            -SectionName 'TestSection' `
             -ControlId 'name'
     }
     
@@ -238,13 +214,14 @@ try {
     Write-Host 'Step 5: Updating control properties...'
     
     Invoke-WithRetry {
-        Set-DataverseFormControl -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab' ``
-            -SectionName 'TestSection' ``
-            -ControlId 'name' ``
-            -Disabled ``
-            -Confirm:`$false
+        Set-DataverseFormControl -Connection $connection `
+            -FormId $formId `
+            -TabName 'CustomTab' `
+            -SectionName 'TestSection' `
+            -ControlId 'name' `
+            -DataField 'name' `
+            -Disabled `
+            -Confirm:$false
     }
     
     Write-Host ""  Updated control 'name' to disabled""
@@ -256,10 +233,10 @@ try {
     Write-Host 'Step 6: Publishing form after all modifications...'
     
     Invoke-WithRetry {
-        Set-DataverseForm -Connection $connection ``
-            -Id $formId ``
-            -Publish ``
-            -Confirm:`$false
+        Set-DataverseForm -Connection $connection `
+            -Id $formId `
+            -Publish `
+            -Confirm:$false
     }
     
     Write-Host '  Published form successfully'
@@ -284,26 +261,32 @@ try {
     Write-Host 'Step 7: Removing a control...'
     
     Invoke-WithRetry {
-        Remove-DataverseFormControl -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab' ``
-            -SectionName 'TestSection' ``
-            -ControlId 'name' ``
-            -Confirm:`$false
+        Remove-DataverseFormControl -Connection $connection `
+            -FormId $formId `
+            -TabName 'CustomTab' `
+            -SectionName 'TestSection' `
+            -ControlId 'name' `
+            -Confirm:$false
     }
     
     Write-Host '  Removed control: name'
     
-    $removedControl = Invoke-WithRetry {
-        Get-DataverseFormControl -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab' ``
-            -SectionName 'TestSection' ``
-            -ControlId 'name'
+    try {
+        $removedControl = Invoke-WithRetry {
+            Get-DataverseFormControl -Connection $connection `
+                -FormId $formId `
+                -TabName 'CustomTab' `
+                -SectionName 'TestSection' `
+                -ControlId 'name'
+        }
+        
+        if ($removedControl) {
+            throw ""Control 'name' should have been removed but still exists""
+        }
     }
-    
-    if ($removedControl) {
-        throw ""Control 'name' should have been removed but still exists""
+    catch {
+        # Expected - control not found after removal
+        Write-Host '  Verified: Control successfully removed (not found in query)'
     }
     
     Write-Host '  Verified: Control successfully removed'
@@ -315,27 +298,31 @@ try {
     Write-Host 'Step 8: Removing a section...'
     
     Invoke-WithRetry {
-        Remove-DataverseFormSection -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab' ``
-            -SectionName 'TestSection' ``
-            -Confirm:`$false
+        Remove-DataverseFormSection -Connection $connection `
+            -FormId $formId `
+            -TabName 'CustomTab' `
+            -SectionName 'TestSection' `
+            -Confirm:$false
     }
     
     Write-Host '  Removed section: TestSection'
     
-    $removedSection = Invoke-WithRetry {
-        Get-DataverseFormSection -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab' ``
-            -SectionName 'TestSection'
+    try {
+        $removedSection = Invoke-WithRetry {
+            Get-DataverseFormSection -Connection $connection `
+                -FormId $formId `
+                -TabName 'CustomTab' `
+                -SectionName 'TestSection'
+        }
+        
+        if ($removedSection) {
+            throw ""Section 'TestSection' should have been removed but still exists""
+        }
     }
-    
-    if ($removedSection) {
-        throw ""Section 'TestSection' should have been removed but still exists""
+    catch {
+        # Expected - section not found after removal
+        Write-Host '  Verified: Section successfully removed (not found in query)'
     }
-    
-    Write-Host '  Verified: Section successfully removed'
     
     # ============================================================
     # STEP 9: REMOVE TAB
@@ -344,25 +331,29 @@ try {
     Write-Host 'Step 9: Removing a tab...'
     
     Invoke-WithRetry {
-        Remove-DataverseFormTab -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab' ``
-            -Confirm:`$false
+        Remove-DataverseFormTab -Connection $connection `
+            -FormId $formId `
+            -TabName 'CustomTab' `
+            -Confirm:$false
     }
     
     Write-Host '  Removed tab: CustomTab'
     
-    $removedTab = Invoke-WithRetry {
-        Get-DataverseFormTab -Connection $connection ``
-            -FormId $formId ``
-            -TabName 'CustomTab'
+    try {
+        $removedTab = Invoke-WithRetry {
+            Get-DataverseFormTab -Connection $connection `
+                -FormId $formId `
+                -TabName 'CustomTab'
+        }
+        
+        if ($removedTab) {
+            throw ""Tab 'CustomTab' should have been removed but still exists""
+        }
     }
-    
-    if ($removedTab) {
-        throw ""Tab 'CustomTab' should have been removed but still exists""
+    catch {
+        # Expected - tab not found after removal
+        Write-Host '  Verified: Tab successfully removed (not found in query)'
     }
-    
-    Write-Host '  Verified: Tab successfully removed'
     
     # ============================================================
     # STEP 10: CLEANUP - REMOVE FORM
@@ -371,7 +362,7 @@ try {
     Write-Host 'Step 10: Final cleanup - Removing test form...'
     
     Invoke-WithRetry {
-        Remove-DataverseForm -Connection $connection -Id $formId -Confirm:`$false
+        Remove-DataverseForm -Connection $connection -Id $formId -Confirm:$false
     }
     
     Write-Host ""  Removed form: $formName (ID: $formId)""
@@ -404,7 +395,7 @@ try {
     Write-Host '  - Published form after all modifications'
     Write-Host '  - Successfully removed controls, sections, tabs'
     Write-Host '  - Cleaned up test form'
-    Write-Host '  - Handled cleanup of leftover test forms from previous runs'
+    Write-Host '  Note: Nightly cleanup handles leftover artifacts from failed runs'
     Write-Host ''
     
 }

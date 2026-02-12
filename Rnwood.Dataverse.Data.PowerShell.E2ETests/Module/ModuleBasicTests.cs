@@ -37,7 +37,7 @@ Write-Host 'Success: All cmdlets have help available'
 
             var result = RunScript(script);
 
-            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -104,7 +104,7 @@ Write-Host 'Success: All tested cmdlets have proper help structure'
 
             var result = RunScript(script);
 
-            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
         }
 
@@ -140,7 +140,7 @@ Write-Host 'Success: Help files exist and are accessible'
 
             var result = RunScript(script);
 
-            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}");
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("Success");
         }
     }
