@@ -23,6 +23,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private int _baseLanguageCode;
 
+
         /// <summary>
         /// Gets or sets the logical name of the entity (for local option sets).
         /// </summary>
