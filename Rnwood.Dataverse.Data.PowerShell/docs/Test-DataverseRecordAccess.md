@@ -137,21 +137,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -TableName
-Logical name of the table.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases: EntityName
-
-Required: True
-Position: 0
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -164,6 +149,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TableName
+Logical name of the table.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases: EntityName
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 

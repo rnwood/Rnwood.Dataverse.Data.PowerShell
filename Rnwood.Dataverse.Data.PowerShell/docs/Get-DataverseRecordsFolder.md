@@ -42,21 +42,6 @@ See documentation for `Set-DataverseRecord` as there are option to control how/i
 
 ## PARAMETERS
 
-### -InputPath
-Path to folder to read JSON files from.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 1
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -deletions
 If specified, reads from the 'deletions' subfolder instead of the main folder. This allows reading records that were present previously but have been deleted.
 
@@ -67,6 +52,21 @@ Aliases:
 
 Required: False
 Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputPath
+Path to folder to read JSON files from.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

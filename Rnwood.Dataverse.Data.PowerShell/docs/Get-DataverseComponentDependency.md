@@ -179,21 +179,6 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -RequiredBy
-Retrieves dependencies that would prevent deletion of the specified component. This shows what requires the component to exist.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: RequiredBy
-Aliases:
-
-Required: True
-Position: Named
-Default value: False
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -205,6 +190,21 @@ Aliases: proga
 Required: False
 Position: Named
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -RequiredBy
+Retrieves dependencies that would prevent deletion of the specified component. This shows what requires the component to exist.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: RequiredBy
+Aliases:
+
+Required: True
+Position: Named
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
