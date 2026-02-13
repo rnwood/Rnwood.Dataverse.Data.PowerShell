@@ -67,7 +67,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 LinkFromAttributeName = "plugintypeid",
                 LinkToEntityName = "plugintype",
                 LinkToAttributeName = "plugintypeid",
-                EntityAlias = "plugintype",
+                EntityAlias = "plugintype_link",
                 JoinOperator = JoinOperator.LeftOuter,
                 Columns = new ColumnSet("typename")
             };
@@ -80,32 +80,75 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 LinkFromAttributeName = "sdkmessageid",
                 LinkToEntityName = "sdkmessage",
                 LinkToAttributeName = "sdkmessageid",
-                EntityAlias = "sdkmessage",
+                EntityAlias = "sdkmessage_link",
                 JoinOperator = JoinOperator.LeftOuter,
                 Columns = new ColumnSet("name")
             };
             query.LinkEntities.Add(messageLink);
 
-            // Link to sdkmessagefilter
+            // Link to sdkmessagefilter - note: this entity doesn't have a traditional "name" field
+            // We're joining it but not including columns to avoid extra properties
             LinkEntity filterLink = new LinkEntity
             {
                 LinkFromEntityName = "sdkmessageprocessingstep",
                 LinkFromAttributeName = "sdkmessagefilterid",
                 LinkToEntityName = "sdkmessagefilter",
                 LinkToAttributeName = "sdkmessagefilterid",
-                EntityAlias = "sdkmessagefilter",
+                EntityAlias = "sdkmessagefilter_link",
                 JoinOperator = JoinOperator.LeftOuter,
-                Columns = new ColumnSet("primaryobjecttypecode")
+                Columns = new ColumnSet(false) // Don't include any columns to avoid extra properties
             };
             query.LinkEntities.Add(filterLink);
+
+            // Link to organization
+            LinkEntity organizationLink = new LinkEntity
+            {
+                LinkFromEntityName = "sdkmessageprocessingstep",
+                LinkFromAttributeName = "organizationid",
+                LinkToEntityName = "organization",
+                LinkToAttributeName = "organizationid",
+                EntityAlias = "organization_link",
+                JoinOperator = JoinOperator.LeftOuter,
+                Columns = new ColumnSet("name")
+            };
+            query.LinkEntities.Add(organizationLink);
 
             EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
             DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
             foreach (Entity entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose))
             {
+                // Populate EntityReference names from linked entity data to avoid N+1 queries
+                PopulateEntityReferenceNamesFromLinks(entity, "plugintypeid", "plugintype_link", "typename");
+                PopulateEntityReferenceNamesFromLinks(entity, "sdkmessageid", "sdkmessage_link", "name");
+                PopulateEntityReferenceNamesFromLinks(entity, "organizationid", "organization_link", "name");
+                // Note: sdkmessagefilterid doesn't have a simple name field, so we skip it
+
                 PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display, WriteVerbose);
                 WriteObject(psObject);
+            }
+        }
+
+        /// <summary>
+        /// Populates an EntityReference Name property from linked entity aliased values.
+        /// Removes the aliased value after populating to avoid extra properties in output.
+        /// </summary>
+        private void PopulateEntityReferenceNamesFromLinks(Entity entity, string referenceAttribute, string linkAlias, string nameAttribute)
+        {
+            string aliasedAttributeName = $"{linkAlias}.{nameAttribute}";
+            
+            if (entity.Contains(aliasedAttributeName) && entity.Contains(referenceAttribute))
+            {
+                var aliasedValue = entity.GetAttributeValue<AliasedValue>(aliasedAttributeName);
+                var entityRef = entity.GetAttributeValue<EntityReference>(referenceAttribute);
+                
+                if (aliasedValue != null && entityRef != null && aliasedValue.Value != null)
+                {
+                    entityRef.Name = aliasedValue.Value.ToString();
+                }
+                
+                // Remove the aliased value to prevent extra properties in output
+                entity.Attributes.Remove(aliasedAttributeName);
             }
         }
     }
