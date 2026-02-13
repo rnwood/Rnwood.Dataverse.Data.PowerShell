@@ -30,56 +30,77 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private IOrganizationService service;
         private EntityMetadataFactory entityMetadataFactory;
+        private Action<string> writeVerbose;
 
         /// <summary>
         /// Converts an Entity to a PSObject.
         /// </summary>
         public PSObject ConvertToPSObject(Entity entity, ColumnSet includedColumns, Func<AttributeMetadata, ValueType> getValueType)
         {
-            PSObject result = new PSObject();
+            return ConvertToPSObject(entity, includedColumns, getValueType, null);
+        }
 
-            result.Properties.Add(new PSNoteProperty("Id", entity.Id));
-            result.Properties.Add(new PSNoteProperty("TableName", entity.LogicalName));
+        /// <summary>
+        /// Converts an Entity to a PSObject with verbose logging.
+        /// </summary>
+        public PSObject ConvertToPSObject(Entity entity, ColumnSet includedColumns, Func<AttributeMetadata, ValueType> getValueType, Action<string> writeVerbose)
+        {
+            // Store the verbose delegate for use in GetPSValue
+            var previousVerbose = this.writeVerbose;
+            this.writeVerbose = writeVerbose;
 
-            EntityMetadata entityMetadata = entityMetadataFactory.GetLimitedMetadata(entity.LogicalName);
-
-            foreach (AttributeMetadata attributeMetadata in entityMetadata.Attributes.OrderBy(a => a.LogicalName, StringComparer.OrdinalIgnoreCase))
+            try
             {
-                if (includedColumns.AllColumns || includedColumns.Columns.Contains(attributeMetadata.LogicalName, StringComparer.OrdinalIgnoreCase))
+                PSObject result = new PSObject();
+
+                result.Properties.Add(new PSNoteProperty("Id", entity.Id));
+                result.Properties.Add(new PSNoteProperty("TableName", entity.LogicalName));
+
+                EntityMetadata entityMetadata = entityMetadataFactory.GetLimitedMetadata(entity.LogicalName, writeVerbose);
+
+                foreach (AttributeMetadata attributeMetadata in entityMetadata.Attributes.OrderBy(a => a.LogicalName, StringComparer.OrdinalIgnoreCase))
                 {
-                    result.Properties.Add(new PSNoteProperty(attributeMetadata.LogicalName, GetPSValue(entity, entityMetadata, attributeMetadata, getValueType)));
-                }
-            }
-
-            foreach (KeyValuePair<string, object> attr in entity.Attributes.Where(aa => aa.Value is AliasedValue && !entityMetadata.Attributes.Any(a => a.LogicalName.Equals(aa.Key, StringComparison.OrdinalIgnoreCase))))
-            {
-                AliasedValue aliasedValue = (AliasedValue)attr.Value;
-
-                result.Properties.Add(new PSNoteProperty(attr.Key, aliasedValue.Value));
-            }
-
-            foreach (KeyValuePair<string, object> attr in entity.Attributes.Where(aa => aa.Value is EntityCollection && !entityMetadata.Attributes.Any(a => a.LogicalName.Equals(aa.Key, StringComparison.OrdinalIgnoreCase))))
-            {
-                if (includedColumns.AllColumns || includedColumns.Columns.Contains(attr.Key, StringComparer.OrdinalIgnoreCase))
-                {
-                    EntityCollection entities = (EntityCollection)attr.Value;
-                    List<PSObject> psObjects = new List<PSObject>(entities.Entities.Count);
-
-                    if (entities.Entities.Any())
+                    if (includedColumns.AllColumns || includedColumns.Columns.Contains(attributeMetadata.LogicalName, StringComparer.OrdinalIgnoreCase))
                     {
-                        EntityMetadata referencedEntityMetadata = entityMetadataFactory.GetLimitedMetadata(entities.Entities.First().LogicalName);
-
-                        foreach (Entity referenceEntity in entities.Entities)
-                        {
-                            psObjects.Add(ConvertToPSObject(referenceEntity, new ColumnSet(GetAllColumnNames(referencedEntityMetadata, false, null, false)), getValueType));
-                        }
+                        result.Properties.Add(new PSNoteProperty(attributeMetadata.LogicalName, GetPSValue(entity, entityMetadata, attributeMetadata, getValueType)));
                     }
-
-                    result.Properties.Add(new PSNoteProperty(attr.Key, psObjects.ToArray()));
                 }
-            }
 
-            return result;
+                foreach (KeyValuePair<string, object> attr in entity.Attributes.Where(aa => aa.Value is AliasedValue && !entityMetadata.Attributes.Any(a => a.LogicalName.Equals(aa.Key, StringComparison.OrdinalIgnoreCase))))
+                {
+                    AliasedValue aliasedValue = (AliasedValue)attr.Value;
+
+                    result.Properties.Add(new PSNoteProperty(attr.Key, aliasedValue.Value));
+                }
+
+                foreach (KeyValuePair<string, object> attr in entity.Attributes.Where(aa => aa.Value is EntityCollection && !entityMetadata.Attributes.Any(a => a.LogicalName.Equals(aa.Key, StringComparison.OrdinalIgnoreCase))))
+                {
+                    if (includedColumns.AllColumns || includedColumns.Columns.Contains(attr.Key, StringComparer.OrdinalIgnoreCase))
+                    {
+                        EntityCollection entities = (EntityCollection)attr.Value;
+                        List<PSObject> psObjects = new List<PSObject>(entities.Entities.Count);
+
+                        if (entities.Entities.Any())
+                        {
+                            EntityMetadata referencedEntityMetadata = entityMetadataFactory.GetLimitedMetadata(entities.Entities.First().LogicalName, writeVerbose);
+
+                            foreach (Entity referenceEntity in entities.Entities)
+                            {
+                                psObjects.Add(ConvertToPSObject(referenceEntity, new ColumnSet(GetAllColumnNames(referencedEntityMetadata, false, null, false)), getValueType, writeVerbose));
+                            }
+                        }
+
+                        result.Properties.Add(new PSNoteProperty(attr.Key, psObjects.ToArray()));
+                    }
+                }
+
+                return result;
+            }
+            finally
+            {
+                // Restore previous verbose delegate
+                this.writeVerbose = previousVerbose;
+            }
         }
 
         /// <summary>
@@ -247,7 +268,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
 
                         //For some odd reason the EntityReference Name that is returned is sometimes null even though the record it's pointing at has a name
-                        string nameAttribute = entityMetadataFactory.GetLimitedMetadata(entityReferenceValue.LogicalName).PrimaryNameAttribute;
+                        string nameAttribute = entityMetadataFactory.GetLimitedMetadata(entityReferenceValue.LogicalName, writeVerbose).PrimaryNameAttribute;
 
                         //Some internal entities do not have a primary name attribute
                         if (nameAttribute == null)
@@ -260,6 +281,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             return null;
                         }
 
+                        writeVerbose?.Invoke($"Retrieving name for lookup {attributeMetadata.LogicalName}: {entityReferenceValue.LogicalName}({entityReferenceValue.Id})");
                         string name = service.Retrieve(entityReferenceValue.LogicalName, entityReferenceValue.Id,
                                          new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
 
@@ -337,12 +359,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                             if (manyToManyRelationshipMetadata.Entity1IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
                             {
-                                string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity1LogicalName).PrimaryNameAttribute;
+                                string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity1LogicalName, writeVerbose).PrimaryNameAttribute;
+                                writeVerbose?.Invoke($"Retrieving name for many-to-many relationship {attributeMetadata.LogicalName}: {manyToManyRelationshipMetadata.Entity1LogicalName}({guidValue.Value})");
                                 return service.Retrieve(manyToManyRelationshipMetadata.Entity1LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
                             }
                             else if (manyToManyRelationshipMetadata.Entity2IntersectAttribute.Equals(attributeMetadata.LogicalName, StringComparison.OrdinalIgnoreCase))
                             {
-                                string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity2LogicalName).PrimaryNameAttribute;
+                                string nameAttribute = entityMetadataFactory.GetLimitedMetadata(manyToManyRelationshipMetadata.Entity2LogicalName, writeVerbose).PrimaryNameAttribute;
+                                writeVerbose?.Invoke($"Retrieving name for many-to-many relationship {attributeMetadata.LogicalName}: {manyToManyRelationshipMetadata.Entity2LogicalName}({guidValue.Value})");
                                 return service.Retrieve(manyToManyRelationshipMetadata.Entity2LogicalName, guidValue.Value, new ColumnSet(nameAttribute)).GetAttributeValue<string>(nameAttribute);
                             }
                         }
