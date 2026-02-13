@@ -59,6 +59,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 query.Criteria.AddCondition("pluginassemblyid", ConditionOperator.Equal, PluginAssemblyId.Value);
             }
 
+            // Add linked entity to fetch pluginassembly name to avoid N+1 queries
+            LinkEntity assemblyLink = new LinkEntity
+            {
+                LinkFromEntityName = "plugintype",
+                LinkFromAttributeName = "pluginassemblyid",
+                LinkToEntityName = "pluginassembly",
+                LinkToAttributeName = "pluginassemblyid",
+                EntityAlias = "assembly",
+                JoinOperator = JoinOperator.LeftOuter,
+                Columns = new ColumnSet("name")
+            };
+            query.LinkEntities.Add(assemblyLink);
+
             EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
             DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 

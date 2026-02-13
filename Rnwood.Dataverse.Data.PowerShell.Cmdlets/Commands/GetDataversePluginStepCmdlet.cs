@@ -59,12 +59,52 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 query.Criteria.AddCondition("plugintypeid", ConditionOperator.Equal, PluginTypeId.Value);
             }
 
+            // Add linked entities to fetch lookup names to avoid N+1 queries
+            // Link to plugintype
+            LinkEntity pluginTypeLink = new LinkEntity
+            {
+                LinkFromEntityName = "sdkmessageprocessingstep",
+                LinkFromAttributeName = "plugintypeid",
+                LinkToEntityName = "plugintype",
+                LinkToAttributeName = "plugintypeid",
+                EntityAlias = "plugintype",
+                JoinOperator = JoinOperator.LeftOuter,
+                Columns = new ColumnSet("typename")
+            };
+            query.LinkEntities.Add(pluginTypeLink);
+
+            // Link to sdkmessage
+            LinkEntity messageLink = new LinkEntity
+            {
+                LinkFromEntityName = "sdkmessageprocessingstep",
+                LinkFromAttributeName = "sdkmessageid",
+                LinkToEntityName = "sdkmessage",
+                LinkToAttributeName = "sdkmessageid",
+                EntityAlias = "sdkmessage",
+                JoinOperator = JoinOperator.LeftOuter,
+                Columns = new ColumnSet("name")
+            };
+            query.LinkEntities.Add(messageLink);
+
+            // Link to sdkmessagefilter
+            LinkEntity filterLink = new LinkEntity
+            {
+                LinkFromEntityName = "sdkmessageprocessingstep",
+                LinkFromAttributeName = "sdkmessagefilterid",
+                LinkToEntityName = "sdkmessagefilter",
+                LinkToAttributeName = "sdkmessagefilterid",
+                EntityAlias = "sdkmessagefilter",
+                JoinOperator = JoinOperator.LeftOuter,
+                Columns = new ColumnSet("primaryobjecttypecode")
+            };
+            query.LinkEntities.Add(filterLink);
+
             EntityMetadataFactory entityMetadataFactory = new EntityMetadataFactory(Connection);
             DataverseEntityConverter converter = new DataverseEntityConverter(Connection, entityMetadataFactory);
 
             foreach (Entity entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose))
             {
-                PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display);
+                PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display, WriteVerbose);
                 WriteObject(psObject);
             }
         }
