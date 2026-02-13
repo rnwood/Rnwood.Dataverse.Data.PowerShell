@@ -875,6 +875,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 control.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
             }
+            else if (!isUpdate)
+            {
+                // For new controls, default to visible unless explicitly hidden
+                control.SetAttributeValue("visible", "true");
+            }
 
             if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
             {
