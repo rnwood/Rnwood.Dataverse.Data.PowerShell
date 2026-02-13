@@ -64,7 +64,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             foreach (Entity entity in QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose))
             {
-                PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display);
+                PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display, WriteVerbose);
                 WriteObject(psObject);
             }
         }
