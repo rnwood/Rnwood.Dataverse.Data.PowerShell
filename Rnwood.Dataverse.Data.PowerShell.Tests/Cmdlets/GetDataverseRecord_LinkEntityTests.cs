@@ -16,6 +16,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
     /// Link entity tests for Get-DataverseRecord cmdlet.
     /// Tests for joining related tables using Links parameter.
     /// </summary>
+    [Collection("LinkEntity")]
     public class GetDataverseRecord_LinkEntityTests : TestBase
     {
         private PS CreatePowerShellWithCmdlets()
