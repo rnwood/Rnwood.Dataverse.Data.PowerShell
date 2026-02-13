@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
 using System;
+using System.Collections;
 using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
@@ -492,6 +493,47 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
                 // FakeXrmEasy may not support the operation
                 ex.Message.Should().Match("*not*supported*");
             }
+        }
+
+        [Fact]
+        public void SetDataverseAttributeMetadata_CreatePicklistWithStateProperty_CreatesStatusOptionMetadata()
+        {
+            // Arrange
+            var initialSessionState = InitialSessionState.CreateDefault();
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseAttributeMetadata", typeof(Commands.SetDataverseAttributeMetadataCmdlet), null));
+
+            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+            runspace.Open();
+            using var ps = PS.Create();
+            ps.Runspace = runspace;
+
+            var mockConnection = CreateMockConnection();
+
+            // Create hashtables with State property (for statuscode)
+            var options = new object[]
+            {
+                new Hashtable { { "Value", 1 }, { "Label", "Draft" }, { "State", 0 } },
+                new Hashtable { { "Value", 2 }, { "Label", "Approved" }, { "State", 0 } },
+                new Hashtable { { "Value", 3 }, { "Label", "Closed" }, { "State", 1 } }
+            };
+
+            // Act - Create a picklist with State property
+            ps.AddCommand("Set-DataverseAttributeMetadata")
+              .AddParameter("Connection", mockConnection)
+              .AddParameter("EntityName", "account")
+              .AddParameter("AttributeName", "new_status")
+              .AddParameter("SchemaName", "new_Status")
+              .AddParameter("DisplayName", "Status")
+              .AddParameter("AttributeType", "Picklist")
+              .AddParameter("Options", options)
+              .AddParameter("WhatIf", true);
+
+            // Assert - should execute without error
+            // StatusOptionMetadata objects should be created instead of OptionMetadata
+            var results = ps.Invoke();
+            results.Should().BeEmpty();
+            ps.HadErrors.Should().BeFalse();
         }
     }
 }

@@ -26,7 +26,9 @@ try {
     
     # Get current organization record
     Write-Host 'Getting organization record...'
-    $org = Get-DataverseOrganizationSettings -Connection $connection
+    $org = Invoke-WithRetry {
+        Get-DataverseOrganizationSettings -Connection $connection
+    }
     
     if (-not $org) {
         throw 'No organization record returned'
@@ -44,12 +46,16 @@ try {
     Write-Host ""Setting MaximumTrackingNumber to: $newTrackingNumber""
     
     # Update the value
-    Set-DataverseOrganizationSettings -Connection $connection -InputObject @{
-        maximumtrackingnumber = $newTrackingNumber
-    } -Confirm:$false -Verbose
+    Invoke-WithRetry {
+        Set-DataverseOrganizationSettings -Connection $connection -InputObject @{
+            maximumtrackingnumber = $newTrackingNumber
+        } -Confirm:$false -Verbose
+    }
     
     # Verify the change
-    $updatedOrg = Get-DataverseOrganizationSettings -Connection $connection
+    $updatedOrg = Invoke-WithRetry {
+        Get-DataverseOrganizationSettings -Connection $connection
+    }
     if ($updatedOrg.maximumtrackingnumber -ne $newTrackingNumber) {
         throw ""MaximumTrackingNumber was not updated. Expected: $newTrackingNumber, Actual: $($updatedOrg.maximumtrackingnumber)""
     }
@@ -57,9 +63,11 @@ try {
     
     # Restore original value
     Write-Host ""Restoring original MaximumTrackingNumber: $originalTrackingNumber""
-    Set-DataverseOrganizationSettings -Connection $connection -InputObject @{
-        maximumtrackingnumber = $originalTrackingNumber
-    } -Confirm:$false -Verbose
+    Invoke-WithRetry {
+        Set-DataverseOrganizationSettings -Connection $connection -InputObject @{
+            maximumtrackingnumber = $originalTrackingNumber
+        } -Confirm:$false -Verbose
+    }
     
     Write-Host ''
     Write-Host '========================================='
@@ -68,7 +76,9 @@ try {
     
     # Get current OrgDbOrgSettings
     Write-Host 'Getting OrgDbOrgSettings...'
-    $currentSettings = Get-DataverseOrganizationSettings -Connection $connection -OrgDbOrgSettings
+    $currentSettings = Invoke-WithRetry {
+        Get-DataverseOrganizationSettings -Connection $connection -OrgDbOrgSettings
+    }
     
     if ($null -eq $currentSettings) {
         throw 'No OrgDbOrgSettings returned'
@@ -86,12 +96,16 @@ try {
     Write-Host ""Setting AllowSaveAsDraftAppointment to: $newValue""
     
     # Update the setting
-    Set-DataverseOrganizationSettings -Connection $connection -InputObject @{
-        AllowSaveAsDraftAppointment = $newValue
-    } -OrgDbOrgSettings -Confirm:$false -Verbose
+    Invoke-WithRetry {
+        Set-DataverseOrganizationSettings -Connection $connection -InputObject @{
+            AllowSaveAsDraftAppointment = $newValue
+        } -OrgDbOrgSettings -Confirm:$false -Verbose
+    }
     
     # Verify the change
-    $updatedSettings = Get-DataverseOrganizationSettings -Connection $connection -OrgDbOrgSettings
+    $updatedSettings = Invoke-WithRetry {
+        Get-DataverseOrganizationSettings -Connection $connection -OrgDbOrgSettings
+    }
     if ($updatedSettings.AllowSaveAsDraftAppointment -ne $newValue) {
         throw ""AllowSaveAsDraftAppointment was not updated. Expected: $newValue, Actual: $($updatedSettings.AllowSaveAsDraftAppointment)""
     }
@@ -99,12 +113,16 @@ try {
     
     # Restore original value
     Write-Host ""Restoring original AllowSaveAsDraftAppointment: $originalValue""
-    Set-DataverseOrganizationSettings -Connection $connection -InputObject @{
-        AllowSaveAsDraftAppointment = $originalValue
-    } -OrgDbOrgSettings -Confirm:$false -Verbose
+    Invoke-WithRetry {
+        Set-DataverseOrganizationSettings -Connection $connection -InputObject @{
+            AllowSaveAsDraftAppointment = $originalValue
+        } -OrgDbOrgSettings -Confirm:$false -Verbose
+    }
     
     # Final verification
-    $finalSettings = Get-DataverseOrganizationSettings -Connection $connection -OrgDbOrgSettings
+    $finalSettings = Invoke-WithRetry {
+        Get-DataverseOrganizationSettings -Connection $connection -OrgDbOrgSettings
+    }
     
     # When restoring to null/empty, the setting may be removed from XML and return as $null or False
     $finalValue = $finalSettings.AllowSaveAsDraftAppointment

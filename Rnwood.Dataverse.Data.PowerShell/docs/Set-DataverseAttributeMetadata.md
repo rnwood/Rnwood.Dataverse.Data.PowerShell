@@ -364,6 +364,23 @@ PS C:\> Set-DataverseAttributeMetadata -EntityName account `
 
 Updates an attribute using a specific connection instead of the default connection.
 
+### Example 31: Update statuscode options with State property
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $statusOptions = @(
+    @{Value=1; Label='Draft'; State=0},
+    @{Value=807290000; Label='Approved'; State=0},
+    @{Value=807290001; Label='Filled'; State=0},
+    @{Value=2; Label='Closed'; State=1},
+    @{Value=807290002; Label='Cancelled'; State=1}
+)
+
+PS C:\> Set-DataverseAttributeMetadata -EntityName abc_position `
+    -AttributeName statuscode -Options $statusOptions
+```
+
+Updates the statuscode attribute options for a custom entity. The State property links each status value to a state (0=Active, 1=Inactive). This allows you to define which status values are valid for each state.
+
 ## PARAMETERS
 
 ### -AttributeName
@@ -776,10 +793,14 @@ Array of hashtables defining options for Picklist or MultiSelectPicklist attribu
 Each hashtable should have:
 - `Value`: Integer value for the option (optional - will be auto-assigned if not provided)
 - `Label`: String label displayed to users
+- `State`: Integer state value (required for statuscode attributes only)
 
 Example: `@(@{Value=1; Label='Small'}, @{Value=2; Label='Large'})`
 
-**Note**: This property is immutable after creation. To update option values, use `Set-DataverseOptionSetMetadata`.
+For statuscode attributes, the State property is required to link each status to a state:
+`@(@{Value=1; Label='Draft'; State=0}, @{Value=2; Label='Approved'; State=0}, @{Value=3; Label='Closed'; State=1})`
+
+**Note**: This property is immutable after creation for regular picklist attributes. To update option values for regular picklists, use `Set-DataverseOptionSetMetadata`. For statuscode attributes, Options can be updated to define valid status values with their associated states.
 
 ```yaml
 Type: Hashtable[]
