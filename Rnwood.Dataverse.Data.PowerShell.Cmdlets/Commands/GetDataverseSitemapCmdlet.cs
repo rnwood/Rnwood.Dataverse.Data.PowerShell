@@ -73,16 +73,25 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     EntityCollection results;
                     if (!Published.IsPresent)
                     {
-                        var retrieveUnpublishedMultipleRequest = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest
+                        try
                         {
-                            Query = lookupQuery
-                        };
-                        var unpublishedResponse = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
-                        results = unpublishedResponse.EntityCollection;
-                        
-                        if (results.Entities.Count == 0)
+                            var retrieveUnpublishedMultipleRequest = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest
+                            {
+                                Query = lookupQuery
+                            };
+                            var unpublishedResponse = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                            results = unpublishedResponse.EntityCollection;
+                            
+                            if (results.Entities.Count == 0)
+                            {
+                                // Try published
+                                results = Connection.RetrieveMultiple(lookupQuery);
+                            }
+                        }
+                        catch (Exception ex) when (ex is NotImplementedException || ex is InvalidOperationException)
                         {
-                            // Try published
+                            // RetrieveUnpublishedMultipleRequest not supported (e.g., in test mocks), fall back to standard RetrieveMultiple
+                            WriteVerbose($"RetrieveUnpublishedMultipleRequest not supported, falling back to standard RetrieveMultiple");
                             results = Connection.RetrieveMultiple(lookupQuery);
                         }
                     }
@@ -100,7 +109,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // If we have a sitemap ID, retrieve it using RetrieveUnpublishedRequest
                 if (sitemapId.HasValue)
                 {
-                Entity sitemap;
+                Entity sitemap = null;
                 
                 if (!Published.IsPresent)
                 {
@@ -121,18 +130,57 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             // Try published version as fallback
                             WriteVerbose($"Sitemap not found in unpublished layer, trying published version...");
-                            sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true)); // Use all columns
+                            try
+                            {
+                                sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true)); // Use all columns
+                            }
+                            catch (System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault> publishedEx) when (QueryHelpers.IsNotFoundException(publishedEx))
+                            {
+                                // Sitemap doesn't exist in either layer, return nothing
+                                WriteVerbose($"Sitemap not found in published layer either");
+                                return;
+                            }
                         }
                         else
                         {
                             throw;
                         }
                     }
+                    catch (Exception ex) when (ex is NotImplementedException || ex is InvalidOperationException)
+                    {
+                        // RetrieveUnpublishedRequest not supported (e.g., in test mocks), fall back to standard Retrieve
+                        WriteVerbose($"RetrieveUnpublishedRequest not supported, falling back to standard Retrieve");
+                        try
+                        {
+                            sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true));
+                        }
+                        catch (System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault> retrieveEx) when (QueryHelpers.IsNotFoundException(retrieveEx))
+                        {
+                            // Sitemap doesn't exist, return nothing
+                            WriteVerbose($"Sitemap not found");
+                            return;
+                        }
+                    }
                 }
                 else
                 {
                     WriteVerbose($"Retrieving published sitemap by ID: {sitemapId.Value}");
-                    sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true)); // Use all columns
+                    try
+                    {
+                        sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true)); // Use all columns
+                    }
+                    catch (System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault> ex) when (QueryHelpers.IsNotFoundException(ex))
+                    {
+                        // Sitemap doesn't exist, return nothing
+                        WriteVerbose($"Sitemap not found");
+                        return;
+                    }
+                }
+
+                // If we got here without a sitemap, return nothing
+                if (sitemap == null)
+                {
+                    return;
                 }
 
                 var sitemapInfo = new SitemapInfo
