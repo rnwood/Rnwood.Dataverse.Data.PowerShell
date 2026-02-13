@@ -83,7 +83,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Try to find existing sitemap by UniqueName
                 var query = new QueryExpression("sitemap")
                 {
-                    ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml"),
+                    ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapnameunique", "sitemapxml"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
@@ -134,7 +134,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     var existingQuery = new QueryExpression("sitemap")
                     {
-                        ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapxml"),
+                        ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapnameunique", "sitemapxml"),
                         Criteria = new FilterExpression
                         {
                             Conditions =
@@ -175,6 +175,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 WriteVerbose($"Checking for changes to sitemap...");
 
                 var updateEntity = new Entity("sitemap", sitemapId);
+                string providedSitemapXml = SitemapXml; // Track if XML was provided
                 
                 // Only add attributes that have changed
                 if (!string.IsNullOrEmpty(Name))
@@ -215,6 +216,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         updateEntity["sitemapxml"] = SitemapXml;
                     }
+                }
+
+                // Dataverse requires sitemapxml to be present when updating other sitemap properties
+                // If we're updating any attributes AND XML was provided, ensure XML is included even if unchanged
+                if (updateEntity.Attributes.Count > 0 && !string.IsNullOrEmpty(providedSitemapXml) && !updateEntity.Contains("sitemapxml"))
+                {
+                    WriteVerbose("Adding sitemapxml to update (required by Dataverse even when unchanged)");
+                    updateEntity["sitemapxml"] = providedSitemapXml;
                 }
 
                 // Only call Update if there are changes
