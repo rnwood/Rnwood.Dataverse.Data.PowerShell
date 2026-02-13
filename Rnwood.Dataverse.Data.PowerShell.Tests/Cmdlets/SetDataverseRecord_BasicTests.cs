@@ -293,5 +293,44 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             results.Where(r => r.Properties["firstname"].Value.Equals("Eve") && 
                                 r.Properties["lastname"].Value.Equals("Davis")).Should().HaveCount(1);
         }
+
+        [Fact]
+        public void SetDataverseRecord_ValuesAlias_SingleHashtable()
+        {
+            // Arrange
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection("contact");
+            
+            var values = new Hashtable {
+                ["firstname"] = "John",
+                ["lastname"] = "Doe",
+                ["emailaddress1"] = "john.doe@example.com"
+            };
+            
+            // Act - Use -Values alias instead of -InputObject
+            ps.AddCommand("Set-DataverseRecord")
+              .AddParameter("Connection", mockConnection)
+              .AddParameter("TableName", "contact")
+              .AddParameter("Values", values)  // Test the -Values alias
+              .AddParameter("CreateOnly", true);
+            var results = ps.Invoke();
+            
+            // Assert
+            ps.HadErrors.Should().BeFalse();
+            ps.Streams.Error.Should().BeEmpty();
+            
+            // Verify record was created with correct values
+            ps.Commands.Clear();
+            ps.AddCommand("Get-DataverseRecord")
+              .AddParameter("Connection", mockConnection)
+              .AddParameter("TableName", "contact")
+              .AddParameter("Columns", new[] { "firstname", "lastname", "emailaddress1" });
+            var records = ps.Invoke();
+            
+            records.Should().HaveCount(1);
+            records[0].Properties["firstname"].Value.Should().Be("John");
+            records[0].Properties["lastname"].Value.Should().Be("Doe");
+            records[0].Properties["emailaddress1"].Value.Should().Be("john.doe@example.com");
+        }
     }
 }

@@ -725,7 +725,7 @@ The properties may include ownerid, statecode and statuscode which will assign a
 ```yaml
 Type: PSObject
 Parameter Sets: (All)
-Aliases:
+Aliases: Values
 
 Required: True
 Position: Named
