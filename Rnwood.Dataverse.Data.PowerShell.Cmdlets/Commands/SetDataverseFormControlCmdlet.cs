@@ -87,12 +87,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter Disabled { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the control is visible.
-        /// </summary>
-        [Parameter(HelpMessage = "Whether the control is visible")]
-        public SwitchParameter Visible { get; set; } = true;
-
-        /// <summary>
         /// Gets or sets the number of rows (for multiline text).
         /// </summary>
         [Parameter(HelpMessage = "Number of rows for multiline text controls")]
@@ -877,28 +871,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
-            {
-                if (!Visible.IsPresent)
-                {
-                    control.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", null);
-                }
-            }
-
             if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
             {
-                if (Hidden.IsPresent)
-                {
-                    control.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", null);
-                }
+                control.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
             }
 
             if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
