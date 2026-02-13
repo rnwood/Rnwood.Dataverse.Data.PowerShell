@@ -57,14 +57,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
         /// Creates a PowerShell script that imports the module and establishes a connection.
         /// Includes a centralized Invoke-WithRetry function for handling transient errors.
         /// </summary>
-        protected string GetConnectionScript(string additionalScript = "")
+        protected string GetConnectionScript(string additionalScript = "", bool useDisableAffinityCookie = false)
         {
             var importStatement = GetModuleImportStatement();
+            var disableAffinityCookieParam = useDisableAffinityCookie ? "-DisableAffinityCookie" : "";
             
             return $@"
 {importStatement}
 
-$connection = Get-DataverseConnection -Url '{E2ETestsUrl}' -ClientId '{E2ETestsClientId}' -ClientSecret '{E2ETestsClientSecret}' -ErrorAction Stop
+$connection = Get-DataverseConnection -Url '{E2ETestsUrl}' -ClientId '{E2ETestsClientId}' -ClientSecret '{E2ETestsClientSecret}' {disableAffinityCookieParam} -ErrorAction Stop
 
 function Write-ErrorDetails {{
     param([Parameter(Mandatory = $true)]$ErrorRecord)

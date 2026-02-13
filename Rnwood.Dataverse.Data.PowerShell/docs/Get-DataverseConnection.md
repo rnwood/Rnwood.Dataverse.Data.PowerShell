@@ -19,21 +19,21 @@ See the examples for this pattern below.
 ### Get default connection
 ```
 Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with username and password
 ```
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>]
- -Username <String> -Password <String> [-Timeout <UInt32>] [-TenantId <Guid>]
+ -Username <String> -Password <String> [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
 ```
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
- -ClientSecret <String> [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ -ClientSecret <String> [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client certificate
@@ -41,75 +41,77 @@ Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -Cli
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
  -CertificatePath <String> [-CertificatePassword <String>] [-CertificateThumbprint <String>]
  [-CertificateStoreLocation <StoreLocation>] [-CertificateStoreName <StoreName>] [-Timeout <UInt32>]
- [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate interactively
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-Interactive] [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-Interactive] [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-DeviceCode] [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DeviceCode] [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with DefaultAzureCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-DefaultAzureCredential]
- [-Timeout <UInt32>] [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Authenticate with ManagedIdentityCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-ManagedIdentity]
- [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
  [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Load a saved named connection
 ```
 Get-DataverseConnection [-SetAsDefault] -Name <String> [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Delete a saved named connection
 ```
 Get-DataverseConnection [-SetAsDefault] -Name <String> [-DeleteConnection] [-Timeout <UInt32>]
- [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Clear all saved connections
 ```
 Get-DataverseConnection [-SetAsDefault] [-ClearAllConnections] [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### List saved named connections
 ```
 Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with access token script block
 ```
 Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] -AccessToken <ScriptBlock> [-Timeout <UInt32>]
- [-TenantId <Guid>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with Dataverse SDK connection string.
 ```
 Get-DataverseConnection [-SetAsDefault] -ConnectionString <String> [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Load connection from PAC CLI profile
 ```
 Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout <UInt32>] [-TenantId <Guid>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -311,6 +313,30 @@ PS C:\> $c = Get-DataverseConnection -FromPac -Profile "MyDevProfile"
 ```
 
 Connects to Dataverse using a specific named PAC CLI profile. The profile name must match one of the profiles created with `pac auth create --name <profilename>`. Alternatively, you can specify the index of the profile (e.g., "0" for the first profile).
+
+### Example 24: Disable affinity cookie for maximum performance
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "3004eb1e-7a00-45e0-a1dc-6703735eac18" -ClientSecret "itsasecret" -DisableAffinityCookie
+```
+
+Connects to MYORG with affinity cookie disabled for maximum performance. This allows each call to Dataverse to be routed to any available server node, which can improve performance in parallel operations. However, this may result in eventual consistency issues where recently created or updated data may not be immediately visible on subsequent requests.
+
+### Example 25: Using parallelization without DisableAffinityCookie (will show warning)
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive
+PS C:\> Get-DataverseRecord -Connection $c -TableName account -Top 1000 | Set-DataverseRecord -Connection $c -TableName account -MaxDegreeOfParallelism 4
+WARNING: Using parallelization with affinity cookie enabled may reduce performance. Consider using Get-DataverseConnection with -DisableAffinityCookie for better parallel performance. Note: Disabling affinity cookie may result in eventual consistency issues.
+```
+
+When using parallelization with MaxDegreeOfParallelism > 1, the cmdlets will emit a warning if affinity cookie is enabled (the default). This is because affinity cookie prefers routing all requests to the same server node, which can reduce parallel performance.
+
+### Example 26: Using parallelization with DisableAffinityCookie (optimal for performance)
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive -DisableAffinityCookie
+PS C:\> Get-DataverseRecord -Connection $c -TableName account -Top 1000 | Set-DataverseRecord -Connection $c -TableName account -MaxDegreeOfParallelism 4
+```
+
+When using parallelization with DisableAffinityCookie, the cmdlets will NOT emit a warning. Each parallel worker can be routed to any available server node, maximizing throughput. Note that this may result in eventual consistency where data updated by one worker may not be immediately visible to another worker.
 
 ## PARAMETERS
 
@@ -517,6 +543,21 @@ Parameter Sets: Authenticate using the device code flow
 Aliases:
 
 Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DisableAffinityCookie
+Disables the affinity cookie to maximize performance at the cost of potential data consistency issues. By default, affinity cookie is enabled to ensure connections prefer a specific server node for better consistency. Only disable this if you need maximum performance and understand the tradeoffs with eventual consistency.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False

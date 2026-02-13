@@ -74,6 +74,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.BeginProcessing();
 
+            // Warn if affinity cookie is enabled (default) when using parallelization
+            if (MaxDegreeOfParallelism > 1 && Connection != null && Connection.EnableAffinityCookie)
+            {
+                WriteWarning("Using parallelization with affinity cookie enabled may reduce performance. Consider using Get-DataverseConnection with -DisableAffinityCookie for better parallel performance. Note: Disabling affinity cookie may result in eventual consistency issues.");
+            }
 
             // Initialize runspace pool for streaming chunk processing
             var initialSessionState = InitialSessionState.CreateDefault();
