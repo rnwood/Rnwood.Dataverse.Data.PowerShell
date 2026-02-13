@@ -26,6 +26,13 @@ Set-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> -FileC
  [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
+### ByteStream
+```
+Set-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> -InputByte <Byte>
+ [-FileName <String>] [-MimeType <String>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [-WhatIf] [-Confirm] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 The Set-DataverseFileData cmdlet uploads file data to a Dataverse file column. You can upload from a file path or from a byte array in memory. The cmdlet uses block-based uploading (4MB blocks) for efficient transfer of large files. MIME types are automatically detected from file extensions using the MimeTypesMap package, but can be manually overridden if needed.
 
@@ -125,7 +132,7 @@ Filename to use when uploading from byte array
 
 ```yaml
 Type: String
-Parameter Sets: Bytes
+Parameter Sets: Bytes, ByteStream
 Aliases:
 
 Required: False
@@ -162,6 +169,21 @@ Required: True
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -InputByte
+Byte stream input from the pipeline
+
+```yaml
+Type: Byte
+Parameter Sets: ByteStream
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
@@ -249,6 +271,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.String
 ### System.Guid
 ### System.Byte[]
+### System.Byte
 ## OUTPUTS
 
 ### System.Void
