@@ -82,7 +82,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 PopulateEntityReferenceNamesFromLinks(entity, "organizationid", "organization_link", "name");
                 PopulateEntityReferenceNamesFromLinks(entity, "managedidentityid", "managedidentity_link", "name");
 
-                PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display, WriteVerbose);
+                // Use Raw for managedidentityid since those records typically don't have meaningful names
+                PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), 
+                    attr => attr.LogicalName == "managedidentityid" ? ValueType.Raw : ValueType.Display, 
+                    WriteVerbose);
                 WriteObject(psObject);
             }
         }

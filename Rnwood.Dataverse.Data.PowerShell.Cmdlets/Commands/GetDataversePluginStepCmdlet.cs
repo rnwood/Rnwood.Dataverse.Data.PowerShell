@@ -122,9 +122,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 PopulateEntityReferenceNamesFromLinks(entity, "plugintypeid", "plugintype_link", "typename");
                 PopulateEntityReferenceNamesFromLinks(entity, "sdkmessageid", "sdkmessage_link", "name");
                 PopulateEntityReferenceNamesFromLinks(entity, "organizationid", "organization_link", "name");
-                // Note: sdkmessagefilterid doesn't have a simple name field, so we skip it
+                // Note: sdkmessagefilterid doesn't have a simple name field, so we use Raw to avoid lookup
 
-                PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), _ => ValueType.Display, WriteVerbose);
+                // Use Raw for sdkmessagefilterid since it doesn't have a meaningful name
+                PSObject psObject = converter.ConvertToPSObject(entity, new ColumnSet(true), 
+                    attr => attr.LogicalName == "sdkmessagefilterid" ? ValueType.Raw : ValueType.Display, 
+                    WriteVerbose);
                 WriteObject(psObject);
             }
         }
