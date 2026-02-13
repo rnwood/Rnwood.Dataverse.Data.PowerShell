@@ -72,7 +72,9 @@ $VerbosePreference = 'Continue'
 
 try {
     Write-Host 'Getting current option set for contact.preferredcontactmethodcode...'
-    $currentOptions = Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName preferredcontactmethodcode
+    $currentOptions = Invoke-WithRetry {
+        Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName preferredcontactmethodcode
+    }
     Write-Host ""Current IsGlobal: $($currentOptions.IsGlobal)""
     Write-Host ""Current Options Count: $($currentOptions.Options.Count)""
     
@@ -86,25 +88,29 @@ try {
     }
     
     Write-Host 'Updating local option set with new labels...'
-    $result = Set-DataverseOptionSetMetadata -Connection $connection `
-        -EntityName contact `
-        -AttributeName preferredcontactmethodcode `
-        -Options @(
-            @{Value=1; Label='Any (Test)'}
-            @{Value=2; Label='Email (Test)'}
-            @{Value=3; Label='Phone (Test)'}
-            @{Value=4; Label='Fax (Test)'}
-            @{Value=5; Label='Mail (Test)'}
-        ) `
-        -NoRemoveMissingOptions `
-        -PassThru `
-        -Confirm:$false
+    $result = Invoke-WithRetry {
+        Set-DataverseOptionSetMetadata -Connection $connection `
+            -EntityName contact `
+            -AttributeName preferredcontactmethodcode `
+            -Options @(
+                @{Value=1; Label='Any (Test)'}
+                @{Value=2; Label='Email (Test)'}
+                @{Value=3; Label='Phone (Test)'}
+                @{Value=4; Label='Fax (Test)'}
+                @{Value=5; Label='Mail (Test)'}
+            ) `
+            -NoRemoveMissingOptions `
+            -PassThru `
+            -Confirm:$false
+    }
     
     Write-Host ""Updated option set returned: $($result -ne $null)""
     Write-Host ""Updated Options Count: $($result.Options.Count)""
     
     # Verify the update
-    $verify = Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName preferredcontactmethodcode
+    $verify = Invoke-WithRetry {
+        Get-DataverseOptionSetMetadata -Connection $connection -EntityName contact -AttributeName preferredcontactmethodcode
+    }
     $testLabel = ($verify.Options | Where-Object { $_.Value -eq 1 }).Label.UserLocalizedLabel.Label
     Write-Host ""Verified label for value 1: $testLabel""
     
@@ -113,12 +119,14 @@ try {
     }
     
     Write-Host 'Restoring original labels...'
-    Set-DataverseOptionSetMetadata -Connection $connection `
-        -EntityName contact `
-        -AttributeName preferredcontactmethodcode `
-        -Options $originalOptions `
-        -NoRemoveMissingOptions `
-        -Confirm:$false
+    Invoke-WithRetry {
+        Set-DataverseOptionSetMetadata -Connection $connection `
+            -EntityName contact `
+            -AttributeName preferredcontactmethodcode `
+            -Options $originalOptions `
+            -NoRemoveMissingOptions `
+            -Confirm:$false
+    }
     
     Write-Host '✓ Local option set updated and restored successfully'
     Write-Host 'SUCCESS: Local option set operations completed'
