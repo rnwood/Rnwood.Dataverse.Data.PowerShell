@@ -30,6 +30,12 @@ Get-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> [-AsBy
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
+### ByteStream
+```
+Get-DataverseFileData -TableName <String> -Id <Guid> -ColumnName <String> [-AsByteStream] [-BlockSize <Int32>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ## DESCRIPTION
 The Get-DataverseFileData cmdlet downloads file data from a Dataverse file column. You can download to a specific file path, to a folder (using the original filename), or retrieve the file content as a byte array for processing in memory.
 
@@ -75,6 +81,21 @@ Return the file content as a byte array
 ```yaml
 Type: SwitchParameter
 Parameter Sets: Bytes
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -AsByteStream
+Output the file content as a byte stream to the pipeline (one byte at a time)
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: ByteStream
 Aliases:
 
 Required: True
@@ -217,6 +238,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Byte[]
 ### System.IO.FileInfo
+### System.Byte
 ## NOTES
 
 ## RELATED LINKS
