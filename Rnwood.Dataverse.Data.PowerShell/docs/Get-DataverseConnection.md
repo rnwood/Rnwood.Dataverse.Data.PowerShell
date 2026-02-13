@@ -711,21 +711,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SaveCredentials
 WARNING: Saves the client secret with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.
 
@@ -820,6 +805,21 @@ Accept wildcard characters: False
 Type: String
 Parameter Sets: Authenticate interactively, Authenticate using the device code flow
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
