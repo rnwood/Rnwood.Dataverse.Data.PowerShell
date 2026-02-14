@@ -8,6 +8,7 @@
     <RootNamespace>Rnwood.Dataverse.Data.PowerShell.Tests</RootNamespace>
     <AssemblyTitle>Rnwood.Dataverse.Data.PowerShell.Tests</AssemblyTitle>
     <Product>Rnwood.Dataverse.Data.PowerShell</Product>
+
     <Copyright>Copyright © 2023-2026 Robert Wood and project contributors</Copyright>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
