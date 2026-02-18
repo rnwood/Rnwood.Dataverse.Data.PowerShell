@@ -48,7 +48,7 @@ Type: Guid
 Parameter Sets: (All)
 Aliases:
 
-Queries and retrieves conversation transcript records from Dataverse. Supports filtering by conversation ID, bot ID, and date range.
+Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
@@ -56,10 +56,8 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-PS C:> Get-DataverseConversationTranscript -BotId $bot.botid -Top 10
-```
+The Dataverse connection to use. Uses the default connection if not specified.
 
-Gets the 10 most recent conversation transcripts for a specific bot.
 ```yaml
 Type: ServiceClient
 Parameter Sets: (All)

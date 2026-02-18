@@ -75,7 +75,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
             return $@"
 {importStatement}
 
-$connection = Get-DataverseConnection -Url '{E2ETestsUrl}' -ClientId '{E2ETestsClientId}' -ClientSecret '{E2ETestsClientSecret}' {disableAffinityCookieParam} -ErrorAction Stop
+$connection = Get-DataverseConnection -Url '{E2ETestsUrl}' -ClientId '{E2ETestsClientId}' -ClientSecret '{E2ETestsClientSecret}' {disableAffinityCookieParam} -SetAsDefault -ErrorAction Stop
 
 function Write-ErrorDetails {{
     param([Parameter(Mandatory = $true)]$ErrorRecord)
