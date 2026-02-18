@@ -1,6 +1,6 @@
 # Copilot Studio Management
 
-PowerShell cmdlets for managing Microsoft Copilot Studio bots and components via Dataverse. These cmdlets provide full CRUD (Create, Read, Update, Delete) operations for bots, bot components (topics, skills, actions), conversation transcript access, and complete bot backup/restore functionality.
+PowerShell cmdlets for managing Microsoft Copilot Studio bots and components via Dataverse. These cmdlets provide full CRUD (Create, Read, Update, Delete) operations for bots, bot components (topics, skills, actions), conversation transcript access, complete bot backup/restore functionality, and **real-time bot conversations using Direct Line API**.
 
 ## Overview
 
@@ -10,12 +10,14 @@ The Copilot Studio management cmdlets enable you to:
 - **Clone components** - Duplicate existing components with custom names
 - **Access conversation history** - Retrieve and analyze conversation transcripts
 - **Backup and restore bots** - Export complete bots with all components and restore them
+- **Have conversations with bots** - Interactive and programmatic bot conversations via Direct Line API
 
 ## Prerequisites
 
 - PowerShell 5.1 or PowerShell Core 7+
 - Access to a Dataverse environment with Copilot Studio
 - Appropriate permissions to read/write bot data
+- **For conversations:** Direct Line channel configured and secret key (see Bot Conversations section)
 
 ## Connection
 
@@ -479,3 +481,163 @@ Common language codes:
 - [Set-DataverseRecord](Set-DataverseRecord.md) - Generic record create/update
 - [Remove-DataverseRecord](Remove-DataverseRecord.md) - Generic record delete
 - [Get-DataverseRecord](Get-DataverseRecord.md) - Generic record query
+
+## Bot Conversations via Direct Line API
+
+Have real-time conversations with Copilot Studio bots using the Direct Line API. Supports both interactive mode (console chat) and non-blocking mode (pipeline/scripting).
+
+### Prerequisites for Conversations
+
+Before using conversation cmdlets, you need to:
+
+1. **Enable Direct Line channel** in Azure Portal:
+   - Go to Azure Portal
+   - Navigate to your bot resource
+   - Select "Channels" > "Direct Line"
+   - Click "Add" if not already enabled
+   
+2. **Get Direct Line secret**:
+   - In Direct Line channel settings
+   - Copy one of the secret keys
+   - Keep this secure - it provides full access to your bot
+
+### Conversation Cmdlets
+
+#### Start-DataverseBotConversation
+
+Starts a conversation session with a bot via Direct Line API.
+
+**Parameters:**
+- `-BotId` (Guid, Mandatory) - Bot ID to start conversation with
+- `-DirectLineSecret` (String, Mandatory) - Direct Line secret or token
+- `-UserId` (String) - User ID for the conversation (auto-generated if not provided)
+- `-UserName` (String) - Display name for the user (defaults to "User")
+- `-PassThru` (Switch) - Return the session object
+
+**Example:**
+```powershell
+$session = Start-DataverseBotConversation -BotId $bot.botid -DirectLineSecret "your-secret" -PassThru
+```
+
+#### Send-DataverseBotMessage
+
+Sends a message to the bot and waits for response.
+
+**Parameters:**
+- `-Session` (PSObject, Mandatory) - Session from Start-DataverseBotConversation
+- `-Message` (String, Mandatory) - Message text to send
+- `-TimeoutSeconds` (Int) - Timeout waiting for response (default: 30)
+
+**Example:**
+```powershell
+$response = Send-DataverseBotMessage -Session $session -Message "Hello!"
+$response.Text  # Bot's response
+```
+
+#### Receive-DataverseBotMessage
+
+Polls for incoming messages from the bot without sending anything. Useful for checking for proactive messages or updates.
+
+**Parameters:**
+- `-Session` (PSObject, Mandatory) - Session from Start-DataverseBotConversation  
+- `-TimeoutSeconds` (Int) - How long to wait for new messages (default: 5, use 0 for immediate)
+- `-IncludeAllActivities` (Switch) - Include typing indicators, events, etc. (not just messages)
+
+**Example:**
+```powershell
+# Check for new messages (wait up to 5 seconds)
+$messages = Receive-DataverseBotMessage -Session $session
+foreach ($msg in $messages) {
+    Write-Host "Bot: $($msg.Text)"
+}
+
+# Immediate check (no waiting)
+$messages = Receive-DataverseBotMessage -Session $session -TimeoutSeconds 0
+```
+
+#### Stop-DataverseBotConversation
+
+Ends the conversation session (optional cleanup).
+
+**Example:**
+```powershell
+Stop-DataverseBotConversation -Session $session
+```
+
+#### Invoke-DataverseBotConversation
+
+Interactive console conversation mode.
+
+**Parameters:**
+- `-BotId` (Guid, Mandatory) - Bot ID to converse with
+- `-DirectLineSecret` (String, Mandatory) - Direct Line secret
+- `-UserName` (String) - Display name (defaults to "User")
+
+**Example:**
+```powershell
+Invoke-DataverseBotConversation -BotId $bot.botid -DirectLineSecret $secret
+```
+
+### Conversation Workflows
+
+**Non-blocking conversation (send and receive separately):**
+
+```powershell
+# Start session
+$session = Start-DataverseBotConversation -BotId $bot.botid -DirectLineSecret $secret -PassThru
+
+# Send a message
+Send-DataverseBotMessage -Session $session -Message "Hello" | Out-Null
+
+# Poll for response
+$responses = Receive-DataverseBotMessage -Session $session -TimeoutSeconds 10
+foreach ($response in $responses) {
+    Write-Host "Bot: $($response.Text)"
+}
+
+# Send another message
+Send-DataverseBotMessage -Session $session -Message "What's the weather?" | Out-Null
+$responses = Receive-DataverseBotMessage -Session $session
+Write-Host "Bot: $($responses[0].Text)"
+
+# End
+Stop-DataverseBotConversation -Session $session
+```
+
+**Background monitoring (check for proactive messages):**
+
+```powershell
+$session = Start-DataverseBotConversation -BotId $bot.botid -DirectLineSecret $secret -PassThru
+
+# Send initial message
+Send-DataverseBotMessage -Session $session -Message "Start monitoring" | Out-Null
+
+# Poll for updates every 10 seconds
+while ($true) {
+    $messages = Receive-DataverseBotMessage -Session $session -TimeoutSeconds 10
+    foreach ($msg in $messages) {
+        Write-Host "[$(Get-Date -Format 'HH:mm:ss')] Bot: $($msg.Text)"
+    }
+    
+    # Check for exit condition
+    if ($messages.Text -match "monitoring complete") {
+        break
+    }
+}
+```
+
+**Interactive mode (simplest approach):**
+
+```powershell
+# Just chat!
+Invoke-DataverseBotConversation -BotId $bot.botid -DirectLineSecret $secret
+```
+
+### Best Practices
+
+1. **Secure credentials:** Store Direct Line secret in environment variables or Key Vault
+2. **Handle timeouts:** Bots may take time to respond to complex queries
+3. **Poll appropriately:** Use Receive-DataverseBotMessage with reasonable timeouts
+4. **Check for null:** Always verify response objects before accessing properties
+5. **Reuse sessions:** Keep the session object for entire conversation lifecycle
+
