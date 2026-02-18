@@ -20,6 +20,9 @@ Compares a solution file with the state of that solution in the target environme
 ### [Compress-DataverseSolutionFile](Compress-DataverseSolutionFile.md)
 Packs a Dataverse solution folder using the Power Apps CLI.
 
+### [Copy-DataverseBotComponent](Copy-DataverseBotComponent.md)
+{{ Fill in the Synopsis }}
+
 ### [Expand-DataverseSolutionFile](Expand-DataverseSolutionFile.md)
 Unpacks a Dataverse solution file using the Power Apps CLI.
 
@@ -35,6 +38,12 @@ Retrieves app module component information from a Dataverse environment.
 ### [Get-DataverseAttributeMetadata](Get-DataverseAttributeMetadata.md)
 Retrieves attribute (column) metadata from Dataverse.
 
+### [Get-DataverseBot](Get-DataverseBot.md)
+{{ Fill in the Synopsis }}
+
+### [Get-DataverseBotComponent](Get-DataverseBotComponent.md)
+{{ Fill in the Synopsis }}
+
 ### [Get-DataverseComponentDependency](Get-DataverseComponentDependency.md)
 Retrieves component dependencies in Dataverse.
 
@@ -47,6 +56,9 @@ See the examples for this pattern below.
 
 ### [Get-DataverseConnectionReference](Get-DataverseConnectionReference.md)
 Gets connection references from Dataverse.
+
+### [Get-DataverseConversationTranscript](Get-DataverseConversationTranscript.md)
+{{ Fill in the Synopsis }}
 
 ### [Get-DataverseDynamicPluginAssembly](Get-DataverseDynamicPluginAssembly.md)
 Extracts source code and build metadata from a dynamic plugin assembly.
@@ -184,6 +196,12 @@ Removes an app module component from Dataverse.
 ### [Remove-DataverseAttributeMetadata](Remove-DataverseAttributeMetadata.md)
 Deletes an attribute (column) from a Dataverse entity.
 
+### [Remove-DataverseBot](Remove-DataverseBot.md)
+{{ Fill in the Synopsis }}
+
+### [Remove-DataverseBotComponent](Remove-DataverseBotComponent.md)
+{{ Fill in the Synopsis }}
+
 ### [Remove-DataverseConnectionReference](Remove-DataverseConnectionReference.md)
 Removes a connection reference from a Dataverse environment.
 
@@ -276,6 +294,12 @@ Sets an app module's icon by downloading an icon from an online icon set and cre
 
 ### [Set-DataverseAttributeMetadata](Set-DataverseAttributeMetadata.md)
 Creates or updates an attribute (column) in Dataverse.
+
+### [Set-DataverseBot](Set-DataverseBot.md)
+{{ Fill in the Synopsis }}
+
+### [Set-DataverseBotComponent](Set-DataverseBotComponent.md)
+{{ Fill in the Synopsis }}
 
 ### [Set-DataverseConnectionAsDefault](Set-DataverseConnectionAsDefault.md)
 Sets the specified Dataverse connection as the default connection for cmdlets that don't specify a connection.
