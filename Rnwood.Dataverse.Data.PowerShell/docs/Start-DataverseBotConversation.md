@@ -5,34 +5,35 @@ online version:
 schema: 2.0.0
 ---
 
-# Remove-DataverseBotComponent
+# Start-DataverseBotConversation
 
 ## SYNOPSIS
-Deletes a bot component from Dataverse.
+Starts a new bot conversation session using Direct Line API.
 
 ## SYNTAX
 
 ```
-Remove-DataverseBotComponent [-BotComponentId] <Guid> [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Start-DataverseBotConversation -BotId <Guid> [-DirectLineSecret <String>] [-UserId <String>]
+ [-UserName <String>] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Permanently deletes a bot component record from Dataverse. This operation requires confirmation by default due to its high impact.
+Initializes a new conversation session with a Copilot Studio bot via the Direct Line API. Returns a session object that can be used with Send-DataverseBotMessage and Receive-DataverseBotMessage cmdlets for non-blocking conversation flow.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> Remove-DataverseBotComponent -BotComponentId $component.botcomponentid
+PS C:\> $session = Start-DataverseBotConversation -BotId $bot.botid -DirectLineSecret $secret -PassThru
 ```
 
-Deletes the specified bot component after confirmation prompt.
+Starts a conversation session and stores the session object for later use.
 
 ## PARAMETERS
 
-### -BotComponentId
-Bot component ID (GUID) to delete.
+### -BotId
+Bot ID (GUID) to start conversation with.
 
 ```yaml
 Type: Guid
@@ -40,7 +41,7 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: 0
+Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
@@ -52,6 +53,37 @@ If not provided, uses the default connection set via Get-DataverseConnection -Se
 
 ```yaml
 Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -DirectLineSecret
+Direct Line secret or token.
+If not provided, attempts to retrieve from bot.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PassThru
+Return the session object for pipeline use.
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
 
@@ -77,13 +109,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -UserId
+User ID to use for the conversation.
+Defaults to generated GUID.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
 Required: False
 Position: Named
@@ -92,14 +125,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+### -UserName
+User name to display in the conversation.
+Defaults to 'User'.
 
 ```yaml
-Type: SwitchParameter
+Type: String
 Parameter Sets: (All)
-Aliases: wi
+Aliases:
 
 Required: False
 Position: Named
@@ -116,7 +149,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Guid
 ## OUTPUTS
 
-### System.Object
+### System.Management.Automation.PSObject
 ## NOTES
 
 ## RELATED LINKS

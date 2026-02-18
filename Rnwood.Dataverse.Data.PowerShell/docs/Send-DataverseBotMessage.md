@@ -5,58 +5,43 @@ online version:
 schema: 2.0.0
 ---
 
-# Remove-DataverseBotComponent
+# Send-DataverseBotMessage
 
 ## SYNOPSIS
-Deletes a bot component from Dataverse.
+Sends a message to an active bot conversation and waits for response.
 
 ## SYNTAX
 
 ```
-Remove-DataverseBotComponent [-BotComponentId] <Guid> [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Send-DataverseBotMessage -Session <PSObject> [-Message] <String> [-TimeoutSeconds <Int32>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Permanently deletes a bot component record from Dataverse. This operation requires confirmation by default due to its high impact.
+Sends a text message to an active bot conversation session via Direct Line API. Waits for and returns the bot's response activities. This is a non-blocking cmdlet designed for programmatic conversations.
 
 ## EXAMPLES
 
 ### Example 1
 ```powershell
-PS C:\> Remove-DataverseBotComponent -BotComponentId $component.botcomponentid
+PS C:\> $response = Send-DataverseBotMessage -Session $session -Message "Hello"
+PS C:\> Write-Host $response.Text
 ```
 
-Deletes the specified bot component after confirmation prompt.
+Sends a message to the bot and displays the response text.
 
 ## PARAMETERS
 
-### -BotComponentId
-Bot component ID (GUID) to delete.
+### -Message
+Message text to send to the bot.
 
 ```yaml
-Type: Guid
+Type: String
 Parameter Sets: (All)
 Aliases:
 
 Required: True
 Position: 0
-Default value: None
-Accept pipeline input: True (ByPropertyName)
-Accept wildcard characters: False
-```
-
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
-If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
-
-```yaml
-Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -77,29 +62,29 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -Session
+Conversation session object from Start-DataverseBotConversation.
 
 ```yaml
-Type: SwitchParameter
+Type: PSObject
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
-Required: False
+Required: True
 Position: Named
 Default value: None
-Accept pipeline input: False
+Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+### -TimeoutSeconds
+Timeout in seconds to wait for bot response.
+Default is 30 seconds.
 
 ```yaml
-Type: SwitchParameter
+Type: Int32
 Parameter Sets: (All)
-Aliases: wi
+Aliases:
 
 Required: False
 Position: Named
@@ -113,10 +98,10 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.Guid
+### System.Management.Automation.PSObject
 ## OUTPUTS
 
-### System.Object
+### System.Management.Automation.PSObject
 ## NOTES
 
 ## RELATED LINKS
