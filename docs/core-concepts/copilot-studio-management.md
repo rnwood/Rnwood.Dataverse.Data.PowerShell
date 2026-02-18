@@ -1,6 +1,6 @@
 # Copilot Studio Management
 
-PowerShell cmdlets for managing Microsoft Copilot Studio bots and components via Dataverse. These cmdlets provide full CRUD (Create, Read, Update, Delete) operations for bots, bot components (topics, skills, actions), and conversation transcript access.
+PowerShell cmdlets for managing Microsoft Copilot Studio bots and components via Dataverse. These cmdlets provide full CRUD (Create, Read, Update, Delete) operations for bots, bot components (topics, skills, actions), conversation transcript access, and complete bot backup/restore functionality.
 
 ## Overview
 
@@ -9,6 +9,7 @@ The Copilot Studio management cmdlets enable you to:
 - **Manage bot components** - Create, update, and delete topics, skills, and other bot components
 - **Clone components** - Duplicate existing components with custom names
 - **Access conversation history** - Retrieve and analyze conversation transcripts
+- **Backup and restore bots** - Export complete bots with all components and restore them
 
 ## Prerequisites
 
@@ -270,6 +271,98 @@ Get-DataverseConversationTranscript -StartDate $startDate -EndDate $endDate
 
 # Get a specific transcript
 Get-DataverseConversationTranscript -ConversationTranscriptId "12345678-1234-1234-1234-123456789012"
+```
+
+## Bot Backup and Restore
+
+### Export-DataverseBot
+
+Exports a complete bot with all its components to a backup directory.
+
+**Parameters:**
+- `-BotId` (Guid, Required) - Bot ID to export
+- `-OutputPath` (String) - Output directory (auto-generates timestamped folder if not specified)
+- `-PassThru` (Switch) - Return export information
+
+**Backup Format:**
+The export creates a structured directory containing:
+- `manifest.json` - Export metadata (version, date, bot info, component count)
+- `bot_config.json` - Bot configuration and settings
+- `[component].yaml` - Component data files (YAML format)
+- `[component].meta.json` - Component metadata files (name, schema, type, description)
+
+**Examples:**
+
+```powershell
+# Export to auto-generated timestamped folder
+$export = Export-DataverseBot -BotId $bot.botid -PassThru
+Write-Host "Exported to: $($export.OutputPath)"
+Write-Host "Components: $($export.ComponentCount)"
+
+# Export to specific directory
+Export-DataverseBot -BotId $bot.botid -OutputPath "./backups/my_bot_backup"
+
+# Preview export with WhatIf
+Export-DataverseBot -BotId $bot.botid -WhatIf
+```
+
+### Import-DataverseBot
+
+Imports a bot from a backup directory created by Export-DataverseBot.
+
+**Parameters:**
+- `-Path` (String, Required) - Path to backup directory
+- `-Name` (String) - New name for bot (uses backup name if not specified)
+- `-SchemaName` (String) - New schema name (uses backup schema name if not specified)
+- `-TargetBotId` (Guid) - Existing bot ID to restore components to (creates new bot if not specified)
+- `-Overwrite` (Switch) - Overwrite existing components with matching schema names
+- `-PassThru` (Switch) - Return import information
+
+**Examples:**
+
+```powershell
+# Import as new bot with custom name
+$import = Import-DataverseBot `
+    -Path "./backups/my_bot_backup" `
+    -Name "Restored Bot" `
+    -SchemaName "restored_bot" `
+    -PassThru
+Write-Host "Created bot: $($import.BotId)"
+Write-Host "Imported components: $($import.ComponentsImported)"
+
+# Restore components to existing bot
+Import-DataverseBot `
+    -Path "./backups/my_bot_backup" `
+    -TargetBotId $existingBot.botid `
+    -Overwrite
+
+# Preview import with WhatIf
+Import-DataverseBot `
+    -Path "./backups/my_bot_backup" `
+    -Name "Test Import" `
+    -WhatIf
+```
+
+### Complete Backup and Restore Workflow
+
+```powershell
+# 1. Export existing bot
+$bot = Get-DataverseBot -Name "Production Bot"
+$export = Export-DataverseBot -BotId $bot.botid -OutputPath "./backups/prod_bot" -PassThru
+Write-Host "Backed up $($export.ComponentCount) components to $($export.OutputPath)"
+
+# 2. Later, restore to new environment
+$import = Import-DataverseBot `
+    -Path "./backups/prod_bot" `
+    -Name "Development Bot" `
+    -SchemaName "dev_bot" `
+    -PassThru
+Write-Host "Restored $($import.ComponentsImported) components to new bot $($import.BotId)"
+
+# 3. Verify restored bot
+$restoredBot = Get-DataverseBot -BotId $import.BotId
+$restoredComponents = Get-DataverseBotComponent -ParentBotId $restoredBot.botid
+Write-Host "Verified: $($restoredComponents.Count) components in restored bot"
 ```
 
 ## Common Scenarios

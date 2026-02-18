@@ -127,6 +127,8 @@ For more advanced scenarios including metadata and customisations, see the [docu
 - [`Get-DataverseBot`](docs/core-concepts/copilot-studio-management.md#get-dataversebot) — list and retrieve Copilot Studio bots
 - [`Set-DataverseBot`](docs/core-concepts/copilot-studio-management.md#set-dataversebot) — create or update bots
 - [`Remove-DataverseBot`](docs/core-concepts/copilot-studio-management.md#remove-dataversebot) — delete bots
+- [`Export-DataverseBot`](docs/core-concepts/copilot-studio-management.md#export-dataversebot) — export complete bot with all components to backup directory
+- [`Import-DataverseBot`](docs/core-concepts/copilot-studio-management.md#import-dataversebot) — import bot from backup directory
 - [`Get-DataverseBotComponent`](docs/core-concepts/copilot-studio-management.md#get-dataversebotcomponent) — list and retrieve bot components (topics, skills)
 - [`Set-DataverseBotComponent`](docs/core-concepts/copilot-studio-management.md#set-dataversebotcomponent) — create or update bot components
 - [`Remove-DataverseBotComponent`](docs/core-concepts/copilot-studio-management.md#remove-dataversebotcomponent) — delete bot components
