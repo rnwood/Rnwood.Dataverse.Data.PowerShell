@@ -16,9 +16,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
 
         protected E2ETestBase()
         {
-            E2ETestsUrl = Environment.GetEnvironmentVariable("E2ETESTS_URL") ?? string.Empty;
-            E2ETestsClientId = Environment.GetEnvironmentVariable("E2ETESTS_CLIENTID") ?? string.Empty;
-            E2ETestsClientSecret = Environment.GetEnvironmentVariable("E2ETESTS_CLIENTSECRET") ?? string.Empty;
+            // Try E2ETESTS_* first (explicit test configuration)
+            // Fall back to DATAVERSE_DEV_* (development environment)
+            E2ETestsUrl = Environment.GetEnvironmentVariable("E2ETESTS_URL") 
+                ?? Environment.GetEnvironmentVariable("DATAVERSE_DEV_URL") 
+                ?? string.Empty;
+            
+            E2ETestsClientId = Environment.GetEnvironmentVariable("E2ETESTS_CLIENTID") 
+                ?? Environment.GetEnvironmentVariable("DATAVERSE_DEV_CLIENTID") 
+                ?? string.Empty;
+            
+            E2ETestsClientSecret = Environment.GetEnvironmentVariable("E2ETESTS_CLIENTSECRET") 
+                ?? Environment.GetEnvironmentVariable("DATAVERSE_DEV_CLIENTSECRET") 
+                ?? string.Empty;
 
             // Skip tests if any required environment variable is missing
             SkipE2ETests = string.IsNullOrWhiteSpace(E2ETestsUrl) ||
@@ -27,7 +37,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Infrastructure
 
             if (SkipE2ETests)
             {
-                Skip.If(true, "E2E tests skipped: E2ETESTS_URL, E2ETESTS_CLIENTID, or E2ETESTS_CLIENTSECRET environment variables not set");
+                Skip.If(true, "E2E tests skipped: Neither E2ETESTS_* nor DATAVERSE_DEV_* environment variables are set");
             }
         }
 
