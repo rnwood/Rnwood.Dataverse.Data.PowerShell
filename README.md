@@ -122,6 +122,14 @@ For more advanced scenarios including metadata and customisations, see the [docu
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
 
+### Copilot Studio Management
+- [`Get-DataverseBot`](docs/copilot-studio-cmdlets.md#get-dataversebot) — list and retrieve Copilot Studio bots
+- [`Get-DataverseBotComponent`](docs/copilot-studio-cmdlets.md#get-dataversebotcomponent) — list and retrieve bot components (topics, skills)
+- [`Get-DataverseConversationTranscript`](docs/copilot-studio-cmdlets.md#get-dataverseconversationtranscript) — list and retrieve conversation transcripts
+- [`Copy-DataverseBotComponent`](docs/copilot-studio-cmdlets.md#copy-dataversebotcomponent) — clone bot components
+- [`Compare-DataverseBotComponent`](docs/copilot-studio-cmdlets.md#compare-dataversebotcomponent) — compare two bot components
+
+See the [Copilot Studio Cmdlets Guide](docs/copilot-studio-cmdlets.md) for detailed examples and usage.
  
 ### Advanced Operations
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
