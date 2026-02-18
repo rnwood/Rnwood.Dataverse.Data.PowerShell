@@ -20,8 +20,14 @@ Compares a solution file with the state of that solution in the target environme
 ### [Compress-DataverseSolutionFile](Compress-DataverseSolutionFile.md)
 Packs a Dataverse solution folder using the Power Apps CLI.
 
+### [Copy-DataverseBotComponent](Copy-DataverseBotComponent.md)
+Clones an existing bot component.
+
 ### [Expand-DataverseSolutionFile](Expand-DataverseSolutionFile.md)
 Unpacks a Dataverse solution file using the Power Apps CLI.
+
+### [Export-DataverseBot](Export-DataverseBot.md)
+Exports a complete bot backup to a directory.
 
 ### [Export-DataverseSolution](Export-DataverseSolution.md)
 Exports a solution from Dataverse using an asynchronous job with progress reporting.
@@ -35,6 +41,12 @@ Retrieves app module component information from a Dataverse environment.
 ### [Get-DataverseAttributeMetadata](Get-DataverseAttributeMetadata.md)
 Retrieves attribute (column) metadata from Dataverse.
 
+### [Get-DataverseBot](Get-DataverseBot.md)
+Retrieves Copilot Studio bots from Dataverse.
+
+### [Get-DataverseBotComponent](Get-DataverseBotComponent.md)
+Retrieves bot components (topics, skills, actions) from Dataverse.
+
 ### [Get-DataverseComponentDependency](Get-DataverseComponentDependency.md)
 Retrieves component dependencies in Dataverse.
 
@@ -47,6 +59,9 @@ See the examples for this pattern below.
 
 ### [Get-DataverseConnectionReference](Get-DataverseConnectionReference.md)
 Gets connection references from Dataverse.
+
+### [Get-DataverseConversationTranscript](Get-DataverseConversationTranscript.md)
+Retrieves conversation transcripts from Dataverse.
 
 ### [Get-DataverseDynamicPluginAssembly](Get-DataverseDynamicPluginAssembly.md)
 Extracts source code and build metadata from a dynamic plugin assembly.
@@ -154,8 +169,14 @@ Retrieves web resources from a Dataverse environment.
 ### [Get-DataverseWhoAmI](Get-DataverseWhoAmI.md)
 Retrieves details about the current Dataverse user and organization specified by the connection provided.
 
+### [Import-DataverseBot](Import-DataverseBot.md)
+Imports a bot from a backup directory.
+
 ### [Import-DataverseSolution](Import-DataverseSolution.md)
 Imports a solution to Dataverse using an asynchronous job with progress reporting.
+
+### [Invoke-DataverseBotConversation](Invoke-DataverseBotConversation.md)
+Starts an interactive console chat session with a bot.
 
 ### [Invoke-DataverseParallel](Invoke-DataverseParallel.md)
 Processes input objects in parallel using chunked batches with cloned Dataverse connections.
@@ -175,6 +196,9 @@ Invokes an XrmToolbox plugin downloaded from NuGet with the current Dataverse co
 ### [Publish-DataverseCustomizations](Publish-DataverseCustomizations.md)
 Publishes customizations in Dataverse.
 
+### [Receive-DataverseBotMessage](Receive-DataverseBotMessage.md)
+Polls for incoming messages from an active bot conversation without sending.
+
 ### [Remove-DataverseAppModule](Remove-DataverseAppModule.md)
 Removes an app module (model-driven app) from Dataverse.
 
@@ -183,6 +207,12 @@ Removes an app module component from Dataverse.
 
 ### [Remove-DataverseAttributeMetadata](Remove-DataverseAttributeMetadata.md)
 Deletes an attribute (column) from a Dataverse entity.
+
+### [Remove-DataverseBot](Remove-DataverseBot.md)
+Deletes a Copilot Studio bot from Dataverse.
+
+### [Remove-DataverseBotComponent](Remove-DataverseBotComponent.md)
+Deletes a bot component from Dataverse.
 
 ### [Remove-DataverseConnectionReference](Remove-DataverseConnectionReference.md)
 Removes a connection reference from a Dataverse environment.
@@ -265,6 +295,9 @@ Removes Dataverse views (savedquery and userquery entities).
 ### [Remove-DataverseWebResource](Remove-DataverseWebResource.md)
 Removes a web resource from a Dataverse environment.
 
+### [Send-DataverseBotMessage](Send-DataverseBotMessage.md)
+Sends a message to an active bot conversation and waits for response.
+
 ### [Set-DataverseAppModule](Set-DataverseAppModule.md)
 Creates or updates an app module (model-driven app) in Dataverse.
 
@@ -276,6 +309,12 @@ Sets an app module's icon by downloading an icon from an online icon set and cre
 
 ### [Set-DataverseAttributeMetadata](Set-DataverseAttributeMetadata.md)
 Creates or updates an attribute (column) in Dataverse.
+
+### [Set-DataverseBot](Set-DataverseBot.md)
+Creates or updates a Copilot Studio bot in Dataverse.
+
+### [Set-DataverseBotComponent](Set-DataverseBotComponent.md)
+Creates or updates a bot component in Dataverse.
 
 ### [Set-DataverseConnectionAsDefault](Set-DataverseConnectionAsDefault.md)
 Sets the specified Dataverse connection as the default connection for cmdlets that don't specify a connection.
@@ -372,6 +411,12 @@ Creates or updates Dataverse views (savedquery and userquery entities) with flex
 
 ### [Set-DataverseWebResource](Set-DataverseWebResource.md)
 Creates or updates web resources in a Dataverse environment.
+
+### [Start-DataverseBotConversation](Start-DataverseBotConversation.md)
+Starts a new bot conversation session using Direct Line API.
+
+### [Stop-DataverseBotConversation](Stop-DataverseBotConversation.md)
+Ends an active bot conversation session.
 
 ### [Test-DataverseRecordAccess](Test-DataverseRecordAccess.md)
 Tests the access rights a security principal (user or team) has for a specific record.

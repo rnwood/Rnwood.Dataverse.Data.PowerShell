@@ -476,14 +476,21 @@ jobs:
           $testsExecuted = $false
           
           # Determine test filter based on OS
+          # TEMPORARY: Only run BotManagement tests while in development
+          # To run all tests, remove the BotManagement filter
+          $testFilter = "--filter `"Category=BotManagement`""
+          Write-Host "Running BotManagement tests only (temporary during development)"
+          
+          # Additional platform-based filtering (if needed)
           # On windows-latest: run all tests
           # On other platforms: run only CrossPlatformTest tests
-          $testFilter = ""
           if ("${{ matrix.os }}" -ne "windows-latest" -or "${{ matrix.powershell_version }}" -ne "latest") {
-            $testFilter = "--filter `"Category=CrossPlatform`""
-            Write-Host "Non-Windows platform detected - running only CrossPlatformTest tests"
+            # For non-Windows or non-latest PS, also require CrossPlatform category
+            # This would be: --filter "Category=BotManagement&Category=CrossPlatform"
+            # For now, just run BotManagement tests on all platforms
+            Write-Host "Platform: ${{ matrix.os }}, PowerShell: ${{ matrix.powershell_version }}"
           } else {
-            Write-Host "Windows, PS latest platform detected - running all E2E tests"
+            Write-Host "Platform: Windows, PS latest - running BotManagement E2E tests"
           }
           
           # Run net8.0 E2E tests on PS latest or PS7

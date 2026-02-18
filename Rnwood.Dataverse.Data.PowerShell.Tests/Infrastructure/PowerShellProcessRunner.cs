@@ -108,6 +108,51 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                     StandardOutputEncoding = Encoding.UTF8,
                     StandardErrorEncoding = Encoding.UTF8
                 };
+                
+                // Pass TESTMODULEPATH to child process if set
+                var testModulePath = Environment.GetEnvironmentVariable("TESTMODULEPATH");
+                if (!string.IsNullOrWhiteSpace(testModulePath))
+                {
+                    startInfo.EnvironmentVariables["TESTMODULEPATH"] = testModulePath;
+                }
+                
+                // Pass E2E test credentials to child process if set
+                var e2eTestsUrl = Environment.GetEnvironmentVariable("E2ETESTS_URL");
+                if (!string.IsNullOrWhiteSpace(e2eTestsUrl))
+                {
+                    startInfo.EnvironmentVariables["E2ETESTS_URL"] = e2eTestsUrl;
+                }
+                
+                var e2eTestsClientId = Environment.GetEnvironmentVariable("E2ETESTS_CLIENTID");
+                if (!string.IsNullOrWhiteSpace(e2eTestsClientId))
+                {
+                    startInfo.EnvironmentVariables["E2ETESTS_CLIENTID"] = e2eTestsClientId;
+                }
+                
+                var e2eTestsClientSecret = Environment.GetEnvironmentVariable("E2ETESTS_CLIENTSECRET");
+                if (!string.IsNullOrWhiteSpace(e2eTestsClientSecret))
+                {
+                    startInfo.EnvironmentVariables["E2ETESTS_CLIENTSECRET"] = e2eTestsClientSecret;
+                }
+                
+                // Pass DATAVERSE_DEV_* credentials to child process if set
+                var dataverseDevUrl = Environment.GetEnvironmentVariable("DATAVERSE_DEV_URL");
+                if (!string.IsNullOrWhiteSpace(dataverseDevUrl))
+                {
+                    startInfo.EnvironmentVariables["DATAVERSE_DEV_URL"] = dataverseDevUrl;
+                }
+                
+                var dataverseDevClientId = Environment.GetEnvironmentVariable("DATAVERSE_DEV_CLIENTID");
+                if (!string.IsNullOrWhiteSpace(dataverseDevClientId))
+                {
+                    startInfo.EnvironmentVariables["DATAVERSE_DEV_CLIENTID"] = dataverseDevClientId;
+                }
+                
+                var dataverseDevClientSecret = Environment.GetEnvironmentVariable("DATAVERSE_DEV_CLIENTSECRET");
+                if (!string.IsNullOrWhiteSpace(dataverseDevClientSecret))
+                {
+                    startInfo.EnvironmentVariables["DATAVERSE_DEV_CLIENTSECRET"] = dataverseDevClientSecret;
+                }
 
                 var stdout = new StringBuilder();
                 var stderr = new StringBuilder();

@@ -93,6 +93,7 @@ For more advanced scenarios including metadata and customisations, see the [docu
 - [Managing Forms](docs/core-concepts/form-management.md) - Creat, update, and managed forms
 - [View Management](docs/core-concepts/view-management.md) - Create, update, and manage system and personal views
 - [App Module Management](docs/core-concepts/app-module-management.md) - Create, update, and manage model-driven apps
+- [Copilot Studio Management](docs/core-concepts/copilot-studio-management.md) - Create, update, and manage Copilot Studio bots and components
 - [Environment Variables and Connection References](docs/core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
 - [Plugin Management](docs/core-concepts/plugin-management.md) - Manage plugins including dynamic plugin assemblies (compile C# on-the-fly), traditional plugin assemblies, plugin steps, and images
 - [Solution Management](docs/core-concepts/solution-management.md) - Import, export, and manage solutions
@@ -122,6 +123,19 @@ For more advanced scenarios including metadata and customisations, see the [docu
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
 - [`Invoke-DataverseSql`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseSql.md) — run SQL queries against Dataverse
 
+### Copilot Studio Management
+- [`Get-DataverseBot`](docs/core-concepts/copilot-studio-management.md#get-dataversebot) — list and retrieve Copilot Studio bots
+- [`Set-DataverseBot`](docs/core-concepts/copilot-studio-management.md#set-dataversebot) — create or update bots
+- [`Remove-DataverseBot`](docs/core-concepts/copilot-studio-management.md#remove-dataversebot) — delete bots
+- [`Export-DataverseBot`](docs/core-concepts/copilot-studio-management.md#export-dataversebot) — export complete bot with all components to backup directory
+- [`Import-DataverseBot`](docs/core-concepts/copilot-studio-management.md#import-dataversebot) — import bot from backup directory
+- [`Get-DataverseBotComponent`](docs/core-concepts/copilot-studio-management.md#get-dataversebotcomponent) — list and retrieve bot components (topics, skills)
+- [`Set-DataverseBotComponent`](docs/core-concepts/copilot-studio-management.md#set-dataversebotcomponent) — create or update bot components
+- [`Remove-DataverseBotComponent`](docs/core-concepts/copilot-studio-management.md#remove-dataversebotcomponent) — delete bot components
+- [`Copy-DataverseBotComponent`](docs/core-concepts/copilot-studio-management.md#copy-dataversebotcomponent) — clone bot components
+- [`Get-DataverseConversationTranscript`](docs/core-concepts/copilot-studio-management.md#get-dataverseconversationtranscript) — list and retrieve conversation transcripts
+
+See the [Copilot Studio Management Guide](docs/core-concepts/copilot-studio-management.md) for detailed examples and usage.
  
 ### Advanced Operations
 - [`Invoke-DataverseRequest`](Rnwood.Dataverse.Data.PowerShell/docs/Invoke-DataverseRequest.md) — execute arbitrary SDK requests
