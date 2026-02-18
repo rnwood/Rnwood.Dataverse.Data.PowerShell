@@ -26,6 +26,9 @@ Packs a Dataverse solution folder using the Power Apps CLI.
 ### [Expand-DataverseSolutionFile](Expand-DataverseSolutionFile.md)
 Unpacks a Dataverse solution file using the Power Apps CLI.
 
+### [Export-DataverseBot](Export-DataverseBot.md)
+{{ Fill in the Synopsis }}
+
 ### [Export-DataverseSolution](Export-DataverseSolution.md)
 Exports a solution from Dataverse using an asynchronous job with progress reporting.
 
@@ -165,6 +168,9 @@ Retrieves web resources from a Dataverse environment.
 
 ### [Get-DataverseWhoAmI](Get-DataverseWhoAmI.md)
 Retrieves details about the current Dataverse user and organization specified by the connection provided.
+
+### [Import-DataverseBot](Import-DataverseBot.md)
+{{ Fill in the Synopsis }}
 
 ### [Import-DataverseSolution](Import-DataverseSolution.md)
 Imports a solution to Dataverse using an asynchronous job with progress reporting.
