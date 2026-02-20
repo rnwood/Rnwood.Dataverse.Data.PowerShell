@@ -55,10 +55,10 @@
   
   <!-- FakeXrmEasy for mocking - version depends on target framework -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageReference Include="FakeXrmEasy.v9" Version="3.7.0" />
+    <PackageReference Include="FakeXrmEasy.v9" Version="3.8.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="FakeXrmEasy.v9" Version="2.8.0" />
+    <PackageReference Include="FakeXrmEasy.v9" Version="3.8.0" />
   </ItemGroup>
   
   <!-- Project reference to cmdlets -->
