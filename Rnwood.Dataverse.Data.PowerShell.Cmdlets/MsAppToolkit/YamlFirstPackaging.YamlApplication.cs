@@ -329,7 +329,7 @@ public static partial class YamlFirstPackaging
                 // Token-containment matching keeps this template-driven while allowing friendly aliases
                 // like Vertical/Horizontal/FlexibleHeight/AutoLayout/ManualLayout.
                 var contains = normalized
-                    .Where(v => v.Token.Contains(requestedToken, StringComparison.OrdinalIgnoreCase))
+                    .Where(v => v.Token.IndexOf(requestedToken, StringComparison.OrdinalIgnoreCase) >= 0)
                     .OrderBy(v => v.Token.Length)
                     .ThenBy(v => v.Value, StringComparer.OrdinalIgnoreCase)
                     .FirstOrDefault();
@@ -339,7 +339,7 @@ public static partial class YamlFirstPackaging
                 }
 
                 var reverseContains = normalized
-                    .Where(v => requestedToken.Contains(v.Token, StringComparison.OrdinalIgnoreCase))
+                    .Where(v => requestedToken.IndexOf(v.Token, StringComparison.OrdinalIgnoreCase) >= 0)
                     .OrderByDescending(v => v.Token.Length)
                     .ThenBy(v => v.Value, StringComparer.OrdinalIgnoreCase)
                     .FirstOrDefault();
@@ -350,12 +350,12 @@ public static partial class YamlFirstPackaging
 
                 var synonyms = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
                 {
-                    ["vertical"] = ["vertical"],
-                    ["horizontal"] = ["horizontal"],
-                    ["autolayout"] = ["autolayout"],
-                    ["manuallayout"] = ["manuallayout"],
-                    ["flexibleheight"] = ["variabletemplateheight", "flexibleheight"],
-                    ["variabletemplateheight"] = ["variabletemplateheight", "flexibleheight"],
+                    { "vertical", new string[] { "vertical" } },
+                    { "horizontal", new string[] { "horizontal" } },
+                    { "autolayout", new string[] { "autolayout" } },
+                    { "manuallayout", new string[] { "manuallayout" } },
+                    { "flexibleheight", new string[] { "variabletemplateheight", "flexibleheight" } },
+                    { "variabletemplateheight", new string[] { "variabletemplateheight", "flexibleheight" } },
                 };
 
                 if (synonyms.TryGetValue(requestedToken, out var tokens))
@@ -363,7 +363,7 @@ public static partial class YamlFirstPackaging
                     foreach (var t in tokens)
                     {
                         var match = normalized
-                            .Where(v => v.Token.Contains(t, StringComparison.OrdinalIgnoreCase))
+                            .Where(v => v.Token.IndexOf(t, StringComparison.OrdinalIgnoreCase) >= 0)
                             .OrderBy(v => v.Token.Length)
                             .ThenBy(v => v.Value, StringComparer.OrdinalIgnoreCase)
                             .FirstOrDefault();
@@ -394,11 +394,11 @@ public static partial class YamlFirstPackaging
         }
 
         string? desiredLayout = null;
-        if (variantName.Contains("vertical", StringComparison.OrdinalIgnoreCase))
+        if (variantName.IndexOf("vertical", StringComparison.OrdinalIgnoreCase) >= 0)
         {
             desiredLayout = "Layout.Vertical";
         }
-        else if (variantName.Contains("horizontal", StringComparison.OrdinalIgnoreCase))
+        else if (variantName.IndexOf("horizontal", StringComparison.OrdinalIgnoreCase) >= 0)
         {
             desiredLayout = "Layout.Horizontal";
         }
@@ -520,7 +520,7 @@ public static partial class YamlFirstPackaging
 
     private static string StripFormula(string value)
     {
-        return value.StartsWith('=') ? value[1..] : value;
+        return (value.Length > 0 && value[0] == '=') ? value.Substring(1) : value;
     }
 
 
@@ -693,14 +693,14 @@ public static partial class YamlFirstPackaging
         var templateName = node["Template"]?["Name"]?.GetValue<string>() ?? string.Empty;
         var templateId = node["Template"]?["Id"]?.GetValue<string>() ?? string.Empty;
         return string.Equals(templateName, "PowerApps_CoreControls_TextInputCanvas", StringComparison.OrdinalIgnoreCase)
-               || templateId.Contains("PowerApps_CoreControls_TextInputCanvas", StringComparison.OrdinalIgnoreCase);
+               || templateId.IndexOf("PowerApps_CoreControls_TextInputCanvas", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     private static List<string> GetNearestPropertyNames(string input, IReadOnlyList<string> candidates, int maxSuggestions)
     {
         if (string.IsNullOrWhiteSpace(input) || candidates.Count == 0 || maxSuggestions <= 0)
         {
-            return [];
+            return new List<string>();
         }
 
         var normalizedInput = input.Trim();

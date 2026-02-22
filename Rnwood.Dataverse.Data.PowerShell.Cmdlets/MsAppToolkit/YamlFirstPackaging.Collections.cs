@@ -191,6 +191,24 @@ public static partial class YamlFirstPackaging
         return removed;
     }
 
+    public static IReadOnlyList<JsonObject> GetDataSources(string unpackDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(unpackDirectory) || !Directory.Exists(unpackDirectory))
+        {
+            throw new DirectoryNotFoundException($"Unpack directory not found: '{unpackDirectory}'.");
+        }
+
+        var (_, _, dataSources) = OpenDataSourcesDocument(unpackDirectory);
+        var result = new List<JsonObject>();
+        for (var i = 0; i < dataSources.Count; i++)
+        {
+            if (dataSources[i] is JsonObject ds)
+            {
+                result.Add((JsonObject)ds.DeepClone());
+            }
+        }
+        return result;
+    }
 
     private static void ValidateDataSourcesContainCollections(
         Dictionary<string, byte[]> entries,
@@ -495,7 +513,7 @@ public static partial class YamlFirstPackaging
     {
         record = new JsonObject();
         var trimmed = expression?.Trim() ?? string.Empty;
-        if (!trimmed.StartsWith('{') || !trimmed.EndsWith('}'))
+        if (!(trimmed.Length > 0 && trimmed[0] == '{') || !(trimmed.Length > 0 && trimmed[trimmed.Length - 1] == '}'))
         {
             return false;
         }
@@ -629,7 +647,7 @@ public static partial class YamlFirstPackaging
     private static bool IsStaticRecordLiteral(string expression)
     {
         var trimmed = expression?.Trim() ?? string.Empty;
-        if (!trimmed.StartsWith('{') || !trimmed.EndsWith('}'))
+        if (!(trimmed.Length > 0 && trimmed[0] == '{') || !(trimmed.Length > 0 && trimmed[trimmed.Length - 1] == '}'))
         {
             return false;
         }
@@ -698,7 +716,7 @@ public static partial class YamlFirstPackaging
                 yield break;
             }
 
-            var args = SplitTopLevelArguments(script[(openParen + 1)..closeParen]);
+            var args = SplitTopLevelArguments(script.Substring(openParen + 1, closeParen - openParen - 1));
             yield return new FunctionCall(functionName, args);
 
             index = closeParen + 1;
@@ -851,9 +869,9 @@ public static partial class YamlFirstPackaging
             return string.Empty;
         }
 
-        if (arg.Length >= 2 && arg[0] == '\'' && arg[^1] == '\'')
+        if (arg.Length >= 2 && arg[0] == '\'' && arg[arg.Length - 1] == '\'')
         {
-            return arg[1..^1];
+            return arg.Substring(1, arg.Length - 2);
         }
 
         return IdentifierRegex.IsMatch(arg) ? arg : string.Empty;
@@ -1050,10 +1068,10 @@ public static partial class YamlFirstPackaging
 
     private static bool LooksLikeImageField(string columnName, string value)
     {
-        if (columnName.Contains("image", StringComparison.OrdinalIgnoreCase)
-            || columnName.Contains("photo", StringComparison.OrdinalIgnoreCase)
-            || columnName.Contains("icon", StringComparison.OrdinalIgnoreCase)
-            || columnName.Contains("logo", StringComparison.OrdinalIgnoreCase))
+        if (columnName.IndexOf("image", StringComparison.OrdinalIgnoreCase) >= 0
+            || columnName.IndexOf("photo", StringComparison.OrdinalIgnoreCase) >= 0
+            || columnName.IndexOf("icon", StringComparison.OrdinalIgnoreCase) >= 0
+            || columnName.IndexOf("logo", StringComparison.OrdinalIgnoreCase) >= 0)
         {
             return true;
         }

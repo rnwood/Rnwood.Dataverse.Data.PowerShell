@@ -119,7 +119,7 @@ public static partial class YamlFirstPackaging
         }
 
         Directory.CreateDirectory(outputDirectory);
-        ZipFile.ExtractToDirectory(msappPath, outputDirectory, overwriteFiles: true);
+        ZipFile.ExtractToDirectory(msappPath, outputDirectory);
     }
 
     public static void InitEmptyAppDirectory(string outputDirectory, string screenName = "Screen1")

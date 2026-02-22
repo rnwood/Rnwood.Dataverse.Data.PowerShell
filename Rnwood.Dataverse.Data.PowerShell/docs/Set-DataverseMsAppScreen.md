@@ -37,7 +37,9 @@ Set-DataverseMsAppScreen [-CanvasApp] <PSObject> [-ScreenName] <String> -YamlFil
 ```
 
 ## DESCRIPTION
-Adds or updates a screen in a Canvas app .msapp file. The screen is defined using Power Apps YAML format. The .msapp file is modified in place.
+Adds or updates a screen in a Canvas app .msapp file. The screen is defined using Power Apps YAML format. The .msapp file is modified in place and the Controls/*.json files are automatically regenerated from the YAML.
+
+> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.
 
 ## EXAMPLES
 
@@ -194,5 +196,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Object
 ## NOTES
+
+> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.
+
+A warning is emitted at runtime each time this cmdlet runs as a reminder of the experimental status. To suppress the warning, use the common `-WarningAction SilentlyContinue` parameter.
 
 ## RELATED LINKS

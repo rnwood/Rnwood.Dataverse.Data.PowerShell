@@ -1,18 +1,15 @@
 using System;
 using System.IO;
-using System.Management.Automation;
-#if NET8_0_OR_GREATER
 using MsAppToolkit;
-#endif
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Helper class for msapp pack/unpack operations using YamlFirstPackaging.
+    /// Helper class for msapp pack/unpack operations using YamlFirstPackaging (MsAppToolkit).
+    /// Automatically regenerates Controls/*.json from YAML.
     /// </summary>
     internal static class MsAppPackagingHelper
     {
-#if NET8_0_OR_GREATER
         /// <summary>
         /// Unpacks an msapp file to a directory using Yaml-first packaging.
         /// </summary>
@@ -32,6 +29,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Modifies an msapp by unpacking, modifying YAML, and repacking.
+        /// Controls/*.json files are automatically regenerated from YAML.
         /// </summary>
         public static void ModifyMsApp(string msappPath, Action<string> modifyAction, bool ignoreMissingDataSources = true)
         {
@@ -70,36 +68,5 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             MsAppToolkit.YamlFirstPackaging.InitEmptyAppDirectory(outputDirectory, screenName);
         }
-#else
-        // For net462, we don't have MsAppToolkit available
-        // The cmdlets will need to handle this appropriately
-        public static void UnpackMsApp(string msappPath, string outputDirectory)
-        {
-            throw new NotSupportedException(
-                "YAML-first msapp packaging with automatic Controls JSON generation is only supported on PowerShell 7+ (.NET 8). " +
-                "For PowerShell 5.1 (.NET Framework 4.6.2), please use PowerShell 7+.");
-        }
-
-        public static void PackMsApp(string sourceDirectory, string outputMsappPath, bool ignoreMissingDataSources = true)
-        {
-            throw new NotSupportedException(
-                "YAML-first msapp packaging with automatic Controls JSON generation is only supported on PowerShell 7+ (.NET 8). " +
-                "For PowerShell 5.1 (.NET Framework 4.6.2), please use PowerShell 7+.");
-        }
-
-        public static void ModifyMsApp(string msappPath, Action<string> modifyAction, bool ignoreMissingDataSources = true)
-        {
-            throw new NotSupportedException(
-                "YAML-first msapp packaging with automatic Controls JSON generation is only supported on PowerShell 7+ (.NET 8). " +
-                "For PowerShell 5.1 (.NET Framework 4.6.2), please use PowerShell 7+.");
-        }
-
-        public static void InitEmptyAppDirectory(string outputDirectory, string screenName = "Screen1")
-        {
-            throw new NotSupportedException(
-                "YAML-first msapp packaging with automatic Controls JSON generation is only supported on PowerShell 7+ (.NET 8). " +
-                "For PowerShell 5.1 (.NET Framework 4.6.2), please use PowerShell 7+.");
-        }
-#endif
     }
 }

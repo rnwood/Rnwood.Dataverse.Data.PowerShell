@@ -59,6 +59,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            WriteWarning("YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.");
+
             bool isFromObject = ParameterSetName.Contains("FromObject");
             string targetPath = null;
             string tempMsappPath = null;
@@ -193,15 +195,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     WriteVerbose($"Component '{ComponentName}' set successfully in .msapp file with regenerated Controls JSON");
                 }
-            }
-            catch (NotSupportedException ex)
-            {
-                WriteWarning(ex.Message);
-                ThrowTerminatingError(new ErrorRecord(
-                    ex,
-                    "YamlPackagingNotSupported",
-                    ErrorCategory.NotImplemented,
-                    targetPath));
             }
             finally
             {

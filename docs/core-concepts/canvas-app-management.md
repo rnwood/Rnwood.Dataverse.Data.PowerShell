@@ -113,6 +113,8 @@ Remove-DataverseCanvasApp -Name "new_maybeexists" -IfExists
 
 ## Working with .msapp Files Locally
 
+> **Note:** The `Set-DataverseMsAppScreen`, `Set-DataverseMsAppComponent`, and `Set-DataverseMsAppProperties` cmdlets use Power Apps YAML format to modify .msapp files. **This functionality is experimental.** The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio. A warning is emitted at runtime for each of these cmdlets as a reminder. To suppress the warning, use `-WarningAction SilentlyContinue`.
+
 ### Understanding .msapp Structure
 
 A .msapp file is a ZIP archive with this typical structure:
