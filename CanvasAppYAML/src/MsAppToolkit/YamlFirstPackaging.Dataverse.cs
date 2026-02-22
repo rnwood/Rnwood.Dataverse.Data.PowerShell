@@ -186,6 +186,131 @@ public static partial class YamlFirstPackaging
         UpsertQualifiedFormsValues(unpackDirectory, normalizedDatasetName, logicalName, displayCollectionName, formsPayload);
     }
 
+    public static async Task UpsertDataverseTableDataSourceAsync(
+        string unpackDirectory,
+        string environmentUrl,
+        string tableLogicalName,
+        string accessToken,
+        string? dataSourceName = null,
+        string? datasetName = null,
+        string? apiId = null)
+    {
+        if (string.IsNullOrWhiteSpace(unpackDirectory) || !Directory.Exists(unpackDirectory))
+        {
+            throw new DirectoryNotFoundException($"Unpack directory not found: '{unpackDirectory}'.");
+        }
+
+        if (string.IsNullOrWhiteSpace(environmentUrl))
+        {
+            throw new ArgumentException("Environment URL must be provided.", nameof(environmentUrl));
+        }
+
+        if (string.IsNullOrWhiteSpace(tableLogicalName))
+        {
+            throw new ArgumentException("Dataverse table logical name must be provided.", nameof(tableLogicalName));
+        }
+
+        if (string.IsNullOrWhiteSpace(accessToken))
+        {
+            throw new ArgumentException("Access token must be provided.", nameof(accessToken));
+        }
+
+        var normalizedEnvironmentUrl = NormalizeEnvironmentUrl(environmentUrl);
+        var normalizedTable = tableLogicalName.Trim();
+        var escapedTable = EscapeODataLiteral(normalizedTable);
+        var normalizedDatasetName = string.IsNullOrWhiteSpace(datasetName) ? "default.cds" : datasetName;
+
+        if (TryRestoreRemovedDataSource(unpackDirectory, dataSourceName, normalizedDatasetName, normalizedTable, out var restoredEntry, out var originalIndex))
+        {
+            var (_, restoredRoot, restoredDataSources) = OpenDataSourcesDocument(unpackDirectory);
+            UpsertDataSourceEntry(restoredDataSources, restoredEntry!, originalIndex);
+            restoredRoot["DataSources"] = restoredDataSources;
+            SaveDataSourcesDocument(unpackDirectory, restoredRoot);
+            return;
+        }
+
+        var entityMetadata = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"EntityDefinitions(LogicalName='{escapedTable}')?$select=LogicalName,LogicalCollectionName,EntitySetName,PrimaryIdAttribute,PrimaryNameAttribute,ObjectTypeCode,DisplayName,DisplayCollectionName");
+        var allAttributes = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"EntityDefinitions(LogicalName='{escapedTable}')/Attributes?$select=LogicalName,DisplayName");
+        var booleanAttrPayload = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"EntityDefinitions(LogicalName='{escapedTable}')/Attributes/Microsoft.Dynamics.CRM.BooleanAttributeMetadata?$select=LogicalName,SchemaName,DisplayName&$expand=OptionSet");
+        var picklistAttrPayload = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"EntityDefinitions(LogicalName='{escapedTable}')/Attributes/Microsoft.Dynamics.CRM.PicklistAttributeMetadata?$select=LogicalName,SchemaName,DisplayName&$expand=OptionSet");
+        var multiPicklistAttrPayload = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"EntityDefinitions(LogicalName='{escapedTable}')/Attributes/Microsoft.Dynamics.CRM.MultiSelectPicklistAttributeMetadata?$select=LogicalName,SchemaName,DisplayName&$expand=OptionSet");
+        var stateAttrPayload = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"EntityDefinitions(LogicalName='{escapedTable}')/Attributes/Microsoft.Dynamics.CRM.StateAttributeMetadata?$select=LogicalName,SchemaName,DisplayName&$expand=OptionSet");
+        var statusAttrPayload = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"EntityDefinitions(LogicalName='{escapedTable}')/Attributes/Microsoft.Dynamics.CRM.StatusAttributeMetadata?$select=LogicalName,SchemaName,DisplayName&$expand=OptionSet");
+        var entityNameAttrPayload = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"EntityDefinitions(LogicalName='{escapedTable}')/Attributes/Microsoft.Dynamics.CRM.EntityNameAttributeMetadata?$select=MetadataId,LogicalName,SchemaName,DisplayName&$expand=OptionSet");
+
+        var optionAttributePayloads = new List<JsonObject> { booleanAttrPayload, picklistAttrPayload, multiPicklistAttrPayload, stateAttrPayload, statusAttrPayload };
+
+        var viewsPayload = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"savedqueries?$select=savedqueryid,name,returnedtypecode&$filter=returnedtypecode eq '{escapedTable}'");
+        var defaultPublicViewPayload = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"savedqueries?$select=layoutxml&$filter=returnedtypecode eq '{escapedTable}' and isdefault eq true&$top=1");
+        var formsPayload = await DataverseGetJsonAsync(normalizedEnvironmentUrl, accessToken, $"systemforms?$select=formid,name,objecttypecode,type&$filter=objecttypecode eq '{escapedTable}'");
+
+        var logicalName = entityMetadata["LogicalName"]?.GetValue<string>() ?? normalizedTable;
+        var entitySetName = entityMetadata["EntitySetName"]?.GetValue<string>() ?? (logicalName + "s");
+        var logicalCollectionName = entityMetadata["LogicalCollectionName"]?.GetValue<string>() ?? entitySetName;
+        var displayCollectionName = GetLocalizedLabel(entityMetadata["DisplayCollectionName"], logicalCollectionName);
+
+        var normalizedApiId = string.IsNullOrWhiteSpace(apiId)
+            ? "/providers/microsoft.powerapps/apis/shared_commondataserviceforapps"
+            : apiId;
+
+        var preferredDataSourceName = ResolvePreferredDataSourceName(dataSourceName, displayCollectionName, logicalName, logicalCollectionName, entitySetName);
+        var displayNameMap = BuildAttributeDisplayNameMap(allAttributes);
+        var optionSetEntries = BuildOptionSetEntries(optionAttributePayloads, normalizedDatasetName, displayCollectionName, logicalName);
+        var viewInfoEntry = BuildViewInfoEntry(viewsPayload, normalizedDatasetName, logicalName, displayCollectionName);
+
+        var tableDefinitionObj = new JsonObject
+        {
+            ["TableName"] = logicalName,
+            ["EntityMetadata"] = entityMetadata.ToJsonString(),
+            ["PicklistOptionSetAttribute"] = picklistAttrPayload.ToJsonString(),
+            ["MultiSelectPicklistOptionSetAttribute"] = multiPicklistAttrPayload.ToJsonString(),
+            ["StateOptionSetAttribute"] = stateAttrPayload.ToJsonString(),
+            ["StatusOptionSetAttribute"] = statusAttrPayload.ToJsonString(),
+            ["BooleanOptionSetAttribute"] = booleanAttrPayload.ToJsonString(),
+            ["EntityNameOptionSetAttribute"] = entityNameAttrPayload.ToJsonString(),
+            ["Views"] = viewsPayload.ToJsonString(),
+            ["DefaultPublicView"] = defaultPublicViewPayload.ToJsonString(),
+            ["IconUrl"] = string.Empty,
+            ["Forms"] = formsPayload.ToJsonString(),
+        };
+
+        var nativeEntry = new JsonObject
+        {
+            ["Name"] = preferredDataSourceName,
+            ["IsSampleData"] = false,
+            ["IsWritable"] = true,
+            ["Type"] = "NativeCDSDataSourceInfo",
+            ["DatasetName"] = normalizedDatasetName,
+            ["EntitySetName"] = entitySetName,
+            ["LogicalName"] = logicalName,
+            ["PreferredName"] = displayCollectionName,
+            ["IsHidden"] = false,
+            ["WadlMetadata"] = new JsonObject { ["WadlXml"] = string.Empty },
+            ["ApiId"] = normalizedApiId,
+            ["CdsActionInfo"] = new JsonObject(),
+            ["CdsFCBContext"] = JsonValue.Create("{\"FileType\":true,\"ImageExternalStorage\":true}"),
+            ["TableDefinition"] = JsonValue.Create(tableDefinitionObj.ToJsonString()),
+            ["NativeCDSDataSourceInfoNameMapping"] = displayNameMap,
+        };
+
+        var (_, root, dataSources) = OpenDataSourcesDocument(unpackDirectory);
+        UpsertDataSourceEntry(dataSources, nativeEntry);
+        foreach (var optionSetEntry in optionSetEntries)
+        {
+            UpsertDataSourceEntry(dataSources, optionSetEntry);
+        }
+
+        if (viewInfoEntry is not null)
+        {
+            UpsertDataSourceEntry(dataSources, viewInfoEntry);
+        }
+
+        root["DataSources"] = dataSources;
+        SaveDataSourcesDocument(unpackDirectory, root);
+
+        UpsertQualifiedFormsValues(unpackDirectory, normalizedDatasetName, logicalName, displayCollectionName, formsPayload);
+    }
+
     private static async Task<string> AcquireDataverseAccessTokenAsync(string environmentUrl)
     {
         var uri = new Uri(environmentUrl);

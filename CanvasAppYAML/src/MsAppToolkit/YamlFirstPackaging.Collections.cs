@@ -191,6 +191,24 @@ public static partial class YamlFirstPackaging
         return removed;
     }
 
+    public static IReadOnlyList<JsonObject> GetDataSources(string unpackDirectory)
+    {
+        if (string.IsNullOrWhiteSpace(unpackDirectory) || !Directory.Exists(unpackDirectory))
+        {
+            throw new DirectoryNotFoundException($"Unpack directory not found: '{unpackDirectory}'.");
+        }
+
+        var (_, _, dataSources) = OpenDataSourcesDocument(unpackDirectory);
+        var result = new List<JsonObject>();
+        for (var i = 0; i < dataSources.Count; i++)
+        {
+            if (dataSources[i] is JsonObject ds)
+            {
+                result.Add((JsonObject)ds.DeepClone());
+            }
+        }
+        return result;
+    }
 
     private static void ValidateDataSourcesContainCollections(
         Dictionary<string, byte[]> entries,

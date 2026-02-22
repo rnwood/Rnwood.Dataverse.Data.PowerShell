@@ -96,6 +96,9 @@ Retrieves available icons from supported online icon sets.
 ### [Get-DataverseMsAppComponent](Get-DataverseMsAppComponent.md)
 Retrieves components from a .msapp file.
 
+### [Get-DataverseMsAppDataSource](Get-DataverseMsAppDataSource.md)
+Gets data sources from a Canvas app .msapp file.
+
 ### [Get-DataverseMsAppProperties](Get-DataverseMsAppProperties.md)
 {{ Fill in the Synopsis }}
 
@@ -241,6 +244,9 @@ Removes a tab from a Dataverse form.
 ### [Remove-DataverseMsAppComponent](Remove-DataverseMsAppComponent.md)
 Removes a component from a .msapp file.
 
+### [Remove-DataverseMsAppDataSource](Remove-DataverseMsAppDataSource.md)
+Removes a data source from a Canvas app .msapp file.
+
 ### [Remove-DataverseMsAppScreen](Remove-DataverseMsAppScreen.md)
 Removes a screen from a .msapp file.
 
@@ -349,8 +355,11 @@ Creates or updates a tab on a Dataverse form with support for column layouts.
 ### [Set-DataverseMsAppComponent](Set-DataverseMsAppComponent.md)
 Adds or updates a component in a .msapp file.
 
+### [Set-DataverseMsAppDataSource](Set-DataverseMsAppDataSource.md)
+Adds or updates a data source in a Canvas app .msapp file.
+
 ### [Set-DataverseMsAppProperties](Set-DataverseMsAppProperties.md)
-{{ Fill in the Synopsis }}
+Sets the app-level properties of a Canvas app .msapp file using Power Apps YAML format.
 
 ### [Set-DataverseMsAppScreen](Set-DataverseMsAppScreen.md)
 Adds or updates a screen in a .msapp file.
