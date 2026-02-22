@@ -213,7 +213,7 @@ public static partial class YamlFirstPackaging
         var entries = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
         foreach (var path in Directory.GetFiles(directory, "*", SearchOption.AllDirectories))
         {
-            var rel = Path.GetRelativePath(directory, path).Replace('\\', '/');
+            var rel = path.Substring(directory.TrimEnd(Path.DirectorySeparatorChar).Length).TrimStart(Path.DirectorySeparatorChar, '/').Replace('\\', '/');
             entries[rel] = File.ReadAllBytes(path);
         }
 
@@ -299,7 +299,7 @@ public static partial class YamlFirstPackaging
 
     private sealed class ControlIdAllocator
     {
-        private readonly HashSet<int> _used = [];
+        private readonly HashSet<int> _used = new HashSet<int>();
         private readonly Dictionary<string, int> _nameMap = new(StringComparer.OrdinalIgnoreCase);
         private int _max;
 

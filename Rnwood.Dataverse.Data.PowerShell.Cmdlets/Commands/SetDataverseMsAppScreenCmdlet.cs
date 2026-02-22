@@ -134,11 +134,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return;
                 }
 
-#if NET8_0_OR_GREATER
                 WriteVerbose("Using YAML-first packaging to update msapp with automatic Controls JSON generation");
-#else
-                WriteVerbose("Updating msapp YAML content using direct zip manipulation");
-#endif
 
                 // Use MsAppPackagingHelper to modify the msapp
                 MsAppPackagingHelper.ModifyMsApp(targetPath, unpackDir =>
@@ -174,19 +170,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     byte[] modifiedBytes = File.ReadAllBytes(tempMsappPath);
                     string base64 = Convert.ToBase64String(modifiedBytes);
                     CanvasApp.Properties["document"].Value = base64;
-#if NET8_0_OR_GREATER
                     WriteVerbose($"Screen '{ScreenName}' set successfully in Canvas app object with regenerated Controls JSON");
-#else
-                    WriteVerbose($"Screen '{ScreenName}' set successfully in Canvas app object");
-#endif
                 }
                 else
                 {
-#if NET8_0_OR_GREATER
                     WriteVerbose($"Screen '{ScreenName}' set successfully in .msapp file with regenerated Controls JSON");
-#else
-                    WriteVerbose($"Screen '{ScreenName}' set successfully in .msapp file");
-#endif
                 }
             }
             finally

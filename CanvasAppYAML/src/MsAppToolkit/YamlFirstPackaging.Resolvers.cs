@@ -456,9 +456,9 @@ public static partial class YamlFirstPackaging
                 return string.Empty;
             }
 
-            var at = raw.Split('@', 2, StringSplitOptions.TrimEntries);
+            var at = raw.Split(new[] { '@' }, 2).Select(p => p.Trim()).ToArray();
             var typePart = at[0];
-            var slash = typePart.Split('/', 2, StringSplitOptions.TrimEntries);
+            var slash = typePart.Split(new[] { '/' }, 2).Select(p => p.Trim()).ToArray();
             var canonical = slash.Length == 2 ? slash[1] : slash[0];
             if (string.Equals(canonical, "TextInput", StringComparison.OrdinalIgnoreCase))
             {
@@ -476,7 +476,7 @@ public static partial class YamlFirstPackaging
                 return string.Empty;
             }
 
-            var at = raw.Split('@', 2, StringSplitOptions.TrimEntries);
+            var at = raw.Split(new[] { '@' }, 2).Select(p => p.Trim()).ToArray();
             return at.Length > 1 ? at[1] : string.Empty;
         }
 
@@ -494,7 +494,7 @@ public static partial class YamlFirstPackaging
 
             var trimmed = id.TrimEnd('/');
             var idx = trimmed.LastIndexOf('/');
-            var tail = idx >= 0 ? trimmed[(idx + 1)..] : trimmed;
+            var tail = idx >= 0 ? trimmed.Substring(idx + 1) : trimmed;
             return NormalizeAlias(tail);
         }
     }
@@ -586,7 +586,7 @@ public static partial class YamlFirstPackaging
             var idx = trimmed.LastIndexOf('/');
             if (idx >= 0 && idx < trimmed.Length - 1)
             {
-                yield return trimmed[(idx + 1)..];
+                yield return trimmed.Substring(idx + 1);
             }
         }
     }
@@ -668,7 +668,7 @@ public static partial class YamlFirstPackaging
             var idx = trimmed.LastIndexOf('/');
             if (idx >= 0 && idx < trimmed.Length - 1)
             {
-                yield return trimmed[(idx + 1)..];
+                yield return trimmed.Substring(idx + 1);
             }
         }
     }
@@ -1107,11 +1107,11 @@ public static partial class YamlFirstPackaging
             }
 
             string? desiredLayout = null;
-            if (variantName.Contains("vertical", StringComparison.OrdinalIgnoreCase))
+            if (variantName.IndexOf("vertical", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 desiredLayout = "Layout.Vertical";
             }
-            else if (variantName.Contains("horizontal", StringComparison.OrdinalIgnoreCase))
+            else if (variantName.IndexOf("horizontal", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 desiredLayout = "Layout.Horizontal";
             }
@@ -1215,7 +1215,7 @@ public static partial class YamlFirstPackaging
                 var idx = trimmed.LastIndexOf('/');
                 if (idx >= 0 && idx < trimmed.Length - 1)
                 {
-                    keys.Add(trimmed[(idx + 1)..].ToLowerInvariant());
+                    keys.Add(trimmed.Substring(idx + 1).ToLowerInvariant());
                 }
             }
 
@@ -1298,10 +1298,10 @@ public static partial class YamlFirstPackaging
                 return false;
             }
 
-            if (normalized.Contains("ThisItem", StringComparison.OrdinalIgnoreCase)
-                || normalized.Contains("ThisRecord", StringComparison.OrdinalIgnoreCase)
-                || normalized.Contains("Gallery", StringComparison.OrdinalIgnoreCase)
-                || normalized.Contains("Parent.Template", StringComparison.OrdinalIgnoreCase))
+            if (normalized.IndexOf("ThisItem", StringComparison.OrdinalIgnoreCase) >= 0
+                || normalized.IndexOf("ThisRecord", StringComparison.OrdinalIgnoreCase) >= 0
+                || normalized.IndexOf("Gallery", StringComparison.OrdinalIgnoreCase) >= 0
+                || normalized.IndexOf("Parent.Template", StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 return true;
             }

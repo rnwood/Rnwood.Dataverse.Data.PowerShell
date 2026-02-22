@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO.Compression;
+using System.Linq;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Encodings.Web;
@@ -19,14 +20,14 @@ public static partial class YamlFirstPackaging
     {
         if (!entries.TryGetValue("References/Templates.json", out var templatesBytes))
         {
-            return [];
+            return Array.Empty<UsedTemplate>();
         }
 
         var templatesRoot = JsonNode.Parse(templatesBytes)?.AsObject();
         var usedTemplates = templatesRoot?["UsedTemplates"] as JsonArray;
         if (usedTemplates is null)
         {
-            return [];
+            return Array.Empty<UsedTemplate>();
         }
 
         var list = new List<UsedTemplate>();
@@ -61,14 +62,14 @@ public static partial class YamlFirstPackaging
     {
         if (!entries.TryGetValue("References/Templates.json", out var templatesBytes))
         {
-            return [];
+            return Array.Empty<JsonObject>();
         }
 
         var templatesRoot = JsonNode.Parse(templatesBytes)?.AsObject();
         var pcfTemplates = templatesRoot?["PcfTemplates"] as JsonArray;
         if (pcfTemplates is null)
         {
-            return [];
+            return Array.Empty<JsonObject>();
         }
 
         return pcfTemplates.OfType<JsonObject>().Select(t => (JsonObject)t.DeepClone()).ToList();
@@ -175,7 +176,7 @@ public static partial class YamlFirstPackaging
     {
         if (string.IsNullOrWhiteSpace(templateXml))
         {
-            return [];
+            return Array.Empty<string>();
         }
 
         try
@@ -183,7 +184,7 @@ public static partial class YamlFirstPackaging
             var root = XDocument.Parse(templateXml).Root;
             if (root is null)
             {
-                return [];
+                return Array.Empty<string>();
             }
 
             return root
@@ -197,18 +198,18 @@ public static partial class YamlFirstPackaging
         }
         catch
         {
-            return [];
+            return Array.Empty<string>();
         }
     }
 
     /// <summary>Parses top-level insertMetadata category names from template XML.</summary>
     private static IReadOnlyList<string> ParseInsertCategoriesFromTemplateXml(string templateXml)
     {
-        if (string.IsNullOrWhiteSpace(templateXml)) return [];
+        if (string.IsNullOrWhiteSpace(templateXml)) return Array.Empty<string>();
         try
         {
             var root = XDocument.Parse(templateXml).Root;
-            if (root is null) return [];
+            if (root is null) return Array.Empty<string>();
             return root
                 .Descendants()
                 .Where(e => string.Equals(e.Name.LocalName, "insertMetadata", StringComparison.OrdinalIgnoreCase))
@@ -220,7 +221,7 @@ public static partial class YamlFirstPackaging
                 .OrderBy(n => n, StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
-        catch { return []; }
+        catch { return Array.Empty<string>(); }
     }
 
     /// <summary>
@@ -229,11 +230,11 @@ public static partial class YamlFirstPackaging
     /// </summary>
     private static IReadOnlyList<string> ParseRootPreviewFlagsFromTemplateXml(string templateXml)
     {
-        if (string.IsNullOrWhiteSpace(templateXml)) return [];
+        if (string.IsNullOrWhiteSpace(templateXml)) return Array.Empty<string>();
         try
         {
             var root = XDocument.Parse(templateXml).Root;
-            if (root is null) return [];
+            if (root is null) return Array.Empty<string>();
             // Find requiredConditions that are direct children of the root (or the first non-variant child),
             // i.e. NOT nested inside a controlVariant element.
             var variantNames = root.Descendants()
@@ -249,7 +250,7 @@ public static partial class YamlFirstPackaging
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
-        catch { return []; }
+        catch { return Array.Empty<string>(); }
     }
 
     /// <summary>
@@ -448,7 +449,7 @@ public static partial class YamlFirstPackaging
     {
         if (string.IsNullOrWhiteSpace(templateXml))
         {
-            return [];
+            return Array.Empty<EmbeddedTemplateProperty>();
         }
 
         try
@@ -456,7 +457,7 @@ public static partial class YamlFirstPackaging
             var root = XDocument.Parse(templateXml).Root;
             if (root is null)
             {
-                return [];
+                return Array.Empty<EmbeddedTemplateProperty>();
             }
 
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -479,7 +480,7 @@ public static partial class YamlFirstPackaging
         }
         catch
         {
-            return [];
+            return Array.Empty<EmbeddedTemplateProperty>();
         }
     }
 
@@ -630,7 +631,7 @@ public static partial class YamlFirstPackaging
 
     private static (int major, int minor, int patch) SemverTuple(string version)
     {
-        var tokens = version.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var tokens = version.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray();
         var nums = new[] { 0, 0, 0 };
         for (var i = 0; i < Math.Min(3, tokens.Length); i++)
         {
@@ -648,6 +649,6 @@ public static partial class YamlFirstPackaging
             return templateName;
         }
 
-        return char.ToUpperInvariant(templateName[0]) + templateName[1..];
+        return char.ToUpperInvariant(templateName[0]) + templateName.Substring(1);
     }
 }

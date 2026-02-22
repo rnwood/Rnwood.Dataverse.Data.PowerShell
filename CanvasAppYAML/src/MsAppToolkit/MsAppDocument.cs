@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO.Compression;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -324,7 +325,7 @@ public sealed class MsAppDocument
             return "=";
         }
 
-        return fx.StartsWith('=') ? fx : $"={fx}";
+        return (fx.Length > 0 && fx[0] == '=') ? fx : $"={fx}";
     }
 
     private static string StripFormulaPrefix(string? fx)
@@ -334,7 +335,7 @@ public sealed class MsAppDocument
             return string.Empty;
         }
 
-        return fx.StartsWith('=') ? fx[1..] : fx;
+        return (fx.Length > 0 && fx[0] == '=') ? fx.Substring(1) : fx;
     }
 
     private static string FormatControlType(string templateName, string templateVersion)
@@ -344,7 +345,7 @@ public sealed class MsAppDocument
             return "Unknown";
         }
 
-        var title = char.ToUpperInvariant(templateName[0]) + templateName[1..];
+        var title = char.ToUpperInvariant(templateName[0]) + templateName.Substring(1);
         return string.IsNullOrWhiteSpace(templateVersion) ? title : $"{title}@{templateVersion}";
     }
 
@@ -355,7 +356,7 @@ public sealed class MsAppDocument
             return ("unknown", "1.0.0");
         }
 
-        var parts = controlType.Split('@', 2, StringSplitOptions.TrimEntries);
+        var parts = controlType.Split(new[] { '@' }, 2).Select(p => p.Trim()).ToArray();
         var name = parts[0].ToLowerInvariant();
         var version = parts.Length > 1 ? parts[1] : "1.0.0";
         return (name, version);
@@ -698,7 +699,7 @@ public sealed class TemplateCatalog
 
     private static (int major, int minor, int patch) SemverTuple(string version)
     {
-        var tokens = version.Split('.', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var tokens = version.Split(new[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToArray();
         var nums = new[] { 0, 0, 0 };
         for (var i = 0; i < Math.Min(3, tokens.Length); i++)
         {
@@ -813,7 +814,7 @@ public sealed class ThemeCatalog
 
         if (value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && value.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
         {
-            var key = value[prefix.Length..^suffix.Length];
+            var key = value.Substring(prefix.Length, value.Length - prefix.Length - suffix.Length);
             if (palette.TryGetValue(key, out var resolved))
             {
                 return resolved;

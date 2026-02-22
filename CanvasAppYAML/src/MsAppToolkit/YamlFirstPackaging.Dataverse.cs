@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO.Compression;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Encodings.Web;
@@ -496,7 +497,7 @@ public static partial class YamlFirstPackaging
 
     private static string EscapeODataLiteral(string value)
     {
-        return value.Replace("'", "''", StringComparison.Ordinal);
+        return value.Replace("'", "''");
     }
 
     private static string ToOptionSetTypeKey(string optionSetType)
@@ -591,7 +592,7 @@ public static partial class YamlFirstPackaging
             sb.Append(char.ToUpperInvariant(lower[0]));
             if (lower.Length > 1)
             {
-                sb.Append(lower.AsSpan(1));
+                sb.Append(lower, 1, lower.Length - 1);
             }
         }
 

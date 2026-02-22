@@ -44,8 +44,7 @@ public static partial class YamlFirstPackaging
             // Patch the raw YAML text before conversion so the outer optional group is complete.
             yamlText = yamlText.Replace(
                 @"^([a-zA-Z][a-zA-Z0-9]{1,7})_)?(\w+\.)+(\w+)(\([0-9a-f-]{36}\))?$",
-                @"^(([a-zA-Z][a-zA-Z0-9]{1,7})_)?(\w+\.)+(\w+)(\([0-9a-f-]{36}\))?$",
-                StringComparison.Ordinal);
+                @"^(([a-zA-Z][a-zA-Z0-9]{1,7})_)?(\w+\.)+(\w+)(\([0-9a-f-]{36}\))?$");
 
             var schemaNode = ParseYamlToJsonNode(yamlText)
                 ?? throw new InvalidOperationException("pa.schema.yaml parsed to null.");
