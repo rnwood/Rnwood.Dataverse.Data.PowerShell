@@ -19,6 +19,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.Power
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rnwood.Dataverse.Data.PowerShell.E2ETests", "Rnwood.Dataverse.Data.PowerShell.E2ETests\Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj", "{C22E3EDA-4444-5057-B731-FF8FC0575E2F}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "CanvasAppYAML", "CanvasAppYAML", "{8D8A5393-ED94-E340-6AFA-9EFB4A15EF10}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1B5AA010-6CAB-6807-F71E-529D0091688A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MsAppToolkit", "CanvasAppYAML\src\MsAppToolkit\MsAppToolkit.csproj", "{23109601-CF75-4DDC-AA8E-8F2F9B16B866}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -125,9 +131,25 @@ Global
 		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Release|x64.Build.0 = Release|Any CPU
 		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Release|x86.ActiveCfg = Release|Any CPU
 		{C22E3EDA-4444-5057-B731-FF8FC0575E2F}.Release|x86.Build.0 = Release|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Debug|x64.Build.0 = Debug|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Debug|x86.Build.0 = Debug|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Release|x64.ActiveCfg = Release|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Release|x64.Build.0 = Release|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Release|x86.ActiveCfg = Release|Any CPU
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{1B5AA010-6CAB-6807-F71E-529D0091688A} = {8D8A5393-ED94-E340-6AFA-9EFB4A15EF10}
+		{23109601-CF75-4DDC-AA8E-8F2F9B16B866} = {1B5AA010-6CAB-6807-F71E-529D0091688A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {0847561B-A643-4E2B-865D-CDD6EED88127}

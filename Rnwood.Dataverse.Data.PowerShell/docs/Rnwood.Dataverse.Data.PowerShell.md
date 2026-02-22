@@ -60,6 +60,9 @@ Retrieves entity key (alternate key) metadata for a Dataverse table.
 ### [Get-DataverseEntityMetadata](Get-DataverseEntityMetadata.md)
 Retrieves entity (table) metadata from Dataverse.
 
+### [Get-DataverseEnvironment](Get-DataverseEnvironment.md)
+Lists Dataverse environments accessible to the authenticated user.
+
 ### [Get-DataverseEnvironmentVariableDefinition](Get-DataverseEnvironmentVariableDefinition.md)
 Gets environment variable definitions from Dataverse.
 
@@ -241,6 +244,9 @@ Removes a component from a .msapp file.
 ### [Remove-DataverseMsAppScreen](Remove-DataverseMsAppScreen.md)
 Removes a screen from a .msapp file.
 
+### [Remove-DataverseOptionSetMetadata](Remove-DataverseOptionSetMetadata.md)
+Deletes a global option set from Dataverse.
+
 ### [Remove-DataversePluginAssembly](Remove-DataversePluginAssembly.md)
 Removes a plugin assembly from a Dataverse environment.
 
@@ -350,7 +356,7 @@ Adds or updates a component in a .msapp file.
 Adds or updates a screen in a .msapp file.
 
 ### [Set-DataverseOptionSetMetadata](Set-DataverseOptionSetMetadata.md)
-Creates or updates a global option set in Dataverse.
+Creates or updates a global or local option set in Dataverse.
 
 ### [Set-DataverseOrganizationSettings](Set-DataverseOrganizationSettings.md)
 Updates organization settings in the single organization record in a Dataverse environment.
@@ -405,7 +411,4 @@ Creates or updates web resources in a Dataverse environment.
 
 ### [Test-DataverseRecordAccess](Test-DataverseRecordAccess.md)
 Tests the access rights a security principal (user or team) has for a specific record.
-
-### [Wait-DataversePublish](Wait-DataversePublish.md)
-Waits for a Dataverse publish operation to complete.
 

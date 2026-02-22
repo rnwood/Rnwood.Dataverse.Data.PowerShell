@@ -41,6 +41,11 @@
     <InternalsVisibleTo Include="Rnwood.Dataverse.Data.PowerShell.Tests" />
   </ItemGroup>
 
+  <!-- Reference MsAppToolkit for proper YAML-first pack/unpack (net8.0 only) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <ProjectReference Include="..\CanvasAppYAML\src\MsAppToolkit\MsAppToolkit.csproj" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="Azure.Identity" Version="1.17.1" />
     <PackageReference Include="MarkMpn.Sql4Cds.Engine" Version="10.2.0" />

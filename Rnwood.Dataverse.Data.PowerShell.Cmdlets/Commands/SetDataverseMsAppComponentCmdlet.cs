@@ -1,16 +1,15 @@
-using ICSharpCode.SharpZipLib.Zip;
 using SharpYaml.Serialization;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Management.Automation;
 using System.Text;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Adds or updates a component in a .msapp file.
+    /// Adds or updates a component in a .msapp file using YAML-first packaging.
+    /// Controls/*.json files are automatically regenerated from YAML.
     /// </summary>
     [Cmdlet(VerbsCommon.Set, "DataverseMsAppComponent", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class SetDataverseMsAppComponentCmdlet : PSCmdlet
@@ -61,164 +60,162 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             base.ProcessRecord();
 
             bool isFromObject = ParameterSetName.Contains("FromObject");
-            byte[] msappBytes;
             string targetPath = null;
+            string tempMsappPath = null;
 
-            if (isFromObject)
+            try
             {
-                // Get .msapp from the PSObject's document property
-                var documentProp = CanvasApp.Properties["document"];
-                if (documentProp == null || documentProp.Value == null)
+                // Get YAML content
+                string yaml;
+                if (!string.IsNullOrEmpty(YamlFilePath))
                 {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new InvalidOperationException("CanvasApp object does not have a 'document' property. Use Get-DataverseCanvasApp with -IncludeDocument."),
-                        "DocumentPropertyMissing",
-                        ErrorCategory.InvalidArgument,
-                        CanvasApp));
-                    return;
-                }
-
-                string base64Document = documentProp.Value.ToString();
-                msappBytes = Convert.FromBase64String(base64Document);
-            }
-            else
-            {
-                targetPath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
-                if (!File.Exists(targetPath))
-                {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new FileNotFoundException($"MsApp file not found: {targetPath}"),
-                        "FileNotFound",
-                        ErrorCategory.ObjectNotFound,
-                        targetPath));
-                    return;
-                }
-
-                msappBytes = File.ReadAllBytes(targetPath);
-            }
-
-            // Get YAML content
-            string yaml;
-            if (!string.IsNullOrEmpty(YamlFilePath))
-            {
-                var yamlPath = GetUnresolvedProviderPathFromPSPath(YamlFilePath);
-                if (!File.Exists(yamlPath))
-                {
-                    ThrowTerminatingError(new ErrorRecord(
-                        new FileNotFoundException($"YAML file not found: {yamlPath}"),
-                        "FileNotFound",
-                        ErrorCategory.ObjectNotFound,
-                        yamlPath));
-                    return;
-                }
-                yaml = File.ReadAllText(yamlPath);
-            }
-            else
-            {
-                yaml = YamlContent;
-            }
-
-            string action = isFromObject 
-                ? $"Set component '{ComponentName}' in Canvas app" 
-                : $"Set component '{ComponentName}' in .msapp file '{targetPath}'";
-            
-            if (!ShouldProcess(action, action, "Set Component"))
-            {
-                return;
-            }
-
-            // Add header and indent the YAML content
-            string fullYaml = AddComponentHeader(yaml, ComponentName);
-
-            byte[] modifiedBytes = ModifyMsAppComponent(msappBytes, fullYaml);
-            
-            if (isFromObject)
-            {
-                // Update the document property in the PSObject
-                string base64 = Convert.ToBase64String(modifiedBytes);
-                CanvasApp.Properties["document"].Value = base64;
-                WriteVerbose($"Component '{ComponentName}' set successfully in Canvas app object");
-            }
-            else
-            {
-                File.WriteAllBytes(targetPath, modifiedBytes);
-                WriteVerbose($"Component '{ComponentName}' set successfully in .msapp file");
-            }
-        }
-
-        private byte[] ModifyMsAppComponent(byte[] originalBytes, string yaml)
-        {
-            using (var memoryStream = new MemoryStream(originalBytes))
-            using (var resultStream = new MemoryStream())
-            {
-                bool componentExists = false;
-                string componentFileName = $"Src/{ComponentName}.pa.yaml";
-
-                using (var zipInputStream = new ZipInputStream(memoryStream))
-                using (var zipOutputStream = new ZipOutputStream(resultStream))
-                {
-                    zipOutputStream.SetLevel(6);
-
-                    ZipEntry entry;
-                    while ((entry = zipInputStream.GetNextEntry()) != null)
+                    var yamlPath = GetUnresolvedProviderPathFromPSPath(YamlFilePath);
+                    if (!File.Exists(yamlPath))
                     {
-                        if (entry.Name == componentFileName)
-                        {
-                            componentExists = true;
-                            WriteVerbose($"Updating existing component '{ComponentName}'");
-                            AddZipEntry(zipOutputStream, entry.Name, yaml);
-                        }
-                        else
-                        {
-                            // Copy entry as-is
-                            byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
-                            AddZipEntry(zipOutputStream, entry.Name, entryBytes);
-                        }
+                        ThrowTerminatingError(new ErrorRecord(
+                            new FileNotFoundException($"YAML file not found: {yamlPath}"),
+                            "FileNotFound",
+                            ErrorCategory.ObjectNotFound,
+                            yamlPath));
+                        return;
+                    }
+                    yaml = File.ReadAllText(yamlPath);
+                }
+                else
+                {
+                    yaml = YamlContent;
+                }
+
+                // Add header to YAML content
+                string fullYaml = AddComponentHeader(yaml, ComponentName);
+
+                if (isFromObject)
+                {
+                    // Get .msapp from the PSObject's document property
+                    var documentProp = CanvasApp.Properties["document"];
+                    if (documentProp == null || documentProp.Value == null)
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException("CanvasApp object does not have a 'document' property. Use Get-DataverseCanvasApp with -IncludeDocument."),
+                            "DocumentPropertyMissing",
+                            ErrorCategory.InvalidArgument,
+                            CanvasApp));
+                        return;
                     }
 
-                    // Add new component if it doesn't exist
-                    if (!componentExists)
+                    string base64Document = documentProp.Value.ToString();
+                    byte[] msappBytes = Convert.FromBase64String(base64Document);
+
+                    // Write to temp file
+                    tempMsappPath = Path.Combine(Path.GetTempPath(), $"msapp_{Guid.NewGuid():N}.msapp");
+                    File.WriteAllBytes(tempMsappPath, msappBytes);
+                    targetPath = tempMsappPath;
+                }
+                else
+                {
+                    targetPath = GetUnresolvedProviderPathFromPSPath(MsAppPath);
+                    if (!File.Exists(targetPath))
                     {
-                        WriteVerbose($"Creating new component '{ComponentName}'");
-                        AddZipEntry(zipOutputStream, componentFileName, yaml);
+                        ThrowTerminatingError(new ErrorRecord(
+                            new FileNotFoundException($"MsApp file not found: {targetPath}"),
+                            "FileNotFound",
+                            ErrorCategory.ObjectNotFound,
+                            targetPath));
+                        return;
+                    }
+                }
+
+                string action = isFromObject 
+                    ? $"Set component '{ComponentName}' in Canvas app" 
+                    : $"Set component '{ComponentName}' in .msapp file '{targetPath}'";
+                
+                if (!ShouldProcess(action, action, "Set Component"))
+                {
+                    return;
+                }
+
+                WriteVerbose("Using YAML-first packaging to update msapp with automatic Controls JSON generation");
+
+                // Use MsAppPackagingHelper to modify the msapp
+                MsAppPackagingHelper.ModifyMsApp(targetPath, unpackDir =>
+                {
+                    // Try both Src/{ComponentName}.pa.yaml and Src/Components/{ComponentName}.pa.yaml
+                    var componentYamlPath = Path.Combine(unpackDir, "Src", $"{ComponentName}.pa.yaml");
+                    var componentsYamlPath = Path.Combine(unpackDir, "Src", "Components", $"{ComponentName}.pa.yaml");
+                    
+                    // Handle Windows-style paths in zip
+                    if (!File.Exists(componentYamlPath))
+                    {
+                        componentYamlPath = Path.Combine(unpackDir, $"Src\\{ComponentName}.pa.yaml");
+                    }
+                    if (!File.Exists(componentsYamlPath))
+                    {
+                        componentsYamlPath = Path.Combine(unpackDir, $"Src\\Components\\{ComponentName}.pa.yaml");
                     }
 
-                    zipOutputStream.Finish();
-                }
+                    // Determine which path to use
+                    string targetComponentPath;
+                    bool isNewComponent = false;
+                    
+                    if (File.Exists(componentYamlPath))
+                    {
+                        targetComponentPath = componentYamlPath;
+                        WriteVerbose($"Updating existing component '{ComponentName}' at Src/{ComponentName}.pa.yaml");
+                    }
+                    else if (File.Exists(componentsYamlPath))
+                    {
+                        targetComponentPath = componentsYamlPath;
+                        WriteVerbose($"Updating existing component '{ComponentName}' at Src/Components/{ComponentName}.pa.yaml");
+                    }
+                    else
+                    {
+                        // New component - prefer Src/{ComponentName}.pa.yaml
+                        targetComponentPath = Path.Combine(unpackDir, "Src", $"{ComponentName}.pa.yaml");
+                        isNewComponent = true;
+                        WriteVerbose($"Creating new component '{ComponentName}' at Src/{ComponentName}.pa.yaml");
+                        // Ensure Src directory exists
+                        Directory.CreateDirectory(Path.Combine(unpackDir, "Src"));
+                    }
 
-                return resultStream.ToArray();
-            }
-        }
+                    File.WriteAllText(targetComponentPath, fullYaml, Encoding.UTF8);
+                    WriteVerbose($"Updated {targetComponentPath}");
+                });
 
-        private void AddZipEntry(ZipOutputStream zipStream, string entryName, byte[] content)
-        {
-            var entry = new ZipEntry(entryName)
-            {
-                DateTime = DateTime.Now,
-                Size = content.Length
-            };
-
-            zipStream.PutNextEntry(entry);
-            zipStream.Write(content, 0, content.Length);
-            zipStream.CloseEntry();
-        }
-
-        private void AddZipEntry(ZipOutputStream zipStream, string entryName, string content)
-        {
-            AddZipEntry(zipStream, entryName, Encoding.UTF8.GetBytes(content));
-        }
-
-        private byte[] ReadZipEntryBytes(ZipInputStream zipInputStream)
-        {
-            using (var entryStream = new MemoryStream())
-            {
-                byte[] buffer = new byte[4096];
-                int count;
-                while ((count = zipInputStream.Read(buffer, 0, buffer.Length)) > 0)
+                if (isFromObject)
                 {
-                    entryStream.Write(buffer, 0, count);
+                    // Read back and update the PSObject
+                    byte[] modifiedBytes = File.ReadAllBytes(tempMsappPath);
+                    string base64 = Convert.ToBase64String(modifiedBytes);
+                    CanvasApp.Properties["document"].Value = base64;
+                    WriteVerbose($"Component '{ComponentName}' set successfully in Canvas app object with regenerated Controls JSON");
                 }
-                return entryStream.ToArray();
+                else
+                {
+                    WriteVerbose($"Component '{ComponentName}' set successfully in .msapp file with regenerated Controls JSON");
+                }
+            }
+            catch (NotSupportedException ex)
+            {
+                WriteWarning(ex.Message);
+                ThrowTerminatingError(new ErrorRecord(
+                    ex,
+                    "YamlPackagingNotSupported",
+                    ErrorCategory.NotImplemented,
+                    targetPath));
+            }
+            finally
+            {
+                if (tempMsappPath != null && File.Exists(tempMsappPath))
+                {
+                    try
+                    {
+                        File.Delete(tempMsappPath);
+                    }
+                    catch
+                    {
+                        // Ignore cleanup errors
+                    }
+                }
             }
         }
 
