@@ -1,5 +1,3 @@
-. $PSScriptRoot/Common.ps1
-
 Describe "MsApp Controls JSON Generation" {
     Context "Set-DataverseMsAppProperties - Generates Controls/1.json" {
         It "Generates Controls/1.json with properties from App.pa.yaml" {
