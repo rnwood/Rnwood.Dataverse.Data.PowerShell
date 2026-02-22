@@ -52,6 +52,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
+            WriteWarning("YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.");
+
             bool isFromObject = ParameterSetName.Contains("FromObject");
             string targetPath = null;
             string tempMsappPath = null;

@@ -8,7 +8,7 @@ schema: 2.0.0
 # Set-DataverseMsAppProperties
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Sets the app-level properties of a Canvas app .msapp file using Power Apps YAML format.
 
 ## SYNTAX
 
@@ -37,16 +37,30 @@ Set-DataverseMsAppProperties [-CanvasApp] <PSObject> -YamlFilePath <String>
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Sets the app-level properties (`App.pa.yaml`) in a Canvas app .msapp file using Power Apps YAML format. The .msapp file is modified in place and the Controls/*.json files are automatically regenerated from the YAML.
+
+> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Set app properties from YAML string
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> $yaml = @"
+Properties:
+  Theme: =PowerAppsTheme
+  BackEnabled: =true
+"@
+PS C:\> Set-DataverseMsAppProperties -MsAppPath "myapp.msapp" -YamlContent $yaml
 ```
 
-{{ Add example description here }}
+Sets app-level properties from an inline YAML string.
+
+### Example 2: Set app properties from YAML file
+```powershell
+PS C:\> Set-DataverseMsAppProperties -MsAppPath "myapp.msapp" -YamlFilePath "App.pa.yaml"
+```
+
+Sets app-level properties using YAML content from a file.
 
 ## PARAMETERS
 
@@ -166,5 +180,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ### System.Object
 ## NOTES
+
+> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.
+
+A warning is emitted at runtime each time this cmdlet runs as a reminder of the experimental status. To suppress the warning, use the common `-WarningAction SilentlyContinue` parameter.
 
 ## RELATED LINKS
