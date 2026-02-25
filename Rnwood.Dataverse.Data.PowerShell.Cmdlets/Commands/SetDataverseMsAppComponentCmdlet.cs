@@ -14,6 +14,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     [Cmdlet(VerbsCommon.Set, "DataverseMsAppComponent", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class SetDataverseMsAppComponentCmdlet : PSCmdlet
     {
+        private static readonly UTF8Encoding Utf8WithoutBom = new UTF8Encoding(false);
+
         /// <summary>
         /// Gets or sets the path to the .msapp file.
         /// </summary>
@@ -59,7 +61,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            WriteWarning("YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.");
+            WriteWarning("YAML-first Canvas app modification is experimental. The Power Apps MSAPP format it not fully understood/supported and the results may need to be validated in Power Apps Studio.");
 
             bool isFromObject = ParameterSetName.Contains("FromObject");
             string targetPath = null;
@@ -157,29 +159,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     // Determine which path to use
                     string targetComponentPath;
-                    bool isNewComponent = false;
                     
-                    if (File.Exists(componentYamlPath))
-                    {
-                        targetComponentPath = componentYamlPath;
-                        WriteVerbose($"Updating existing component '{ComponentName}' at Src/{ComponentName}.pa.yaml");
-                    }
-                    else if (File.Exists(componentsYamlPath))
+                    if (File.Exists(componentsYamlPath))
                     {
                         targetComponentPath = componentsYamlPath;
                         WriteVerbose($"Updating existing component '{ComponentName}' at Src/Components/{ComponentName}.pa.yaml");
                     }
+                    else if (File.Exists(componentYamlPath))
+                    {
+                        targetComponentPath = componentYamlPath;
+                        WriteVerbose($"Updating existing component '{ComponentName}' at Src/{ComponentName}.pa.yaml");
+                    }
                     else
                     {
-                        // New component - prefer Src/{ComponentName}.pa.yaml
-                        targetComponentPath = Path.Combine(unpackDir, "Src", $"{ComponentName}.pa.yaml");
-                        isNewComponent = true;
-                        WriteVerbose($"Creating new component '{ComponentName}' at Src/{ComponentName}.pa.yaml");
-                        // Ensure Src directory exists
-                        Directory.CreateDirectory(Path.Combine(unpackDir, "Src"));
+                        // New component - use Src/Components/{ComponentName}.pa.yaml
+                        targetComponentPath = componentsYamlPath;
+                        WriteVerbose($"Creating new component '{ComponentName}' at Src/Components/{ComponentName}.pa.yaml");
+                        // Ensure Src/Components directory exists
+                        Directory.CreateDirectory(Path.Combine(unpackDir, "Src", "Components"));
                     }
 
-                    File.WriteAllText(targetComponentPath, fullYaml, Encoding.UTF8);
+                    File.WriteAllText(targetComponentPath, fullYaml, Utf8WithoutBom);
                     WriteVerbose($"Updated {targetComponentPath}");
                 });
 
@@ -214,7 +214,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         /// <summary>
         /// Adds the component header using SharpYaml to properly serialize the YAML structure.
-        /// Transforms the provided content into: "Components:\n  ComponentName:\n    ..."
+        /// Transforms the provided content into: "ComponentDefinitions:\n  ComponentName:\n    ..."
         /// </summary>
         private string AddComponentHeader(string yamlContent, string componentName)
         {
@@ -224,10 +224,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var serializer = new Serializer();
                 var componentContent = serializer.Deserialize(yamlContent);
 
-                // Create the full structure: Components -> ComponentName -> content
+                // Create the full structure: ComponentDefinitions -> ComponentName -> content
                 var fullStructure = new Dictionary<object, object>
                 {
-                    ["Components"] = new Dictionary<object, object>
+                    ["ComponentDefinitions"] = new Dictionary<object, object>
                     {
                         [componentName] = componentContent
                     }

@@ -84,7 +84,6 @@
 
   <!-- MsAppToolkit net462 requirements -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="System.Memory" Version="4.5.5" />
     <Reference Include="System.Net.Http" />
     <Using Include="MsAppToolkit.Polyfills.KeyValuePairExtensions" Static="True" />
     <Using Include="MsAppToolkit.Polyfills.EnumerableExtensions" Static="True" />

@@ -122,7 +122,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     ZipEntry entry;
                     while ((entry = zipInputStream.GetNextEntry()) != null)
                     {
-                        if (entry.Name == componentFileName)
+                        string entryName = entry.Name.Replace('\\', '/');
+                        if (entryName == componentFileName)
                         {
                             componentFound = true;
                             WriteVerbose($"Removing component '{ComponentName}'");
@@ -132,7 +133,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         // Copy entry as-is
                         byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
-                        AddZipEntry(zipOutputStream, entry.Name, entryBytes);
+                        AddZipEntry(zipOutputStream, entryName, entryBytes);
                     }
 
                     zipOutputStream.Finish();

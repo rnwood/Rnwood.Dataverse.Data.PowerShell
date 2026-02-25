@@ -96,11 +96,17 @@ Retrieves available icons from supported online icon sets.
 ### [Get-DataverseMsAppComponent](Get-DataverseMsAppComponent.md)
 Retrieves components from a .msapp file.
 
+### [Get-DataverseMsAppControlTemplate](Get-DataverseMsAppControlTemplate.md)
+Lists Canvas control templates from embedded all-controls metadata, optionally augmented by a .msapp file.
+
+### [Get-DataverseMsAppControlTemplateProperty](Get-DataverseMsAppControlTemplateProperty.md)
+Lists properties for a Canvas control template from embedded all-controls metadata, optionally augmented by a .msapp file.
+
 ### [Get-DataverseMsAppDataSource](Get-DataverseMsAppDataSource.md)
 Gets data sources from a Canvas app .msapp file.
 
 ### [Get-DataverseMsAppProperties](Get-DataverseMsAppProperties.md)
-{{ Fill in the Synopsis }}
+Gets app-level properties from a Canvas app .msapp file.
 
 ### [Get-DataverseMsAppScreen](Get-DataverseMsAppScreen.md)
 Retrieves screens from a .msapp file.

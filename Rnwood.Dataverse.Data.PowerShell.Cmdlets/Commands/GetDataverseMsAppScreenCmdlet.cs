@@ -87,14 +87,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ZipEntry entry;
                 while ((entry = zipInputStream.GetNextEntry()) != null)
                 {
+                    string entryName = entry.Name.Replace('\\', '/');
                     // Screen YAML files are in the Src/ folder and end with .pa.yaml
                     // Skip App.pa.yaml and _EditorState.pa.yaml
-                    if (entry.Name.StartsWith("Src/") && 
-                        entry.Name.EndsWith(".pa.yaml") && 
-                        !entry.Name.EndsWith("/App.pa.yaml") &&
-                        !entry.Name.EndsWith("/_EditorState.pa.yaml"))
+                    if (entryName.StartsWith("Src/") && 
+                        entryName.EndsWith(".pa.yaml") && 
+                        !entryName.EndsWith("/App.pa.yaml") &&
+                        !entryName.EndsWith("/_EditorState.pa.yaml"))
                     {
-                        string screenName = Path.GetFileNameWithoutExtension( Path.GetFileNameWithoutExtension(entry.Name));
+                        string screenName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(entryName));
 
                         // Apply name filter if specified
                         if (!string.IsNullOrEmpty(ScreenName))
@@ -115,7 +116,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         // Create PSObject with screen information
                         var psObject = new PSObject();
                         psObject.Properties.Add(new PSNoteProperty("ScreenName", screenName));
-                        psObject.Properties.Add(new PSNoteProperty("FilePath", entry.Name));
+                        psObject.Properties.Add(new PSNoteProperty("FilePath", entryName));
                         psObject.Properties.Add(new PSNoteProperty("YamlContent", processedYaml));
                         psObject.Properties.Add(new PSNoteProperty("Size", entryBytes.Length));
 
@@ -177,14 +178,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return contentYaml;
                 }
 
-                // Fallback: return original if structure doesn't match
-                WriteWarning($"Could not parse screen YAML structure for '{screenName}'. Returning original content.");
-                return yamlContent;
+                var errorRecord = new ErrorRecord(
+                    new InvalidDataException($"Could not parse screen YAML structure for '{screenName}'."),
+                    "ScreenYamlStructureInvalid",
+                    ErrorCategory.InvalidData,
+                    screenName);
+                ThrowTerminatingError(errorRecord);
+                return null;
             }
             catch (Exception ex)
             {
-                WriteWarning($"Error parsing YAML for screen '{screenName}': {ex.Message}. Returning original content.");
-                return yamlContent;
+                ThrowTerminatingError(new ErrorRecord(
+                    ex,
+                    "ScreenYamlParseError",
+                    ErrorCategory.InvalidData,
+                    screenName));
+                return null;
             }
         }
     }

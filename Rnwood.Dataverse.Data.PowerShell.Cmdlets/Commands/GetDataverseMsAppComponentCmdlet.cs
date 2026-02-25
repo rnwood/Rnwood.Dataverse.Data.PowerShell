@@ -86,15 +86,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ZipEntry entry;
                 while ((entry = zipInputStream.GetNextEntry()) != null)
                 {
-                    // Component YAML files can be in Components/ folder or Src/ folder
-                    bool isComponent = false;
-                    string componentName = null;
-
-                    if (entry.Name.StartsWith("Components/") && entry.Name.EndsWith(".pa.yaml"))
+                    string entryName = entry.Name.Replace('\\', '/');
+                    // Component YAML files are in Src/Components/ folder and end with .pa.yaml
+                    if (entryName.StartsWith("Src/Components/") && entryName.EndsWith(".pa.yaml"))
                     {
-                        // Components in Components/ folder
-                        isComponent = true;
-                        componentName = Path.GetFileNameWithoutExtension(entry.Name);
+                        string componentName = Path.GetFileNameWithoutExtension(Path.GetFileNameWithoutExtension(entryName));
 
                         // Apply name filter
                         if (!string.IsNullOrEmpty(ComponentName) && !MatchesPattern(componentName, ComponentName))
@@ -106,55 +102,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
                         string yamlContent = System.Text.Encoding.UTF8.GetString(entryBytes);
 
-                        // Strip the component header and unindent the content
+                        // Strip the ComponentDefinitions header
                         string processedYaml = StripComponentHeader(yamlContent, componentName);
 
                         // Create PSObject
                         var psObject = new PSObject();
                         psObject.Properties.Add(new PSNoteProperty("ComponentName", componentName));
-                        psObject.Properties.Add(new PSNoteProperty("FilePath", entry.Name));
+                        psObject.Properties.Add(new PSNoteProperty("FilePath", entryName));
                         psObject.Properties.Add(new PSNoteProperty("YamlContent", processedYaml));
                         psObject.Properties.Add(new PSNoteProperty("Size", entryBytes.Length));
 
                         WriteObject(psObject);
-                    }
-                    else if (entry.Name.StartsWith("Src/") && 
-                             entry.Name.EndsWith(".pa.yaml") &&
-                             !entry.Name.EndsWith("/App.pa.yaml") &&
-                             !entry.Name.EndsWith("/_EditorState.pa.yaml") &&
-                             !entry.Name.Contains("/Screen"))
-                    {
-                        // Check if it's a component in Src/ folder
-                        string fileName = Path.GetFileNameWithoutExtension(entry.Name);
-                        
-                        // Read content to check
-                        byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
-                        string yamlContent = System.Text.Encoding.UTF8.GetString(entryBytes);
-
-                        // Components start with "Component:" or "Components:" in YAML
-                        if (yamlContent.TrimStart().StartsWith("Component:") || 
-                            yamlContent.TrimStart().StartsWith("Components:"))
-                        {
-                            componentName = fileName;
-
-                            // Apply name filter
-                            if (!string.IsNullOrEmpty(ComponentName) && !MatchesPattern(componentName, ComponentName))
-                            {
-                                continue;
-                            }
-
-                            // Strip the component header and unindent the content
-                            string processedYaml = StripComponentHeader(yamlContent, componentName);
-
-                            // Create PSObject
-                            var psObject = new PSObject();
-                            psObject.Properties.Add(new PSNoteProperty("ComponentName", componentName));
-                            psObject.Properties.Add(new PSNoteProperty("FilePath", entry.Name));
-                            psObject.Properties.Add(new PSNoteProperty("YamlContent", processedYaml));
-                            psObject.Properties.Add(new PSNoteProperty("Size", entryBytes.Length));
-
-                            WriteObject(psObject);
-                        }
                     }
                 }
             }
@@ -191,7 +149,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         /// <summary>
-        /// Strips the component header (e.g., "Components:\n  ComponentName:") using SharpYaml to parse and extract the component content.
+        /// Strips the component header (e.g., "ComponentDefinitions:\n  ComponentName:") using SharpYaml to parse and extract the component content.
         /// </summary>
         private string StripComponentHeader(string yamlContent, string componentName)
         {
@@ -201,9 +159,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 var serializer = new Serializer();
                 var yamlObject = serializer.Deserialize(yamlContent);
 
-                // Expected structure: { Components: { ComponentName: { ... properties ... } } }
+                // Expected structure: { ComponentDefinitions: { ComponentName: { ... properties ... } } }
                 if (yamlObject is Dictionary<object, object> root &&
-                    root.TryGetValue("Components", out var componentsObj) &&
+                    root.TryGetValue("ComponentDefinitions", out var componentsObj) &&
                     componentsObj is Dictionary<object, object> components &&
                     components.TryGetValue(componentName, out var componentContent))
                 {
@@ -212,14 +170,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return contentYaml;
                 }
 
-                // Fallback: return original if structure doesn't match
-                WriteWarning($"Could not parse component YAML structure for '{componentName}'. Returning original content.");
-                return yamlContent;
+                var errorRecord = new ErrorRecord(
+                    new InvalidDataException($"Could not parse component YAML structure for '{componentName}'."),
+                    "ComponentYamlStructureInvalid",
+                    ErrorCategory.InvalidData,
+                    componentName);
+                ThrowTerminatingError(errorRecord);
+                return null;
             }
             catch (Exception ex)
             {
-                WriteWarning($"Error parsing YAML for component '{componentName}': {ex.Message}. Returning original content.");
-                return yamlContent;
+                ThrowTerminatingError(new ErrorRecord(
+                    ex,
+                    "ComponentYamlParseError",
+                    ErrorCategory.InvalidData,
+                    componentName));
+                return null;
             }
         }
     }

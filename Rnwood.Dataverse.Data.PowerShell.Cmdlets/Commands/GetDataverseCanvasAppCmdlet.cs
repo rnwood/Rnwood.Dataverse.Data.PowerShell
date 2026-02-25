@@ -179,8 +179,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             WriteVerbose($"Saved .msapp file to: {filePath}");
                         }
 
-                        // Add document as base64 string to match expected format
-                        psObject.Properties.Add(new PSNoteProperty("document", Convert.ToBase64String(msappBytes)));
+                        if (IncludeDocument.IsPresent)
+                        {
+                            // Add document as base64 string to match expected format
+                            psObject.Properties.Add(new PSNoteProperty("document", Convert.ToBase64String(msappBytes)));
+                        }
                         WriteVerbose($"Retrieved .msapp file ({msappBytes.Length} bytes)");
                     }
                     else

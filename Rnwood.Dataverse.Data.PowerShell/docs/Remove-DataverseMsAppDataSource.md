@@ -27,7 +27,7 @@ Remove-DataverseMsAppDataSource [-CanvasApp] <PSObject> [-DataSourceName] <Strin
 ## DESCRIPTION
 Removes a named data source from a Canvas app .msapp file.
 
-> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.
+> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps MSAPP format it not fully understood/supported and the results may need to be validated in Power Apps Studio.
 
 ## EXAMPLES
 
@@ -159,7 +159,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Object
 ## NOTES
 
-> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.
+> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps MSAPP format it not fully understood/supported and the results may need to be validated in Power Apps Studio.
 
 A warning is emitted at runtime each time this cmdlet runs as a reminder of the experimental status. To suppress the warning, use the common `-WarningAction SilentlyContinue` parameter.
 

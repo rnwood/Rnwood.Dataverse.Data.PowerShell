@@ -14,6 +14,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     [Cmdlet(VerbsCommon.Set, "DataverseMsAppScreen", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class SetDataverseMsAppScreenCmdlet : PSCmdlet
     {
+        private static readonly UTF8Encoding Utf8WithoutBom = new UTF8Encoding(false);
+
         /// <summary>
         /// Gets or sets the path to the .msapp file.
         /// </summary>
@@ -59,7 +61,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.ProcessRecord();
 
-            WriteWarning("YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.");
+            WriteWarning("YAML-first Canvas app modification is experimental. The Power Apps MSAPP format it not fully understood/supported and the results may need to be validated in Power Apps Studio.");
 
             bool isFromObject = ParameterSetName.Contains("FromObject");
             string targetPath = null;
@@ -162,7 +164,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         WriteVerbose($"Updating existing screen '{ScreenName}'");
                     }
 
-                    File.WriteAllText(screenYamlPath, fullYaml, Encoding.UTF8);
+                    File.WriteAllText(screenYamlPath, fullYaml, Utf8WithoutBom);
                     WriteVerbose($"Updated {screenYamlPath}");
                 });
 

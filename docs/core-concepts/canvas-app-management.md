@@ -115,6 +115,36 @@ Remove-DataverseCanvasApp -Name "new_maybeexists" -IfExists
 
 > **Note:** The `Set-DataverseMsAppScreen`, `Set-DataverseMsAppComponent`, and `Set-DataverseMsAppProperties` cmdlets use Power Apps YAML format to modify .msapp files. **This functionality is experimental.** The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio. A warning is emitted at runtime for each of these cmdlets as a reminder. To suppress the warning, use `-WarningAction SilentlyContinue`.
 
+### Discovering Control Templates and Properties
+
+Use the control-template discovery cmdlets to inspect available control templates and their properties before authoring YAML:
+
+```powershell
+# List templates from embedded all-controls metadata
+Get-DataverseMsAppControlTemplate
+
+# Filter to button-like templates
+Get-DataverseMsAppControlTemplate -TemplateName "*button*"
+
+# Include template metadata from a specific app as an additional source
+Get-DataverseMsAppControlTemplate -MsAppPath "myapp.msapp"
+
+# Include template metadata from an app record piped from Dataverse
+Get-DataverseCanvasApp -Name "myapp" -IncludeDocument | Get-DataverseMsAppControlTemplate
+
+# List properties for the latest template version
+Get-DataverseMsAppControlTemplateProperty -TemplateName "button"
+
+# Inspect a specific version and include contextual auto-layout child properties
+Get-DataverseMsAppControlTemplateProperty -TemplateName "button" -TemplateVersion "1.0.44" -IncludeContextualDynamicProperties
+
+# Use an app record from pipeline as an additional template source
+Get-DataverseCanvasApp -Name "myapp" -IncludeDocument |
+  Get-DataverseMsAppControlTemplateProperty -TemplateName "button"
+```
+
+By default, these cmdlets use embedded `All controls.msapp` metadata. If you provide `-MsAppPath` or pipe a canvas app object from `Get-DataverseCanvasApp -IncludeDocument`, templates from that app are merged in. If the same template exists in both sources, the latest version is returned. For property discovery, if `-TemplateVersion` is omitted, the latest available version is used.
+
 ### Understanding .msapp Structure
 
 A .msapp file is a ZIP archive with this typical structure:
@@ -311,73 +341,6 @@ Component:
             Color: =RGBA(255, 255, 255, 1)
 ```
 
-## Best Practices
-
-### 1. Use Version Control
-
-Store .msapp files in version control (Git) to track changes:
-
-```powershell
-# After modifications
-git add myapp.msapp
-git commit -m "Added new feature screen"
-git push
-```
-
-### 2. Use Descriptive Names
-
-Use consistent naming conventions for screens and components:
-
-```powershell
-# Good naming
-Set-DataverseMsAppScreen -MsAppPath "app.msapp" -ScreenName "CustomerListScreen" -YamlContent $yaml
-Set-DataverseMsAppComponent -MsAppPath "app.msapp" -ComponentName "CustomerCardComponent" -YamlContent $yaml
-
-# Avoid generic names like "Screen1", "Component1"
-```
-
-### 3. Test Locally Before Uploading
-
-Make multiple local changes and test them before uploading to Dataverse:
-
-```powershell
-# Make multiple changes
-Set-DataverseMsAppScreen -MsAppPath "app.msapp" -ScreenName "Screen1" -YamlContent $yaml1
-Set-DataverseMsAppScreen -MsAppPath "app.msapp" -ScreenName "Screen2" -YamlContent $yaml2
-Set-DataverseMsAppComponent -MsAppPath "app.msapp" -ComponentName "Component1" -YamlContent $yaml3
-
-# Test locally (extract and review)
-$screens = Get-DataverseMsAppScreen -MsAppPath "app.msapp"
-$screens | Format-Table
-
-# Upload once when satisfied
-Set-DataverseCanvasApp -Name "new_myapp" -MsAppPath "app.msapp"
-```
-
-### 4. Use WhatIf for Destructive Operations
-
-Use `-WhatIf` to preview changes before executing:
-
-```powershell
-# Preview deletion
-Remove-DataverseCanvasApp -Name "new_testapp" -WhatIf
-
-# Preview screen removal
-Remove-DataverseMsAppScreen -MsAppPath "app.msapp" -ScreenName "OldScreen" -WhatIf
-```
-
-### 5. Handle Errors Gracefully
-
-Use `-IfExists` flag to avoid errors when resources may not exist:
-
-```powershell
-# Won't throw error if app doesn't exist
-Remove-DataverseCanvasApp -Name "new_maybeexists" -IfExists
-
-# Won't throw error if screen doesn't exist
-Remove-DataverseMsAppScreen -MsAppPath "app.msapp" -ScreenName "MaybeExists" -IfExists
-```
-
 ## Troubleshooting
 
 ### Issue: "Canvas app not found"
@@ -404,24 +367,25 @@ $screen = Get-DataverseMsAppScreen -MsAppPath "app.msapp" -ScreenName "Screen1"
 $screen.YamlContent
 ```
 
-### Issue: "No default connection set"
-
-**Solution:** Establish a default connection:
-```powershell
-Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive -SetAsDefault
-```
 
 ## Related Cmdlets
 
 - **Get-DataverseCanvasApp** - Retrieve Canvas apps from Dataverse
 - **Set-DataverseCanvasApp** - Create or update Canvas apps (upsert)
 - **Remove-DataverseCanvasApp** - Delete Canvas apps
+- **Get-DataverseMsAppControlTemplate** - List available control templates from embedded and optional app metadata
+- **Get-DataverseMsAppControlTemplateProperty** - List properties for a template, including optional contextual dynamic properties
 - **Get-DataverseMsAppScreen** - Extract screens from .msapp files
 - **Set-DataverseMsAppScreen** - Add/update screens in .msapp files
 - **Remove-DataverseMsAppScreen** - Remove screens from .msapp files
 - **Get-DataverseMsAppComponent** - Extract components from .msapp files
 - **Set-DataverseMsAppComponent** - Add/update components in .msapp files
 - **Remove-DataverseMsAppComponent** - Remove components from .msapp files
+- **Get-DataverseMsAppDataSource** - Retrieve data sources from a .msapp file
+- **Set-DataverseMsAppDataSource** - Add or update data sources in a .msapp file
+- **Remove-DataverseMsAppDataSource** - Remove data sources from a .msapp file
+- **Get-DataverseMsAppProperties** - Retrieve app-level properties from a .msapp file
+- **Set-DataverseMsAppProperties** - Update app-level properties in a .msapp file
 
 ## See Also
 

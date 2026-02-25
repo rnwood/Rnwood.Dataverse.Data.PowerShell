@@ -43,27 +43,53 @@ public static partial class YamlFirstPackaging
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
     };
 
-
-    public static IReadOnlyList<EmbeddedTemplateSummary> ListEmbeddedControlTemplates()
+    /// <summary>
+    /// Lists control templates from embedded all-controls resources, optionally augmented by templates
+    /// found in the provided .msapp file. When the same template name exists in multiple sources,
+    /// only the latest version is returned.
+    /// </summary>
+    /// <param name="msappPath">Optional path to a .msapp file to augment embedded templates.</param>
+    public static IReadOnlyList<EmbeddedTemplateSummary> ListControlTemplates(string? msappPath = null)
     {
         ReadEmbeddedAllControlsEntries(out var embeddedEntries);
-        var templates = ReadUsedTemplates(embeddedEntries);
-        var variantMap = CollectVariantsByTemplateName(embeddedEntries);
+        var embeddedTemplates = ReadUsedTemplates(embeddedEntries);
 
-        return templates
+        var combinedTemplates = new List<UsedTemplate>(embeddedTemplates);
+        var variantMaps = new List<IReadOnlyDictionary<string, IReadOnlyList<string>>>
+        {
+            CollectVariantsByTemplateName(embeddedEntries)
+        };
+
+        if (!string.IsNullOrWhiteSpace(msappPath))
+        {
+            var msappEntries = ReadEntriesFromMsApp(msappPath);
+            combinedTemplates.AddRange(ReadUsedTemplates(msappEntries));
+            variantMaps.Add(CollectVariantsByTemplateName(msappEntries));
+        }
+
+        var mergedVariantMap = MergeVariantMaps(variantMaps);
+
+        return SelectLatestTemplatesByName(combinedTemplates)
             .Select(t =>
             {
-                var requiresVariant = RequiresVariantKeyword(t.Name, t.Id, t.TemplateXml, variantMap);
-                var variants = MergeVariants(t.Name, t.Id, t.TemplateXml, variantMap);
+                var requiresVariant = RequiresVariantKeyword(t.Name, t.Id, t.TemplateXml, mergedVariantMap);
+                var variants = MergeVariants(t.Name, t.Id, t.TemplateXml, mergedVariantMap);
                 var flagReqs = BuildAppFlagRequirements(t.TemplateXml);
                 return new EmbeddedTemplateSummary(t.Name, t.Version, t.Id, ToYamlControlName(t.Name), requiresVariant, variants, flagReqs);
             })
             .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase)
-            .ThenBy(t => t.Version, StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
-    public static EmbeddedTemplateDetails DescribeEmbeddedTemplate(string templateName, string? templateVersion = null)
+    /// <summary>
+    /// Describes a control template from embedded all-controls resources, optionally augmented by
+    /// templates found in the provided .msapp file. When templateVersion is not provided, the latest
+    /// available version across all sources is returned.
+    /// </summary>
+    /// <param name="templateName">Template name.</param>
+    /// <param name="templateVersion">Optional template version to select.</param>
+    /// <param name="msappPath">Optional path to a .msapp file to augment embedded templates.</param>
+    public static EmbeddedTemplateDetails DescribeTemplate(string templateName, string? templateVersion = null, string? msappPath = null)
     {
         if (string.IsNullOrWhiteSpace(templateName))
         {
@@ -71,15 +97,26 @@ public static partial class YamlFirstPackaging
         }
 
         ReadEmbeddedAllControlsEntries(out var embeddedEntries);
-        var templates = ReadUsedTemplates(embeddedEntries);
+        var combinedTemplates = new List<UsedTemplate>(ReadUsedTemplates(embeddedEntries));
+        var variantMaps = new List<IReadOnlyDictionary<string, IReadOnlyList<string>>>
+        {
+            CollectVariantsByTemplateName(embeddedEntries)
+        };
 
-        var matchingByName = templates
+        if (!string.IsNullOrWhiteSpace(msappPath))
+        {
+            var msappEntries = ReadEntriesFromMsApp(msappPath);
+            combinedTemplates.AddRange(ReadUsedTemplates(msappEntries));
+            variantMaps.Add(CollectVariantsByTemplateName(msappEntries));
+        }
+
+        var matchingByName = combinedTemplates
             .Where(t => string.Equals(t.Name, templateName, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         if (matchingByName.Count == 0)
         {
-            throw new InvalidDataException($"Template '{templateName}' was not found in embedded all-controls templates.");
+            throw new InvalidDataException($"Template '{templateName}' was not found in available template sources.");
         }
 
         UsedTemplate selected;
@@ -88,26 +125,79 @@ public static partial class YamlFirstPackaging
             selected = matchingByName.FirstOrDefault(t => string.Equals(t.Version, templateVersion, StringComparison.OrdinalIgnoreCase));
             if (string.IsNullOrWhiteSpace(selected.Name))
             {
-                throw new InvalidDataException($"Template '{templateName}' with version '{templateVersion}' was not found in embedded all-controls templates.");
+                throw new InvalidDataException($"Template '{templateName}' with version '{templateVersion}' was not found in available template sources.");
             }
         }
         else
         {
-            selected = matchingByName
-                .OrderByDescending(t => SemverTuple(t.Version))
-                .First();
+            selected = SelectLatestTemplatesByName(matchingByName).First();
         }
 
         var properties = ParseTemplateProperties(selected.TemplateXml)
             .OrderBy(p => p.PropertyName, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        var variantMap = CollectVariantsByTemplateName(embeddedEntries);
-        var requiresVariant = RequiresVariantKeyword(selected.Name, selected.Id, selected.TemplateXml, variantMap);
-        var variants = MergeVariants(selected.Name, selected.Id, selected.TemplateXml, variantMap);
+        var mergedVariantMap = MergeVariantMaps(variantMaps);
+        var requiresVariant = RequiresVariantKeyword(selected.Name, selected.Id, selected.TemplateXml, mergedVariantMap);
+        var variants = MergeVariants(selected.Name, selected.Id, selected.TemplateXml, mergedVariantMap);
         var flagReqs = BuildAppFlagRequirements(selected.TemplateXml);
 
         return new EmbeddedTemplateDetails(selected.Name, selected.Version, selected.Id, ToYamlControlName(selected.Name), properties, requiresVariant, variants, flagReqs, AutoLayoutChildProperties);
+    }
+
+
+    public static IReadOnlyList<EmbeddedTemplateSummary> ListEmbeddedControlTemplates()
+    {
+        return ListControlTemplates();
+    }
+
+    public static EmbeddedTemplateDetails DescribeEmbeddedTemplate(string templateName, string? templateVersion = null)
+    {
+        return DescribeTemplate(templateName, templateVersion);
+    }
+
+    private static IReadOnlyList<UsedTemplate> SelectLatestTemplatesByName(IEnumerable<UsedTemplate> templates)
+    {
+        var latest = new Dictionary<string, UsedTemplate>(StringComparer.OrdinalIgnoreCase);
+        foreach (var template in templates)
+        {
+            if (!latest.TryGetValue(template.Name, out var existing)
+                || SemverTuple(template.Version).CompareTo(SemverTuple(existing.Version)) > 0)
+            {
+                latest[template.Name] = template;
+            }
+        }
+
+        return latest.Values
+            .OrderBy(t => t.Name, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>> MergeVariantMaps(IEnumerable<IReadOnlyDictionary<string, IReadOnlyList<string>>> variantMaps)
+    {
+        var merged = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var map in variantMaps)
+        {
+            foreach (var (templateName, variants) in map)
+            {
+                if (!merged.TryGetValue(templateName, out var set))
+                {
+                    set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    merged[templateName] = set;
+                }
+
+                foreach (var variant in variants)
+                {
+                    set.Add(variant);
+                }
+            }
+        }
+
+        return merged.ToDictionary(
+            kv => kv.Key,
+            kv => (IReadOnlyList<string>)kv.Value.OrderBy(v => v, StringComparer.OrdinalIgnoreCase).ToList(),
+            StringComparer.OrdinalIgnoreCase);
     }
 
 
@@ -224,21 +314,33 @@ public static partial class YamlFirstPackaging
         WriteEntriesToDirectory(entries, outputDirectory);
     }
 
+    public static byte[] CreateDefaultMsApp(string screenName = "Screen1")
+    {
+        var tempDir = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName());
+        var tempMsapp = Path.Combine(Path.GetTempPath(), Path.GetRandomFileName() + ".msapp");
+        try
+        {
+            InitEmptyAppDirectory(tempDir, screenName);
+            PackFromDirectory(tempDir, tempMsapp);
+            return File.ReadAllBytes(tempMsapp);
+        }
+        finally
+        {
+            if (Directory.Exists(tempDir))
+            {
+                Directory.Delete(tempDir, true);
+            }
+
+            if (File.Exists(tempMsapp))
+            {
+                File.Delete(tempMsapp);
+            }
+        }
+    }
+
     public static void PackFromDirectory(string unpackDirectory, string outputMsappPath, bool ignoreMissingDataSources = false)
     {
         var entries = ReadEntries(unpackDirectory);
-
-        var schemaIssues = ValidatePaYamlFilesAgainstSchema(entries);
-        if (schemaIssues.Count > 0)
-        {
-            Console.Error.WriteLine($"PA YAML schema validation: {schemaIssues.Count} issue(s) found:");
-            foreach (var issue in schemaIssues)
-            {
-                Console.Error.WriteLine($"  {issue}");
-            }
-
-            throw new InvalidDataException($"PA YAML schema validation failed with {schemaIssues.Count} issue(s). See error output for details.");
-        }
 
         var deserializer = new DeserializerBuilder().IgnoreUnmatchedProperties().Build();
         var serializer = new SerializerBuilder().Build();

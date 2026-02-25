@@ -44,7 +44,7 @@ Adds or updates a data source in a Canvas app .msapp file. Two types of data sou
 - **Dataverse table data source**: Fetches table metadata from Dataverse using the provided connection and registers it as a data source. Uses the connection's authentication.
 - **Static collection data source**: Creates a collection data source from a JSON example file, inferring the schema from the data.
 
-> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.
+> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps MSAPP format it not fully understood/supported and the results may need to be validated in Power Apps Studio.
 
 ## EXAMPLES
 
@@ -243,7 +243,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Object
 ## NOTES
 
-> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps YAML format may change between releases and the results may need to be validated in Power Apps Studio.
+> **EXPERIMENTAL:** YAML-first Canvas app modification is experimental. The Power Apps MSAPP format it not fully understood/supported and the results may need to be validated in Power Apps Studio.
 
 A warning is emitted at runtime each time this cmdlet runs as a reminder of the experimental status. To suppress the warning, use the common `-WarningAction SilentlyContinue` parameter.
 

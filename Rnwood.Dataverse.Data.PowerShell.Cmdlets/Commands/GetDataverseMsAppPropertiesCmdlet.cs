@@ -80,8 +80,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ZipEntry entry;
                 while ((entry = zipInputStream.GetNextEntry()) != null)
                 {
+                    string entryName = entry.Name.Replace('\\', '/');
                     // Look for Src/App.pa.yaml
-                    if (entry.Name == "Src/App.pa.yaml")
+                    if (entryName == "Src/App.pa.yaml")
                     {
                         // Read YAML content
                         byte[] entryBytes = ReadZipEntryBytes(zipInputStream);
@@ -92,7 +93,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                         // Create PSObject with app properties information
                         var psObject = new PSObject();
-                        psObject.Properties.Add(new PSNoteProperty("FilePath", entry.Name));
+                        psObject.Properties.Add(new PSNoteProperty("FilePath", entryName));
                         psObject.Properties.Add(new PSNoteProperty("YamlContent", processedYaml));
                         psObject.Properties.Add(new PSNoteProperty("Size", entryBytes.Length));
 
@@ -139,14 +140,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     return contentYaml;
                 }
 
-                // Fallback: return original if structure doesn't match
-                WriteWarning("Could not parse App YAML structure. Returning original content.");
-                return yamlContent;
+                var errorRecord = new ErrorRecord(
+                    new InvalidDataException("Could not parse App YAML structure."),
+                    "AppYamlStructureInvalid",
+                    ErrorCategory.InvalidData,
+                    "App");
+                ThrowTerminatingError(errorRecord);
+                return null;
             }
             catch (Exception ex)
             {
-                WriteWarning($"Error parsing YAML for App properties: {ex.Message}. Returning original content.");
-                return yamlContent;
+                ThrowTerminatingError(new ErrorRecord(
+                    ex,
+                    "AppYamlParseError",
+                    ErrorCategory.InvalidData,
+                    "App"));
+                return null;
             }
         }
     }
