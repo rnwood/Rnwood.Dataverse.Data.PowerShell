@@ -472,8 +472,14 @@ public static partial class YamlFirstPackaging
 
                 var defaultValue = prop.Attribute("defaultValue")?.Value ?? string.Empty;
                 var datatype = prop.Attribute("datatype")?.Value ?? string.Empty;
-                defaultValue = NormalizeReservedEnumTokenForDatatype(defaultValue, datatype);
-                props.Add(new EmbeddedTemplateProperty(name, defaultValue));
+                // Try datatype-specific normalization first (validates enum type matches declared datatype);
+                // fall back to unconditional normalization when datatype is empty/absent.
+                var normalizedValue = NormalizeReservedEnumTokenForDatatype(defaultValue, datatype);
+                if (string.Equals(normalizedValue, defaultValue, StringComparison.Ordinal))
+                {
+                    normalizedValue = NormalizeAllReservedEnumTokens(defaultValue);
+                }
+                props.Add(new EmbeddedTemplateProperty(name, normalizedValue));
             }
 
             return props;
@@ -574,6 +580,20 @@ public static partial class YamlFirstPackaging
         {
             return string.Empty;
         }
+    }
+
+    private static string NormalizeAllReservedEnumTokens(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return value;
+        }
+
+        return Regex.Replace(
+            value,
+            "%([A-Za-z_][A-Za-z0-9_]*)\\.RESERVED%\\.([A-Za-z_][A-Za-z0-9_.]*)",
+            m => $"{m.Groups[1].Value}.{m.Groups[2].Value.Trim()}",
+            RegexOptions.CultureInvariant);
     }
 
     private static string NormalizeReservedEnumTokenForDatatype(string value, string datatype)
