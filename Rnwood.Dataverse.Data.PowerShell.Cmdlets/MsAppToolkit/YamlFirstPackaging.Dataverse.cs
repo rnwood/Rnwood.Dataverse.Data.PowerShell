@@ -173,14 +173,14 @@ public static partial class YamlFirstPackaging
             .OfType<JsonObject>()
             .FirstOrDefault(ds => string.Equals(ds["Type"]?.GetValue<string>() ?? string.Empty, "NativeCDSDataSourceInfo", StringComparison.OrdinalIgnoreCase)
                                   && string.Equals(ds["Name"]?.GetValue<string>() ?? string.Empty, preferredDataSourceName, StringComparison.OrdinalIgnoreCase));
-        // Always include connector metadata (WadlXml, ApiId, CdsActionInfo) for new entries.
-        // For updates to existing entries, preserve the existing behaviour: only include connector metadata
-        // if the entry already contains it (so we don't regress apps that were intentionally saved without it).
+        var hasAnyNativeEntry = dataSources
+            .OfType<JsonObject>()
+            .Any(ds => string.Equals(ds["Type"]?.GetValue<string>() ?? string.Empty, "NativeCDSDataSourceInfo", StringComparison.OrdinalIgnoreCase));
         var includeConnectorMetadata = existingNativeEntry is not null
             ? existingNativeEntry["ApiId"] is not null
               || existingNativeEntry["WadlMetadata"] is not null
               || existingNativeEntry["CdsActionInfo"] is not null
-            : true;
+            : hasAnyNativeEntry;
 
             string? connectorWadlXml = null;
             if (includeConnectorMetadata)
@@ -242,29 +242,6 @@ public static partial class YamlFirstPackaging
         }
 
         UpsertDataSourceEntry(dataSources, nativeEntry, preferredInsertIndex);
-
-        // Power Apps Studio only stores connector metadata (WadlMetadata, ApiId, CdsActionInfo)
-        // for the most recently added DataSource per Dataverse connection. Strip it from all
-        // other NativeCDSDataSourceInfo entries sharing the same DatasetName so only one entry
-        // per connection holds the connector type grammar.
-        if (includeConnectorMetadata)
-        {
-            foreach (var otherEntry in dataSources.OfType<JsonObject>())
-            {
-                var otherType = otherEntry["Type"]?.GetValue<string>() ?? string.Empty;
-                var otherDataset = otherEntry["DatasetName"]?.GetValue<string>() ?? string.Empty;
-                var otherName = otherEntry["Name"]?.GetValue<string>() ?? string.Empty;
-                if (string.Equals(otherType, "NativeCDSDataSourceInfo", StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(otherDataset, normalizedDatasetName, StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(otherName, preferredDataSourceName, StringComparison.OrdinalIgnoreCase))
-                {
-                    otherEntry.Remove("WadlMetadata");
-                    otherEntry.Remove("ApiId");
-                    otherEntry.Remove("CdsActionInfo");
-                }
-            }
-        }
-
         foreach (var optionSetEntry in optionSetEntries)
         {
             UpsertDataSourceEntry(dataSources, optionSetEntry);
@@ -367,14 +344,14 @@ public static partial class YamlFirstPackaging
             .OfType<JsonObject>()
             .FirstOrDefault(ds => string.Equals(ds["Type"]?.GetValue<string>() ?? string.Empty, "NativeCDSDataSourceInfo", StringComparison.OrdinalIgnoreCase)
                                   && string.Equals(ds["Name"]?.GetValue<string>() ?? string.Empty, preferredDataSourceName, StringComparison.OrdinalIgnoreCase));
-        // Always include connector metadata (WadlXml, ApiId, CdsActionInfo) for new entries.
-        // For updates to existing entries, preserve the existing behaviour: only include connector metadata
-        // if the entry already contains it (so we don't regress apps that were intentionally saved without it).
+        var hasAnyNativeEntry = dataSources
+            .OfType<JsonObject>()
+            .Any(ds => string.Equals(ds["Type"]?.GetValue<string>() ?? string.Empty, "NativeCDSDataSourceInfo", StringComparison.OrdinalIgnoreCase));
         var includeConnectorMetadata = existingNativeEntry is not null
             ? existingNativeEntry["ApiId"] is not null
               || existingNativeEntry["WadlMetadata"] is not null
               || existingNativeEntry["CdsActionInfo"] is not null
-            : true;
+            : hasAnyNativeEntry;
 
             string? connectorWadlXml = null;
             if (includeConnectorMetadata)
@@ -438,29 +415,6 @@ public static partial class YamlFirstPackaging
         }
 
         UpsertDataSourceEntry(dataSources, nativeEntry, preferredInsertIndex);
-
-        // Power Apps Studio only stores connector metadata (WadlMetadata, ApiId, CdsActionInfo)
-        // for the most recently added DataSource per Dataverse connection. Strip it from all
-        // other NativeCDSDataSourceInfo entries sharing the same DatasetName so only one entry
-        // per connection holds the connector type grammar.
-        if (includeConnectorMetadata)
-        {
-            foreach (var otherEntry in dataSources.OfType<JsonObject>())
-            {
-                var otherType = otherEntry["Type"]?.GetValue<string>() ?? string.Empty;
-                var otherDataset = otherEntry["DatasetName"]?.GetValue<string>() ?? string.Empty;
-                var otherName = otherEntry["Name"]?.GetValue<string>() ?? string.Empty;
-                if (string.Equals(otherType, "NativeCDSDataSourceInfo", StringComparison.OrdinalIgnoreCase)
-                    && string.Equals(otherDataset, normalizedDatasetName, StringComparison.OrdinalIgnoreCase)
-                    && !string.Equals(otherName, preferredDataSourceName, StringComparison.OrdinalIgnoreCase))
-                {
-                    otherEntry.Remove("WadlMetadata");
-                    otherEntry.Remove("ApiId");
-                    otherEntry.Remove("CdsActionInfo");
-                }
-            }
-        }
-
         foreach (var optionSetEntry in optionSetEntries)
         {
             UpsertDataSourceEntry(dataSources, optionSetEntry);
@@ -626,13 +580,16 @@ public static partial class YamlFirstPackaging
         var normalizedEntitySetName = entitySetName.Trim();
         var normalizedPrimaryId = primaryIdAttribute.Trim();
 
-        // Build the jsonTypes grammars from OData metadata
-        var jsonTypesElements = BuildJsonTypesFromMetadata(
-            metadataDoc,
-            edmNs,
-            sienaNs,
-            normalizedServiceRoot,
-            tableLogicalName);
+        var jsonTypesElement = new XElement(
+            sienaNs + "jsonTypes",
+            new XAttribute("xmlns", sienaNs.NamespaceName),
+            new XAttribute("targetNamespace", normalizedServiceRoot),
+            new XElement(sienaNs + "untypedObject", new XAttribute("name", "Microsoft_Dynamics_CRM_expando")));
+
+        foreach (var typeElement in BuildWadlJsonTypeElements(metadataDoc, edmNs, sienaNs))
+        {
+            jsonTypesElement.Add(typeElement);
+        }
 
         var app = new XElement(
             wadlNs + "application",
@@ -642,13 +599,7 @@ public static partial class YamlFirstPackaging
             new XAttribute(XNamespace.Xmlns + "siena", "http://schemas.microsoft.com/MicrosoftProjectSiena/WADL/2014/11"),
             new XAttribute(XName.Get("serviceId", "http://schemas.microsoft.com/MicrosoftProjectSiena/WADL/2014/11"), DataverseWadlServiceId),
             new XElement(wadlNs + "doc", new XAttribute("title", "OData Service for namespace Microsoft.Dynamics.CRM"), "This OData service is located at http://localhost"),
-            new XElement(
-                wadlNs + "grammars",
-                new XElement(
-                    sienaNs + "jsonTypes",
-                    new XAttribute("xmlns", sienaNs.NamespaceName),
-                    new XAttribute("targetNamespace", normalizedServiceRoot),
-                    jsonTypesElements)));
+            new XElement(wadlNs + "grammars", jsonTypesElement));
 
         var resourcesElement = new XElement(
             wadlNs + "resources",
@@ -782,6 +733,138 @@ public static partial class YamlFirstPackaging
             "Edm.DateTimeOffset" => "xs:dateTime",
             _ => "xs:string",
         };
+    }
+
+    /// <summary>
+    /// Builds WADL jsonType elements from OData $metadata entity type definitions.
+    /// For each entity type, generates standalone type definitions for scalar properties
+    /// and an <c>&lt;object&gt;</c> element with property children (matching Studio format).
+    /// </summary>
+    private static IEnumerable<XElement> BuildWadlJsonTypeElements(
+        XDocument metadataDoc,
+        XNamespace edmNs,
+        XNamespace sienaNs)
+    {
+        var entityTypes = metadataDoc
+            .Descendants(edmNs + "EntityType")
+            .Select(et => new
+            {
+                Name = et.Attribute("Name")?.Value ?? string.Empty,
+                Properties = et.Elements(edmNs + "Property").ToList(),
+                NavigationProperties = et.Elements(edmNs + "NavigationProperty").ToList(),
+            })
+            .Where(et => !string.IsNullOrWhiteSpace(et.Name))
+            .ToList();
+
+        foreach (var entityType in entityTypes)
+        {
+            var entityWadlName = $"Microsoft_Dynamics_CRM_{entityType.Name}";
+
+            // Phase 1: Standalone type definitions for each scalar property.
+            // Studio emits one standalone def per scalar property (string/integer/boolean/number/dateTimeString/untypedObject).
+            foreach (var prop in entityType.Properties)
+            {
+                var propName = prop.Attribute("Name")?.Value;
+                if (string.IsNullOrWhiteSpace(propName)) continue;
+
+                var edmType = prop.Attribute("Type")?.Value;
+                var (_, wadlElementName) = MapEdmTypeToWadlJsonType(edmType);
+                var defName = $"{entityWadlName}_{propName}_def";
+                yield return new XElement(sienaNs + wadlElementName, new XAttribute("name", defName));
+            }
+
+            // Phase 2: Object element with all properties.
+            var objectElement = new XElement(sienaNs + "object", new XAttribute("name", entityWadlName));
+
+            foreach (var prop in entityType.Properties)
+            {
+                var propName = prop.Attribute("Name")?.Value;
+                if (string.IsNullOrWhiteSpace(propName)) continue;
+
+                var edmType = prop.Attribute("Type")?.Value;
+                var (wadlInlineType, wadlElementName) = MapEdmTypeToWadlJsonType(edmType);
+
+                if (wadlInlineType is null)
+                {
+                    // Types without an inline equivalent (dateTimeString, untypedObject) must use typeRef.
+                    objectElement.Add(new XElement(sienaNs + "property",
+                        new XAttribute("name", propName),
+                        new XAttribute("typeRef", $"{entityWadlName}_{propName}_def")));
+                }
+                else
+                {
+                    objectElement.Add(new XElement(sienaNs + "property",
+                        new XAttribute("name", propName),
+                        new XAttribute("type", wadlInlineType)));
+                }
+            }
+
+            // Phase 3: Navigation properties reference entity object types.
+            foreach (var navProp in entityType.NavigationProperties)
+            {
+                var propName = navProp.Attribute("Name")?.Value;
+                var typeName = navProp.Attribute("Type")?.Value;
+                if (string.IsNullOrWhiteSpace(propName) || string.IsNullOrWhiteSpace(typeName)) continue;
+
+                var targetEntityName = ExtractEntityNameFromODataType(typeName);
+                if (!string.IsNullOrWhiteSpace(targetEntityName))
+                {
+                    objectElement.Add(new XElement(sienaNs + "property",
+                        new XAttribute("name", propName),
+                        new XAttribute("typeRef", $"Microsoft_Dynamics_CRM_{targetEntityName}")));
+                }
+            }
+
+            yield return objectElement;
+        }
+    }
+
+    /// <summary>
+    /// Maps an OData EDM type to a WADL json type element name and optional inline type.
+    /// Returns (inlineType, elementName) where inlineType is null when the type must use typeRef.
+    /// </summary>
+    private static (string? inlineType, string elementName) MapEdmTypeToWadlJsonType(string? edmType)
+    {
+        if (string.IsNullOrWhiteSpace(edmType))
+        {
+            return ("string", "string");
+        }
+
+        return edmType switch
+        {
+            "Edm.String" => ("string", "string"),
+            "Edm.Guid" => ("string", "string"),
+            "Edm.Binary" => ("string", "string"),
+            "Edm.Int32" => ("integer", "integer"),
+            "Edm.Int64" => ("integer", "integer"),
+            "Edm.Int16" => ("integer", "integer"),
+            "Edm.Byte" => ("integer", "integer"),
+            "Edm.Boolean" => ("boolean", "boolean"),
+            "Edm.Decimal" => ("number", "number"),
+            "Edm.Double" => (null, "untypedObject"),             // Studio maps Double to untypedObject with typeRef
+            "Edm.Single" => ("number", "number"),
+            "Edm.DateTimeOffset" => (null, "dateTimeString"),    // No inline equivalent; must use typeRef
+            "Edm.Duration" => ("string", "string"),
+            "Edm.Stream" => ("string", "string"),
+            _ => ("string", "string"),
+        };
+    }
+
+    /// <summary>
+    /// Extracts the entity logical name from an OData type string.
+    /// Handles both <c>Microsoft.Dynamics.CRM.contact</c> and <c>Collection(Microsoft.Dynamics.CRM.contact)</c>.
+    /// </summary>
+    private static string? ExtractEntityNameFromODataType(string typeName)
+    {
+        var normalized = typeName.Trim();
+        if (normalized.StartsWith("Collection(", StringComparison.OrdinalIgnoreCase)
+            && normalized.EndsWith(")", StringComparison.Ordinal))
+        {
+            normalized = normalized.Substring("Collection(".Length, normalized.Length - "Collection(".Length - 1);
+        }
+
+        var lastDot = normalized.LastIndexOf('.');
+        return lastDot >= 0 ? normalized.Substring(lastDot + 1) : normalized;
     }
 
     private static async Task<JsonObject> GetPowerAppsEntityMetadataAsync(
@@ -1634,450 +1717,5 @@ public static partial class YamlFirstPackaging
         }
 
         return fallback;
-    }
-
-    /// <summary>
-    /// Build WADL jsonTypes from OData $metadata EntityType and ComplexType definitions.
-    /// Generates type definitions for all entity types and their navigation properties recursively.
-    /// </summary>
-    private static IEnumerable<XElement> BuildJsonTypesFromMetadata(
-        XDocument metadataDoc,
-        XNamespace edmNs,
-        XNamespace sienaNs,
-        string serviceRoot,
-        string tableLogicalName)
-    {
-        var elements = new List<XElement>();
-        elements.Add(new XElement(sienaNs + "untypedObject", new XAttribute("name", "Microsoft_Dynamics_CRM_expando")));
-
-        // Build a set of entity types to include by traversing the primary entity and all its relationships recursively
-        var entityTypes = metadataDoc.Descendants(edmNs + "EntityType").ToList();
-        var enumerationTypes = metadataDoc.Descendants(edmNs + "EnumType").ToList();
-        var complexTypes = metadataDoc.Descendants(edmNs + "ComplexType").ToList();
-
-        // Find the primary entity type
-        var primaryEntity = entityTypes.FirstOrDefault(e => 
-            string.Equals(e.Attribute("Name")?.Value, tableLogicalName, StringComparison.OrdinalIgnoreCase));
-
-        if (primaryEntity is null)
-        {
-            // If primary entity not found, still try to generate types for at least the basic structure
-            return elements;
-        }
-
-        // Phase 1: entity discovery via ALL navigation properties (single-valued + collection).
-        // This gives the full entity set S that the WADL will cover.  Using only single-valued props
-        // here would reduce to ~27 entities, causing formulas that reference activity/annotation
-        // lookup relationships to break.
-        var allReachableEntities = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { tableLogicalName };
-        var toProcess = new Queue<string>();
-        toProcess.Enqueue(tableLogicalName);
-
-        while (toProcess.Count > 0)
-        {
-            var currentEntityName = toProcess.Dequeue();
-            var currentEntity = entityTypes.FirstOrDefault(e =>
-                string.Equals(e.Attribute("Name")?.Value, currentEntityName, StringComparison.OrdinalIgnoreCase));
-
-            if (currentEntity is null) continue;
-
-            var allNavProps = GetAllInheritedNavigationProperties(currentEntity, edmNs, entityTypes);
-            foreach (var navProp in allNavProps)
-            {
-                var typeValue = navProp.Attribute("Type")?.Value ?? string.Empty;
-                var referencedEntity = ExtractEntityTypeNameFromNavigationProperty(typeValue);
-
-                if (!string.IsNullOrEmpty(referencedEntity) && !allReachableEntities.Contains(referencedEntity))
-                {
-                    allReachableEntities.Add(referencedEntity);
-                    toProcess.Enqueue(referencedEntity);
-                }
-            }
-        }
-
-        // Phase 2: compute the single-valued-only reachable subset.
-        // Collection nav props inside each entity object are restricted to target entities in this
-        // smaller set, mirroring the reference APIM connector curation pattern and preventing the
-        // 7+ MB explosion that results when all collection nav props across 700+ entities are included
-        // (systemuser alone has 3,500+ collection relationships in OData, vs 275 in the reference).
-        var singleValuedEntities = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { tableLogicalName };
-        var svToProcess = new Queue<string>();
-        svToProcess.Enqueue(tableLogicalName);
-
-        while (svToProcess.Count > 0)
-        {
-            var currentEntityName = svToProcess.Dequeue();
-            var currentEntity = entityTypes.FirstOrDefault(e =>
-                string.Equals(e.Attribute("Name")?.Value, currentEntityName, StringComparison.OrdinalIgnoreCase));
-
-            if (currentEntity is null) continue;
-
-            var svNavProps = GetAllInheritedNavigationProperties(currentEntity, edmNs, entityTypes);
-            foreach (var navProp in svNavProps)
-            {
-                var typeValue = navProp.Attribute("Type")?.Value ?? string.Empty;
-
-                // Single-valued nav props only for this subset
-                if (typeValue.StartsWith("Collection(", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var referencedEntity = ExtractEntityTypeNameFromNavigationProperty(typeValue);
-
-                if (!string.IsNullOrEmpty(referencedEntity) && !singleValuedEntities.Contains(referencedEntity))
-                {
-                    singleValuedEntities.Add(referencedEntity);
-                    svToProcess.Enqueue(referencedEntity);
-                }
-            }
-        }
-
-        // Generate type definitions for all reachable entities (Phase 1 set).
-        // Collection nav props within each entity only include targets from the Phase 2 set.
-        foreach (var entityName in allReachableEntities.OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
-        {
-            var entityType = entityTypes.FirstOrDefault(e =>
-                string.Equals(e.Attribute("Name")?.Value, entityName, StringComparison.OrdinalIgnoreCase));
-
-            if (entityType is not null)
-            {
-                var entityElements = GenerateObjectElementsFromEntityType(
-                    entityType,
-                    edmNs,
-                    sienaNs,
-                    serviceRoot,
-                    entityTypes,
-                    singleValuedEntities);
-                elements.AddRange(entityElements);
-            }
-        }
-
-        // Generate type definitions for enumeration types referenced by entity properties
-        foreach (var enumType in enumerationTypes.OrderBy(e => e.Attribute("Name")?.Value, StringComparer.OrdinalIgnoreCase))
-        {
-            var enumName = enumType.Attribute("Name")?.Value;
-            if (!string.IsNullOrEmpty(enumName))
-            {
-                var enumElement = GenerateEnumElementFromEnumerationType(enumType, edmNs, sienaNs);
-                if (enumElement is not null)
-                {
-                    elements.Add(enumElement);
-                }
-            }
-        }
-
-        return elements;
-    }
-
-    /// <summary>
-    /// Extract entity type name from navigation property Type attribute.
-    /// Handles any namespace prefix (e.g., "Microsoft.Dynamics.CRM.contact", "mscrm.contact", "self.contact")
-    /// and collection wrappers (e.g., "Collection(Microsoft.Dynamics.CRM.contact)").
-    /// Returns the last dot-delimited segment, which is the entity's logical name.
-    /// </summary>
-    private static string? ExtractEntityTypeNameFromNavigationProperty(string typeValue)
-    {
-        if (string.IsNullOrWhiteSpace(typeValue))
-            return null;
-
-        // Unwrap Collection() if present
-        var baseType = typeValue.Trim();
-        if (baseType.StartsWith("Collection(", StringComparison.OrdinalIgnoreCase) && baseType.EndsWith(")"))
-        {
-            baseType = baseType.Substring("Collection(".Length, baseType.Length - "Collection(".Length - 1);
-        }
-
-        // Remove any trailing ) or , from malformed types
-        var endIdx = baseType.IndexOfAny(new[] { ')', ',' });
-        if (endIdx >= 0)
-        {
-            baseType = baseType.Substring(0, endIdx);
-        }
-
-        // Extract the last segment after a dot (handles any namespace prefix)
-        // e.g., "Microsoft.Dynamics.CRM.account" -> "account"
-        // e.g., "mscrm.account" -> "account"
-        // e.g., "self.account" -> "account"
-        var lastDot = baseType.LastIndexOf('.');
-        if (lastDot >= 0)
-        {
-            return baseType.Substring(lastDot + 1);
-        }
-
-        // No dot found - return the whole thing (rare case like a bare type name)
-        return baseType.Length > 0 ? baseType : null;
-    }
-
-    /// <summary>
-    /// Generate WADL elements for an OData EntityType: any preceding _def type definitions
-    /// followed by the object element itself.
-    /// Power Apps Studio WADL pattern:
-    ///   - Properties whose type is "dateTimeString" or "untypedObject" get a standalone _def type
-    ///     element emitted before the object AND reference it via typeRef (no inline type=).
-    ///   - Properties whose type is "string", "integer", "boolean", "number" use ONLY inline type= —
-    ///     no _def element is emitted.  Adding _def for every property would bloat the WADL 5x and
-    ///     Studio rejects it (reference WADL: ~7 _defs/entity avg, only dateTimeString/untypedObject).
-    /// </summary>
-    private static IEnumerable<XElement> GenerateObjectElementsFromEntityType(
-        XElement entityType,
-        XNamespace edmNs,
-        XNamespace sienaNs,
-        string serviceRoot,
-        List<XElement> allEntityTypes,
-        HashSet<string>? reachableEntityNames = null)
-    {
-        var entityName = entityType.Attribute("Name")?.Value ?? "Unknown";
-        var wadlEntityName = $"Microsoft_Dynamics_CRM_{entityName}";
-
-        var defElements = new List<XElement>();
-        var objectElement = new XElement(
-            sienaNs + "object",
-            new XAttribute("name", wadlEntityName));
-
-        // Collect ALL structural properties including inherited from BaseType chain.
-        // OData EntityType inherits properties from BaseType — we must walk the chain
-        // so that derived entities include all their ancestor's properties too.
-        var structuralProps = GetAllInheritedProperties(entityType, edmNs, allEntityTypes);
-        foreach (var prop in structuralProps)
-        {
-            var propName = prop.Attribute("Name")?.Value ?? string.Empty;
-            var propType = prop.Attribute("Type")?.Value ?? "Edm.String";
-
-            var wadlType = MapODataTypeToWadlType(propType);
-
-            // Only dateTimeString and untypedObject get a standalone _def element — AND they use
-            // typeRef instead of inline type=.  String/integer/boolean/number use ONLY inline type=
-            // (no _def element).  Emitting _def for every property inflates the WADL ~5x and Studio
-            // rejects it (reference WADL averages ~7 _defs per entity, not ~250).
-            XElement propElement;
-            if (wadlType == "dateTimeString" || wadlType == "untypedObject")
-            {
-                var defName = $"{wadlEntityName}_{propName}_def";
-                defElements.Add(new XElement(sienaNs + wadlType, new XAttribute("name", defName)));
-                propElement = new XElement(
-                    sienaNs + "property",
-                    new XAttribute("name", propName),
-                    new XAttribute("typeRef", defName));
-            }
-            else
-            {
-                propElement = new XElement(
-                    sienaNs + "property",
-                    new XAttribute("name", propName),
-                    new XAttribute("type", wadlType));
-            }
-
-            objectElement.Add(propElement);
-        }
-
-        // Add navigation properties (relationships to other entities), including inherited ones.
-        // Two different patterns based on cardinality, matching Power Apps Studio WADL exactly:
-        //
-        //   Single-valued (lookup / many-to-one):
-        //     → <property name="navprop" typeRef="Microsoft_Dynamics_CRM_entityname" />
-        //
-        //   Collection (one-to-many / reverse):
-        //     → before object: <array typeRef="Microsoft_Dynamics_CRM_entityname" name="{wadlEntity}_{navprop}_def" />
-        //     → in object:     <property name="navprop" typeRef="{wadlEntity}_{navprop}_def" />
-        //
-        //   Collection nav props are only included when their target entity is in the
-        //   single-valued-reachable set (reachableEntityNames).  This matches the reference APIM
-        //   connector pattern where only relationships between "known" entities are exposed,
-        //   avoiding the 7+ MB explosion from including every reverse relationship in the org.
-        var navProps = GetAllInheritedNavigationProperties(entityType, edmNs, allEntityTypes);
-        foreach (var navProp in navProps)
-        {
-            var navPropName = navProp.Attribute("Name")?.Value ?? string.Empty;
-            var navPropType = navProp.Attribute("Type")?.Value ?? string.Empty;
-
-            var referencedEntity = ExtractEntityTypeNameFromNavigationProperty(navPropType);
-            if (string.IsNullOrEmpty(referencedEntity)) continue;
-
-            if (navPropType.StartsWith("Collection(", StringComparison.OrdinalIgnoreCase))
-            {
-                // Collection nav prop: only include if target is in the known entity set
-                if (reachableEntityNames is null || !reachableEntityNames.Contains(referencedEntity))
-                    continue;
-
-                // Emit: <array typeRef="...entity..." name="{currentEntity}_{navprop}_def" />
-                // and: <property name="navprop" typeRef="{currentEntity}_{navprop}_def" />
-                var arrayTargetRef = $"Microsoft_Dynamics_CRM_{referencedEntity}";
-                var arrayDefName = $"{wadlEntityName}_{navPropName}_def";
-                defElements.Add(new XElement(
-                    sienaNs + "array",
-                    new XAttribute("typeRef", arrayTargetRef),
-                    new XAttribute("name", arrayDefName)));
-                objectElement.Add(new XElement(
-                    sienaNs + "property",
-                    new XAttribute("name", navPropName),
-                    new XAttribute("typeRef", arrayDefName)));
-            }
-            else
-            {
-                // Single-valued (lookup) nav prop: direct typeRef to entity object
-                var wadlEntityRef = $"Microsoft_Dynamics_CRM_{referencedEntity}";
-                objectElement.Add(new XElement(
-                    sienaNs + "property",
-                    new XAttribute("name", navPropName),
-                    new XAttribute("typeRef", wadlEntityRef)));
-            }
-        }
-
-        // Emit _def elements BEFORE the object element (matching reference WADL ordering)
-        foreach (var def in defElements)
-        {
-            yield return def;
-        }
-        yield return objectElement;
-    }
-
-    /// <summary>
-    /// Collect all OData structural (non-navigation) properties for an EntityType, walking
-    /// the BaseType inheritance chain so inherited properties are included.
-    /// Properties are deduped by name with the most-derived type winning.
-    /// </summary>
-    private static List<XElement> GetAllInheritedProperties(
-        XElement entityType,
-        XNamespace edmNs,
-        List<XElement> allEntityTypes)
-    {
-        var result = new Dictionary<string, XElement>(StringComparer.OrdinalIgnoreCase);
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var current = entityType;
-
-        while (current is not null)
-        {
-            var typeName = current.Attribute("Name")?.Value ?? string.Empty;
-            if (!visited.Add(typeName)) break; // cycle guard
-
-            // Own properties — only add if not already shadowed by more-derived type
-            foreach (var prop in current.Elements(edmNs + "Property"))
-            {
-                var name = prop.Attribute("Name")?.Value ?? string.Empty;
-                if (!string.IsNullOrEmpty(name) && !result.ContainsKey(name))
-                    result[name] = prop;
-            }
-
-            // Walk up to base type
-            var baseTypeQualified = current.Attribute("BaseType")?.Value;
-            if (string.IsNullOrEmpty(baseTypeQualified)) break;
-
-            // BaseType is like "Microsoft.Dynamics.CRM.crmbaseentity" — extract the local name
-            var lastDot = baseTypeQualified.LastIndexOf('.');
-            var baseTypeName = lastDot >= 0 ? baseTypeQualified.Substring(lastDot + 1) : baseTypeQualified;
-
-            current = allEntityTypes.FirstOrDefault(e =>
-                string.Equals(e.Attribute("Name")?.Value, baseTypeName, StringComparison.OrdinalIgnoreCase));
-        }
-
-        return [.. result.Values];
-    }
-
-    /// <summary>
-    /// Collect all single-valued OData navigation properties for an EntityType, walking
-    /// the BaseType inheritance chain. Collection nav properties are excluded.
-    /// </summary>
-    private static List<XElement> GetAllInheritedNavigationProperties(
-        XElement entityType,
-        XNamespace edmNs,
-        List<XElement> allEntityTypes)
-    {
-        var result = new Dictionary<string, XElement>(StringComparer.OrdinalIgnoreCase);
-        var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var current = entityType;
-
-        while (current is not null)
-        {
-            var typeName = current.Attribute("Name")?.Value ?? string.Empty;
-            if (!visited.Add(typeName)) break;
-
-            foreach (var navProp in current.Elements(edmNs + "NavigationProperty"))
-            {
-                var name = navProp.Attribute("Name")?.Value ?? string.Empty;
-                if (!string.IsNullOrEmpty(name) && !result.ContainsKey(name))
-                    result[name] = navProp;
-            }
-
-            var baseTypeQualified = current.Attribute("BaseType")?.Value;
-            if (string.IsNullOrEmpty(baseTypeQualified)) break;
-
-            var lastDot = baseTypeQualified.LastIndexOf('.');
-            var baseTypeName = lastDot >= 0 ? baseTypeQualified.Substring(lastDot + 1) : baseTypeQualified;
-
-            current = allEntityTypes.FirstOrDefault(e =>
-                string.Equals(e.Attribute("Name")?.Value, baseTypeName, StringComparison.OrdinalIgnoreCase));
-        }
-
-        return [.. result.Values];
-    }
-
-    /// <summary>
-    /// Map OData type names to WADL type names.
-    /// </summary>
-    private static string MapODataTypeToWadlType(string odataType)
-    {
-        if (string.IsNullOrWhiteSpace(odataType))
-            return "string";
-
-        var odataLower = odataType.ToLowerInvariant();
-
-        // Handle collection types
-        if (odataLower.StartsWith("collection("))
-        {
-            var innerType = odataType.Substring("Collection(".Length);
-            innerType = innerType.TrimEnd(')');
-            return $"array({MapODataTypeToWadlType(innerType)})";
-        }
-
-        // Handle Edm primitive types
-        return odataLower switch
-        {
-            "edm.string" => "string",
-            "edm.int32" => "integer",
-            "edm.int64" => "integer",
-            "edm.double" => "untypedObject", // lat/lng fields in Dataverse are Double; reference WADL uses untypedObject
-            "edm.decimal" => "number",
-            "edm.boolean" => "boolean",
-            "edm.datetimeoffset" => "dateTimeString",
-            "edm.guid" => "string",
-            "edm.date" => "string",
-            "edm.timeofday" => "string",
-            _ => "string" // Default fallback
-        };
-    }
-
-    /// <summary>
-    /// Generate a WADL enumeration element from an OData EnumType definition.
-    /// </summary>
-    private static XElement? GenerateEnumElementFromEnumerationType(
-        XElement enumType,
-        XNamespace edmNs,
-        XNamespace sienaNs)
-    {
-        var enumName = enumType.Attribute("Name")?.Value;
-        if (string.IsNullOrEmpty(enumName))
-            return null;
-
-        var wadlEnumName = $"Microsoft_Dynamics_CRM_{enumName}";
-
-        var enumElement = new XElement(
-            sienaNs + "enumType",
-            new XAttribute("name", wadlEnumName));
-
-        // Add enum members
-        var members = enumType.Elements(edmNs + "Member").ToList();
-        foreach (var member in members)
-        {
-            var memberName = member.Attribute("Name")?.Value ?? string.Empty;
-            var memberValue = member.Attribute("Value")?.Value ?? "0";
-
-            var memberElement = new XElement(
-                sienaNs + "enumMember",
-                new XAttribute("name", memberName),
-                new XAttribute("value", memberValue));
-
-            enumElement.Add(memberElement);
-        }
-
-        return enumElement;
     }
 }
