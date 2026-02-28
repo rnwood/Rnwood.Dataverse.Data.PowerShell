@@ -127,6 +127,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     string environmentUrl = Connection.ConnectedOrgUriActual?.ToString()
                         ?? throw new InvalidOperationException("Cannot determine environment URL from connection.");
                     string accessToken = GetAccessToken();
+                    var accessTokenProvider = GetAccessTokenProvider();
 
                     MsAppPackagingHelper.ModifyMsApp(targetPath, unpackDir =>
                     {
@@ -136,7 +137,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             TableLogicalName,
                             accessToken,
                             DisplayName,
-                            DatasetName).GetAwaiter().GetResult();
+                            DatasetName,
+                            null,
+                            accessTokenProvider).GetAwaiter().GetResult();
                     });
 
                     WriteVerbose($"Dataverse table data source '{TableLogicalName}' set successfully");
@@ -215,6 +218,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             throw new InvalidOperationException("Unable to retrieve access token from connection. Ensure you are authenticated.");
+        }
+
+        private Func<string, System.Threading.Tasks.Task<string>> GetAccessTokenProvider()
+        {
+            if (Connection is ServiceClientWithTokenProvider clientWithProvider && clientWithProvider.TokenProviderFunction != null)
+            {
+                return clientWithProvider.TokenProviderFunction;
+            }
+
+            return null;
         }
     }
 }

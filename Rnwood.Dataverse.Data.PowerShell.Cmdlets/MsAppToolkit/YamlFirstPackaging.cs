@@ -423,48 +423,78 @@ public static partial class YamlFirstPackaging
             var yaml = Encoding.UTF8.GetString(bytes);
             if (!TryParseYamlMap(deserializer, yaml, out var root))
             {
-                continue;
+                throw new InvalidDataException($"Failed to parse YAML in '{path}'. Ensure it is valid YAML with the expected schema.");
             }
 
             if (path.StartsWith("Src/Components/", StringComparison.OrdinalIgnoreCase))
             {
-                if (TryGetMap(root, "ComponentDefinitions", out var defs))
+                if (!TryGetMap(root, "ComponentDefinitions", out var defs))
                 {
-                    foreach (var kv in defs)
-                    {
-                        var n = kv.Key?.ToString() ?? string.Empty;
-                        if (string.IsNullOrWhiteSpace(n) || kv.Value is not Dictionary<object, object?> payload)
-                        {
-                            continue;
-                        }
+                    throw new InvalidDataException($"YAML file '{path}' must contain a 'ComponentDefinitions' mapping.");
+                }
 
-                        componentPayloads[n] = payload;
-                        if (!componentOrderFromFiles.Contains(n, StringComparer.OrdinalIgnoreCase))
-                        {
-                            componentOrderFromFiles.Add(n);
-                        }
+                var foundAnyComponent = false;
+                foreach (var kv in defs)
+                {
+                    var n = kv.Key?.ToString() ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(n))
+                    {
+                        throw new InvalidDataException($"YAML file '{path}' contains a component definition with an empty name.");
                     }
+
+                    if (kv.Value is not Dictionary<object, object?> payload)
+                    {
+                        throw new InvalidDataException($"Component '{n}' in '{path}' must map to an object payload.");
+                    }
+
+                    componentPayloads[n] = payload;
+                    if (!componentOrderFromFiles.Contains(n, StringComparer.OrdinalIgnoreCase))
+                    {
+                        componentOrderFromFiles.Add(n);
+                    }
+
+                    foundAnyComponent = true;
+                }
+
+                if (!foundAnyComponent)
+                {
+                    throw new InvalidDataException($"YAML file '{path}' does not define any components under 'ComponentDefinitions'.");
                 }
 
                 continue;
             }
 
-            if (TryGetMap(root, "Screens", out var screens))
+            if (!TryGetMap(root, "Screens", out var screens))
             {
-                foreach (var kv in screens)
-                {
-                    var n = kv.Key?.ToString() ?? string.Empty;
-                    if (string.IsNullOrWhiteSpace(n) || kv.Value is not Dictionary<object, object?> payload)
-                    {
-                        continue;
-                    }
+                throw new InvalidDataException($"YAML file '{path}' must contain a 'Screens' mapping.");
+            }
 
-                    screenPayloads[n] = payload;
-                    if (!screenOrderFromFiles.Contains(n, StringComparer.OrdinalIgnoreCase))
-                    {
-                        screenOrderFromFiles.Add(n);
-                    }
+            var foundAnyScreen = false;
+            foreach (var kv in screens)
+            {
+                var n = kv.Key?.ToString() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(n))
+                {
+                    throw new InvalidDataException($"YAML file '{path}' contains a screen with an empty name.");
                 }
+
+                if (kv.Value is not Dictionary<object, object?> payload)
+                {
+                    throw new InvalidDataException($"Screen '{n}' in '{path}' must map to an object payload.");
+                }
+
+                screenPayloads[n] = payload;
+                if (!screenOrderFromFiles.Contains(n, StringComparer.OrdinalIgnoreCase))
+                {
+                    screenOrderFromFiles.Add(n);
+                }
+
+                foundAnyScreen = true;
+            }
+
+            if (!foundAnyScreen)
+            {
+                throw new InvalidDataException($"YAML file '{path}' does not define any screens under 'Screens'.");
             }
         }
 
@@ -589,70 +619,146 @@ public static partial class YamlFirstPackaging
     }
 
     /// <summary>
-    /// Validates that all control names (including screen names) are globally unique
-    /// across all screens and components. Power Apps requires unique control names;
-    /// duplicate names cause generic load errors in Studio.
+    /// Validates control naming rules:
+    /// 1) Screen names and all control names across all screens must be globally unique.
+    /// 2) Component names must be globally unique.
+    /// 3) Control names inside each component must be unique within that component.
+    /// Control names are allowed to be reused across different components.
     /// </summary>
     private static void ValidateUniqueControlNames(
         Dictionary<string, JsonObject> topControlFiles,
         Dictionary<string, JsonObject> topComponentFiles)
     {
-        // Map: control name -> list of (screen/component name, control name) for error reporting
-        var nameLocations = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        var screenNameLocations = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
-        void CollectNames(Dictionary<string, JsonObject> files, string kind)
+        foreach (var (fileName, wrapper) in topControlFiles)
         {
-            foreach (var (fileName, wrapper) in files)
+            var topParent = wrapper["TopParent"] as JsonObject;
+            if (topParent is null)
             {
-                var topParent = wrapper["TopParent"] as JsonObject;
-                if (topParent is null)
-                    continue;
+                continue;
+            }
 
-                var topName = topParent["Name"]?.GetValue<string>() ?? fileName;
-                var templateName = topParent["Template"]?["Name"]?.GetValue<string>() ?? string.Empty;
+            var topName = topParent["Name"]?.GetValue<string>() ?? fileName;
+            if (string.Equals(topName, "App", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
 
-                // Skip the App control itself — it's special
-                if (string.Equals(topName, "App", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                foreach (var node in Flatten(topParent))
+            foreach (var node in Flatten(topParent))
+            {
+                var controlName = node["Name"]?.GetValue<string>();
+                if (string.IsNullOrWhiteSpace(controlName))
                 {
-                    var controlName = node["Name"]?.GetValue<string>();
-                    if (string.IsNullOrWhiteSpace(controlName))
-                        continue;
-
-                    if (!nameLocations.TryGetValue(controlName, out var locations))
-                    {
-                        locations = new List<string>();
-                        nameLocations[controlName] = locations;
-                    }
-
-                    locations.Add($"{kind} '{topName}'");
+                    continue;
                 }
+
+                if (!screenNameLocations.TryGetValue(controlName, out var locations))
+                {
+                    locations = new List<string>();
+                    screenNameLocations[controlName] = locations;
+                }
+
+                locations.Add($"Screen '{topName}'");
             }
         }
 
-        CollectNames(topControlFiles, "Screen");
-        CollectNames(topComponentFiles, "Component");
-
-        var duplicates = nameLocations
+        var screenDuplicates = screenNameLocations
             .Where(kv => kv.Value.Count > 1)
             .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
             .ToList();
 
-        if (duplicates.Count > 0)
+        if (screenDuplicates.Count > 0)
         {
             var messages = new List<string>();
-            foreach (var dup in duplicates)
+            foreach (var dup in screenDuplicates)
             {
                 var locations = string.Join(", ", dup.Value.Distinct(StringComparer.OrdinalIgnoreCase));
-                messages.Add($"  Control '{dup.Key}' appears in: {locations}");
+                messages.Add($"  Name '{dup.Key}' appears in: {locations}");
             }
 
             throw new InvalidDataException(
-                $"Duplicate control names detected ({duplicates.Count}). " +
-                $"Power Apps requires globally unique control names across all screens and components.\n" +
+                $"Duplicate screen/control names detected across screens ({screenDuplicates.Count}). " +
+                $"Screen names and all control names in screens must be globally unique.\n" +
                 string.Join("\n", messages));
+        }
+
+        var componentNameLocations = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (fileName, wrapper) in topComponentFiles)
+        {
+            var topParent = wrapper["TopParent"] as JsonObject;
+            if (topParent is null)
+            {
+                continue;
+            }
+
+            var componentName = topParent["Name"]?.GetValue<string>() ?? fileName;
+            if (!componentNameLocations.TryGetValue(componentName, out var locations))
+            {
+                locations = new List<string>();
+                componentNameLocations[componentName] = locations;
+            }
+
+            locations.Add(fileName);
+        }
+
+        var duplicateComponentNames = componentNameLocations
+            .Where(kv => kv.Value.Count > 1)
+            .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (duplicateComponentNames.Count > 0)
+        {
+            var messages = duplicateComponentNames
+                .Select(dup => $"  Component '{dup.Key}' appears in files: {string.Join(", ", dup.Value)}")
+                .ToList();
+
+            throw new InvalidDataException(
+                $"Duplicate component names detected ({duplicateComponentNames.Count}). " +
+                "Component names must be globally unique.\n" +
+                string.Join("\n", messages));
+        }
+
+        var componentViolations = new List<string>();
+        foreach (var (fileName, wrapper) in topComponentFiles)
+        {
+            var topParent = wrapper["TopParent"] as JsonObject;
+            if (topParent is null)
+            {
+                continue;
+            }
+
+            var componentName = topParent["Name"]?.GetValue<string>() ?? fileName;
+            var localCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var node in Flatten(topParent))
+            {
+                var controlName = node["Name"]?.GetValue<string>();
+                if (string.IsNullOrWhiteSpace(controlName))
+                {
+                    continue;
+                }
+
+                localCounts[controlName] = localCounts.TryGetValue(controlName, out var current) ? current + 1 : 1;
+            }
+
+            var duplicateLocalNames = localCounts
+                .Where(kv => kv.Value > 1)
+                .Select(kv => kv.Key)
+                .OrderBy(v => v, StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (duplicateLocalNames.Count > 0)
+            {
+                componentViolations.Add($"  Component '{componentName}' has duplicate control names: {string.Join(", ", duplicateLocalNames)}");
+            }
+        }
+
+        if (componentViolations.Count > 0)
+        {
+            throw new InvalidDataException(
+                $"Duplicate control names detected within component definitions ({componentViolations.Count}). " +
+                "Control names in a component must be unique within that component.\n" +
+                string.Join("\n", componentViolations));
         }
     }
 

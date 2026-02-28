@@ -233,6 +233,12 @@ public static partial class YamlFirstPackaging
                 resolver.RegisterTemplatePropertyDatatypesFromXml(name, id, templateXml);
             }
         }
+
+        if (entries.TryGetValue("References/Themes.json", out var themesBytes)
+            && JsonNode.Parse(themesBytes) is JsonObject themesRoot)
+        {
+            resolver.RegisterThemeStyleDefaultsFromThemesJson(themesRoot);
+        }
     }
 
     private static void PopulateTemplateResolverFromEntries(Dictionary<string, byte[]> entries, TemplateResolver resolver)
@@ -678,11 +684,90 @@ public static partial class YamlFirstPackaging
         private readonly Dictionary<string, string> _categoryByTemplateAndProperty = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, string> _datatypeByTemplateAndProperty = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, Dictionary<string, int>> _styleHistogram = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, string> _styleTemplateByName = new(StringComparer.OrdinalIgnoreCase);
+        private readonly Dictionary<string, Dictionary<string, string>> _styleDefaultRulesByName = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, JsonArray> _rulesPrototypeByTemplate = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, JsonArray> _statePrototypeByTemplate = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, bool> _hasDynamicPropertiesByTemplate = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _rulesPrototypeSeededFromTemplate = new(StringComparer.OrdinalIgnoreCase);
         private readonly HashSet<string> _statePrototypeSeededFromTemplate = new(StringComparer.OrdinalIgnoreCase);
+
+        public void RegisterThemeStyleDefaultsFromThemesJson(JsonObject themesRoot)
+        {
+            var current = themesRoot["CurrentTheme"]?.GetValue<string>() ?? string.Empty;
+            var customThemes = themesRoot["CustomThemes"] as JsonArray;
+            if (customThemes is null || customThemes.Count == 0)
+            {
+                return;
+            }
+
+            var selectedTheme = customThemes
+                .OfType<JsonObject>()
+                .FirstOrDefault(t => string.Equals(t["name"]?.GetValue<string>(), current, StringComparison.OrdinalIgnoreCase))
+                ?? customThemes.OfType<JsonObject>().FirstOrDefault();
+
+            if (selectedTheme is null)
+            {
+                return;
+            }
+
+            var palette = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            if (selectedTheme["palette"] is JsonArray paletteEntries)
+            {
+                foreach (var item in paletteEntries.OfType<JsonObject>())
+                {
+                    var name = item["name"]?.GetValue<string>() ?? string.Empty;
+                    var value = item["value"]?.GetValue<string>() ?? string.Empty;
+                    if (!string.IsNullOrWhiteSpace(name))
+                    {
+                        palette[name] = value;
+                    }
+                }
+            }
+
+            if (selectedTheme["styles"] is not JsonArray styleEntries)
+            {
+                return;
+            }
+
+            foreach (var style in styleEntries.OfType<JsonObject>())
+            {
+                var styleName = style["name"]?.GetValue<string>() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(styleName))
+                {
+                    continue;
+                }
+
+                var templateName = style["controlTemplateName"]?.GetValue<string>() ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(templateName))
+                {
+                    _styleTemplateByName[styleName] = templateName;
+                }
+
+                if (style["propertyValuesMap"] is not JsonArray propertyValues)
+                {
+                    continue;
+                }
+
+                var mapped = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var row in propertyValues.OfType<JsonObject>())
+                {
+                    var property = row["property"]?.GetValue<string>() ?? string.Empty;
+                    var value = row["value"]?.GetValue<string>() ?? string.Empty;
+                    if (string.IsNullOrWhiteSpace(property) || string.IsNullOrWhiteSpace(value))
+                    {
+                        continue;
+                    }
+
+                    mapped[property] = ResolvePaletteTokens(value, palette);
+                }
+
+                if (mapped.Count > 0)
+                {
+                    _styleDefaultRulesByName[styleName] = mapped;
+                }
+            }
+        }
 
         public void RegisterTemplatePropertyDatatypesFromXml(string templateName, string templateId, string templateXml)
         {
@@ -1085,6 +1170,8 @@ public static partial class YamlFirstPackaging
                 }
             }
 
+            ApplyStyleDefaultRules(node, templateName);
+
             NormalizeReservedEnumTokensInRules(node);
             EnsureGalleryLayoutRuleFromVariant(node);
             UpdateControlPropertyStateFromRules(node);
@@ -1330,6 +1417,72 @@ public static partial class YamlFirstPackaging
             }
 
             return string.Empty;
+        }
+
+        private void ApplyStyleDefaultRules(JsonObject node, string templateName)
+        {
+            var styleName = node["StyleName"]?.GetValue<string>() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(styleName)
+                || !_styleDefaultRulesByName.TryGetValue(styleName, out var styleDefaults)
+                || styleDefaults.Count == 0)
+            {
+                return;
+            }
+
+            if (_styleTemplateByName.TryGetValue(styleName, out var styleTemplate)
+                && !string.IsNullOrWhiteSpace(styleTemplate)
+                && !string.Equals(styleTemplate, templateName, StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            var rules = (node["Rules"] as JsonArray) ?? new JsonArray();
+            var existingProperties = rules
+                .OfType<JsonObject>()
+                .Select(r => r["Property"]?.GetValue<string>() ?? string.Empty)
+                .Where(p => !string.IsNullOrWhiteSpace(p))
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var (property, value) in styleDefaults)
+            {
+                if (existingProperties.Contains(property))
+                {
+                    continue;
+                }
+
+                rules.Add(new JsonObject
+                {
+                    ["Property"] = property,
+                    ["Category"] = InferCategory(property),
+                    ["InvariantScript"] = NormalizeReservedEnumToken(value),
+                    ["RuleProviderType"] = "Unknown",
+                });
+            }
+
+            node["Rules"] = rules;
+        }
+
+        private static string ResolvePaletteTokens(string value, IReadOnlyDictionary<string, string> palette)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return value;
+            }
+
+            const string prefix = "%Palette.";
+            const string suffix = "%";
+
+            if (value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)
+                && value.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
+            {
+                var key = value.Substring(prefix.Length, value.Length - prefix.Length - suffix.Length);
+                if (palette.TryGetValue(key, out var resolved))
+                {
+                    return resolved;
+                }
+            }
+
+            return value;
         }
     }
 }

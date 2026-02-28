@@ -102,6 +102,9 @@ public static partial class YamlFirstPackaging
             node["IsLocked"] = l;
         }
 
+        var controlNameForValidation = node["Name"]?.GetValue<string>() ?? parentName;
+        ValidateNoUnrecognizedControlKeys(payload, controlNameForValidation, parentName);
+
         if (payload.TryGetValue("Properties", out var propsObj) && propsObj is Dictionary<object, object?> props)
         {
             ValidatePropertiesAgainstTemplate(node, props, propertyResolver);
@@ -233,6 +236,30 @@ public static partial class YamlFirstPackaging
         {
             node["Children"] ??= new JsonArray();
         }
+    }
+
+    private static void ValidateNoUnrecognizedControlKeys(
+        Dictionary<object, object?> payload,
+        string controlName,
+        string parentName)
+    {
+        var invalidKeys = payload
+            .Select(kv => kv.Key?.ToString() ?? string.Empty)
+            .Where(k => !string.IsNullOrWhiteSpace(k) && !StructuralYamlControlKeys.Contains(k))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(k => k, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (invalidKeys.Count == 0)
+        {
+            return;
+        }
+
+        var controlPath = string.IsNullOrWhiteSpace(parentName) ? controlName : $"{parentName}/{controlName}";
+        throw new InvalidDataException(
+            $"Unrecognized control-level keys for '{controlPath}': {string.Join(", ", invalidKeys)}. " +
+            "Control members must use only: Control, Variant, IsLocked, Properties, Children. " +
+            "If these are control properties, place them under 'Properties:' with the correct indentation.");
     }
 
     private static void ApplyTemplateFromControlType(JsonObject node, string controlType, TemplateResolver templateResolver, ControlMetadataResolver metadataResolver)
@@ -780,4 +807,14 @@ public static partial class YamlFirstPackaging
         "Orientation", "PaddingBottom", "PaddingLeft", "PaddingRight", "PaddingTop", "PressedBorderColor",
         "PressedColor", "PressedFill", "Size", "Strikethrough", "TemplateSize", "Underline", "VerticalAlign",
         "Visible", "Width", "X", "Y", "ZIndex",
-    };}
+    };
+
+    private static readonly HashSet<string> StructuralYamlControlKeys = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Control",
+        "Variant",
+        "IsLocked",
+        "Properties",
+        "Children",
+    };
+}

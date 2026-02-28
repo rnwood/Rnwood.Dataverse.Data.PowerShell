@@ -332,6 +332,8 @@ public static partial class YamlFirstPackaging
         EnsureBool(root, "ContainsThirdPartyPcfControls", false);
         EnsureNumber(root, "ParserErrorCount", 0);
         EnsureNumber(root, "BindingErrorCount", 0);
+        EnsureDouble(root, "AnalysisLoadTime", 0.0);
+        EnsureDouble(root, "DeserializationLoadTime", 0.0);
         EnsureString(root, "ConnectionString", "");
         EnsureBool(root, "EnableInstrumentation", false);
 
@@ -341,14 +343,12 @@ public static partial class YamlFirstPackaging
             root["OriginatingVersion"] = root["DocVersion"]?.GetValue<string>() ?? "1.348";
         }
 
-        var hasLocalDbRefs = !string.IsNullOrWhiteSpace(root["LocalDatabaseReferences"]?.GetValue<string>() ?? string.Empty);
-        if (!hasLocalDbRefs)
+        var existingLocalDbRefs = root["LocalDatabaseReferences"]?.GetValue<string>() ?? string.Empty;
+        var computedLocalDbRefs = BuildLocalDatabaseReferences(entries);
+        var mergedLocalDbRefs = MergeLocalDatabaseReferences(existingLocalDbRefs, computedLocalDbRefs);
+        if (!string.IsNullOrWhiteSpace(mergedLocalDbRefs))
         {
-            var localDbRefs = BuildLocalDatabaseReferences(entries);
-            if (!string.IsNullOrWhiteSpace(localDbRefs))
-            {
-                root["LocalDatabaseReferences"] = localDbRefs;
-            }
+            root["LocalDatabaseReferences"] = mergedLocalDbRefs;
         }
 
         entries["Properties.json"] = Encoding.UTF8.GetBytes(root.ToJsonString(JsonOptions));
@@ -376,10 +376,20 @@ public static partial class YamlFirstPackaging
     private static void EnsureName(JsonObject root, string appName)
     {
         var current = root["Name"]?.GetValue<string>() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(current))
+        var normalized = ToMsAppDocumentName(appName);
+        if (string.IsNullOrWhiteSpace(current)
+            || string.Equals(current, appName, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(current, "App", StringComparison.OrdinalIgnoreCase))
         {
-            root["Name"] = appName;
+            root["Name"] = normalized;
         }
+    }
+
+    private static string ToMsAppDocumentName(string appName)
+    {
+        var source = string.IsNullOrWhiteSpace(appName) ? "App" : appName.Trim();
+        var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(source));
+        return encoded + ".msapp";
     }
 
     private static void EnsureGuidString(JsonObject root, string property)
@@ -403,6 +413,15 @@ public static partial class YamlFirstPackaging
     private static void EnsureBool(JsonObject root, string property, bool defaultValue)
     {
         if (root[property] is not JsonValue existing || !existing.TryGetValue<bool>(out _))
+        {
+            root[property] = defaultValue;
+        }
+    }
+
+    private static void EnsureDouble(JsonObject root, string property, double defaultValue)
+    {
+        if (root[property] is not JsonValue existing
+            || !(existing.TryGetValue<double>(out _) || existing.TryGetValue<decimal>(out _)))
         {
             root[property] = defaultValue;
         }
@@ -507,6 +526,7 @@ public static partial class YamlFirstPackaging
             ["offlineprofilegenerationemitscolumns"] = false,
             ["onegrid"] = false,
             ["optimizestartscreenpublishedappload"] = true,
+            ["optimizedforteamsmeeting"] = false,
             ["packagemodernruntime"] = false,
             ["pdffunction"] = false,
             ["powerfxdecimal"] = false,
@@ -558,6 +578,8 @@ public static partial class YamlFirstPackaging
             root["MinVersionToLoad"] = currentVersion;
         if (root["MSAppStructureVersion"]?.GetValue<string>() is not { Length: > 0 })
             root["MSAppStructureVersion"] = structureVersion;
+        if (root["LastSavedDateTimeUTC"]?.GetValue<string>() is not { Length: > 0 })
+            root["LastSavedDateTimeUTC"] = DateTime.UtcNow.ToString("MM/dd/yyyy HH:mm:ss", CultureInfo.InvariantCulture);
 
         // AnalysisOptions block: ensure it exists
         if (root["AnalysisOptions"] is not JsonObject)
@@ -725,6 +747,51 @@ public static partial class YamlFirstPackaging
         return payload.ToJsonString();
     }
 
+    private static string MergeLocalDatabaseReferences(string existingLocalDbRefs, string computedLocalDbRefs)
+    {
+        var existingParsed = ParseLocalDatabaseReferences(existingLocalDbRefs);
+        var computedParsed = ParseLocalDatabaseReferences(computedLocalDbRefs);
+
+        if (existingParsed is null && computedParsed is null)
+        {
+            return string.Empty;
+        }
+
+        if (existingParsed is null)
+        {
+            return computedParsed!.ToJsonString();
+        }
+
+        if (computedParsed is null)
+        {
+            return existingParsed.ToJsonString();
+        }
+
+        foreach (var (key, value) in computedParsed)
+        {
+            existingParsed[key] = value?.DeepClone();
+        }
+
+        return existingParsed.ToJsonString();
+    }
+
+    private static JsonObject? ParseLocalDatabaseReferences(string localDbRefs)
+    {
+        if (string.IsNullOrWhiteSpace(localDbRefs))
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonNode.Parse(localDbRefs) as JsonObject;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     private static void NormalizeDataSourceMetadata(Dictionary<string, byte[]> entries)
     {
         if (!entries.TryGetValue("References/DataSources.json", out var bytes))
@@ -743,13 +810,6 @@ public static partial class YamlFirstPackaging
             var type = ds["Type"]?.GetValue<string>() ?? string.Empty;
             var name = ds["Name"]?.GetValue<string>() ?? string.Empty;
 
-            if (string.Equals(type, "NativeCDSDataSourceInfo", StringComparison.OrdinalIgnoreCase)
-                && ds["MaxGetRowsCount"] is null)
-            {
-                ds["MaxGetRowsCount"] = 500;
-                changed = true;
-            }
-
             if (string.Equals(type, "StaticDataSourceInfo", StringComparison.OrdinalIgnoreCase)
                 && name.EndsWith("Sample", StringComparison.OrdinalIgnoreCase)
                 && !(ds["IsSampleData"]?.GetValue<bool>() ?? false))
@@ -759,12 +819,72 @@ public static partial class YamlFirstPackaging
             }
         }
 
+        var nonNativeReversed = dataSources
+            .OfType<JsonObject>()
+            .Where(ds => !string.Equals(ds["Type"]?.GetValue<string>() ?? string.Empty, "NativeCDSDataSourceInfo", StringComparison.OrdinalIgnoreCase))
+            .Reverse()
+            .ToList();
+
+        var nonViewNonNative = nonNativeReversed
+            .Where(ds => !string.Equals(ds["Type"]?.GetValue<string>() ?? string.Empty, "ViewInfo", StringComparison.OrdinalIgnoreCase))
+            .Select(ds => (JsonNode)ds.DeepClone())
+            .ToList();
+
+        var viewInfos = nonNativeReversed
+            .Where(ds => string.Equals(ds["Type"]?.GetValue<string>() ?? string.Empty, "ViewInfo", StringComparison.OrdinalIgnoreCase))
+            .Select(ds => (JsonNode)ds.DeepClone())
+            .ToList();
+
+        var nativeReversed = dataSources
+            .OfType<JsonObject>()
+            .Where(ds => string.Equals(ds["Type"]?.GetValue<string>() ?? string.Empty, "NativeCDSDataSourceInfo", StringComparison.OrdinalIgnoreCase))
+            .Reverse()
+            .Select(ds => (JsonNode)ds.DeepClone())
+            .ToList();
+
+        var reordered = new JsonArray();
+        foreach (var node in nonViewNonNative)
+        {
+            reordered.Add(node);
+        }
+
+        foreach (var node in viewInfos)
+        {
+            reordered.Add(node);
+        }
+
+        foreach (var node in nativeReversed)
+        {
+            reordered.Add(node);
+        }
+
+        if (reordered.Count == dataSources.Count)
+        {
+            var oldOrder = dataSources
+                .OfType<JsonObject>()
+                .Select(ds => ds["Name"]?.GetValue<string>() ?? string.Empty)
+                .ToArray();
+            var newOrder = reordered
+                .OfType<JsonObject>()
+                .Select(ds => ds["Name"]?.GetValue<string>() ?? string.Empty)
+                .ToArray();
+
+            if (!oldOrder.SequenceEqual(newOrder, StringComparer.OrdinalIgnoreCase))
+            {
+                root["DataSources"] = reordered;
+                changed = true;
+            }
+        }
+
         if (!changed)
         {
             return;
         }
 
-        root["DataSources"] = dataSources;
+        if (root["DataSources"] is not JsonArray)
+        {
+            root["DataSources"] = dataSources;
+        }
         entries["References/DataSources.json"] = Encoding.UTF8.GetBytes(root.ToJsonString(JsonOptions));
     }
 }
