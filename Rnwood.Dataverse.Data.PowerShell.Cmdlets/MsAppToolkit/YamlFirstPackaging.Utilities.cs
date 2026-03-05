@@ -385,6 +385,20 @@ public static partial class YamlFirstPackaging
         }
     }
 
+    /// <summary>
+    /// Serializes a <see cref="JsonNode"/> to JSON bytes with Unix line endings (\n) so that
+    /// the output is byte-identical on Windows and Linux. System.Text.Json uses
+    /// Environment.NewLine for indented output on .NET 8, which is \r\n on Windows.
+    /// </summary>
+    private static byte[] JsonToBytes(JsonNode node) =>
+        Encoding.UTF8.GetBytes(node.ToJsonString(JsonOptions).Replace("\r\n", "\n"));
+
+    /// <summary>
+    /// Serializes a <see cref="JsonNode"/> to a JSON string with Unix line endings (\n).
+    /// </summary>
+    private static string JsonToString(JsonNode node) =>
+        node.ToJsonString(JsonOptions).Replace("\r\n", "\n");
+
     private static readonly string[] HeaderLines =
     [
         "# ************************************************************************************************",

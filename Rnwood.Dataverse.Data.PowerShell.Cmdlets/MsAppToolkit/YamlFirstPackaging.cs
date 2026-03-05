@@ -259,8 +259,8 @@ public static partial class YamlFirstPackaging
         };
         screenTop["ControlPropertyState"] = new JsonArray("LoadingSpinnerColor");
 
-        entries["Controls/1.json"] = Encoding.UTF8.GetBytes(WrapTopParent(appTop).ToJsonString(JsonOptions));
-        entries["Controls/4.json"] = Encoding.UTF8.GetBytes(WrapTopParent(screenTop).ToJsonString(JsonOptions));
+        entries["Controls/1.json"] = JsonToBytes(WrapTopParent(appTop));
+        entries["Controls/4.json"] = JsonToBytes(WrapTopParent(screenTop));
 
         var appYamlPayload = new Dictionary<string, object?>
         {

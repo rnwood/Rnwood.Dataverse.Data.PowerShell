@@ -428,7 +428,7 @@ public static partial class YamlFirstPackaging
             }
 
             flagsNode[flagName] = flagValue;
-            entries["Properties.json"] = Encoding.UTF8.GetBytes(root.ToJsonString(JsonOptions));
+            entries["Properties.json"] = JsonToBytes(root);
         }
         catch
         {

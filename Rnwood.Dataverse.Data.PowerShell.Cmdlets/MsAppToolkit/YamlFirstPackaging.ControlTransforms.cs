@@ -35,7 +35,7 @@ public static partial class YamlFirstPackaging
 
         foreach (var (k, v) in replacement)
         {
-            entries[k] = Encoding.UTF8.GetBytes(v.ToJsonString(JsonOptions));
+            entries[k] = JsonToBytes(v);
         }
     }
 
@@ -228,7 +228,7 @@ public static partial class YamlFirstPackaging
             templatesRoot.Remove("PcfTemplates");
         }
 
-        entries["References/Templates.json"] = Encoding.UTF8.GetBytes(templatesRoot.ToJsonString(JsonOptions));
+        entries["References/Templates.json"] = JsonToBytes(templatesRoot);
     }
 
     private sealed record GalleryTemplateDescriptor(string Id, string Name, string Version, HashSet<string> Properties);
@@ -1029,7 +1029,7 @@ public static partial class YamlFirstPackaging
         }
 
         root["ControlCount"] = controlCountNode;
-        entries["Properties.json"] = Encoding.UTF8.GetBytes(root.ToJsonString(JsonOptions));
+        entries["Properties.json"] = JsonToBytes(root);
     }
 
     /// <summary>

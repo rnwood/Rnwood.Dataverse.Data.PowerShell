@@ -39,7 +39,7 @@ public static partial class YamlFirstPackaging
 
         // Studio-authored modern apps default to this pointer.
         root["CurrentTheme"] = "v9WebLightTheme";
-        entries["References/Themes.json"] = Encoding.UTF8.GetBytes(root.ToJsonString(JsonOptions));
+        entries["References/Themes.json"] = JsonToBytes(root);
     }
 
     private static void NormalizeModernThemeMetadata(Dictionary<string, byte[]> entries)
@@ -80,7 +80,7 @@ public static partial class YamlFirstPackaging
             root.Remove("$schema");
         }
 
-        entries["References/ModernThemes.json"] = Encoding.UTF8.GetBytes(root.ToJsonString(JsonOptions));
+        entries["References/ModernThemes.json"] = JsonToBytes(root);
     }
 
     private static JsonObject? TryReadEmbeddedReferenceJson(string entryPath)
@@ -142,7 +142,7 @@ public static partial class YamlFirstPackaging
 
             if (changed)
             {
-                entries[path] = Encoding.UTF8.GetBytes(doc.ToJsonString(JsonOptions));
+                entries[path] = JsonToBytes(doc);
             }
         }
     }
@@ -192,7 +192,7 @@ public static partial class YamlFirstPackaging
 
             if (changed)
             {
-                entries[path] = Encoding.UTF8.GetBytes(doc.ToJsonString(JsonOptions));
+                entries[path] = JsonToBytes(doc);
             }
         }
     }
@@ -671,7 +671,7 @@ public static partial class YamlFirstPackaging
             ["UserLocale"] = "en-US",
         };
 
-        entries[publishInfoPath] = Encoding.UTF8.GetBytes(publishInfo.ToJsonString(JsonOptions));
+        entries[publishInfoPath] = JsonToBytes(publishInfo);
     }
 
     private static string BuildLocalDatabaseReferences(Dictionary<string, byte[]> entries)
@@ -868,6 +868,6 @@ public static partial class YamlFirstPackaging
         {
             root["DataSources"] = dataSources;
         }
-        entries["References/DataSources.json"] = Encoding.UTF8.GetBytes(root.ToJsonString(JsonOptions));
+        entries["References/DataSources.json"] = JsonToBytes(root);
     }
 }

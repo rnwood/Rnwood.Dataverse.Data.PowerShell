@@ -16,6 +16,13 @@ public sealed class MsAppDocument
         WriteIndented = true,
     };
 
+    /// <summary>
+    /// Serializes a <see cref="JsonNode"/> to JSON bytes with Unix line endings (\n) so that
+    /// the output is byte-identical on Windows and Linux.
+    /// </summary>
+    private static byte[] JsonToBytes(JsonNode node) =>
+        Encoding.UTF8.GetBytes(node.ToJsonString(JsonOptions).Replace("\r\n", "\n"));
+
     private readonly Dictionary<string, byte[]> _entries;
     private readonly Dictionary<string, JsonObject> _controlFiles;
     private readonly Dictionary<string, JsonObject> _componentFiles;
@@ -102,16 +109,16 @@ public sealed class MsAppDocument
     {
         foreach (var (entryName, json) in _controlFiles)
         {
-            _entries[entryName] = Encoding.UTF8.GetBytes(json.ToJsonString(JsonOptions));
+            _entries[entryName] = JsonToBytes(json);
         }
 
         foreach (var (entryName, json) in _componentFiles)
         {
-            _entries[entryName] = Encoding.UTF8.GetBytes(json.ToJsonString(JsonOptions));
+            _entries[entryName] = JsonToBytes(json);
         }
 
-        _entries["References/Templates.json"] = Encoding.UTF8.GetBytes(_referencesTemplates.ToJsonString(JsonOptions));
-        _entries["References/Themes.json"] = Encoding.UTF8.GetBytes(_referencesThemes.ToJsonString(JsonOptions));
+        _entries["References/Templates.json"] = JsonToBytes(_referencesTemplates);
+        _entries["References/Themes.json"] = JsonToBytes(_referencesThemes);
 
         if (File.Exists(msappPath))
         {

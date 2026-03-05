@@ -112,7 +112,7 @@ public static partial class YamlFirstPackaging
         }
 
         root["DataSources"] = dataSources;
-        File.WriteAllText(dataSourcesPath, root.ToJsonString(JsonOptions));
+        File.WriteAllText(dataSourcesPath, JsonToString(root));
     }
 
     public static void UpsertDataSourceFromJson(string unpackDirectory, string dataSourceJsonPath)
@@ -291,7 +291,7 @@ public static partial class YamlFirstPackaging
         }
 
         root["DataSources"] = dataSources;
-        entries["References/DataSources.json"] = Encoding.UTF8.GetBytes(root.ToJsonString(JsonOptions));
+        entries["References/DataSources.json"] = JsonToBytes(root);
     }
 
     private static HashSet<string> ExtractCollectionTargetsFromCollectCalls(
@@ -436,7 +436,7 @@ public static partial class YamlFirstPackaging
         }
 
         root["DataSources"] = dataSources;
-        entries["References/DataSources.json"] = Encoding.UTF8.GetBytes(root.ToJsonString(JsonOptions));
+        entries["References/DataSources.json"] = JsonToBytes(root);
     }
 
     private static Dictionary<string, List<JsonObject>> ExtractStaticCollectionSeedRows(
@@ -1149,7 +1149,7 @@ public static partial class YamlFirstPackaging
         });
 
         root["RemovedDataSources"] = removed;
-        File.WriteAllText(cachePath, root.ToJsonString(JsonOptions));
+        File.WriteAllText(cachePath, JsonToString(root));
     }
 
     private static bool TryRestoreRemovedDataSource(
@@ -1209,7 +1209,7 @@ public static partial class YamlFirstPackaging
         originalIndex = candidate["OriginalIndex"]?.GetValue<int?>() ?? -1;
         removed.RemoveAt(candidatePos);
         root["RemovedDataSources"] = removed;
-        File.WriteAllText(cachePath, root.ToJsonString(JsonOptions));
+        File.WriteAllText(cachePath, JsonToString(root));
         return true;
     }
 
@@ -1241,7 +1241,7 @@ public static partial class YamlFirstPackaging
     {
         var path = Path.Combine(unpackDirectory, "References", "DataSources.json");
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        File.WriteAllText(path, root.ToJsonString(JsonOptions));
+        File.WriteAllText(path, JsonToString(root));
     }
 
     private static void UpsertDataSourceEntry(JsonArray dataSources, JsonObject newEntry, int preferredInsertIndex = -1)

@@ -1530,7 +1530,7 @@ public static partial class YamlFirstPackaging
         }
 
         root["QualifiedValues"] = arr;
-        File.WriteAllText(path, root.ToJsonString(JsonOptions));
+        File.WriteAllText(path, JsonToString(root));
     }
 
     private static string NormalizeEnvironmentUrl(string environmentUrl)
