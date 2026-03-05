@@ -15,25 +15,29 @@ Adds or updates a screen in a .msapp file.
 ### YamlContent-FromPath
 ```
 Set-DataverseMsAppScreen [-MsAppPath] <String> [-ScreenName] <String> [-YamlContent] <String>
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-TemplateSourceMsAppPath <String[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### YamlFile-FromPath
 ```
 Set-DataverseMsAppScreen [-MsAppPath] <String> [-ScreenName] <String> -YamlFilePath <String>
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-TemplateSourceMsAppPath <String[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### YamlContent-FromObject
 ```
 Set-DataverseMsAppScreen [-CanvasApp] <PSObject> [-ScreenName] <String> [-YamlContent] <String>
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-TemplateSourceMsAppPath <String[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ### YamlFile-FromObject
 ```
 Set-DataverseMsAppScreen [-CanvasApp] <PSObject> [-ScreenName] <String> -YamlFilePath <String>
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-TemplateSourceMsAppPath <String[]>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -120,6 +124,21 @@ Aliases:
 
 Required: True
 Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TemplateSourceMsAppPath
+Optional .msapp file(s) used as template sources for control prototypes during pack
+
+```yaml
+Type: String[]
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
