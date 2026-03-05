@@ -10,7 +10,7 @@ public class MsAppYamlEncodingTests : TestBase
     public void SetDataverseMsAppScreen_WritesYamlWithoutUtf8Bom()
     {
         var script = """
-$tmp = Join-Path $env:TEMP ("msapp-encoding-test-" + [guid]::NewGuid().ToString() + ".msapp")
+$tmp = Join-Path ([System.IO.Path]::GetTempPath()) ("msapp-encoding-test-" + [guid]::NewGuid().ToString() + ".msapp")
 
 try {
     $msapp = New-DataverseMsApp -Path $tmp -Force
