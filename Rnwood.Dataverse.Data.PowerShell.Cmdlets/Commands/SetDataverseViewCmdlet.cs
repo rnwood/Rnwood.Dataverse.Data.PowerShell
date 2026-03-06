@@ -209,6 +209,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         }
                     }
                 }
+                // If no ID provided but Name is specified, try to find existing view by Name, TableName, and ViewType
+                else if (!string.IsNullOrEmpty(Name) && !string.IsNullOrEmpty(TableName))
+                {
+                    WriteVerbose($"No ID provided, searching for existing view by Name: {Name}, TableName: {TableName}, ViewType: {ViewType}");
+                    var query = new QueryExpression(entityName)
+                    {
+                        ColumnSet = new ColumnSet(true)
+                    };
+                    query.Criteria.AddCondition("name", ConditionOperator.Equal, Name);
+                    query.Criteria.AddCondition("returnedtypecode", ConditionOperator.Equal, TableName);
+                    
+                    var results = Connection.RetrieveMultiple(query);
+                    if (results.Entities.Count > 0)
+                    {
+                        viewEntity = results.Entities[0];
+                        viewId = viewEntity.Id;
+                        isUpdate = true;
+                        WriteVerbose($"Found existing {(ViewType == "System" ? "system" : "personal")} view by name with ID: {viewId}");
+                    }
+                    else
+                    {
+                        WriteVerbose($"No existing view found with Name: {Name} and TableName: {TableName}");
+                    }
+                }
 
                 if (isUpdate)
                 {
