@@ -26,6 +26,8 @@ The Set-DataverseView cmdlet creates new views or updates existing ones using an
 
 The cmdlet supports both simplified syntax (using Columns and FilterValues parameters) and advanced FetchXML-based configuration. Column configurations can be specified as simple strings or detailed hashtables with width and other properties.
 
+When the Id parameter is provided, the cmdlet updates the existing view with that ID. When the Id parameter is not provided but Name and TableName are specified, the cmdlet searches for an existing view with that Name and TableName combination. If found, it updates that view; otherwise, it creates a new view. This prevents creating duplicate views when the same Name and TableName are used.
+
 When updating existing views, you can add, remove, or update specific columns without affecting other view properties.
 
 ## EXAMPLES
@@ -71,7 +73,29 @@ PS C:\> Set-DataverseView -Id $viewId `
 
 Updates the name and description of an existing view. ViewType must be specified when updating.
 
-### Example 4: Add columns to a view
+### Example 4: Update or create a view by Name (upsert pattern)
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> # First call creates the view
+PS C:\> Set-DataverseView -PassThru `
+    -Name "Active Contacts" `
+    -TableName contact `
+    -ViewType "System" `
+    -Columns @("firstname", "lastname", "emailaddress1") `
+    -Description "Shows active contacts"
+
+PS C:\> # Second call with same Name and TableName updates the existing view
+PS C:\> Set-DataverseView -PassThru `
+    -Name "Active Contacts" `
+    -TableName contact `
+    -ViewType "System" `
+    -Columns @("firstname", "lastname", "emailaddress1", "telephone1") `
+    -Description "Updated to include telephone"
+```
+
+Demonstrates the upsert behavior when Name and TableName are provided without Id. The first call creates a new view. The second call finds the existing view by Name and TableName, then updates it instead of creating a duplicate. This is useful for configuration scripts that can be run multiple times.
+
+### Example 5: Add columns to a view
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseView -Id $viewId `
@@ -84,7 +108,7 @@ PS C:\> Set-DataverseView -Id $viewId `
 
 Adds new columns to an existing view without affecting existing columns.
 
-### Example 5: Add columns at specific positions
+### Example 6: Add columns at specific positions
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseView -Id $viewId `
@@ -95,7 +119,7 @@ PS C:\> Set-DataverseView -Id $viewId `
 
 Adds mobile phone and fax columns after the telephone1 column.
 
-### Example 6: Insert columns before a specific column
+### Example 7: Insert columns before a specific column
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseView -Id $viewId `
@@ -106,7 +130,7 @@ PS C:\> Set-DataverseView -Id $viewId `
 
 Inserts the job title column before the email address column in the layout.
 
-### Example 7: Clone a view using Get-DataverseView output
+### Example 8: Clone a view using Get-DataverseView output
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $originalView = Get-DataverseView -Id $originalViewId
@@ -122,7 +146,7 @@ PS C:\> Set-DataverseView -PassThru `
 
 Retrieves a view and creates a copy. The properties returned by Get-DataverseView (Columns, Filters, Links, OrderBy) are in the format expected by Set-DataverseView.
 
-### Example 8: Create view with complex filters
+### Example 9: Create view with complex filters
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseView -PassThru `
@@ -143,7 +167,7 @@ PS C:\> Set-DataverseView -PassThru `
 
 Creates a system view with nested logical filter expressions using AND/OR operators.
 
-### Example 9: Use FetchXML for advanced queries
+### Example 10: Use FetchXML for advanced queries
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $fetchXml = @"
