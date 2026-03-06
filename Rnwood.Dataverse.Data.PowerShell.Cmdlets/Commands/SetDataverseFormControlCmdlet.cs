@@ -438,7 +438,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose("DEBUG: About to call UpdateControlAttributes");
                 // Update control attributes with determined control type
-                UpdateControlAttributes(control, finalControlType, controlId, cell);
+                UpdateControlAttributes(control, finalControlType, controlId, cell, isUpdate);
                 WriteVerbose("DEBUG: UpdateControlAttributes completed");
             }
 
@@ -820,7 +820,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Updates control attributes with the determined control type.
         /// </summary>
-        private void UpdateControlAttributes(XElement control, string finalControlType, string controlId, XElement cell)
+        private void UpdateControlAttributes(XElement control, string finalControlType, string controlId, XElement cell, bool isUpdate)
         {
             WriteVerbose($"DEBUG: UpdateControlAttributes called - finalControlType='{finalControlType}', controlId='{controlId}'");
             
