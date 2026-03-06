@@ -35,6 +35,9 @@ Retrieves app module component information from a Dataverse environment.
 ### [Get-DataverseAttributeMetadata](Get-DataverseAttributeMetadata.md)
 Retrieves attribute (column) metadata from Dataverse.
 
+### [Get-DataverseCanvasApp](Get-DataverseCanvasApp.md)
+Retrieves Canvas apps from a Dataverse environment.
+
 ### [Get-DataverseComponentDependency](Get-DataverseComponentDependency.md)
 Retrieves component dependencies in Dataverse.
 
@@ -89,6 +92,24 @@ Retrieves tab information from a Dataverse form.
 
 ### [Get-DataverseIconSetIcon](Get-DataverseIconSetIcon.md)
 Retrieves available icons from supported online icon sets.
+
+### [Get-DataverseMsAppComponent](Get-DataverseMsAppComponent.md)
+Retrieves components from a .msapp file.
+
+### [Get-DataverseMsAppControlTemplate](Get-DataverseMsAppControlTemplate.md)
+Lists Canvas control templates from embedded all-controls metadata, optionally augmented by a .msapp file.
+
+### [Get-DataverseMsAppControlTemplateProperty](Get-DataverseMsAppControlTemplateProperty.md)
+Lists properties for a Canvas control template from embedded all-controls metadata, optionally augmented by a .msapp file.
+
+### [Get-DataverseMsAppDataSource](Get-DataverseMsAppDataSource.md)
+Gets data sources from a Canvas app .msapp file.
+
+### [Get-DataverseMsAppProperties](Get-DataverseMsAppProperties.md)
+Gets app-level properties from a Canvas app .msapp file.
+
+### [Get-DataverseMsAppScreen](Get-DataverseMsAppScreen.md)
+Retrieves screens from a .msapp file.
 
 ### [Get-DataverseOptionSetMetadata](Get-DataverseOptionSetMetadata.md)
 Retrieves option set (choice) metadata from Dataverse.
@@ -172,6 +193,9 @@ Invokes a Dataverse SQL query using Sql4Cds and writes any resulting rows to the
 ### [Invoke-DataverseXrmToolbox](Invoke-DataverseXrmToolbox.md)
 Invokes an XrmToolbox plugin downloaded from NuGet with the current Dataverse connection injected.
 
+### [New-DataverseMsApp](New-DataverseMsApp.md)
+Creates a new default .msapp file for a Canvas app.
+
 ### [Publish-DataverseCustomizations](Publish-DataverseCustomizations.md)
 Publishes customizations in Dataverse.
 
@@ -183,6 +207,9 @@ Removes an app module component from Dataverse.
 
 ### [Remove-DataverseAttributeMetadata](Remove-DataverseAttributeMetadata.md)
 Deletes an attribute (column) from a Dataverse entity.
+
+### [Remove-DataverseCanvasApp](Remove-DataverseCanvasApp.md)
+Removes a Canvas app from a Dataverse environment.
 
 ### [Remove-DataverseConnectionReference](Remove-DataverseConnectionReference.md)
 Removes a connection reference from a Dataverse environment.
@@ -219,6 +246,15 @@ Removes a section from a Dataverse form tab.
 
 ### [Remove-DataverseFormTab](Remove-DataverseFormTab.md)
 Removes a tab from a Dataverse form.
+
+### [Remove-DataverseMsAppComponent](Remove-DataverseMsAppComponent.md)
+Removes a component from a .msapp file.
+
+### [Remove-DataverseMsAppDataSource](Remove-DataverseMsAppDataSource.md)
+Removes a data source from a Canvas app .msapp file.
+
+### [Remove-DataverseMsAppScreen](Remove-DataverseMsAppScreen.md)
+Removes a screen from a .msapp file.
 
 ### [Remove-DataverseOptionSetMetadata](Remove-DataverseOptionSetMetadata.md)
 Deletes a global option set from Dataverse.
@@ -277,6 +313,9 @@ Sets an app module's icon by downloading an icon from an online icon set and cre
 ### [Set-DataverseAttributeMetadata](Set-DataverseAttributeMetadata.md)
 Creates or updates an attribute (column) in Dataverse.
 
+### [Set-DataverseCanvasApp](Set-DataverseCanvasApp.md)
+Creates or updates a Canvas app in a Dataverse environment.
+
 ### [Set-DataverseConnectionAsDefault](Set-DataverseConnectionAsDefault.md)
 Sets the specified Dataverse connection as the default connection for cmdlets that don't specify a connection.
 
@@ -318,6 +357,18 @@ Creates or updates a section in a Dataverse form tab.
 
 ### [Set-DataverseFormTab](Set-DataverseFormTab.md)
 Creates or updates a tab on a Dataverse form with support for column layouts.
+
+### [Set-DataverseMsAppComponent](Set-DataverseMsAppComponent.md)
+Adds or updates a component in a .msapp file.
+
+### [Set-DataverseMsAppDataSource](Set-DataverseMsAppDataSource.md)
+Adds or updates a data source in a Canvas app .msapp file.
+
+### [Set-DataverseMsAppProperties](Set-DataverseMsAppProperties.md)
+Sets the app-level properties of a Canvas app .msapp file using Power Apps YAML format.
+
+### [Set-DataverseMsAppScreen](Set-DataverseMsAppScreen.md)
+Adds or updates a screen in a .msapp file.
 
 ### [Set-DataverseOptionSetMetadata](Set-DataverseOptionSetMetadata.md)
 Creates or updates a global or local option set in Dataverse.
