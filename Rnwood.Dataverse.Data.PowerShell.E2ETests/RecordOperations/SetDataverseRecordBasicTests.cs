@@ -72,7 +72,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.RecordOperations
                         -TableName account `
                         -Values @{{ name = ""$testPrefix-$name"" }} `
                         -CreateOnly `
-                        -PassThru | Out-Null
+                        -PassThru
                     
                     if (-not $result) {{
                         throw ""Failed to create record for $name""
