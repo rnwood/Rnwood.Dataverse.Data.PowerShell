@@ -85,7 +85,7 @@ Write-Output 'PASS'
         // Microsoft.Extensions.Logging.Abstractions v6.0.0.0 and the Dataverse module
         // requires v8.0.0.0. The module's Default.Resolving hook must handle ALL assemblies
         // in the cmdlets directory, not just the 3 previously hardcoded ones.
-        // See: https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/issues/<n>
+        // See: https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/issues/250
 
         EnsureModulePath();
 
@@ -142,8 +142,6 @@ Write-Output 'PASS'
         var result = PowerShellProcessRunner.Run(script, importModule: false);
         result.Success.Should().BeTrue($"Script failed: {result.GetFullOutput()}");
     }
-
-
     private static void EnsureModulePath()
     {
         // Check if TESTMODULEPATH is already set (e.g., by CI)
