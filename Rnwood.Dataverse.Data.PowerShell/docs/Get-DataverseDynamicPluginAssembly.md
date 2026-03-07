@@ -70,7 +70,7 @@ Dynamic plugin assemblies embed this metadata during compilation to enable:
 - **Strong name key reuse** to maintain consistent public key tokens across updates
 - **Visual Studio project export** for development using standard .NET tools
 
-### Retrieval Methods
+**Retrieval Methods**
 
 This cmdlet supports multiple ways to retrieve plugin assembly metadata:
 
@@ -78,7 +78,7 @@ This cmdlet supports multiple ways to retrieve plugin assembly metadata:
 2. **From Assembly Bytes** - Extract metadata from raw assembly bytes (e.g., after downloading from Dataverse)
 3. **From File** - Extract metadata from a local DLL file
 
-### Visual Studio Project Export
+**Visual Studio Project Export**
 
 When the `-OutputProjectPath` parameter is specified, the cmdlet generates a complete, buildable Visual Studio project:
 
@@ -93,7 +93,7 @@ The generated project can be built using standard `dotnet build` commands withou
 3. Build using `dotnet build` (produces properly signed DLL)
 4. Update plugin in Dataverse using `Set-DataverseDynamicPluginAssembly` with the modified source code
 
-### When to Use VS Project Export
+**When to Use VS Project Export**
 
 **Use VS project export when you need to:**
 - Develop and test plugins locally with standard .NET tooling
@@ -445,3 +445,4 @@ This workflow combines the rapid deployment of dynamic plugins with the power of
 
 [Set-DataverseDynamicPluginAssembly](Set-DataverseDynamicPluginAssembly.md)
 [Get-DataversePluginAssembly](Get-DataversePluginAssembly.md)
+
