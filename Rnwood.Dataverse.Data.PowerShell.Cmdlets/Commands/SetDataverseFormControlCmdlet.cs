@@ -871,16 +871,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
-            {
-                control.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
-            }
-            else if (!isUpdate)
-            {
-                // For new controls, default to visible unless explicitly hidden
-                control.SetAttributeValue("visible", "true");
-            }
-
             if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
             {
                 if (!ShowLabel.IsPresent)
@@ -906,6 +896,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Update cell attributes
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
+            {
+                if (Hidden.IsPresent)
+                {
+                    cell.SetAttributeValue("visible", "false");
+                }
+                else
+                {
+                    cell.SetAttributeValue("visible", null);
+                }
+            }
+
             if (ColSpan.HasValue)
             {
                 cell.SetAttributeValue("colspan", ColSpan.Value);
