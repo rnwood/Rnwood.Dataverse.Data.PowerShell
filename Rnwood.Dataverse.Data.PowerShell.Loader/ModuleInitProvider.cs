@@ -35,8 +35,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 				{
 					return null;
 				}
-				
-				if (assemblyName.Name == "Rnwood.Dataverse.Data.PowerShell.Cmdlets" || assemblyName.Name == "Microsoft.ApplicationInsights" || assemblyName.Name.StartsWith("Microsoft.CodeAnalysis"))
+
+				// Load any assembly that exists in our cmdlets directory via the isolated context.
+				// This ensures module dependencies are resolved from the module's own directory and
+				// don't conflict with assemblies pre-loaded by the host (e.g. Azure Functions worker),
+				// which may have different versions of shared dependencies such as
+				// Microsoft.Extensions.Logging.Abstractions.
+				string assemblyPath = Path.Combine(basePath, assemblyName.Name + ".dll");
+				if (File.Exists(assemblyPath))
 				{
 					return alc.LoadFromAssemblyName(assemblyName);
 				}

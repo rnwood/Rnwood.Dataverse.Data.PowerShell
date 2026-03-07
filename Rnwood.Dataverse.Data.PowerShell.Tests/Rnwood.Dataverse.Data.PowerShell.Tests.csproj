@@ -86,4 +86,13 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <!-- Test fixture for assembly conflict simulation (Azure Functions scenario).
+       This is Microsoft.Extensions.Logging.Abstractions v6.0.0.0, sourced from the
+       Azure Functions PowerShell 7.4 worker, used to simulate the version conflict
+       that occurs when the module is loaded inside an Azure Functions worker process. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+    <None Include="ConflictTestFixtures\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>
