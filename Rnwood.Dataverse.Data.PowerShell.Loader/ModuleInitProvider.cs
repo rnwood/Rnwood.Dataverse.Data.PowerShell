@@ -113,7 +113,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
                 // By returning null here we let the DEFAULT ALC supply them.
                 //
                 // When PS7 ships these assemblies (e.g. Windows), Cmdlets.dll (DEFAULT ALC)
-                // resolved them directly from PS7's install directory WITHOUT going through
+                // resolves them directly from PS7's install directory WITHOUT going through
                 // Default.Resolving.  If CmdletsLoadContext loaded its own copy here, the
                 // CmdletsLoadContext copy and DEFAULT ALC's copy would be different objects,
                 // causing FaultException<OrganizationServiceFault> catch clauses in Cmdlets.dll
