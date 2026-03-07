@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
 using System.Management.Automation;
 using System.Reflection;
 using System.Threading;
@@ -66,6 +67,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
                 return null;
             };
 
+            // Eagerly load SDK assemblies that PowerShell scripts commonly reference with New-Object or type literals
+            // (e.g. [Microsoft.Crm.Sdk.Messages.WhoAmIRequest] or New-Object Microsoft.Crm.Sdk.Messages.PublishXmlRequest).
+            // PS7's type resolver only searches AssemblyLoadContext.Default.Assemblies. Assemblies loaded only inside
+            // CmdletsLoadContext (as dependencies of ServiceClient, etc.) are not visible there. We load them directly
+            // into DEFAULT ALC here so PS type resolution can find them at any point in the script lifecycle.
+            // CmdletsLoadContext.Load() must also exclude these names so that ServiceClient uses the same DEFAULT ALC
+            // copy, keeping the type identity consistent (one copy, no duplicate-ALC issues).
+            var sdkAssembliesToPreload = new[] { "Microsoft.Crm.Sdk.Proxy" };
+            foreach (var asmName in sdkAssembliesToPreload)
+            {
+                var asmPath = Path.Combine(basePath, asmName + ".dll");
+                if (File.Exists(asmPath) &&
+                    !AssemblyLoadContext.Default.Assemblies.Any(a => string.Equals(a.GetName().Name, asmName, StringComparison.OrdinalIgnoreCase)))
+                {
+                    try { AssemblyLoadContext.Default.LoadFromAssemblyPath(asmPath); }
+                    catch (FileLoadException) { /* Assembly or a conflicting version already loaded — safe to skip */ }
+                    catch (BadImageFormatException) { /* Not a valid .NET assembly for this runtime — skip */ }
+                }
+            }
+
 #else
 			string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets/net462";
 
@@ -125,6 +146,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
                 // here makes the runtime fall back to DEFAULT ALC, which returns the same
                 // CmdletsLoadContext assembly instance.  Both code paths therefore share one copy.
                 if (assemblyName.Name != null && assemblyName.Name.StartsWith("System.ServiceModel", StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+
+                // Microsoft.Crm.Sdk.Proxy is preloaded directly into DEFAULT ALC by OnImport() so that
+                // PowerShell scripts can use New-Object / type literals with CRM message types.
+                // Returning null here makes CmdletsLoadContext fall back to that DEFAULT ALC copy, ensuring
+                // ServiceClient and PS scripts share the same type identity (one copy, no ALC duplication).
+                if (assemblyName.Name != null && assemblyName.Name.Equals("Microsoft.Crm.Sdk.Proxy", StringComparison.OrdinalIgnoreCase))
                 {
                     return null;
                 }
