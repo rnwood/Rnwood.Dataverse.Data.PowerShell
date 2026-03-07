@@ -60,6 +60,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <returns>The entity metadata.</returns>
         public EntityMetadata GetLimitedMetadata(string entityName)
         {
+            return GetLimitedMetadata(entityName, null);
+        }
+
+        /// <summary>
+        /// Gets the entity metadata for the specified entity with verbose logging.
+        /// </summary>
+        /// <param name="entityName">The logical name of the entity.</param>
+        /// <param name="writeVerbose">Optional delegate for verbose logging.</param>
+        /// <returns>The entity metadata.</returns>
+        public EntityMetadata GetLimitedMetadata(string entityName, Action<string> writeVerbose)
+        {
             EntityMetadata result;
             bool retrieveAsIfPublished = false; // Use published metadata for CRUD operations
 
@@ -67,6 +78,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Try shared cache first if enabled
             if (UseSharedCache && MetadataCache.TryGetEntityMetadata(ConnectionKey, entityName, EntityFilters.Attributes|EntityFilters.Relationships, retrieveAsIfPublished, out result))
             {
+                writeVerbose?.Invoke($"Retrieved metadata for {entityName} from shared cache");
                 return result;
             }
 
@@ -76,6 +88,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Try local cache
             if (!_entities.TryGetValue(cacheKey, out result))
             {
+                writeVerbose?.Invoke($"Retrieving metadata for entity: {entityName}");
 
                 RetrieveEntityRequest request = new RetrieveEntityRequest()
                 {
@@ -93,6 +106,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     MetadataCache.AddEntityMetadata(ConnectionKey, entityName, EntityFilters.Attributes|EntityFilters.Relationships, retrieveAsIfPublished, result);
                 }
+            }
+            else
+            {
+                writeVerbose?.Invoke($"Retrieved metadata for {entityName} from local cache");
             }
             return result;
         }

@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Plugin
     /// Tests for dynamic plugin assembly creation, update, and invocation.
     /// Converted from e2e-tests/DynamicPluginAssembly.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests create custom entities
+    /// and add attributes (schema changes) as part of the plugin test setup, which conflicts with
+    /// other schema-changing tests when run in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class DynamicPluginAssemblyTests : E2ETestBase
     {
 [Fact]
@@ -248,7 +254,7 @@ namespace TestDynamicPlugins
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("ALL TESTS PASSED");
+            result.StandardOutput.Should().Contain("ALL TESTS PASSED", because: result.GetFullOutput());
         }
     }
 }

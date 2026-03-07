@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Metadata
     /// Entity metadata manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/EntityMetadata.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests create and delete
+    /// custom entities (schema changes) which conflict with other schema-changing tests when run
+    /// in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class EntityMetadataTests : E2ETestBase
     {
 [Fact]
@@ -73,7 +79,7 @@ catch {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
-            result.StandardOutput.Should().Contain("SUCCESS");
+            result.StandardOutput.Should().Contain("SUCCESS", because: result.GetFullOutput());
         }
     }
 }

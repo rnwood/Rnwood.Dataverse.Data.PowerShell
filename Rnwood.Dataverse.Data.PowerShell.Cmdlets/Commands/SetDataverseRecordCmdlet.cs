@@ -27,6 +27,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipeline = true, ValueFromRemainingArguments = true,
             HelpMessage = "Object containing values to be used. Property names must match the logical names of Dataverse columns in the specified table and the property values are used to set the values of the Dataverse record being created/updated. The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.")]
+        [Alias("Values")]
         public PSObject InputObject { get; set; }
         /// <summary>
         /// The logical name of the table to operate on.

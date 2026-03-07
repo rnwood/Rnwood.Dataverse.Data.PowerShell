@@ -74,7 +74,7 @@ Write-Host 'Success: Error message verification passed'
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("Success");
+            result.StandardOutput.Should().Contain("Success", because: result.GetFullOutput());
         }
     }
 }

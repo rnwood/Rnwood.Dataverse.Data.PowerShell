@@ -17,6 +17,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
     /// Owner and Status tests for Set-DataverseRecord cmdlet.
     /// Migrated from Pester tests in tests/Set-DataverseRecord-OwnerAndStatus.Tests.ps1
     /// </summary>
+    [Collection("OwnerAndStatus")]
     public class SetDataverseRecord_OwnerAndStatusTests : TestBase
     {
         private PS CreatePowerShellWithCmdlets()

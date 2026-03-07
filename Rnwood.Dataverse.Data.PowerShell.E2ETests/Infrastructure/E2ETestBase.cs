@@ -217,10 +217,13 @@ function Invoke-WithRetry {{
         /// (since E2E test scripts include Import-Module statements themselves).
         /// Uses auto-detection to select the correct PowerShell executable based on target framework.
         /// Timeout is set to 30 minutes.
+        /// Throws an exception with full stdout and stderr context if the script fails (exit code != 0).
         /// </summary>
         protected Tests.Infrastructure.PowerShellProcessResult RunScript(string script)
         {
-            return Tests.Infrastructure.PowerShellProcessRunner.Run(script, usePowerShellCore: null, timeoutSeconds: 1800, importModule: false);
+            var result = Tests.Infrastructure.PowerShellProcessRunner.Run(script, usePowerShellCore: null, timeoutSeconds: 1800, importModule: false);
+            result.ThrowIfFailed();
+            return result;
         }
     }
 }
