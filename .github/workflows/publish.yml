@@ -382,7 +382,12 @@ jobs:
               Write-Host "Running E2E tests..."
               $testCommand = "dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger `"console;verbosity=normal`" --logger `"trx;LogFileName=e2e-test-results-net8.0.trx`" --results-directory TestResults/E2E $testFilter"
               Write-Host "Executing: $testCommand"
-              Invoke-Expression $testCommand
+              # Execute directly instead of using Invoke-Expression for better output capture
+              if ($testFilter) {
+                dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E --filter "Category=CrossPlatform"
+              } else {
+                dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E
+              }
               $e2eExitCode = $LASTEXITCODE
               $e2eTestsExecuted = $true
               
