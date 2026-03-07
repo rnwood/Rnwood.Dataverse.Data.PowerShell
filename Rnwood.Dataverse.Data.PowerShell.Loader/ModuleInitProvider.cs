@@ -3,7 +3,6 @@ using System.IO;
 using System.Management.Automation;
 using System.Reflection;
 using System.Threading;
-using Rnwood.Dataverse.Data.PowerShell.Commands;
 using System.Diagnostics;
 
 
