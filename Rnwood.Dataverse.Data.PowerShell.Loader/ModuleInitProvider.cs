@@ -45,7 +45,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
                 if (File.Exists(path))
                 {
                     var fileVersion = FileVersionInfo.GetVersionInfo(path);
-                    if (assemblyName.Version == null || new Version(fileVersion.ProductVersion) >= assemblyName.Version)
+                    // Strip SemVer build metadata (+sha) and pre-release labels (-beta) from ProductVersion
+                    // before parsing, as System.Version doesn't support SemVer suffixes.
+                    // Find the first suffix character in the original string and truncate there.
+                    var productVersionStr = fileVersion.ProductVersion;
+                    if (productVersionStr != null)
+                    {
+                        int plusIdx = productVersionStr.IndexOf('+');
+                        int dashIdx = productVersionStr.IndexOf('-');
+                        int suffixIdx = (plusIdx >= 0 && dashIdx >= 0) ? Math.Min(plusIdx, dashIdx)
+                                        : (plusIdx >= 0 ? plusIdx : dashIdx);
+                        if (suffixIdx >= 0) productVersionStr = productVersionStr.Substring(0, suffixIdx);
+                    }
+                    if (assemblyName.Version == null ||
+                        (Version.TryParse(productVersionStr, out var parsedVersion) && parsedVersion >= assemblyName.Version))
                     {
                         return alc.LoadFromAssemblyName(assemblyName);
                     }
