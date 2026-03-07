@@ -1,17 +1,5 @@
 ﻿using Azure.Core;
 using Azure.Identity;
-<<<<<<< HEAD
-=======
-using FakeItEasy;
-using FakeXrmEasy;
-using FakeXrmEasy.Abstractions;
-using FakeXrmEasy.Abstractions.Enums;
-using FakeXrmEasy.Core;
-using FakeXrmEasy.FakeMessageExecutors;
-using FakeXrmEasy.Middleware;
-using FakeXrmEasy.Middleware.Crud;
-using FakeXrmEasy.Middleware.Messages;
->>>>>>> 53f276c7 (Adjust)
 using Microsoft.Extensions.Logging;
 using Microsoft.Identity.Client;
 using Microsoft.PowerPlatform.Dataverse.Client;
