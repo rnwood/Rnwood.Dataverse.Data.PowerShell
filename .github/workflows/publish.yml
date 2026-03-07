@@ -627,7 +627,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v5
         with:
-          name: module-windows-latest-5
+          name: module-tests-windows-latest-5
           path: .
       
       - name: Publish to PS Gallery and Nuget (XrmToolbox Plugin)
@@ -731,7 +731,7 @@ jobs:
       - name: Download build artifacts
         uses: actions/download-artifact@v5
         with:
-          name: module-windows-latest-5
+          name: module-tests-windows-latest-5
           path: .
       
       - name: Create CI Build Artifact
