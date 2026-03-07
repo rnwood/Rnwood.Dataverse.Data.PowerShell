@@ -124,7 +124,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				// use ServiceClient (new package), so it falls back to the org friendly name instead of the
 				// unique name. Users querying cross-datasource use ConnectedOrgUniqueName in their SQL, so we
 				// must ensure the registered data source name matches.
-				dataSource.Name = Connection.ConnectedOrgUniqueName;
+				var orgUniqueName = Connection.ConnectedOrgUniqueName;
+				if (!string.IsNullOrEmpty(orgUniqueName))
+				{
+					dataSource.Name = orgUniqueName;
+				}
 				WriteVerbose($"Using default datasource name '{dataSource.Name}' from connection");
 			}
 
