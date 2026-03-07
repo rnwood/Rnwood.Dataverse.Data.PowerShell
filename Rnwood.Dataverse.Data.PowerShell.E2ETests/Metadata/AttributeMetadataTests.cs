@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Metadata
     /// Attribute metadata manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/AttributeMetadata.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests create custom
+    /// entities, modify attributes and execute Publish operations which conflict with other
+    /// schema-changing tests when run in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class AttributeMetadataTests : E2ETestBase
     {
 [Fact]

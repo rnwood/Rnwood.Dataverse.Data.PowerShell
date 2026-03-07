@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Metadata
     /// OptionSet metadata manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/OptionSetMetadata.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests create global option
+    /// sets and also modify the shared contact.preferredcontactmethodcode option set, which
+    /// conflicts with other tests if run in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class OptionSetMetadataTests : E2ETestBase
     {
         [Fact]

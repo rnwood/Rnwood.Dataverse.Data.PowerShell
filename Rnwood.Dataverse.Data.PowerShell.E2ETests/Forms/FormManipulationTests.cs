@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Forms
     /// Form manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/FormManipulation.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests publish form
+    /// customizations, which acquires a Dataverse customization lock that conflicts with other
+    /// publish/schema-change operations when run in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class FormManipulationTests : E2ETestBase
     {
         [Fact]

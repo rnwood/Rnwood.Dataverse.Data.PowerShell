@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Sitemap
     /// Sitemap manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/Sitemap.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests publish sitemap
+    /// customizations, which acquires a Dataverse customization lock that conflicts with other
+    /// publish/schema-change operations when run in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class SitemapTests : E2ETestBase
     {
         [Fact]

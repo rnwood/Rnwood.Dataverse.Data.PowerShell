@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Metadata
     /// Entity key metadata manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/EntityKeyMetadata.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests create and delete
+    /// alternate keys (schema changes) which conflict with other schema-changing tests when run
+    /// in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class EntityKeyMetadataTests : E2ETestBase
     {
 [Fact]

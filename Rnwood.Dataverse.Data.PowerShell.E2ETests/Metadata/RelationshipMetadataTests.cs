@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Metadata
     /// Relationship metadata manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/RelationshipMetadata.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests create and delete
+    /// relationships (schema changes) which conflict with other schema-changing tests when run
+    /// in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class RelationshipMetadataTests : E2ETestBase
     {
 [Fact]
