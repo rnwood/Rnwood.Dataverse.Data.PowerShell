@@ -39,17 +39,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
                     return null;
                 }
 
-                // System.ServiceModel.* assemblies are shipped with PowerShell itself and loaded
-                // into the DEFAULT ALC from PS7's installation directory. Loading them again from
-                // the cmdlets directory into CmdletsLoadContext would produce a second copy with a
-                // different type identity, causing FaultException<OrganizationServiceFault> catch
-                // clauses in Cmdlets.dll (DEFAULT ALC) to silently miss the thrown exception.
-                // Always let these fall through to the DEFAULT ALC's own copy.
-                if (assemblyName.Name != null && assemblyName.Name.StartsWith("System.ServiceModel", StringComparison.OrdinalIgnoreCase))
-                {
-                    return null;
-                }
-
                 string path = Path.Combine(basePath, assemblyName.Name + ".dll");
 
                 if (File.Exists(path))
@@ -120,10 +109,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
             protected override Assembly Load(AssemblyName assemblyName)
             {
-                // System.ServiceModel.* assemblies are provided by PowerShell itself.
-                // Returning null here causes fallback to the DEFAULT ALC, ensuring both
-                // Cmdlets.dll and any assemblies loaded inside this context (e.g. ServiceClient)
-                // share the same FaultException<T> type identity and catch clauses work correctly.
+                // System.ServiceModel.* assemblies may or may not ship with PowerShell itself.
+                // By returning null here we let the DEFAULT ALC supply them.
+                //
+                // When PS7 ships these assemblies (e.g. Windows), Cmdlets.dll (DEFAULT ALC)
+                // resolved them directly from PS7's install directory WITHOUT going through
+                // Default.Resolving.  If CmdletsLoadContext loaded its own copy here, the
+                // CmdletsLoadContext copy and DEFAULT ALC's copy would be different objects,
+                // causing FaultException<OrganizationServiceFault> catch clauses in Cmdlets.dll
+                // to silently miss exceptions thrown by ServiceClient (type identity mismatch).
+                //
+                // When PS7 does NOT ship these assemblies (e.g. some Ubuntu PS versions),
+                // Default.Resolving already loaded them from cmdlets/net8.0/ INTO CmdletsLoadContext
+                // on behalf of Cmdlets.dll.  DEFAULT ALC caches that resolution, so returning null
+                // here makes the runtime fall back to DEFAULT ALC, which returns the same
+                // CmdletsLoadContext assembly instance.  Both code paths therefore share one copy.
                 if (assemblyName.Name != null && assemblyName.Name.StartsWith("System.ServiceModel", StringComparison.OrdinalIgnoreCase))
                 {
                     return null;
