@@ -8,6 +8,7 @@
     <RootNamespace>Rnwood.Dataverse.Data.PowerShell.Tests</RootNamespace>
     <AssemblyTitle>Rnwood.Dataverse.Data.PowerShell.Tests</AssemblyTitle>
     <Product>Rnwood.Dataverse.Data.PowerShell</Product>
+
     <Copyright>Copyright © 2023-2026 Robert Wood and project contributors</Copyright>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
@@ -75,6 +76,13 @@
   <!-- Copy metadata files to output for tests that need file access -->
   <ItemGroup>
     <None Include="..\tests\*.xml" Link="Metadata\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- xUnit runner configuration -->
+  <ItemGroup>
+    <None Include="xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Forms
     /// Form library and event handler manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/FormLibraryAndEventHandler.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests modify a shared
+    /// contact form definition (adding and removing libraries and event handlers), which conflicts
+    /// with other form-modifying tests when run in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class FormLibraryAndEventHandlerTests : E2ETestBase
     {
         [Fact]
@@ -126,7 +132,7 @@ catch {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
-            result.StandardOutput.Should().Contain("SUCCESS");
+            result.StandardOutput.Should().Contain("SUCCESS", because: result.GetFullOutput());
         }
     }
 }

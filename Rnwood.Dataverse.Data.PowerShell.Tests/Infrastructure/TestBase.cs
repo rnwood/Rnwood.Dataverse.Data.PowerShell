@@ -36,6 +36,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
     public abstract class TestBase : IDisposable
     {
         private static readonly Dictionary<string, EntityMetadata> MetadataCache = new();
+        private static readonly Dictionary<string, byte[]> MetadataSerializedCache = new();
         private static readonly object MetadataCacheLock = new();
         private List<EntityMetadata>? _loadedMetadata;
         
@@ -667,16 +668,30 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 
         /// <summary>
         /// Creates a deep copy of entity metadata to prevent modifying the shared cache.
-        /// This uses serialization/deserialization to ensure a complete deep copy.
+        /// This uses cached serialization/deserialization for better performance.
         /// </summary>
         protected static EntityMetadata CloneEntityMetadata(EntityMetadata source)
         {
-            // Use DataContractSerializer for deep cloning
-            var serializer = new DataContractSerializer(typeof(EntityMetadata));
-            using var ms = new MemoryStream();
-            serializer.WriteObject(ms, source);
-            ms.Position = 0;
-            return (EntityMetadata)serializer.ReadObject(ms)!;
+            var logicalName = source.LogicalName;
+            
+            lock (MetadataCacheLock)
+            {
+                // Check if we have a cached serialized version
+                if (!MetadataSerializedCache.TryGetValue(logicalName, out var serializedData))
+                {
+                    // Serialize once and cache the byte array
+                    var serializer = new DataContractSerializer(typeof(EntityMetadata));
+                    using var ms = new MemoryStream();
+                    serializer.WriteObject(ms, source);
+                    serializedData = ms.ToArray();
+                    MetadataSerializedCache[logicalName] = serializedData;
+                }
+                
+                // Deserialize from cached byte array
+                var deserializer = new DataContractSerializer(typeof(EntityMetadata));
+                using var readStream = new MemoryStream(serializedData);
+                return (EntityMetadata)deserializer.ReadObject(readStream)!;
+            }
         }
 
         private static EntityMetadata BuildSystemUserMetadata()

@@ -136,6 +136,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                     throw new TimeoutException($"PowerShell script timed out after {timeoutSeconds} seconds");
                 }
 
+                // Wait for async output/error reads to complete. When using BeginOutputReadLine/BeginErrorReadLine,
+                // WaitForExit(int) only waits for the process to exit, not for async read callbacks to finish.
+                // Calling WaitForExit() without a timeout ensures all buffered output is flushed to the StringBuilder.
+                process.WaitForExit();
+
                 return new PowerShellProcessResult
                 {
                     ExitCode = process.ExitCode,
@@ -342,14 +347,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         public bool Success { get; set; }
 
         /// <summary>
-        /// Gets the combined output (stdout + stderr if there were errors).
+        /// Gets the combined output (stdout + stderr) always, useful for assertion context.
         /// </summary>
         public string GetFullOutput()
         {
-            if (string.IsNullOrEmpty(StandardError))
-                return StandardOutput;
-            
-            return $"{StandardOutput}\n\nErrors:\n{StandardError}";
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"Exit code: {ExitCode}");
+            sb.AppendLine("StdOut:");
+            sb.AppendLine(StandardOutput);
+            if (!string.IsNullOrEmpty(StandardError))
+            {
+                sb.AppendLine("StdErr:");
+                sb.AppendLine(StandardError);
+            }
+            return sb.ToString();
         }
 
         /// <summary>

@@ -141,7 +141,7 @@ try {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("Success");
+            result.StandardOutput.Should().Contain("Success", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -259,8 +259,8 @@ try {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("Success");
-            result.StandardOutput.Should().Contain("no duplicate created");
+            result.StandardOutput.Should().Contain("Success", because: result.GetFullOutput());
+            result.StandardOutput.Should().Contain("no duplicate created", because: result.GetFullOutput());
         }
     }
 }
