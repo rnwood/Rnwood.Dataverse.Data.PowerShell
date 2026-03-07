@@ -896,9 +896,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Update cell attributes
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)) && Hidden.IsPresent)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
             {
-                cell.SetAttributeValue("visible", "false");
+                cell.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
             }
 
             if (ColSpan.HasValue)
