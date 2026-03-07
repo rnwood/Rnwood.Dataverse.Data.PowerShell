@@ -119,6 +119,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			else
 			{
+				// Explicitly use ConnectedOrgUniqueName to ensure consistent behaviour across all platforms.
+				// On net462 (PS5), the DataSource constructor checks for CrmServiceClient (old package), but we
+				// use ServiceClient (new package), so it falls back to the org friendly name instead of the
+				// unique name. Users querying cross-datasource use ConnectedOrgUniqueName in their SQL, so we
+				// must ensure the registered data source name matches.
+				dataSource.Name = Connection.ConnectedOrgUniqueName;
 				WriteVerbose($"Using default datasource name '{dataSource.Name}' from connection");
 			}
 
