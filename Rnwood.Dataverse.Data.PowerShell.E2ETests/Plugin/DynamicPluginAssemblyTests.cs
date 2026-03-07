@@ -254,7 +254,7 @@ namespace TestDynamicPlugins
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("ALL TESTS PASSED");
+            result.StandardOutput.Should().Contain("ALL TESTS PASSED", because: result.GetFullOutput());
         }
     }
 }
