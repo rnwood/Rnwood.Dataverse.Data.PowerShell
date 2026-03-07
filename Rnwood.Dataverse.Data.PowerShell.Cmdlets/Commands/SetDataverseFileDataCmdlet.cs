@@ -18,8 +18,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     {
         private const string PARAMSET_FILEPATH = "FilePath";
         private const string PARAMSET_BYTES = "Bytes";
+        private const string PARAMSET_BYTESTREAM = "ByteStream";
         private const string UPLOAD_BLOCK_REQUEST = "UploadBlock";
         private const int BLOCK_SIZE = 4 * 1024 * 1024; // 4MB blocks
+
+        // For byte stream mode, we upload blocks incrementally
+        private List<byte> _byteStreamBuffer;
+        private bool _byteStreamMode;
+        private string _fileContinuationToken;
+        private List<string> _blockList;
+        private int _blockNumber;
 
         /// <summary>
         /// Gets or sets the logical name of the table containing the file column.
@@ -55,9 +63,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public byte[] FileContent { get; set; }
 
         /// <summary>
+        /// Gets or sets the byte stream input from the pipeline.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_BYTESTREAM, Mandatory = true, ValueFromPipeline = true, HelpMessage = "Byte stream input from the pipeline")]
+        public byte InputByte { get; set; }
+
+        /// <summary>
         /// Gets or sets the filename to use when uploading from byte array.
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_BYTES, HelpMessage = "Filename to use when uploading from byte array")]
+        [Parameter(ParameterSetName = PARAMSET_BYTESTREAM, HelpMessage = "Filename to use when uploading from byte stream")]
         public string FileName { get; set; }
 
         /// <summary>
@@ -67,11 +82,57 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string MimeType { get; set; }
 
         /// <summary>
+        /// Begins processing - initialize byte stream buffer if in ByteStream mode.
+        /// </summary>
+        protected override void BeginProcessing()
+        {
+            base.BeginProcessing();
+
+            if (ParameterSetName == PARAMSET_BYTESTREAM)
+            {
+                _byteStreamMode = true;
+                _byteStreamBuffer = new List<byte>();
+                _blockList = new List<string>();
+                _blockNumber = 0;
+                
+                string fileName = FileName ?? "file.bin";
+                WriteVerbose($"Initializing byte stream upload for file '{fileName}'");
+                
+                // Initialize the upload at the beginning
+                var initRequest = new InitializeFileBlocksUploadRequest
+                {
+                    Target = new EntityReference(TableName, Id),
+                    FileAttributeName = ColumnName,
+                    FileName = fileName
+                };
+
+                var initResponse = (InitializeFileBlocksUploadResponse)Connection.Execute(initRequest);
+                _fileContinuationToken = initResponse.FileContinuationToken;
+                
+                WriteVerbose($"Upload initialized with continuation token");
+            }
+        }
+
+        /// <summary>
         /// Processes each record in the pipeline to upload file data.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            // In byte stream mode, accumulate bytes and upload when we reach block size
+            if (_byteStreamMode)
+            {
+                _byteStreamBuffer.Add(InputByte);
+                
+                // Upload block when we reach block size
+                if (_byteStreamBuffer.Count >= BLOCK_SIZE)
+                {
+                    UploadBlock();
+                }
+                
+                return;
+            }
 
             byte[] fileData;
             string fileName;
@@ -117,6 +178,81 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteError(new ErrorRecord(ex, "FileUploadError", ErrorCategory.WriteError, Id));
             }
+        }
+
+        /// <summary>
+        /// Ends processing - upload any remaining bytes and commit the upload if in ByteStream mode.
+        /// </summary>
+        protected override void EndProcessing()
+        {
+            base.EndProcessing();
+
+            if (_byteStreamMode)
+            {
+                string fileName = FileName ?? "file.bin";
+                
+                // Check ShouldProcess before committing
+                if (!ShouldProcess($"{TableName} record {Id}, column {ColumnName}", $"Upload file '{fileName}' from byte stream"))
+                {
+                    return;
+                }
+                
+                try
+                {
+                    // Upload any remaining bytes in buffer (last partial block)
+                    if (_byteStreamBuffer != null && _byteStreamBuffer.Count > 0)
+                    {
+                        UploadBlock();
+                    }
+                    
+                    // Commit the upload
+                    WriteVerbose($"Committing upload with {_blockList.Count} blocks");
+                    
+                    var commitRequest = new CommitFileBlocksUploadRequest
+                    {
+                        FileContinuationToken = _fileContinuationToken,
+                        BlockList = _blockList.ToArray(),
+                        FileName = fileName,
+                        MimeType = DetermineMimeType(fileName)
+                    };
+
+                    Connection.Execute(commitRequest);
+                    
+                    WriteVerbose($"Successfully uploaded file '{fileName}' from byte stream to {TableName} record {Id}, column {ColumnName}");
+                }
+                catch (Exception ex)
+                {
+                    WriteError(new ErrorRecord(ex, "FileUploadError", ErrorCategory.WriteError, Id));
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Uploads the current buffer as a block.
+        /// </summary>
+        private void UploadBlock()
+        {
+            if (_byteStreamBuffer.Count == 0)
+            {
+                return;
+            }
+            
+            byte[] blockData = _byteStreamBuffer.ToArray();
+            string blockId = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes($"block-{_blockNumber:D6}"));
+            _blockList.Add(blockId);
+
+            var uploadRequest = new OrganizationRequest(UPLOAD_BLOCK_REQUEST);
+            uploadRequest.Parameters["BlockId"] = blockId;
+            uploadRequest.Parameters["BlockData"] = blockData;
+            uploadRequest.Parameters["FileContinuationToken"] = _fileContinuationToken;
+
+            Connection.Execute(uploadRequest);
+            
+            _blockNumber++;
+            WriteVerbose($"Uploaded block {_blockNumber} with {blockData.Length} bytes");
+            
+            // Clear buffer for next block
+            _byteStreamBuffer.Clear();
         }
 
         private void UploadFile(byte[] fileData, string fileName)
