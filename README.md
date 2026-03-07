@@ -25,6 +25,7 @@ This module works in PowerShell Desktop and PowerShell Core, supporting Windows,
 - Full plugin lifecycle management
     - Upload and manage plugin assemblies and packages
     - Register plugin types, steps, and images with tab completion support
+    - **Dynamic plugin development** with on-the-fly C# compilation and Visual Studio project export for IDE-based development
 
 **Note**: On-premise Dataverse environments are not supported.
 
@@ -225,7 +226,10 @@ For more advanced scenarios including metadata and customisations, see the [docu
 
 **Dynamic Plugin Assemblies** (compile C# source code on-the-fly):
 - [`Set-DataverseDynamicPluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseDynamicPluginAssembly.md) — compile C# source code into a plugin assembly and upload to Dataverse with automatic plugin type management
-- [`Get-DataverseDynamicPluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseDynamicPluginAssembly.md) — extract source code and build metadata from dynamic plugin assemblies
+- [`Get-DataverseDynamicPluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseDynamicPluginAssembly.md) — extract source code and build metadata from dynamic plugin assemblies, or export to a complete Visual Studio project for development with standard .NET tools
+
+**NEW: Visual Studio Project Export**  
+Export dynamic plugin assemblies to complete, buildable VS projects (.csproj, .cs, .snk files) that support the full development workflow: `Get-DataverseDynamicPluginAssembly -Name "MyPlugin" -OutputProjectPath "C:\Dev\MyPlugin"` → modify in IDE → `dotnet build` → update back to Dataverse. Enables IDE-based development (IntelliSense, debugging, refactoring) while maintaining the rapid deployment benefits of dynamic plugins.
 
 **Traditional Plugin Assemblies**:
 - [`Get-DataversePluginAssembly`](Rnwood.Dataverse.Data.PowerShell/docs/Get-DataversePluginAssembly.md) — retrieve plugin assemblies
