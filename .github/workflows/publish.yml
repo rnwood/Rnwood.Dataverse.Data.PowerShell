@@ -53,6 +53,10 @@ jobs:
         uses: PSModule/install-powershell@v1
         with:
           Version: ${{ matrix.powershell_version }}
+      - if: ${{ matrix.test_set == 'e2e-minimal' || matrix.test_set == 'e2e-full' }}
+        name: Install Azure Functions Core Tools (for AzureFunctionsCompatibilityTests)
+        shell: bash
+        run: npm install -g azure-functions-core-tools@4 --unsafe-perm true
       - name: Build
         shell: pwsh
         run: |       
