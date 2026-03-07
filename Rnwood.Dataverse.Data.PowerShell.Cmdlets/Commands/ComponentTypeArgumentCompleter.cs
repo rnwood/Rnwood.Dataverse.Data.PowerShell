@@ -131,7 +131,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             { "ImportMap", 49 },
             { "WebResource", 50 },
             { "SiteMap", 52 },
-            { "Sitemap", 52 },
             { "ConnectionRole", 53 },
             { "FieldSecurityProfile", 55 },
             { "PluginType", 59 },

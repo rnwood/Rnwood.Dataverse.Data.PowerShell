@@ -294,12 +294,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            if (HasActivities.IsPresent)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)))
             {
                 entity.HasActivities = HasActivities.ToBool();
             }
 
-            if (HasNotes.IsPresent)
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)))
             {
                 entity.HasNotes = HasNotes.ToBool();
             }
@@ -384,11 +384,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             else
             {
                 // For non-activity entities, set based on parameters
-                if (HasNotes.IsPresent)
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)))
                 {
                     request.HasNotes = HasNotes.ToBool();
                 }
-                if (HasActivities.IsPresent)
+                if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)))
                 {
                     request.HasActivities = HasActivities.ToBool();
                 }
@@ -486,6 +486,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             if (ChangeTrackingEnabled.IsPresent)
             {
                 entityToUpdate.ChangeTrackingEnabled = ChangeTrackingEnabled.ToBool();
+                hasChanges = true;
+            }
+
+            // Update has activities - use BoundParameters to properly detect -HasActivities:$false
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)))
+            {
+                entityToUpdate.HasActivities = HasActivities.ToBool();
+                hasChanges = true;
+            }
+
+            // Update has notes - use BoundParameters to properly detect -HasNotes:$false
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)))
+            {
+                entityToUpdate.HasNotes = HasNotes.ToBool();
                 hasChanges = true;
             }
             
@@ -630,17 +644,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            // Check if HasActivities was provided and is different (immutable after creation)
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasActivities)) &&
-                HasActivities.ToBool() != existingEntity.HasActivities)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Cannot change HasActivities from '{existingEntity.HasActivities}' to '{HasActivities.ToBool()}'. This property is immutable after creation."),
-                    "ImmutableHasActivities",
-                    ErrorCategory.InvalidOperation,
-                    null));
-            }
-
             // Check if IsActivity was provided and is different (immutable after creation)
             if (MyInvocation.BoundParameters.ContainsKey(nameof(IsActivity)) &&
                 IsActivity.ToBool() != existingEntity.IsActivity)
@@ -648,17 +651,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 ThrowTerminatingError(new ErrorRecord(
                     new InvalidOperationException($"Cannot change IsActivity from '{existingEntity.IsActivity}' to '{IsActivity.ToBool()}'. This property is immutable after creation. Activity entities cannot be converted to standard entities and vice versa."),
                     "ImmutableIsActivity",
-                    ErrorCategory.InvalidOperation,
-                    null));
-            }
-
-            // Check if HasNotes was provided and is different (immutable after creation)
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(HasNotes)) &&
-                HasNotes.ToBool() != existingEntity.HasNotes)
-            {
-                ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Cannot change HasNotes from '{existingEntity.HasNotes}' to '{HasNotes.ToBool()}'. This property is immutable after creation."),
-                    "ImmutableHasNotes",
                     ErrorCategory.InvalidOperation,
                     null));
             }

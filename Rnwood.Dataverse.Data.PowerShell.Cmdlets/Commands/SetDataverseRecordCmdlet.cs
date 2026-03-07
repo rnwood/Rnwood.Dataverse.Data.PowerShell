@@ -27,6 +27,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipeline = true, ValueFromRemainingArguments = true,
             HelpMessage = "Object containing values to be used. Property names must match the logical names of Dataverse columns in the specified table and the property values are used to set the values of the Dataverse record being created/updated. The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.")]
+        [Alias("Values")]
         public PSObject InputObject { get; set; }
         /// <summary>
         /// The logical name of the table to operate on.
@@ -203,6 +204,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             recordCount = 0;
             entityMetadataFactory = new EntityMetadataFactory(Connection);
             entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
+
+            // Warn if affinity cookie is enabled (default) when using parallelization
+            if (MaxDegreeOfParallelism > 1 && Connection != null && Connection.EnableAffinityCookie)
+            {
+                WriteWarning("Using parallelization with affinity cookie enabled may reduce performance. Consider using Get-DataverseConnection with -DisableAffinityCookie for better parallel performance. Note: Disabling affinity cookie may result in eventual consistency issues.");
+            }
 
             // Initialize retrieval batch processor
             _retrievalBatchProcessor = new RetrievalBatchProcessor(

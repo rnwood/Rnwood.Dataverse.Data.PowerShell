@@ -196,24 +196,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Map behavior to DoNotIncludeSubcomponents
             // Behavior 0 (Include Subcomponents) = DoNotIncludeSubcomponents false
             // Behavior 1 (Do Not Include Subcomponents) = DoNotIncludeSubcomponents true
-            // Behavior 2 (Include As Shell) = Not directly supported by AddSolutionComponentRequest
+            // Behavior 2 (Include As Shell) = DoNotIncludeSubcomponents true
             
-            bool doNotIncludeSubcomponents = behavior == 1;
-            
-            // Note: Behavior 2 (Include As Shell) cannot be set via AddSolutionComponentRequest
-            // It requires post-processing via UpdateSolutionComponentRequest or direct SQL
-            if (behavior == 2)
-            {
-                WriteWarning("Behavior 2 (Include As Shell) is not fully supported by the AddSolutionComponent API. " +
-                           "The component will be added with 'Do Not Include Subcomponents' behavior. " +
-                           "To set 'Include As Shell' behavior, you may need to use the Dataverse UI or direct API calls.");
-                doNotIncludeSubcomponents = true;
-            }
+            bool doNotIncludeSubcomponents = behavior == 1 || behavior == 2;
             
             // Map behavior to IncludedComponentSettingsValues
-            // When set to null, the component is added to the solution with metadata
-            // When set to empty array, no metadata settings are included with the component
-            string[] includedComponentSettingsValues = behavior == 1 ? new string[0] : null;
+            // Behavior 0: null (include metadata)
+            // Behavior 1: null (do not include subcomponents but include metadata)
+            // Behavior 2: empty array (include as shell - no metadata settings)
+            string[] includedComponentSettingsValues = behavior == 2 ? new string[0] : null;
             
             var request = new AddSolutionComponentRequest
             {

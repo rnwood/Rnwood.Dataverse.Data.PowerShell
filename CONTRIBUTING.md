@@ -146,8 +146,8 @@ This PR adds support for batch operations and fixes a connection timeout issue.
 ### Testing
 
 - Add tests for all new functionality
-- Use Pester 5.x format
-- Run tests via `tests/All.Tests.ps1`
+- Add xUnit tests in Rnwood.Dataverse.Data.PowerShell.Tests/ for infrastructure/cmdlet logic
+- Add xUnit E2E tests in Rnwood.Dataverse.Data.PowerShell.E2ETests/ for real environment scenarios
 - Use FakeXrmEasy for mocking
 
 ## Building and Testing
@@ -156,7 +156,6 @@ This PR adds support for batch operations and fixes a connection timeout issue.
 
 - .NET SDK 8.0+
 - PowerShell 7+ or PowerShell 5.1+
-- Pester 5.x
 
 ### Build
 
@@ -174,19 +173,17 @@ dotnet build
 # Set module path
 $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 
-# Install Pester
-Install-Module -Force -Scope CurrentUser Pester -MinimumVersion 5.0
+# Run xUnit infrastructure tests (net8.0)
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net8.0 --logger "console;verbosity=normal"
 
-# Run all tests (5+ minutes)
-$config = New-PesterConfiguration
-$config.Run.Path = 'tests/All.Tests.ps1'
-$config.Run.PassThru = $true
-$config.Output.Verbosity = 'Normal'
-$result = Invoke-Pester -Configuration $config
+# Run xUnit infrastructure tests (net462, Windows only)
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net462 --logger "console;verbosity=normal"
 
-# Or run filtered tests (20-30 seconds)
-$config.Filter.FullName = '*YourFeature*'
-$result = Invoke-Pester -Configuration $config
+# Run E2E tests (requires credentials)
+$env:E2ETESTS_URL = "https://yourorg.crm.dynamics.com"
+$env:E2ETESTS_CLIENTID = "your-client-id"
+$env:E2ETESTS_CLIENTSECRET = "your-client-secret"
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal"
 ```
 
 ## Documentation
@@ -195,6 +192,7 @@ $result = Invoke-Pester -Configuration $config
 - Update markdown docs in `Rnwood.Dataverse.Data.PowerShell/docs/`
 - Run `updatehelp.ps1` to sync documentation
 - Add examples that demonstrate the new functionality
+- Update README features list and docs/ files.
 
 ## Questions?
 

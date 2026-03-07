@@ -264,6 +264,34 @@ Set-DataverseAttributeMetadata `
 - **Update support**: Can update display name, description, and required level of existing lookups
 - **Immutable properties**: Target entities, relationship name, and cascade behaviors cannot be changed after creation
 
+### Updating StatusCode Options
+
+For custom entities, you can update the statuscode attribute to define custom status values. Each status value must be associated with a state (0 = Active, 1 = Inactive).
+
+```powershell
+# Define status options with State property
+$statusOptions = @(
+    @{Value=1; Label='Draft'; State=0},
+    @{Value=807290000; Label='Approved'; State=0},
+    @{Value=807290001; Label='Filled'; State=0},
+    @{Value=2; Label='Closed'; State=1},
+    @{Value=807290002; Label='Cancelled'; State=1}
+)
+
+# Update statuscode options
+Set-DataverseAttributeMetadata `
+    -EntityName abc_position `
+    -AttributeName statuscode `
+    -Options $statusOptions
+```
+
+**StatusCode Options Requirements:**
+- **State property is required**: Each option must include a State value (0 for Active state, 1 for Inactive state)
+- **Value property is required**: Specify the numeric value for each status
+- **Label property is required**: Specify the display name for each status
+- **Custom values**: Use values 807290000 and higher to avoid conflicts with default values
+- **Cannot modify system entities**: This only works for custom entities (with new_ prefix)
+
 ### Creating Relationships
 
 ```powershell

@@ -20,6 +20,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(Mandatory = true, Position = 0, ParameterSetName = "Single", HelpMessage = "Schema name of the environment variable to set the value for.")]
         [ValidateNotNullOrEmpty]
+        [Alias("DefinitionSchemaName")]
         public string SchemaName { get; set; }
 
         /// <summary>

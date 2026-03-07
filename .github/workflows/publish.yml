@@ -12,20 +12,36 @@ on:
 jobs:
   test:
     timeout-minutes: 60  # Fail fast if job exceeds 60 minutes
+    permissions:
+      contents: read
+      checks: write  # Required for test-reporter action to create check runs
+      pull-requests: read  # Required for test-reporter action to read PR info
     strategy:
       matrix:
         include:
+          # Infrastructure tests only
           - os: ubuntu-latest
             powershell_version: "7.4.11"
+            test_set: tests
           - os: windows-latest
             powershell_version: "7.4.11"
+            test_set: tests
           - os: ubuntu-latest
             powershell_version: latest
-          - os: windows-latest
-            powershell_version: latest
+            test_set: tests
           - os: windows-latest
             powershell_version: '5'
-
+            test_set: tests
+          # Infrastructure tests + E2E minimal (cross-platform)
+          - os: ubuntu-latest
+            powershell_version: latest
+            test_set: e2e-minimal
+          # Infrastructure tests + E2E full (all tests)
+          - os: windows-latest
+            powershell_version: latest
+            test_set: e2e-full
+    
+    name: Test (${{ matrix.test_set }}, ${{ matrix.os }}, PS ${{ matrix.powershell_version }})
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
@@ -308,6 +324,127 @@ jobs:
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
 
+      # Run xUnit tests - infrastructure and E2E tests run in parallel when applicable
+      - name: Test - xUnit (Infrastructure + E2E)
+        id: run-tests
+        timeout-minutes: 60
+        shell: pwsh
+        env:
+          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
+          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
+          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
+        run: |
+          Write-Host "Running xUnit tests (test_set: ${{ matrix.test_set }})..."
+          # Set TESTMODULEPATH for tests that need to load the module
+          $env:TESTMODULEPATH=(Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell").Path
+          Write-Host "TESTMODULEPATH set to: $env:TESTMODULEPATH"
+          
+          # Create test results directories
+          New-Item -ItemType Directory -Force -Path TestResults | Out-Null
+          New-Item -ItemType Directory -Force -Path TestResults/E2E | Out-Null
+
+          # Track execution
+          $infraTestsExecuted = $false
+          $e2eTestsExecuted = $false
+          $infraJob = $null
+          $infraExitCode = 0
+          $e2eExitCode = 0
+          
+          # Determine if we need E2E tests
+          $runE2E = "${{ matrix.test_set }}" -eq "e2e-minimal" -or "${{ matrix.test_set }}" -eq "e2e-full"
+          
+          # Determine E2E test filter
+          $testFilter = ""
+          if ("${{ matrix.test_set }}" -eq "e2e-minimal") {
+            $testFilter = "--filter `"Category=CrossPlatform`""
+            Write-Host "E2E: Running minimal tests (CrossPlatform only)"
+          } elseif ("${{ matrix.test_set }}" -eq "e2e-full") {
+            Write-Host "E2E: Running full test suite"
+          }
+          
+          # Run net8.0 tests for PS latest or PS7
+          if ("${{ matrix.powershell_version }}" -ne "5") {
+            if ($runE2E) {
+              # Run infrastructure tests in background, E2E in foreground
+              Write-Host "Starting infrastructure tests in background..."
+              $infraJob = Start-Job -ScriptBlock {
+                param($workDir, $testModulePath)
+                Set-Location $workDir
+                $env:TESTMODULEPATH = $testModulePath
+                dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net8.0.trx" --results-directory TestResults 2>&1 | Write-Host
+                return $LASTEXITCODE
+              } -ArgumentList (Get-Location).Path, $env:TESTMODULEPATH
+              
+              $infraTestsExecuted = $true
+              Write-Host "Infrastructure tests started in background (Job ID: $($infraJob.Id))"
+              
+              # Run E2E tests in foreground
+              Write-Host "Running E2E tests..."
+              $testCommand = "dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger `"console;verbosity=normal`" --logger `"trx;LogFileName=e2e-test-results-net8.0.trx`" --results-directory TestResults/E2E $testFilter"
+              Write-Host "Executing: $testCommand"
+              # Execute directly instead of using Invoke-Expression for better output capture
+              if ($testFilter) {
+                dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E --filter "Category=CrossPlatform"
+              } else {
+                dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E
+              }
+              $e2eExitCode = $LASTEXITCODE
+              $e2eTestsExecuted = $true
+              
+              # Wait for infrastructure tests
+              Write-Host "Waiting for infrastructure tests to complete..."
+              $infraJob | Wait-Job | Out-Null
+              $infraExitCode = Receive-Job -Job $infraJob
+              $infraJobState = $infraJob.State
+              Remove-Job -Job $infraJob
+              
+              if ($infraJobState -ne "Completed") {
+                Write-Error "Infrastructure tests job ended in state: $infraJobState"
+                $infraExitCode = 1
+              }
+              
+              Write-Host "Infrastructure tests completed with exit code: $infraExitCode"
+              Write-Host "E2E tests completed with exit code: $e2eExitCode"
+              
+            } else {
+              # Run only infrastructure tests
+              Write-Host "Running infrastructure tests only..."
+              dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net8.0 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net8.0.trx" --results-directory TestResults
+              $infraExitCode = $LASTEXITCODE
+              $infraTestsExecuted = $true
+            }
+          }
+          
+          # Run net462 tests on PS5 (no E2E on PS5)
+          if ("${{ matrix.powershell_version }}" -eq "5") {
+            Write-Host "Running infrastructure tests (net462)..."
+            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net462 --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net462.trx" --results-directory TestResults
+            $infraExitCode = $LASTEXITCODE
+            $infraTestsExecuted = $true
+          }
+          
+          # Record outputs
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "infra_tests_executed=$infraTestsExecuted"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "e2e_tests_executed=$e2eTestsExecuted"
+          
+          # Check for failures
+          if ($infraTestsExecuted -and $infraExitCode -ne 0) {
+            Write-Error "Infrastructure tests failed with exit code $infraExitCode"
+            exit $infraExitCode
+          }
+          
+          if ($e2eTestsExecuted -and $e2eExitCode -ne 0) {
+            Write-Error "E2E tests failed with exit code $e2eExitCode"
+            exit $e2eExitCode
+          }
+          
+          if ($infraTestsExecuted -or $e2eTestsExecuted) {
+            Write-Host "All tests completed successfully"
+          } else {
+            Write-Host "No tests executed in this matrix configuration"
+          }
+      
+
       # Build and pack XrmToolbox Plugin (Windows only - requires .NET Framework 4.8)
       - if: ${{ matrix.os == 'windows-latest' }}
         name: Build and Pack XrmToolbox Plugin
@@ -394,133 +531,32 @@ jobs:
               Write-Error "No .nupkg file was created in out/nuget/"
               exit 1
           }
-      - if: ${{ matrix.powershell_version != '5' }}
-        name: Test - pwsh (Standard + E2E in parallel)
-        id: test-pwsh
-        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
-        shell: pwsh
-        env:
-          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
-          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
-          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
-        run: |
-          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"    
-          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
-
-          Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          
-          # Run standard tests
-          $config = New-PesterConfiguration
-          $config.Run.Path = 'tests'
-          $config.Run.ExcludePath = 'tests/Performance-Investigation.Tests.ps1'
-          $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Detailed'
-          $config.Should.ErrorAction = 'Continue'
-          
-          $standardResults = Invoke-Pester -Configuration $config
-          
-          # Run E2E tests
-          $config = New-PesterConfiguration
-          $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
-          $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Detailed'
-          $config.Filter.ExcludeTag = 'LongRunning'
-          
-          $e2eModuleResult = Invoke-Pester -Configuration $config
-          
-          # Check if we should also run metadata tests (Windows Latest only)
-          $shouldRunMetadataTests = ("${{ matrix.os }}" -eq 'windows-latest' -and "${{ matrix.powershell_version }}" -eq 'latest')
-          $metadataResult = $null
-          
-          if ($shouldRunMetadataTests) {
-              $metadataConfig = New-PesterConfiguration
-              $metadataConfig.Run.Path = @(
-                  'e2e-tests/DynamicPluginAssembly.Tests.ps1'
-                  # Opt in per branch by uncommenting
-                  # 'e2e-tests/EntityKeyMetadata.Tests.ps1'
-                  # 'e2e-tests/EntityMetadata.Tests.ps1',
-                  # 'e2e-tests/AttributeMetadata.Tests.ps1', 
-                  # 'e2e-tests/RelationshipMetadata.Tests.ps1',
-                  # 'e2e-tests/OptionSetMetadata.Tests.ps1'
-              )
-              $metadataConfig.Run.PassThru = $true
-              $metadataConfig.Output.Verbosity = 'Detailed'
-              $metadataConfig.Filter.ExcludeTag = 'LongRunning'
-              
-              $metadataResult = Invoke-Pester -Configuration $metadataConfig
-          }
-          
-          # Check for failures
-          $hasFailures = $false
-          
-          if ($standardResults.FailedCount -gt 0) {
-              $hasFailures = $true
-          }
-          
-          if ($e2eModuleResult.FailedCount -gt 0) {
-              $hasFailures = $true
-          }
-          
-          if ($metadataResult -and $metadataResult.FailedCount -gt 0) {
-              $hasFailures = $true
-          }
-          
-          if ($hasFailures) {
-              exit 1
-          }
-      - if:  ${{ matrix.powershell_version == '5' }}
-        name: Test - powershell (Standard + E2E in parallel)
-        id: test-powershell
-        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
-        shell: powershell
-        env:
-          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
-          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
-          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
-        run: |  
-            $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
-  
-            Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-            
-            # Run standard tests
-            $config = New-PesterConfiguration
-            $config.Run.Path = 'tests'
-            $config.Run.ExcludePath = 'tests/Performance-Investigation.Tests.ps1'
-            $config.Run.PassThru = $true
-            $config.Output.Verbosity = 'Detailed'
-            $config.Should.ErrorAction = 'Continue'
-            
-            $standardResults = Invoke-Pester -Configuration $config
-            
-            # Run E2E tests
-            $config = New-PesterConfiguration
-            $config.Run.Path = 'e2e-tests/Module.Tests.ps1'
-            $config.Run.PassThru = $true
-            $config.Output.Verbosity = 'Detailed'
-            $config.Filter.ExcludeTag = 'LongRunning'
-            
-            $e2eResult = Invoke-Pester -Configuration $config
-            
-            # Check for failures
-            $hasFailures = $false
-            
-            if ($standardResults.FailedCount -gt 0) {
-                $hasFailures = $true
-            }
-            
-            if ($e2eResult.FailedCount -gt 0) {
-                $hasFailures = $true
-            }
-            
-            if ($hasFailures) {
-                exit 1
-            }
+      
+      # Publish xUnit test results to GitHub
+      - name: Publish Infrastructure Test Results
+        uses: dorny/test-reporter@v1
+        if: ${{ always() && steps.run-tests.outputs.infra_tests_executed == 'true' }}
+        with:
+          name: Infrastructure Tests (${{ matrix.test_set }}, ${{ matrix.os }}, PS ${{ matrix.powershell_version }})
+          path: TestResults/*.trx
+          reporter: dotnet-trx
+          fail-on-error: false
+      
+      # Publish E2E test results to GitHub
+      - name: Publish E2E Test Results
+        uses: dorny/test-reporter@v1
+        if: ${{ always() && steps.run-tests.outputs.e2e_tests_executed == 'true' }}
+        with:
+          name: E2E Tests (${{ matrix.test_set }}, ${{ matrix.os }}, PS ${{ matrix.powershell_version }})
+          path: TestResults/E2E/*.trx
+          reporter: dotnet-trx
+          fail-on-error: false
       
       # Upload artifacts needed for publishing
       - name: Upload build artifacts
         uses: actions/upload-artifact@v5
         with:
-          name: module-${{ matrix.os }}-${{ matrix.powershell_version }}
+          name: module-${{ matrix.test_set }}-${{ matrix.os }}-${{ matrix.powershell_version }}
           path: |
             out/Rnwood.Dataverse.Data.PowerShell/
             out/nuget/
@@ -535,7 +571,7 @@ jobs:
         if: failure() && github.event_name == 'pull_request'
         uses: actions/upload-artifact@v5
         with:
-          name: test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}
+          name: test-failures-${{ matrix.test_set }}-${{ matrix.os }}-${{ matrix.powershell_version }}
           path: test-failures-*.md
           if-no-files-found: ignore
       

@@ -1,0 +1,54 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net462</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Rnwood.Dataverse.Data.PowerShell.E2ETests</RootNamespace>
+    <AssemblyTitle>Rnwood.Dataverse.Data.PowerShell.E2ETests</AssemblyTitle>
+    <Product>Rnwood.Dataverse.Data.PowerShell</Product>
+    <Copyright>Copyright © 2023-2026 Robert Wood and project contributors</Copyright>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>full</DebugType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>pdbonly</DebugType>
+  </PropertyGroup>
+  
+  <!-- Suppress common warnings -->
+  <PropertyGroup>
+    <NoWarn>1701;1702;NU1605</NoWarn>
+  </PropertyGroup>
+
+  <!-- Test Framework -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Xunit.SkippableFact" Version="1.5.2" />
+    <PackageReference Include="coverlet.collector" Version="6.0.2">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="FluentAssertions" Version="6.12.1" />
+  </ItemGroup>
+
+  <!-- Project References -->
+  <ItemGroup>
+    <!-- Reference the infrastructure project to reuse PowerShellProcessRunner -->
+    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Tests\Rnwood.Dataverse.Data.PowerShell.Tests.csproj" />
+  </ItemGroup>
+
+  <!-- xUnit Configuration -->
+  <ItemGroup>
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

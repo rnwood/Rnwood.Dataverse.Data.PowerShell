@@ -55,6 +55,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string DefaultValue { get; set; }
 
         /// <summary>
+        /// Gets or sets whether to return the environment variable definition record as a PSObject after creation/update.
+        /// </summary>
+        [Parameter(HelpMessage = "If specified, returns the environment variable definition record as a PSObject after creation/update.")]
+        public SwitchParameter PassThru { get; set; }
+
+        /// <summary>
         /// Initializes the cmdlet and sets up required helpers.
         /// </summary>
         protected override void BeginProcessing()
@@ -75,6 +81,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 return;
             }
+
+            Guid? definitionId = null;
 
             // Query for the environment variable definition by schema name
             var defQuery = new QueryExpression("environmentvariabledefinition")
@@ -112,13 +120,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     defEntity["defaultvalue"] = DefaultValue;
                 }
 
-                var newDefId = Connection.Create(defEntity);
-                WriteVerbose($"  Created environment variable definition with ID: {newDefId}");
+                definitionId = Connection.Create(defEntity);
+                WriteVerbose($"  Created environment variable definition with ID: {definitionId}");
             }
             else
             {
                 var envVarDef = defResults.Entities[0];
                 var envVarDefId = envVarDef.Id;
+                definitionId = envVarDefId;
                 WriteVerbose($"  Found environment variable definition: '{envVarDef.GetAttributeValue<string>("displayname")}' (ID: {envVarDefId})");
 
                 // Update the definition if any properties have changed
@@ -158,6 +167,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     WriteVerbose($"  No changes needed for environment variable definition '{SchemaName}'");
                 }
+            }
+
+            // If PassThru is specified, retrieve and output the record
+            if (PassThru.IsPresent && definitionId.HasValue)
+            {
+                WriteVerbose($"  Retrieving environment variable definition (ID: {definitionId.Value}) for PassThru output");
+                var retrievedEntity = Connection.Retrieve("environmentvariabledefinition", definitionId.Value, new ColumnSet(true));
+                var psObject = entityConverter.ConvertToPSObject(retrievedEntity, new ColumnSet(true), _ => ValueType.Raw);
+                WriteObject(psObject);
             }
         }
 

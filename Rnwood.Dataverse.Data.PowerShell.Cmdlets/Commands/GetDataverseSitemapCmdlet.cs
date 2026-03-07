@@ -47,7 +47,158 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose("Querying sitemaps from Dataverse environment...");
 
-            // Build query
+            // Optimization: When retrieving by ID or UniqueName and not forcing Published, use RetrieveUnpublishedRequest
+            // for better support of unpublished sitemap XML (similar to forms)
+            if (string.IsNullOrEmpty(Name))
+            {
+                Guid? sitemapId = Id;
+                
+                // If retrieving by UniqueName, first find the sitemap ID
+                if (!sitemapId.HasValue && !string.IsNullOrEmpty(UniqueName))
+                {
+                    WriteVerbose($"Looking up sitemap by unique name: {UniqueName}");
+                    var lookupQuery = new QueryExpression("sitemap")
+                    {
+                        ColumnSet = new ColumnSet("sitemapid"),
+                        Criteria = new FilterExpression
+                        {
+                            Conditions =
+                            {
+                                new ConditionExpression("sitemapnameunique", ConditionOperator.Equal, UniqueName)
+                            }
+                        },
+                        TopCount = 1
+                    };
+                    
+                    EntityCollection results;
+                    if (!Published.IsPresent)
+                    {
+                        try
+                        {
+                            var retrieveUnpublishedMultipleRequest = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleRequest
+                            {
+                                Query = lookupQuery
+                            };
+                            var unpublishedResponse = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedMultipleResponse)Connection.Execute(retrieveUnpublishedMultipleRequest);
+                            results = unpublishedResponse.EntityCollection;
+                            
+                            if (results.Entities.Count == 0)
+                            {
+                                // Try published
+                                results = Connection.RetrieveMultiple(lookupQuery);
+                            }
+                        }
+                        catch (Exception ex) when (ex is NotImplementedException || ex is InvalidOperationException)
+                        {
+                            // RetrieveUnpublishedMultipleRequest not supported (e.g., in test mocks), fall back to standard RetrieveMultiple
+                            WriteVerbose($"RetrieveUnpublishedMultipleRequest not supported, falling back to standard RetrieveMultiple");
+                            results = Connection.RetrieveMultiple(lookupQuery);
+                        }
+                    }
+                    else
+                    {
+                        results = Connection.RetrieveMultiple(lookupQuery);
+                    }
+                    
+                    if (results.Entities.Count > 0)
+                    {
+                        sitemapId = results.Entities[0].Id;
+                    }
+                }
+                
+                // If we have a sitemap ID, retrieve it using RetrieveUnpublishedRequest
+                if (sitemapId.HasValue)
+                {
+                Entity sitemap = null;
+                
+                if (!Published.IsPresent)
+                {
+                    WriteVerbose($"Retrieving unpublished sitemap by ID: {sitemapId.Value}");
+                    try
+                    {
+                        var retrieveUnpublishedRequest = new Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedRequest
+                        {
+                            Target = new EntityReference("sitemap", sitemapId.Value),
+                            ColumnSet = new ColumnSet(true) // Use all columns to ensure sitemapxml is retrieved
+                        };
+                        var response = (Microsoft.Crm.Sdk.Messages.RetrieveUnpublishedResponse)Connection.Execute(retrieveUnpublishedRequest);
+                        sitemap = response.Entity;
+                    }
+                    catch (System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault> ex)
+                    {
+                        if (QueryHelpers.IsNotFoundException(ex))
+                        {
+                            // Try published version as fallback
+                            WriteVerbose($"Sitemap not found in unpublished layer, trying published version...");
+                            try
+                            {
+                                sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true)); // Use all columns
+                            }
+                            catch (System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault> publishedEx) when (QueryHelpers.IsNotFoundException(publishedEx))
+                            {
+                                // Sitemap doesn't exist in either layer, return nothing
+                                WriteVerbose($"Sitemap not found in published layer either");
+                                return;
+                            }
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
+                    catch (Exception ex) when (ex is NotImplementedException || ex is InvalidOperationException)
+                    {
+                        // RetrieveUnpublishedRequest not supported (e.g., in test mocks), fall back to standard Retrieve
+                        WriteVerbose($"RetrieveUnpublishedRequest not supported, falling back to standard Retrieve");
+                        try
+                        {
+                            sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true));
+                        }
+                        catch (System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault> retrieveEx) when (QueryHelpers.IsNotFoundException(retrieveEx))
+                        {
+                            // Sitemap doesn't exist, return nothing
+                            WriteVerbose($"Sitemap not found");
+                            return;
+                        }
+                    }
+                }
+                else
+                {
+                    WriteVerbose($"Retrieving published sitemap by ID: {sitemapId.Value}");
+                    try
+                    {
+                        sitemap = Connection.Retrieve("sitemap", sitemapId.Value, new ColumnSet(true)); // Use all columns
+                    }
+                    catch (System.ServiceModel.FaultException<Microsoft.Xrm.Sdk.OrganizationServiceFault> ex) when (QueryHelpers.IsNotFoundException(ex))
+                    {
+                        // Sitemap doesn't exist, return nothing
+                        WriteVerbose($"Sitemap not found");
+                        return;
+                    }
+                }
+
+                // If we got here without a sitemap, return nothing
+                if (sitemap == null)
+                {
+                    return;
+                }
+
+                var sitemapInfo = new SitemapInfo
+                {
+                    Id = sitemap.Id,
+                    Name = sitemap.GetAttributeValue<string>("sitemapname"),
+                    UniqueName = sitemap.GetAttributeValue<string>("sitemapnameunique"),
+                    SitemapXml = sitemap.GetAttributeValue<string>("sitemapxml"),
+                    CreatedOn = sitemap.GetAttributeValue<DateTime?>("createdon"),
+                    ModifiedOn = sitemap.GetAttributeValue<DateTime?>("modifiedon")
+                };
+
+                WriteObject(sitemapInfo);
+                return;
+                }
+            }
+
+            // Build query for other cases
             var query = new QueryExpression("sitemap")
             {
                 ColumnSet = new ColumnSet(

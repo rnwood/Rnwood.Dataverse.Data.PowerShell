@@ -87,12 +87,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter Disabled { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the control is visible.
-        /// </summary>
-        [Parameter(HelpMessage = "Whether the control is visible")]
-        public SwitchParameter Visible { get; set; } = true;
-
-        /// <summary>
         /// Gets or sets the number of rows (for multiline text).
         /// </summary>
         [Parameter(HelpMessage = "Number of rows for multiline text controls")]
@@ -355,9 +349,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
             else
             {
-                // Standard parameter set - determine control type if not provided and validate metadata
-                finalControlType = DetermineAndValidateControlType();
-
+                // Standard parameter set - first determine if we're updating or creating
                 // Determine control ID and check if exists
                 if (!string.IsNullOrEmpty(ControlId))
                 {
@@ -380,6 +372,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         existingCell = tempExistingCell;
                         isUpdate = true;
                         controlId = ControlId;
+                        
+                        // When updating, extract DataField from existing control if not provided
+                        if (string.IsNullOrEmpty(DataField))
+                        {
+                            DataField = existingControl.Attribute("datafieldname")?.Value;
+                            WriteVerbose($"DEBUG: Extracted DataField '{DataField}' from existing control");
+                        }
                     }
                 }
                 else if (!string.IsNullOrEmpty(DataField))
@@ -406,6 +405,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     }
                 }
                 // else: No ControlId and no DataField (special controls) - will create new
+
+                // Now determine control type - pass isUpdate flag so validation can be skipped for updates without DataField
+                finalControlType = DetermineAndValidateControlType(isUpdate);
 
                 if (!isUpdate)
                 {
@@ -436,7 +438,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose("DEBUG: About to call UpdateControlAttributes");
                 // Update control attributes with determined control type
-                UpdateControlAttributes(control, finalControlType, controlId, cell);
+                UpdateControlAttributes(control, finalControlType, controlId, cell, isUpdate);
                 WriteVerbose("DEBUG: UpdateControlAttributes completed");
             }
 
@@ -505,7 +507,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Determines the appropriate control type based on attribute metadata if not specified, and validates that the metadata exists.
         /// </summary>
-        private string DetermineAndValidateControlType()
+        /// <param name="isUpdate">True if this is an update operation, false if creating new control</param>
+        private string DetermineAndValidateControlType(bool isUpdate)
         {
             // Check if this is a special control type that doesn't require a DataField
             if (!string.IsNullOrEmpty(ControlType) && IsSpecialControlType(ControlType))
@@ -515,8 +518,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return ControlType;
             }
 
+            // When updating, DataField may have been extracted from existing control
+            // Only require it when creating new controls
             if (string.IsNullOrEmpty(DataField))
             {
+                if (isUpdate)
+                {
+                    // For updates, if DataField is still empty after extraction attempt, 
+                    // this might be a special control (e.g., Subgrid, WebResource) or DataField extraction failed
+                    WriteVerbose("Updating control without DataField - may be a special control or DataField extraction failed");
+                    return ControlType ?? "Standard";
+                }
+                
                 throw new ArgumentException("DataField is required for attribute-bound controls (Standard, Lookup, OptionSet, DateTime, Boolean, Email, Memo, Money, Notes, Data). For special controls (Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch), specify ControlType parameter.");
             }
 
@@ -807,7 +820,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Updates control attributes with the determined control type.
         /// </summary>
-        private void UpdateControlAttributes(XElement control, string finalControlType, string controlId, XElement cell)
+        private void UpdateControlAttributes(XElement control, string finalControlType, string controlId, XElement cell, bool isUpdate)
         {
             WriteVerbose($"DEBUG: UpdateControlAttributes called - finalControlType='{finalControlType}', controlId='{controlId}'");
             
@@ -858,30 +871,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
-            {
-                if (!Visible.IsPresent)
-                {
-                    control.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", null);
-                }
-            }
-
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
-            {
-                if (Hidden.IsPresent)
-                {
-                    control.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", null);
-                }
-            }
-
             if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
             {
                 if (!ShowLabel.IsPresent)
@@ -907,6 +896,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Update cell attributes
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
+            {
+                cell.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
+            }
+
             if (ColSpan.HasValue)
             {
                 cell.SetAttributeValue("colspan", ColSpan.Value);

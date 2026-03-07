@@ -56,6 +56,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private CancellationTokenSource _cancellationTokenSource;
         private Task _outputWriterTask;
         private object _tasksLock = new object();
+        private object _connectionCloneLock = new object(); // Serialize connection cloning to avoid initialization race conditions
         private ConcurrentQueue<PSObject> _outputObjectQueue = new ConcurrentQueue<PSObject>();
         private ConcurrentQueue<ErrorRecord> _errorQueue = new ConcurrentQueue<ErrorRecord>();
         private ConcurrentQueue<string> _verboseQueue = new ConcurrentQueue<string>();
@@ -73,10 +74,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.BeginProcessing();
 
+            // Warn if affinity cookie is enabled (default) when using parallelization
+            if (MaxDegreeOfParallelism > 1 && Connection != null && Connection.EnableAffinityCookie)
+            {
+                WriteWarning("Using parallelization with affinity cookie enabled may reduce performance. Consider using Get-DataverseConnection with -DisableAffinityCookie for better parallel performance. Note: Disabling affinity cookie may result in eventual consistency issues.");
+            }
 
             // Initialize runspace pool for streaming chunk processing
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.ThreadOptions = PSThreadOptions.UseNewThread;
+
+            // Add Set-DataverseConnectionAsDefault cmdlet to the worker runspaces
+            // This is required for the worker script to set the connection
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             // Build list of module patterns to exclude (always include Pester)
             var excludePatterns = new List<string> { "Pester" };
@@ -195,6 +206,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _cancellationTokenSource.Cancel();
             _outputWriterTask.Wait();
 
+            // Final drain after output writer completes to catch any items
+            // enqueued between the last DrainQueues and the writer finishing
+            DrainQueues();
+
             // Clean up runspace pool
             if (_runspacePool != null)
             {
@@ -281,28 +296,70 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             ps.RunspacePool = _runspacePool;
 
             // Try to clone the connection for this runspace
-            ServiceClient connectionToUse;
-            try
+            // Serialize connection cloning to avoid ServiceClient initialization race conditions
+            ServiceClient connectionToUse = Connection; // Default to original connection
+            bool cloneAttempted = false;
+            
+            // Only attempt cloning for the first chunk to test if it works
+            // If cloning fails, all subsequent chunks will use the original shared connection
+            if (_chunkNumber == 1)
             {
-                connectionToUse = Connection.Clone();
+                lock (_connectionCloneLock)
+                {
+                    cloneAttempted = true;
+                    try
+                    {
+                        var clonedConnection = DataverseConnectionExtensions.CloneConnection(Connection);
+                        
+                        // Force initialization of the cloned connection to detect issues early
+                        // ServiceClient uses lazy initialization, so we need to trigger it
+                        try
+                        {
+                            var isReady = clonedConnection.IsReady;
+                            _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Cloned connection initialized successfully (IsReady={isReady})");
+                            connectionToUse = clonedConnection;
+                        }
+                        catch (Exception initEx)
+                        {
+                            _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Cloned connection initialization failed: {initEx.Message}. Falling back to shared connection.");
+                            _warningQueue.Enqueue($"Connection cloning not supported for this environment ({initEx.Message}). All workers will share the original connection.");
+                            clonedConnection.Dispose();
+                            connectionToUse = Connection;
+                        }
+                    }
+                    catch (Exception ex) when (ex is NotImplementedException ||
+                                                ex.Message.Contains("On-Premises Connections are not supported") ||
+                                                ex.InnerException is NotImplementedException)
+                    {
+                        // On-premises connections don't support cloning
+                        _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Connection cloning not supported, using shared connection");
+                        connectionToUse = Connection;
+                    }
+                    catch (Exception ex)
+                    {
+                        // Clone failed - use original connection
+                        _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Clone failed: {ex.Message}. Using shared connection.");
+                        _warningQueue.Enqueue($"Connection cloning failed ({ex.Message}). All workers will share the original connection.");
+                        connectionToUse = Connection;
+                    }
+                }
             }
-            catch (Exception ex) when (ex is NotImplementedException ||
-                                        ex.Message.Contains("On-Premises Connections are not supported") ||
-                                        ex.InnerException is NotImplementedException)
+            else
             {
-                // Mock connections don't support cloning - use the original connection
-                // With thread-safe proxy, this is now safe for mock connections
+                // For chunks after the first, use original connection (cloning likely failed on first chunk)
+                _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Using shared connection");
                 connectionToUse = Connection;
-                _verboseQueue.Enqueue($"Connection cloning not supported");
             }
 
-            ps.AddScript(@"param($Chunk, $connection ); 
+            var workerScript = @"param($Chunk, $connection ); 
             Set-DataverseConnectionAsDefault -Connection $connection
             $psVar = New-Object System.Management.Automation.PSVariable -ArgumentList '_', $Chunk
             $varList = New-Object 'System.Collections.Generic.List[System.Management.Automation.PSVariable]'
             $varList.Add($psVar)
             {" + ScriptBlock + @"}.InvokeWithContext($null, $varList)
-");
+";
+            _verboseQueue.Enqueue($"Worker script for chunk {currentChunkNum}: {workerScript}");
+            ps.AddScript(workerScript);
             // Convert chunk to array to ensure it's fully materialized before passing to PowerShell
             var chunkArray = chunk.ToArray();
 
@@ -315,8 +372,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var taskInfo = new TaskInfo
             {
                 PowerShell = ps,
-                OutputCollection = outputCollection,
-                ChunkNumber = currentChunkNum,
+                OutputCollection = outputCollection,            ChunkNumber = currentChunkNum,
                 RecordCount = chunk.Count
             };
 
