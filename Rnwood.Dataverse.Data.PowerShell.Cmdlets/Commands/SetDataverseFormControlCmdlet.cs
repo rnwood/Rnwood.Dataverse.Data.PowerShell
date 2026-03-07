@@ -87,12 +87,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter Disabled { get; set; }
 
         /// <summary>
-        /// Gets or sets whether the control is visible.
-        /// </summary>
-        [Parameter(HelpMessage = "Whether the control is visible")]
-        public SwitchParameter Visible { get; set; } = true;
-
-        /// <summary>
         /// Gets or sets the number of rows (for multiline text).
         /// </summary>
         [Parameter(HelpMessage = "Number of rows for multiline text controls")]
@@ -444,7 +438,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 WriteVerbose("DEBUG: About to call UpdateControlAttributes");
                 // Update control attributes with determined control type
-                UpdateControlAttributes(control, finalControlType, controlId, cell);
+                UpdateControlAttributes(control, finalControlType, controlId, cell, isUpdate);
                 WriteVerbose("DEBUG: UpdateControlAttributes completed");
             }
 
@@ -826,7 +820,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Updates control attributes with the determined control type.
         /// </summary>
-        private void UpdateControlAttributes(XElement control, string finalControlType, string controlId, XElement cell)
+        private void UpdateControlAttributes(XElement control, string finalControlType, string controlId, XElement cell, bool isUpdate)
         {
             WriteVerbose($"DEBUG: UpdateControlAttributes called - finalControlType='{finalControlType}', controlId='{controlId}'");
             
@@ -877,30 +871,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Visible)))
-            {
-                if (!Visible.IsPresent)
-                {
-                    control.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", null);
-                }
-            }
-
-            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
-            {
-                if (Hidden.IsPresent)
-                {
-                    control.SetAttributeValue("visible", "false");
-                }
-                else
-                {
-                    control.SetAttributeValue("visible", null);
-                }
-            }
-
             if (MyInvocation.BoundParameters.ContainsKey(nameof(ShowLabel)))
             {
                 if (!ShowLabel.IsPresent)
@@ -926,6 +896,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Update cell attributes
+            if (MyInvocation.BoundParameters.ContainsKey(nameof(Hidden)))
+            {
+                cell.SetAttributeValue("visible", Hidden.IsPresent ? "false" : "true");
+            }
+
             if (ColSpan.HasValue)
             {
                 cell.SetAttributeValue("colspan", ColSpan.Value);

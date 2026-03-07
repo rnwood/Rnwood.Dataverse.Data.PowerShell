@@ -15,7 +15,7 @@ Creates or updates a control in a Dataverse form section or header.
 ### Standard (Default)
 ```
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- [-DataField <String>] [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Visible] [-Rows <Int32>]
+ [-DataField <String>] [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Rows <Int32>]
  [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>] [-PassThru]
  [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -24,7 +24,7 @@ Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String
 ### RawXml
 ```
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- -ControlXml <String> [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Visible] [-Rows <Int32>]
+ -ControlXml <String> [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Rows <Int32>]
  [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>] [-PassThru]
  [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
@@ -44,7 +44,7 @@ You can specify control properties like data binding, positioning, visibility, l
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
 PS C:\> Set-DataverseFormControl -FormId $form.Id -SectionName 'GeneralSection' `
-    -DataField 'firstname' -Labels @{1033 = 'First Name'} -ShowLabel -Visible -PassThru
+    -DataField 'firstname' -Labels @{1033 = 'First Name'} -ShowLabel -PassThru
 ```
 
 Adds a text field control for the firstname attribute with a custom label.
@@ -69,7 +69,17 @@ PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'Details' `
 
 Creates a multiline text area with 4 rows spanning 2 columns.
 
-### Example 4: Insert control at specific position
+### Example 4: Hide a control on the form
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'Details' `
+    -DataField 'internalfield' -Labels @{1033 = 'Internal Field'} `
+    -Hidden -PassThru
+```
+
+Creates a hidden control that won't be visible to users on the form.
+
+### Example 5: Insert control at specific position
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'GeneralSection' `
@@ -79,7 +89,7 @@ PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'GeneralSection' `
 
 Inserts an email control after the 'lastname' control.
 
-### Example 5: Create a subgrid control without DataField
+### Example 6: Create a subgrid control without DataField
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $parameters = @{
@@ -94,7 +104,7 @@ PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'RelatedData' `
 
 Creates a subgrid control showing related opportunities. Note: Subgrids don't require a DataField parameter since they're not bound to a single attribute.
 
-### Example 6: Create a web resource control without DataField
+### Example 7: Create a web resource control without DataField
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $webResourceParams = @{
@@ -124,7 +134,7 @@ Creates a subgrid control by specifying a relationship name in DataField. When D
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'ContactInfo' `
     -ControlId 'existing-control-id' -DataField 'telephone1' `
-    -Labels @{1033 = 'Primary Phone'} -IsRequired -ColSpan 1 -Visible
+    -Labels @{1033 = 'Primary Phone'} -IsRequired -ColSpan 1
 ```
 
 Updates an existing control's label, requirement status, and layout.
@@ -134,7 +144,7 @@ Updates an existing control's label, requirement status, and layout.
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $controlXml = @"
 <control id="custom_datetime" classid="{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}" 
-         datafieldname="custom_datetime" disabled="false" visible="true">
+         datafieldname="custom_datetime" disabled="false">
   <labels>
     <label description="Custom Date/Time" languagecode="1033" />
   </labels>
@@ -150,7 +160,7 @@ PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'CustomSection' `
 
 Creates a datetime control using raw XML for full control over configuration.
 
-### Example 10: Create control with cell-level attributes
+### Example 11: Create control with cell-level attributes
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseFormControl -FormId $formId `
@@ -172,7 +182,7 @@ PS C:\> Set-DataverseFormControl -FormId $formId `
 
 Updates an existing control to make it required. The cmdlet now supports updating existing controls without recreating them.
 
-### Example 12: Create Email control with validation
+### Example 13: Create Email control with validation
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseFormControl -FormId $formId `
@@ -183,7 +193,7 @@ PS C:\> Set-DataverseFormControl -FormId $formId `
 
 Creates an email control with built-in email validation.
 
-### Example 13: Create Money control for currency field
+### Example 14: Create Money control for currency field
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseFormControl -FormId $formId `
@@ -194,7 +204,7 @@ PS C:\> Set-DataverseFormControl -FormId $formId `
 
 Creates a currency control with proper formatting.
 
-### Example 14: Bulk control creation with error handling
+### Example 15: Bulk control creation with error handling
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $controls = @(
@@ -240,7 +250,7 @@ PS C:\> Set-DataverseFormControl -FormId $formId `
 
 Creates a read-only email control in the form header. Header controls are displayed at the top of the form across all tabs. The header section is automatically created if it doesn't exist.
 
-### Example 16: Create multiple header controls
+### Example 17: Create multiple header controls
 ```powershell
 PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create email control in header
@@ -631,21 +641,6 @@ Parameter Sets: (All)
 Aliases:
 
 Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Visible
-Whether the control is visible
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
