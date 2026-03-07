@@ -3,13 +3,15 @@
 # This function demonstrates using the Rnwood.Dataverse.Data.PowerShell module
 # inside an Azure Function to query Dataverse records.
 #
-# Prerequisites:
+# Prerequisites (production):
 #   - Azure Function App with System-Assigned Managed Identity enabled
 #   - Managed Identity must have appropriate Dataverse permissions
-#   - Environment variables: DATAVERSE_URL
+#   - Environment variable: DATAVERSE_URL
 #
-# For local testing with client credentials, set:
-#   - DATAVERSE_URL, DATAVERSE_CLIENT_ID, DATAVERSE_CLIENT_SECRET
+# Prerequisites (local development):
+#   - Environment variables: DATAVERSE_URL, DATAVERSE_CLIENT_ID, DATAVERSE_CLIENT_SECRET
+#   - Set DATAVERSE_MODULE_PATH to your locally built module directory
+#   - See local.settings.json.example for configuration
 
 param($Timer)
 
@@ -22,10 +24,14 @@ if (-not $dataverseUrl) {
 
 Write-Host "Connecting to Dataverse: $dataverseUrl"
 
-# Connect using Managed Identity (preferred for production Azure Functions)
-# For local testing, use client credentials instead:
-#   $connection = Get-DataverseConnection -Url $dataverseUrl -ClientId $env:DATAVERSE_CLIENT_ID -ClientSecret $env:DATAVERSE_CLIENT_SECRET
-$connection = Get-DataverseConnection -Url $dataverseUrl -ManagedIdentity
+# Connect using client credentials when available (local dev), otherwise use Managed Identity (production)
+if ($env:DATAVERSE_CLIENT_ID -and $env:DATAVERSE_CLIENT_SECRET) {
+    Write-Host "Using client credentials (local development mode)"
+    $connection = Get-DataverseConnection -Url $dataverseUrl -ClientId $env:DATAVERSE_CLIENT_ID -ClientSecret $env:DATAVERSE_CLIENT_SECRET
+} else {
+    Write-Host "Using Managed Identity (production mode)"
+    $connection = Get-DataverseConnection -Url $dataverseUrl -ManagedIdentity
+}
 
 Write-Host "Connected to Dataverse successfully"
 

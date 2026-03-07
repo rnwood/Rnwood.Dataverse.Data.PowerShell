@@ -5,13 +5,16 @@
 #
 # * A Function App instance is first started
 # * A Function App instance is started after being de-allocated
-#
-# To define shared variables or functions that can be used in your Azure Functions,
-# write them in this profile.ps1. You can then reference the function or variable in
-# your function scripts.
-#
-# You can define functions specific to your deployment environment in this profile.
-#
+
+# For local development: if DATAVERSE_MODULE_PATH is set, import from that path.
+# In production, the module is installed via requirements.psd1 (managed dependencies).
+if ($env:DATAVERSE_MODULE_PATH) {
+    Write-Host "Importing Rnwood.Dataverse.Data.PowerShell from local path: $env:DATAVERSE_MODULE_PATH"
+    Import-Module "$env:DATAVERSE_MODULE_PATH/Rnwood.Dataverse.Data.PowerShell.psd1" -Force -ErrorAction Stop
+} else {
+    Import-Module Rnwood.Dataverse.Data.PowerShell -ErrorAction Stop
+}
+
 # Authenticate with Azure PowerShell using MSI.
 # Remove this if you are not planning on using MSI or Azure PowerShell.
 if ($env:MSI_SECRET) {

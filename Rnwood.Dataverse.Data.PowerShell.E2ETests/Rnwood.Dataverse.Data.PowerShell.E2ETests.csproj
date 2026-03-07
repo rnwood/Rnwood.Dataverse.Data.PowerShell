@@ -24,16 +24,6 @@
     <NoWarn>1701;1702;NU1605</NoWarn>
   </PropertyGroup>
 
-  <!-- Azure Functions Worker SDK - referenced to ensure packages are available in NuGet cache
-       for AzureFunctionCompatibilityTests which simulate the Azure Functions assembly loading environment.
-       PrivateAssets=all prevents this from being included in the module output or affecting runtime dependencies. -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
-    <PackageReference Include="Microsoft.Azure.Functions.Worker" Version="2.0.0">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>none</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
   <!-- Test Framework -->
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
