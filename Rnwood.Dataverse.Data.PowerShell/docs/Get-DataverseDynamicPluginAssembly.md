@@ -12,16 +12,53 @@ Extracts source code and build metadata from a dynamic plugin assembly.
 
 ## SYNTAX
 
+### ById (Default)
+```
+Get-DataverseDynamicPluginAssembly -Id <Guid> [-OutputSourceFile <String>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### VSProjectById
+```
+Get-DataverseDynamicPluginAssembly -Id <Guid> [-OutputSourceFile <String>] -OutputProjectPath <String>
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### ByName
+```
+Get-DataverseDynamicPluginAssembly -Name <String> [-OutputSourceFile <String>] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### VSProjectByName
+```
+Get-DataverseDynamicPluginAssembly -Name <String> [-OutputSourceFile <String>] -OutputProjectPath <String>
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
 ### Bytes
 ```
 Get-DataverseDynamicPluginAssembly -AssemblyBytes <Byte[]> [-OutputSourceFile <String>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### VSProjectFromBytes
+```
+Get-DataverseDynamicPluginAssembly -AssemblyBytes <Byte[]> [-OutputSourceFile <String>]
+ -OutputProjectPath <String> [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### FilePath
 ```
 Get-DataverseDynamicPluginAssembly -FilePath <String> [-OutputSourceFile <String>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### VSProjectFromFile
+```
+Get-DataverseDynamicPluginAssembly -FilePath <String> [-OutputSourceFile <String>] -OutputProjectPath <String>
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -88,7 +125,7 @@ Assembly bytes
 
 ```yaml
 Type: Byte[]
-Parameter Sets: Bytes
+Parameter Sets: Bytes, VSProjectFromBytes
 Aliases:
 
 Required: True
@@ -98,12 +135,72 @@ Accept pipeline input: True (ByValue)
 Accept wildcard characters: False
 ```
 
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+
+```yaml
+Type: ServiceClient
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -FilePath
 Path to assembly file
 
 ```yaml
 Type: String
-Parameter Sets: FilePath
+Parameter Sets: FilePath, VSProjectFromFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Id
+ID of the plugin assembly
+
+```yaml
+Type: Guid
+Parameter Sets: ById, VSProjectById
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -Name
+Name of the plugin assembly
+
+```yaml
+Type: String
+Parameter Sets: ByName, VSProjectByName
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -OutputProjectPath
+Output directory for Visual Studio project
+
+```yaml
+Type: String
+Parameter Sets: VSProjectById, VSProjectByName, VSProjectFromBytes, VSProjectFromFile
 Aliases:
 
 Required: True
@@ -148,6 +245,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
+### System.Guid
 ### System.Byte[]
 ## OUTPUTS
 
