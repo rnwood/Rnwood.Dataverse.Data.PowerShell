@@ -376,7 +376,7 @@ catch {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
-            result.StandardOutput.Should().Contain("All sitemap tests passed successfully");
+            result.StandardOutput.Should().Contain("All sitemap tests passed successfully", because: result.GetFullOutput());
         }
     }
 }

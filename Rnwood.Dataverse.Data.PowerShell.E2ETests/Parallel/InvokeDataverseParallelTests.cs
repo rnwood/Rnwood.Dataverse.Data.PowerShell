@@ -46,7 +46,7 @@ Write-Host 'Success: Executed 5 parallel WhoAmI calls'
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("Success");
+            result.StandardOutput.Should().Contain("Success", because: result.GetFullOutput());
         }
 
         [Fact(Skip = "Known Issue: ServiceClient.Clone() fails with 'Fault While initializing client' when used with Azure AD client secret authentication in parallel scenarios. Requires investigation - see InvokeDataverseParallelCmdlet.cs")]
@@ -102,7 +102,7 @@ Write-Host 'Success: All accounts created, verified, and cleaned up'
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("Success");
+            result.StandardOutput.Should().Contain("Success", because: result.GetFullOutput());
         }
     }
 }

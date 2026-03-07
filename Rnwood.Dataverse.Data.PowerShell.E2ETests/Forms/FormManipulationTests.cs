@@ -425,7 +425,7 @@ catch {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
-            result.StandardOutput.Should().Contain("Form Manipulation E2E Test PASSED");
+            result.StandardOutput.Should().Contain("Form Manipulation E2E Test PASSED", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -589,7 +589,7 @@ catch {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
-            result.StandardOutput.Should().Contain("Update Control Without DataField E2E Test PASSED");
+            result.StandardOutput.Should().Contain("Update Control Without DataField E2E Test PASSED", because: result.GetFullOutput());
         }
     }
 }

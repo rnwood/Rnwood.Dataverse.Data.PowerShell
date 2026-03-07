@@ -55,7 +55,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.RecordOperations
             var result = RunScript(testScript);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("SUCCESS");
+            result.StandardOutput.Should().Contain("SUCCESS", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -99,8 +99,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.RecordOperations
             var result = RunScript(testScript);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("SUCCESS");
-            result.StandardOutput.Should().Contain("Created 4 records");
+            result.StandardOutput.Should().Contain("SUCCESS", because: result.GetFullOutput());
+            result.StandardOutput.Should().Contain("Created 4 records", because: result.GetFullOutput());
         }
     }
 }
