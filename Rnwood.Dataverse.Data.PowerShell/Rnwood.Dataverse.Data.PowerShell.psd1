@@ -70,12 +70,9 @@ ScriptsToProcess = @('ValidateVersion.ps1')
 # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
 NestedModules = 
 @(if ($PSEdition -eq 'Core') {
-	$cmdletsTfm = if ($PSVersionTable.PSVersion -ge [version]'7.6') { "net10.0" }
-	              elseif ($PSVersionTable.PSVersion -ge [version]'7.5') { "net9.0" }
-	              else { "net8.0" }
 	@(
 		"loader/net8.0/Rnwood.Dataverse.Data.PowerShell.Loader.dll",
-		"cmdlets/$cmdletsTfm/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
+		"cmdlets/net8.0/Rnwood.Dataverse.Data.PowerShell.Cmdlets.dll",
 		"Get-DataverseRecordsFolder.psm1",
 		"Set-DataverseRecordsFolder.psm1"
 	)
