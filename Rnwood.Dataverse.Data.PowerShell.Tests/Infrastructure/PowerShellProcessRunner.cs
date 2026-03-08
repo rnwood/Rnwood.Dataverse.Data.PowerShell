@@ -57,6 +57,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             var fullScript = $@"{prelude}{moduleVariables}try {{
 {importSection}    {script}
 }} catch {{
+    # Reset error action preference to ensure all Write-Error calls execute
+    # (with 'Stop', the first Write-Error would throw and prevent subsequent ones)
+    $ErrorActionPreference = 'Continue'
     # Output detailed exception information including inner exceptions
     $ex = $_.Exception
     Write-Error ""Exception: $($ex.GetType().FullName)""

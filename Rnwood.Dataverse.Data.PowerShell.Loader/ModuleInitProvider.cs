@@ -31,6 +31,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
             AssemblyLoadContext.Default.Resolving += (s, args) =>
             {
+                // Guard against null or empty assembly names. PowerShell (7.5+) can fire
+                // the Resolving event with a null Name when loading certain internal types
+                // (e.g. via Set-StrictMode). new AssemblyName(null/empty) throws
+                // ArgumentNullException/ArgumentException which propagates as a test failure.
+                if (string.IsNullOrEmpty(args.Name))
+                {
+                    return null;
+                }
+
                 AssemblyName assemblyName = new AssemblyName(args.Name);
 
                 // Don't try to resolve satellite assemblies (culture-specific resource assemblies)
@@ -92,6 +101,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
 
 			AppDomain.CurrentDomain.AssemblyResolve += (s, args) =>
 			{
+				if (string.IsNullOrEmpty(args.Name))
+				{
+					return null;
+				}
+
 				AssemblyName assemblyName = new AssemblyName(args.Name);
 				string path = Path.Combine(basePath, assemblyName.Name + ".dll");
 
