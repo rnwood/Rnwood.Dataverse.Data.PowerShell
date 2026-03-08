@@ -19,12 +19,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
         {
 
 #if NET
-            // The manifest loads the appropriate target framework (net8.0 for Core)
-            // The loader just needs to handle dependency resolution for the cmdlets
+            // The manifest loads net8.0 loader for all Core editions, but the cmdlets are loaded
+            // from the runtime-appropriate TFM folder (net9.0 for .NET 9, net10.0 for .NET 10, etc.).
+            // Derive the cmdlets base path from the actual .NET runtime version so that dependency
+            // resolution picks up the matching TFM's assemblies, falling back to net8.0 if no
+            // specific folder exists for a newer runtime.
             string basePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/../../cmdlets";
-            // Get the actual target framework directory that was loaded
-            var loaderPath = Assembly.GetExecutingAssembly().Location;
-            var targetFramework = Path.GetFileName(Path.GetDirectoryName(loaderPath));
+            var runtimeMajor = Environment.Version.Major;
+            string runtimeTfm = runtimeMajor >= 10 ? ("net" + runtimeMajor + ".0")
+                               : runtimeMajor == 9  ? "net9.0"
+                               :                      "net8.0";
+            // Fall back to net8.0 if the runtime-specific folder does not exist (e.g. future .NET versions)
+            var runtimeTfmPath = Path.Combine(basePath, runtimeTfm);
+            var targetFramework = Directory.Exists(runtimeTfmPath) ? runtimeTfm : "net8.0";
             basePath = Path.Combine(basePath, targetFramework);
 
             var alc = new CmdletsLoadContext(basePath);
