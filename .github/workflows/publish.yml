@@ -19,48 +19,34 @@ jobs:
     strategy:
       matrix:
         include:
-          # Infrastructure tests only
           - os: ubuntu-latest
-            powershell_version: "7.4.11"
+            powershell_version: "7.4.13"
             dotnet_tfm: "net8.0"
-            test_set: tests
+            test_set: e2e-minimal
           - os: windows-latest
-            powershell_version: "7.4.11"
+            powershell_version: "7.4.13"
             dotnet_tfm: "net8.0"
-            test_set: tests
-          - os: ubuntu-latest
-            powershell_version: "7.5"
-            dotnet_tfm: "net9.0"
-            test_set: tests
+            test_set: e2e-full
           - os: windows-latest
             powershell_version: '5'
             dotnet_tfm: "net462"
-            test_set: tests
+            test_set: e2e-minimal
           - os: ubuntu-latest
-            powershell_version: "7.6"
+            powershell_version: "7.6.0-rc.1"
             dotnet_tfm: "net10.0"
-            test_set: tests
+            test_set: e2e-minimal
           - os: windows-latest
-            powershell_version: "7.6"
+            powershell_version: "7.6.0-rc.1"
             dotnet_tfm: "net10.0"
-            test_set: tests
-          # Infrastructure tests + E2E minimal (cross-platform)
+            test_set: e2e-minimal
           - os: ubuntu-latest
             powershell_version: "7.5"
             dotnet_tfm: "net9.0"
-            test_set: e2e-minimal
-          - os: ubuntu-latest
-            powershell_version: "7.6"
-            dotnet_tfm: "net10.0"
             test_set: e2e-minimal
           # Infrastructure tests + E2E full (all tests)
           - os: windows-latest
             powershell_version: "7.5"
             dotnet_tfm: "net9.0"
-            test_set: e2e-full
-          - os: windows-latest
-            powershell_version: "7.6"
-            dotnet_tfm: "net10.0"
             test_set: e2e-full
     
     name: Test (${{ matrix.test_set }}, ${{ matrix.os }}, PS ${{ matrix.powershell_version }})
