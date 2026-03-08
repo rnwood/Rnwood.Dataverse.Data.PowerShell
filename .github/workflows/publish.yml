@@ -22,23 +22,45 @@ jobs:
           # Infrastructure tests only
           - os: ubuntu-latest
             powershell_version: "7.4.11"
+            dotnet_tfm: "net8.0"
             test_set: tests
           - os: windows-latest
             powershell_version: "7.4.11"
+            dotnet_tfm: "net8.0"
             test_set: tests
           - os: ubuntu-latest
-            powershell_version: latest
+            powershell_version: "7.5"
+            dotnet_tfm: "net9.0"
             test_set: tests
           - os: windows-latest
             powershell_version: '5'
+            dotnet_tfm: "net462"
+            test_set: tests
+          - os: ubuntu-latest
+            powershell_version: "7.6"
+            dotnet_tfm: "net10.0"
+            test_set: tests
+          - os: windows-latest
+            powershell_version: "7.6"
+            dotnet_tfm: "net10.0"
             test_set: tests
           # Infrastructure tests + E2E minimal (cross-platform)
           - os: ubuntu-latest
-            powershell_version: latest
+            powershell_version: "7.5"
+            dotnet_tfm: "net9.0"
+            test_set: e2e-minimal
+          - os: ubuntu-latest
+            powershell_version: "7.6"
+            dotnet_tfm: "net10.0"
             test_set: e2e-minimal
           # Infrastructure tests + E2E full (all tests)
           - os: windows-latest
-            powershell_version: latest
+            powershell_version: "7.5"
+            dotnet_tfm: "net9.0"
+            test_set: e2e-full
+          - os: windows-latest
+            powershell_version: "7.6"
+            dotnet_tfm: "net10.0"
             test_set: e2e-full
     
     name: Test (${{ matrix.test_set }}, ${{ matrix.os }}, PS ${{ matrix.powershell_version }})
@@ -329,13 +351,9 @@ jobs:
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
 
           # Build test projects to avoid rebuild during test execution
-          if ("${{ matrix.powershell_version }}" -ne "5") {
-            dotnet build -c Release -f net8.0 ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj
-          } else {
-            dotnet build -c Release -f net462 ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj
-          }
+          dotnet build -c Release -f ${{ matrix.dotnet_tfm }} ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj
           if ("${{ matrix.test_set }}" -eq "e2e-minimal" -or "${{ matrix.test_set }}" -eq "e2e-full") {
-            dotnet build -c Release -f net8.0 ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj
+            dotnet build -c Release -f ${{ matrix.dotnet_tfm }} ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj
           }
 
       # Run xUnit tests - infrastructure and E2E tests run in parallel when applicable
@@ -367,6 +385,8 @@ jobs:
           # Determine if we need E2E tests
           $runE2E = "${{ matrix.test_set }}" -eq "e2e-minimal" -or "${{ matrix.test_set }}" -eq "e2e-full"
           
+          Write-Host "Using test TFM: ${{ matrix.dotnet_tfm }} for PS ${{ matrix.powershell_version }}"
+
           # Determine E2E test filter
           $testFilter = ""
           if ("${{ matrix.test_set }}" -eq "e2e-minimal") {
@@ -376,63 +396,52 @@ jobs:
             Write-Host "E2E: Running full test suite"
           }
           
-          # Run net8.0 tests for PS latest or PS7
-          if ("${{ matrix.powershell_version }}" -ne "5") {
-            if ($runE2E) {
-              # Run infrastructure tests in background, E2E in foreground
-              Write-Host "Starting infrastructure tests in background..."
-              $infraJob = Start-Job -ScriptBlock {
-                param($workDir, $testModulePath)
-                Set-Location $workDir
-                $env:TESTMODULEPATH = $testModulePath
-                dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net8.0 --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net8.0.trx" --results-directory TestResults 2>&1 | Write-Host
-                return $LASTEXITCODE
-              } -ArgumentList (Get-Location).Path, $env:TESTMODULEPATH
-              
-              $infraTestsExecuted = $true
-              Write-Host "Infrastructure tests started in background (Job ID: $($infraJob.Id))"
-              
-              # Run E2E tests in foreground
-              Write-Host "Running E2E tests..."
-              $testCommand = "dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -c Release -f net8.0 --no-build --logger `"console;verbosity=normal`" --logger `"trx;LogFileName=e2e-test-results-net8.0.trx`" --results-directory TestResults/E2E $testFilter"
-              Write-Host "Executing: $testCommand"
-              # Execute directly instead of using Invoke-Expression for better output capture
-              if ($testFilter) {
-                dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -c Release -f net8.0 --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E --filter "Category=CrossPlatform"
-              } else {
-                dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -c Release -f net8.0 --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-net8.0.trx" --results-directory TestResults/E2E
-              }
-              $e2eExitCode = $LASTEXITCODE
-              $e2eTestsExecuted = $true
-              
-              # Wait for infrastructure tests
-              Write-Host "Waiting for infrastructure tests to complete..."
-              $infraJob | Wait-Job | Out-Null
-              $infraExitCode = Receive-Job -Job $infraJob
-              $infraJobState = $infraJob.State
-              Remove-Job -Job $infraJob
-              
-              if ($infraJobState -ne "Completed") {
-                Write-Error "Infrastructure tests job ended in state: $infraJobState"
-                $infraExitCode = 1
-              }
-              
-              Write-Host "Infrastructure tests completed with exit code: $infraExitCode"
-              Write-Host "E2E tests completed with exit code: $e2eExitCode"
-              
+          if ($runE2E) {
+            # Run infrastructure tests in background, E2E in foreground
+            Write-Host "Starting infrastructure tests in background..."
+            $infraJob = Start-Job -ScriptBlock {
+              param($workDir, $testModulePath, $tfm)
+              Set-Location $workDir
+              $env:TESTMODULEPATH = $testModulePath
+              dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f $tfm --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-$tfm.trx" --results-directory TestResults 2>&1 | Write-Host
+              return $LASTEXITCODE
+            } -ArgumentList (Get-Location).Path, $env:TESTMODULEPATH, "${{ matrix.dotnet_tfm }}"
+            
+            $infraTestsExecuted = $true
+            Write-Host "Infrastructure tests started in background (Job ID: $($infraJob.Id))"
+            
+            # Run E2E tests in foreground
+            Write-Host "Running E2E tests..."
+            $testCommand = "dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -c Release -f ${{ matrix.dotnet_tfm }} --no-build --logger `"console;verbosity=normal`" --logger `"trx;LogFileName=e2e-test-results-${{ matrix.dotnet_tfm }}.trx`" --results-directory TestResults/E2E $testFilter"
+            Write-Host "Executing: $testCommand"
+            # Execute directly instead of using Invoke-Expression for better output capture
+            if ($testFilter) {
+              dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -c Release -f ${{ matrix.dotnet_tfm }} --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-${{ matrix.dotnet_tfm }}.trx" --results-directory TestResults/E2E --filter "Category=CrossPlatform"
             } else {
-              # Run only infrastructure tests
-              Write-Host "Running infrastructure tests only..."
-              dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net8.0 --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net8.0.trx" --results-directory TestResults
-              $infraExitCode = $LASTEXITCODE
-              $infraTestsExecuted = $true
+              dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -c Release -f ${{ matrix.dotnet_tfm }} --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-${{ matrix.dotnet_tfm }}.trx" --results-directory TestResults/E2E
             }
-          }
-          
-          # Run net462 tests on PS5 (no E2E on PS5)
-          if ("${{ matrix.powershell_version }}" -eq "5") {
-            Write-Host "Running infrastructure tests (net462)..."
-            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f net462 --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-net462.trx" --results-directory TestResults
+            $e2eExitCode = $LASTEXITCODE
+            $e2eTestsExecuted = $true
+            
+            # Wait for infrastructure tests
+            Write-Host "Waiting for infrastructure tests to complete..."
+            $infraJob | Wait-Job | Out-Null
+            $infraExitCode = Receive-Job -Job $infraJob
+            $infraJobState = $infraJob.State
+            Remove-Job -Job $infraJob
+            
+            if ($infraJobState -ne "Completed") {
+              Write-Error "Infrastructure tests job ended in state: $infraJobState"
+              $infraExitCode = 1
+            }
+            
+            Write-Host "Infrastructure tests completed with exit code: $infraExitCode"
+            Write-Host "E2E tests completed with exit code: $e2eExitCode"
+            
+          } else {
+            # Run only infrastructure tests
+            Write-Host "Running infrastructure tests only..."
+            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f ${{ matrix.dotnet_tfm }} --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-${{ matrix.dotnet_tfm }}.trx" --results-directory TestResults
             $infraExitCode = $LASTEXITCODE
             $infraTestsExecuted = $true
           }
