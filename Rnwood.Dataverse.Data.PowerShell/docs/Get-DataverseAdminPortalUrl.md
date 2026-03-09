@@ -13,8 +13,8 @@ Generates a URL to open the Power Platform Admin Center for the current environm
 ## SYNTAX
 
 ```
-Get-DataverseAdminPortalUrl [-Connection <ServiceClient>] 
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseAdminPortalUrl [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -89,11 +89,9 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
-
 ## OUTPUTS
 
 ### System.String
-
 ## NOTES
 
 The Admin Center URL format is: https://admin.powerplatform.microsoft.com/environments/{environmentId}/hub
@@ -101,4 +99,5 @@ The Admin Center URL format is: https://admin.powerplatform.microsoft.com/enviro
 Administrative permissions may be required to access the Admin Center.
 
 ## RELATED LINKS
+
 [Power Platform Admin Center](https://admin.powerplatform.microsoft.com)

@@ -10,7 +10,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	/// <summary>
 	/// Generates a URL to open a record in the Dataverse web interface.
 	/// </summary>
-	[Cmdlet(VerbsCommon.Get, "DataverseRecordUrl")]
+	[Cmdlet(VerbsCommon.Get, "DataverseRecordUrl", DefaultParameterSetName = "ByAppUniqueName")]
 	[OutputType(typeof(string))]
 	public class GetDataverseRecordUrlCmdlet : OrganizationServiceCmdlet
 	{
@@ -64,8 +64,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				return;
 			}
 
-			// Extract the base URL from the connection
-			string baseUrl = Connection.ConnectedOrgUriActual?.ToString();
+			// Extract the base URL from the connection using the WebApplication endpoint
+			string baseUrl = null;
+			if (Connection.ConnectedOrgPublishedEndpoints?.ContainsKey(Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication) == true)
+			{
+				baseUrl = Connection.ConnectedOrgPublishedEndpoints[Microsoft.Xrm.Sdk.Discovery.EndpointType.WebApplication]?.ToString();
+			}
+
 			if (string.IsNullOrEmpty(baseUrl))
 			{
 				ThrowTerminatingError(new ErrorRecord(

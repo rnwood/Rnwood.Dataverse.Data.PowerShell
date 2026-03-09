@@ -1,7 +1,6 @@
 using System;
 using System.Management.Automation;
 using Microsoft.PowerPlatform.Dataverse.Client;
-using Microsoft.Crm.Sdk.Messages;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -36,10 +35,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				return;
 			}
 
-			// Get the environment ID from the organization
-			WhoAmIRequest whoAmIRequest = new WhoAmIRequest();
-			WhoAmIResponse whoAmIResponse = (WhoAmIResponse)Connection.Execute(whoAmIRequest);
-			Guid orgId = whoAmIResponse.OrganizationId;
+			// Use ConnectedOrgId directly - avoids an extra WhoAmI network call
+			Guid orgId = Connection.ConnectedOrgId;
 
 			// Build the maker portal URL
 			string baseUrl = "https://make.powerapps.com";
