@@ -119,6 +119,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			else
 			{
+				// Explicitly use ConnectedOrgUniqueName to ensure consistent behaviour across all platforms.
+				// On net462 (PS5), the DataSource constructor checks for CrmServiceClient (old package), but we
+				// use ServiceClient (new package), so it falls back to the org friendly name instead of the
+				// unique name. Users querying cross-datasource use ConnectedOrgUniqueName in their SQL, so we
+				// must ensure the registered data source name matches.
+				var orgUniqueName = Connection.ConnectedOrgUniqueName;
+				if (!string.IsNullOrEmpty(orgUniqueName))
+				{
+					dataSource.Name = orgUniqueName;
+				}
 				WriteVerbose($"Using default datasource name '{dataSource.Name}' from connection");
 			}
 
@@ -299,6 +309,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			try
 			{
 				_userCancellationCts?.Cancel();
+				_command?.Cancel();
 			}
 			catch { }
 			base.StopProcessing();
@@ -349,8 +360,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			Task<DbDataReader> task = Task.Run(() =>
 			{
-				//Despite the Async, seems to block until completion
-				return _command.ExecuteReaderAsync();
+				return _command.ExecuteReaderAsync(_userCancellationCts.Token);
 			});
 
 			while (!task.IsCompleted)
@@ -359,8 +369,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				if (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
 				{
 					WriteVerbose("SQL query execution cancelled by user");
-					// Note: Sql4Cds doesn't support cancellation tokens directly, so the task may continue
-					// but we'll stop processing results
 					return;
 				}
 
@@ -380,12 +388,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 			}
 
-			using (DbDataReader reader = task.Result)
+			if (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested) || task.IsCanceled)
+			{
+				WriteVerbose("SQL query execution cancelled by user");
+				return;
+			}
+
+			using (DbDataReader reader = task.GetAwaiter().GetResult())
 			{
 				if (reader.HasRows)
 				{
-					while (reader.Read())
+					while (true)
 					{
+						bool hasRow;
+						try
+						{
+							hasRow = reader.Read();
+						}
+						catch (OperationCanceledException ex)
+						{
+							WriteVerbose($"SQL query result reading cancelled by user: {ex.Message}");
+							break;
+						}
+						catch (Exception ex) when (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
+						{
+							WriteVerbose($"SQL query result reading cancelled by user: {ex.Message}");
+							break;
+						}
+
+						if (!hasRow)
+						{
+							break;
+						}
+
 						// Check for cancellation during result reading
 						if (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
 						{

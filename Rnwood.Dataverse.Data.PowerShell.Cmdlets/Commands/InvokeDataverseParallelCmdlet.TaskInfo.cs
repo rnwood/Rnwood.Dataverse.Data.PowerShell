@@ -1,6 +1,7 @@
 using System;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
+using Microsoft.PowerPlatform.Dataverse.Client;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
@@ -28,6 +29,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             public EventHandler<DataAddedEventArgs> WarningHandler { get; set; }
             public EventHandler<DataAddedEventArgs> DebugHandler { get; set; }
             public EventHandler<DataAddedEventArgs> InformationHandler { get; set; }
+            /// <summary>
+            /// The cloned connection for this task, if one was created. Disposed when the task completes.
+            /// </summary>
+            public ServiceClient ClonedConnection { get; set; }
         }
     }
 }

@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Sitemap
     /// Sitemap manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/Sitemap.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests publish sitemap
+    /// customizations, which acquires a Dataverse customization lock that conflicts with other
+    /// publish/schema-change operations when run in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class SitemapTests : E2ETestBase
     {
         [Fact]
@@ -370,7 +376,7 @@ catch {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
-            result.StandardOutput.Should().Contain("All sitemap tests passed successfully");
+            result.StandardOutput.Should().Contain("All sitemap tests passed successfully", because: result.GetFullOutput());
         }
     }
 }

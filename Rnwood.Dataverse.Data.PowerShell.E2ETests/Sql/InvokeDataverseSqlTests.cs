@@ -36,7 +36,7 @@ try {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("records");
+            result.StandardOutput.Should().Contain("records", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -78,10 +78,10 @@ try {{
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("additional connections");
+            result.StandardOutput.Should().Contain("additional connections", because: result.GetFullOutput());
         }
 
-        [Fact(Skip = "Fails on PS5 - ticket logged to investigate cross-datasource query issues")]
+        [Fact]
         public void CanExecuteCrossDatasourceQueryUsingAdditionalConnections()
         {
 
@@ -131,7 +131,7 @@ try {{
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("Cross-datasource query");
+            result.StandardOutput.Should().Contain("Cross-datasource query", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -173,7 +173,7 @@ try {{
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("alternate");
+            result.StandardOutput.Should().Contain("alternate", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -207,7 +207,7 @@ if (-not $errorThrown) {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("Correctly threw error");
+            result.StandardOutput.Should().Contain("Correctly threw error", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -251,7 +251,7 @@ Write-Host ""Query with DataSourceName='main' returned $(($results | Measure-Obj
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("DataSourceName");
+            result.StandardOutput.Should().Contain("DataSourceName", because: result.GetFullOutput());
         }
     }
 }

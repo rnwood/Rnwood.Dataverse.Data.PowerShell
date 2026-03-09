@@ -256,6 +256,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         WriteVerbose($"Error stopping PowerShell task: {ex.Message}");
                     }
+
+                    try
+                    {
+                        taskInfo.ClonedConnection?.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteVerbose($"Error disposing cloned connection: {ex.Message}");
+                    }
                 }
                 _activeTasks.Clear();
             }
@@ -295,60 +304,47 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var ps = System.Management.Automation.PowerShell.Create();
             ps.RunspacePool = _runspacePool;
 
-            // Try to clone the connection for this runspace
-            // Serialize connection cloning to avoid ServiceClient initialization race conditions
+            // Try to clone the connection for this runspace so each chunk has its own independent
+            // ServiceClient instance. Serialise cloning to avoid MSAL token-refresh race conditions
+            // where concurrent clone initialisations can interfere with each other or with the
+            // original connection's authentication state.
             ServiceClient connectionToUse = Connection; // Default to original connection
-            bool cloneAttempted = false;
-            
-            // Only attempt cloning for the first chunk to test if it works
-            // If cloning fails, all subsequent chunks will use the original shared connection
-            if (_chunkNumber == 1)
+            ServiceClient clonedConnection = null;
+
+            lock (_connectionCloneLock)
             {
-                lock (_connectionCloneLock)
+                try
                 {
-                    cloneAttempted = true;
-                    try
-                    {
-                        var clonedConnection = DataverseConnectionExtensions.CloneConnection(Connection);
-                        
-                        // Force initialization of the cloned connection to detect issues early
-                        // ServiceClient uses lazy initialization, so we need to trigger it
-                        try
-                        {
-                            var isReady = clonedConnection.IsReady;
-                            _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Cloned connection initialized successfully (IsReady={isReady})");
-                            connectionToUse = clonedConnection;
-                        }
-                        catch (Exception initEx)
-                        {
-                            _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Cloned connection initialization failed: {initEx.Message}. Falling back to shared connection.");
-                            _warningQueue.Enqueue($"Connection cloning not supported for this environment ({initEx.Message}). All workers will share the original connection.");
-                            clonedConnection.Dispose();
-                            connectionToUse = Connection;
-                        }
-                    }
-                    catch (Exception ex) when (ex is NotImplementedException ||
-                                                ex.Message.Contains("On-Premises Connections are not supported") ||
-                                                ex.InnerException is NotImplementedException)
-                    {
-                        // On-premises connections don't support cloning
-                        _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Connection cloning not supported, using shared connection");
-                        connectionToUse = Connection;
-                    }
-                    catch (Exception ex)
-                    {
-                        // Clone failed - use original connection
-                        _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Clone failed: {ex.Message}. Using shared connection.");
-                        _warningQueue.Enqueue($"Connection cloning failed ({ex.Message}). All workers will share the original connection.");
-                        connectionToUse = Connection;
-                    }
+                    clonedConnection = DataverseConnectionExtensions.CloneConnection(Connection);
+
+                    // Force initialization of the cloned connection while holding the lock.
+                    // ServiceClient uses lazy initialization; triggering it here (serialized)
+                    // prevents concurrent MSAL token-refresh races that would otherwise occur
+                    // if multiple clones initialized simultaneously in worker threads.
+                    var _ = clonedConnection.IsReady;
+
+                    _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Cloned connection successfully");
+                    connectionToUse = clonedConnection;
                 }
-            }
-            else
-            {
-                // For chunks after the first, use original connection (cloning likely failed on first chunk)
-                _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Using shared connection");
-                connectionToUse = Connection;
+                catch (Exception ex) when (ex is NotImplementedException ||
+                                            ex.Message.Contains("On-Premises Connections are not supported") ||
+                                            ex.InnerException is NotImplementedException)
+                {
+                    // On-premises connections don't support cloning
+                    _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Connection cloning not supported, using shared connection");
+                    clonedConnection?.Dispose();
+                    clonedConnection = null;
+                    connectionToUse = Connection;
+                }
+                catch (Exception ex)
+                {
+                    // Clone or initialization failed - fall back to original connection
+                    _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Clone failed: {ex.Message}. Using shared connection.");
+                    _warningQueue.Enqueue($"Connection cloning failed ({ex.Message}). Workers will share the original connection.");
+                    clonedConnection?.Dispose();
+                    clonedConnection = null;
+                    connectionToUse = Connection;
+                }
             }
 
             var workerScript = @"param($Chunk, $connection ); 
@@ -373,7 +369,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 PowerShell = ps,
                 OutputCollection = outputCollection,            ChunkNumber = currentChunkNum,
-                RecordCount = chunk.Count
+                RecordCount = chunk.Count,
+                ClonedConnection = clonedConnection
             };
 
             taskInfo.OutputHandler = (sender, e) => { _outputObjectQueue.Enqueue(outputCollection[e.Index]); taskInfo.LastOutputIndex = e.Index; };
@@ -483,8 +480,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         taskToComplete.PowerShell.Streams.Debug.DataAdded -= taskToComplete.DebugHandler;
                         taskToComplete.PowerShell.Streams.Information.DataAdded -= taskToComplete.InformationHandler;
 
-                        taskToComplete.PowerShell.Dispose();
-                        taskToComplete.OutputCollection.Dispose();
+                        DisposeTask(taskToComplete);
                     }
                 }
                 else
@@ -509,25 +505,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     foreach (var taskInfo in _activeTasks)
                     {
-                        try
-                        {
-                            taskInfo.PowerShell.Dispose();
-                        }
-                        catch (Exception ex)
-                        {
-                            _verboseQueue.Enqueue($"Error disposing PowerShell task: {ex.Message}");
-                        }
-                    }
-                    foreach (var taskInfo in _activeTasks)
-                    {
-                        try
-                        {
-                            taskInfo.OutputCollection.Dispose();
-                        }
-                        catch (Exception ex)
-                        {
-                            _verboseQueue.Enqueue($"Error disposing output collection: {ex.Message}");
-                        }
+                        DisposeTask(taskInfo);
                     }
                     _activeTasks.Clear();
                 }
@@ -547,6 +525,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
+
+        private void DisposeTask(TaskInfo taskInfo)
+        {
+            try { taskInfo.PowerShell.Dispose(); }
+            catch (Exception ex) { _verboseQueue.Enqueue($"Error disposing PowerShell task: {ex.Message}"); }
+
+            try { taskInfo.OutputCollection.Dispose(); }
+            catch (Exception ex) { _verboseQueue.Enqueue($"Error disposing output collection: {ex.Message}"); }
+
+            try { taskInfo.ClonedConnection?.Dispose(); }
+            catch (Exception ex) { _verboseQueue.Enqueue($"Error disposing cloned connection: {ex.Message}"); }
+        }
 
         private void DrainQueues()
         {

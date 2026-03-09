@@ -836,7 +836,7 @@ public class FormsTests : TestBase
           .AddParameter("DataField", "firstname")
           .AddParameter("ControlId", "firstname")
           .AddParameter("Disabled", true)
-          .AddParameter("Visible", false);
+          .AddParameter("Hidden", true);
         var results = ps.Invoke();
         
         // Assert

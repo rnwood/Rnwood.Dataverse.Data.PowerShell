@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Plugin
     /// Tests for dynamic plugin assembly creation, update, and invocation.
     /// Converted from e2e-tests/DynamicPluginAssembly.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests create custom entities
+    /// and add attributes (schema changes) as part of the plugin test setup, which conflicts with
+    /// other schema-changing tests when run in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class DynamicPluginAssemblyTests : E2ETestBase
     {
 [Fact]
@@ -248,7 +254,197 @@ namespace TestDynamicPlugins
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("ALL TESTS PASSED");
+            result.StandardOutput.Should().Contain("ALL TESTS PASSED", because: result.GetFullOutput());
+        }
+
+        [Fact]
+        public void CanRetrievePluginAssemblyByNameAndIdAndExportToVSProject()
+        {
+            var script = GetConnectionScript(@"
+$ErrorActionPreference = 'Stop'
+$ConfirmPreference = 'None'
+$VerbosePreference = 'Continue'
+
+try {
+    Write-Host '=== Dynamic Plugin Assembly Connection-Based Retrieval & VS Project Export Test ==='
+    
+    # Generate unique test identifiers
+    $timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+    $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 6)
+    $assemblyName = ""TestDynPluginVSExport_${timestamp}_${testRunId}""
+    $markerValue = ""VSExport_${testRunId}""
+    
+    Write-Host ""Test assembly: $assemblyName""
+    
+    # Create plugin source code
+    $pluginSource = @""
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace TestDynamicPluginsVSExport
+{
+    public class VSExportTestPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            var trace = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
+            trace.Trace(""VSExportTestPlugin executing - Marker: $markerValue"");
+        }
+    }
+}
+""@
+
+    # Create dynamic plugin assembly
+    Write-Host 'Step 1: Creating dynamic plugin assembly...'
+    $assembly = Invoke-WithRetry {
+        Set-DataverseDynamicPluginAssembly `
+            -Connection $connection `
+            -SourceCode $pluginSource `
+            -Name $assemblyName `
+            -Version '1.5.0.0' `
+            -PassThru
+    }
+    $assemblyId = $assembly.Id
+    Write-Host ""✓ Created plugin assembly: $assemblyId""
+    
+    # Test connection-based retrieval by name
+    Write-Host 'Step 2: Testing connection-based retrieval by name...'
+    $metadataByName = Get-DataverseDynamicPluginAssembly -Connection $connection -Name $assemblyName
+    
+    if (-not $metadataByName) {
+        throw 'Failed to retrieve metadata by name'
+    }
+    
+    if (-not $metadataByName.SourceCode.Contains($markerValue)) {
+        throw ""Retrieved metadata by name does not contain marker: $markerValue""
+    }
+    
+    if ($metadataByName.AssemblyName -ne $assemblyName) {
+        throw ""Assembly name mismatch. Expected '$assemblyName', got '$($metadataByName.AssemblyName)'""
+    }
+    
+    if ($metadataByName.Version -ne '1.5.0.0') {
+        throw ""Version mismatch. Expected '1.5.0.0', got '$($metadataByName.Version)'""
+    }
+    
+    Write-Host '✓ Successfully retrieved metadata by name'
+    Write-Host ""  Assembly Name: $($metadataByName.AssemblyName)""
+    Write-Host ""  Version: $($metadataByName.Version)""
+    
+    # Test connection-based retrieval by ID
+    Write-Host 'Step 3: Testing connection-based retrieval by ID...'
+    $metadataById = Get-DataverseDynamicPluginAssembly -Connection $connection -Id $assemblyId
+    
+    if (-not $metadataById) {
+        throw 'Failed to retrieve metadata by ID'
+    }
+    
+    if (-not $metadataById.SourceCode.Contains($markerValue)) {
+        throw ""Retrieved metadata by ID does not contain marker: $markerValue""
+    }
+    
+    if ($metadataById.AssemblyName -ne $assemblyName) {
+        throw ""Assembly name mismatch. Expected '$assemblyName', got '$($metadataById.AssemblyName)'""
+    }
+    
+    Write-Host '✓ Successfully retrieved metadata by ID'
+    
+    # Test VS project export by name
+    Write-Host 'Step 4: Testing VS project export by name...'
+    $projectPath = [System.IO.Path]::Combine([System.IO.Path]::GetTempPath(), ""E2E_VSProject_$testRunId"")
+    
+    if (Test-Path $projectPath) {
+        Remove-Item $projectPath -Recurse -Force
+    }
+    
+    Get-DataverseDynamicPluginAssembly -Connection $connection -Name $assemblyName -OutputProjectPath $projectPath
+    
+    # Verify files were created
+    $csprojPath = Join-Path $projectPath ""$assemblyName.csproj""
+    $csPath = Join-Path $projectPath ""$assemblyName.cs""
+    $snkPath = Join-Path $projectPath ""$assemblyName.snk""
+    
+    if (-not (Test-Path $csprojPath)) {
+        throw ""Project file not created: $csprojPath""
+    }
+    
+    if (-not (Test-Path $csPath)) {
+        throw ""Source file not created: $csPath""
+    }
+    
+    if (-not (Test-Path $snkPath)) {
+        throw ""Key file not created: $snkPath""
+    }
+    
+    # Verify source code content
+    $sourceContent = Get-Content $csPath -Raw
+    if (-not $sourceContent.Contains($markerValue)) {
+        throw ""Exported source code does not contain marker: $markerValue""
+    }
+    
+    # Verify project file content
+    $projectContent = Get-Content $csprojPath -Raw
+    if (-not $projectContent.Contains('net462')) {
+        throw 'Project file does not target net462'
+    }
+    
+    if (-not $projectContent.Contains($assemblyName)) {
+        throw ""Project file does not contain assembly name: $assemblyName""
+    }
+    
+    Write-Host '✓ Successfully exported VS project by name'
+    Write-Host ""  Project: $csprojPath""
+    Write-Host ""  Source: $csPath""
+    Write-Host ""  Key: $snkPath""
+    
+    # Test default connection (set as default and use without -Connection)
+    Write-Host 'Step 5: Testing default connection usage...'
+    Set-DataverseConnectionAsDefault -Connection $connection
+    
+    # Retrieve without -Connection parameter
+    $metadataDefault = Get-DataverseDynamicPluginAssembly -Name $assemblyName
+    
+    if (-not $metadataDefault) {
+        throw 'Failed to retrieve metadata using default connection'
+    }
+    
+    if ($metadataDefault.AssemblyName -ne $assemblyName) {
+        throw ""Assembly name mismatch with default connection. Expected '$assemblyName', got '$($metadataDefault.AssemblyName)'""
+    }
+    
+    Write-Host '✓ Successfully used default connection (no -Connection parameter)'
+    
+    # Cleanup project directory
+    if (Test-Path $projectPath) {
+        Remove-Item $projectPath -Recurse -Force
+        Write-Host '✓ Cleaned up VS project directory'
+    }
+    
+    # Cleanup
+    Write-Host 'Step 6: Cleaning up...'
+    Invoke-WithRetry {
+        Remove-DataversePluginAssembly -Connection $connection -Id $assemblyId -Confirm:$false -ErrorAction SilentlyContinue
+    }
+    Write-Host '✓ Cleanup complete'
+    
+    Write-Host ''
+    Write-Host '=== ALL TESTS PASSED ===' -ForegroundColor Green
+    Write-Host '✓ Connection-based retrieval by name works'
+    Write-Host '✓ Connection-based retrieval by ID works'
+    Write-Host '✓ VS project export by name works'
+    Write-Host '✓ Default connection usage works (no -Connection parameter)'
+    Write-Host 'Success'
+} catch {
+    Write-ErrorDetails $_
+    throw
+}
+");
+
+            var result = RunScript(script);
+
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("ALL TESTS PASSED", because: result.GetFullOutput());
         }
     }
 }

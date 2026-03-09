@@ -24,7 +24,7 @@ Write-Host 'Success'
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("Success");
+            result.StandardOutput.Should().Contain("Success", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -38,7 +38,7 @@ Write-Host ""EnableAffinityCookie: $($connection.EnableAffinityCookie)""
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("EnableAffinityCookie: False");
+            result.StandardOutput.Should().Contain("EnableAffinityCookie: False", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -52,7 +52,7 @@ Write-Host ""EnableAffinityCookie: $($connection.EnableAffinityCookie)""
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("EnableAffinityCookie: True");
+            result.StandardOutput.Should().Contain("EnableAffinityCookie: True", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -67,7 +67,7 @@ Get-DataverseRecord -Connection $connection -TableName systemuser -Top 10 |
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().Contain("Using parallelization with affinity cookie enabled may reduce performance");
+            result.StandardOutput.Should().Contain("Using parallelization with affinity cookie enabled may reduce performance", because: result.GetFullOutput());
         }
 
         [Fact]
@@ -82,7 +82,7 @@ Get-DataverseRecord -Connection $connection -TableName systemuser -Top 10 |
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
-            result.StandardOutput.Should().NotContain("Using parallelization with affinity cookie enabled may reduce performance");
+            result.StandardOutput.Should().NotContain("Using parallelization with affinity cookie enabled may reduce performance", because: result.GetFullOutput());
         }
     }
 }

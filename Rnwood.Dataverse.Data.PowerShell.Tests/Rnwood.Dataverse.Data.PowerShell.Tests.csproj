@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net462</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0;net462</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
     <LangVersion>latest</LangVersion>
@@ -8,6 +8,7 @@
     <RootNamespace>Rnwood.Dataverse.Data.PowerShell.Tests</RootNamespace>
     <AssemblyTitle>Rnwood.Dataverse.Data.PowerShell.Tests</AssemblyTitle>
     <Product>Rnwood.Dataverse.Data.PowerShell</Product>
+
     <Copyright>Copyright © 2023-2026 Robert Wood and project contributors</Copyright>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
@@ -44,6 +45,9 @@
   <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net9.0' Or '$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.5.4" />
+  </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
     <PackageReference Include="PowerShellStandard.Library" Version="5.1.1" />
   </ItemGroup>
@@ -54,7 +58,7 @@
   </ItemGroup>
   
   <!-- FakeXrmEasy for mocking - version depends on target framework -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net8.0'">
+  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
     <PackageReference Include="FakeXrmEasy.v9" Version="3.7.0" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
@@ -75,6 +79,13 @@
   <!-- Copy metadata files to output for tests that need file access -->
   <ItemGroup>
     <None Include="..\tests\*.xml" Link="Metadata\%(Filename)%(Extension)">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+  <!-- xUnit runner configuration -->
+  <ItemGroup>
+    <None Include="xunit.runner.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

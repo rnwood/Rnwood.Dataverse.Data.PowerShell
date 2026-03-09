@@ -113,26 +113,11 @@ PS C:\> Set-DataverseForm -Id $formId -Publish
 
 Demonstrates creating a form and then customizing it with specialized form cmdlets.
 
-
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
+http://server.com/MyOrg/).
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -235,7 +220,7 @@ Accept wildcard characters: False
 ```
 
 ### -FormXmlContent
-Complete FormXml content
+Complete FormXml content for the form
 
 ```yaml
 Type: String
@@ -265,7 +250,7 @@ Accept wildcard characters: False
 ```
 
 ### -IsActive
-Whether the form is active (default: true)
+Whether the form is active (default: true when creating)
 
 ```yaml
 Type: SwitchParameter
@@ -336,8 +321,23 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+Controls how progress information is displayed during cmdlet execution.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Publish
-Publish the form after creation/update
+Publish the form and entity after creation/update
 
 ```yaml
 Type: SwitchParameter
@@ -351,14 +351,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -367,13 +366,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named
@@ -393,4 +392,56 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ### System.Guid
 ## NOTES
 
+**Form Types Available:**
+- Dashboard (0) - Dashboard forms
+- AppointmentBook (1) - Appointment book forms
+- Main (2) - Main entity forms
+- MiniCampaignBO (3) - Mini campaign forms
+- Preview (4) - Preview forms
+- MobileExpress (5) - Mobile express forms
+- QuickViewForm (6) - Quick view forms
+- QuickCreate (7) - Quick create forms
+- Dialog (8) - Dialog forms
+- TaskFlowForm (9) - Task flow forms
+- InteractionCentricDashboard (10) - Interaction centric dashboards
+- Card (11) - Card forms
+- MainInteractiveExperience (12) - Main interactive experience forms
+- ContextualDashboard (13) - Contextual dashboards
+- Other (100) - Other form types
+- MainBackup (101) - Main backup forms
+- AppointmentBookBackup (102) - Appointment book backup forms
+- PowerBIDashboard (103) - Power BI dashboard forms
+
+**Form Presentation Types:**
+- ClassicForm (0) - Classic form presentation
+- AirForm (1) - Air form presentation
+- ConvertedICForm (2) - Converted interaction centric form presentation
+
+**Creation Behavior:**
+- When creating without FormXmlContent, a minimal default form structure is generated
+- New forms are active by default unless -IsActive:$false is specified
+- Forms are created in unpublished state unless -Publish is specified
+
+**Update Behavior:**
+- Only specified properties are updated; unspecified properties remain unchanged
+- Use -FormXmlContent to completely replace the form structure
+- Publishing is optional but recommended for changes to take effect
+
+**Best Practices:**
+- Use specialized form cmdlets (Set-DataverseFormTab, Set-DataverseFormSection, Set-DataverseFormControl) for detailed form customization
+- Always publish forms after making structural changes
+- Test form changes in non-production environments first
+- Back up existing forms before making major modifications
+
 ## RELATED LINKS
+
+[Get-DataverseForm](Get-DataverseForm.md)
+
+[Remove-DataverseForm](Remove-DataverseForm.md)
+
+[Set-DataverseFormTab](Set-DataverseFormTab.md)
+
+[Set-DataverseFormSection](Set-DataverseFormSection.md)
+
+[Set-DataverseFormControl](Set-DataverseFormControl.md)
+

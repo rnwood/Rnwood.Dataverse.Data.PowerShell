@@ -9,6 +9,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.OrganizationSettings
     /// Organization settings manipulation tests against a real Dataverse environment.
     /// Converted from e2e-tests/OrganizationSettings.Tests.ps1
     /// </summary>
+    /// <remarks>
+    /// Placed in the SchemaAndPublishChanges collection because these tests modify shared
+    /// singleton organisation settings (e.g. MaximumTrackingNumber, OrgDbOrgSettings XML)
+    /// which would conflict with other tests modifying the same record when run in parallel.
+    /// </remarks>
+    [Collection(SchemaChangesCollection.Name)]
     public class OrganizationSettingsTests : E2ETestBase
     {
         [Fact]
@@ -150,7 +156,7 @@ catch {
             var result = RunScript(script);
 
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
-            result.StandardOutput.Should().Contain("SUCCESS");
+            result.StandardOutput.Should().Contain("SUCCESS", because: result.GetFullOutput());
         }
     }
 }
