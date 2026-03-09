@@ -1,17 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Error Handling and Batch Operations](#error-handling-and-batch-operations)
-    - [Parallelising work for best performance](#parallelising-work-for-best-performance)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Error Handling and Batch Operations
 
-<!-- TOC -->
-  - [Parallelising work for best performance](#parallelising-work-for-best-performance)
-<!-- /TOC -->
 
 
 When working with batch operations, errors don't stop processing - all records are attempted and errors are collected. You can correlate errors back to the specific input records that failed.
@@ -74,7 +63,7 @@ Example with `Remove-DataverseRecord`:
 
 ```powershell
 # Delete records in parallel using 4 workers
-$records = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ status = 'inactive' }
+$records = Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ status = 'inactive' }
 $records | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 4 -Verbose
 ```
 

@@ -1,35 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Quick Start Guide](#quick-start-guide)
-  - [PowerShell Best Practices](#powershell-best-practices)
-  - [Getting a Connection](#getting-a-connection)
-    - [Simple Interactive Connection](#simple-interactive-connection)
-    - [Default Connection](#default-connection)
-  - [Basic Operations](#basic-operations)
-    - [Query Records](#query-records)
-    - [Create a Record](#create-a-record)
-    - [Update a Record](#update-a-record)
-    - [Delete a Record](#delete-a-record)
-  - [Next Steps](#next-steps)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Quick Start Guide
 
-<!-- TOC -->
-- [PowerShell Best Practices](#powershell-best-practices)
-- [Getting a Connection](#getting-a-connection)
-  - [Simple Interactive Connection](#simple-interactive-connection)
-  - [Default Connection](#default-connection)
-- [Basic Operations](#basic-operations)
-  - [Query Records](#query-records)
-  - [Create a Record](#create-a-record)
-  - [Update a Record](#update-a-record)
-  - [Delete a Record](#delete-a-record)
-- [Next Steps](#next-steps)
-<!-- /TOC -->
 
 ## PowerShell Best Practices
 

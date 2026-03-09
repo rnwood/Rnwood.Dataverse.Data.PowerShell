@@ -1,33 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Environment Variables and Connection References](#environment-variables-and-connection-references)
-  - [Overview](#overview)
-  - [Environment Variables](#environment-variables)
-    - [Understanding Environment Variables](#understanding-environment-variables)
-    - [Working with Environment Variable Definitions](#working-with-environment-variable-definitions)
-    - [Working with Environment Variable Values](#working-with-environment-variable-values)
-    - [When to Use Which Cmdlet Set](#when-to-use-which-cmdlet-set)
-    - [Common Workflows](#common-workflows)
-      - [Deploying a Solution with Environment Variables](#deploying-a-solution-with-environment-variables)
-      - [Creating Environment Variables Without Solutions](#creating-environment-variables-without-solutions)
-      - [Migrating Values Between Environments](#migrating-values-between-environments)
-  - [Connection References](#connection-references)
-    - [Understanding Connection References](#understanding-connection-references)
-    - [Working with Connection References](#working-with-connection-references)
-    - [Finding Connection IDs](#finding-connection-ids)
-    - [Common Workflows](#common-workflows-1)
-      - [Deploying a Solution with Connection References](#deploying-a-solution-with-connection-references)
-      - [Setting Connection References During Solution Import](#setting-connection-references-during-solution-import)
-      - [Creating Connection References Manually](#creating-connection-references-manually)
-  - [Best Practices](#best-practices)
-    - [Environment Variables](#environment-variables-1)
-    - [Connection References](#connection-references-1)
-    - [Automation Scripts](#automation-scripts)
-  - [See Also](#see-also)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Environment Variables and Connection References
 
@@ -210,7 +180,7 @@ Connection references need valid connection IDs. To find available connections:
 
 ```powershell
 # Query connections by name
-$conn = Get-DataverseRecord -TableName connection -Filter "name eq 'Production SharePoint'"
+$conn = Get-DataverseRecord -TableName connection -FilterValues @{ name = 'Production SharePoint' }
 Write-Host "Connection ID: $($conn.connectionid)"
 
 # List all connections

@@ -1,26 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Rnwood.Dataverse.Data.PowerShell Documentation](#rnwooddataversedatapowershell-documentation)
-  - [Documentation Sections](#documentation-sections)
-    - [Getting Started](#getting-started)
-    - [Core Concepts](#core-concepts)
-    - [Advanced Topics](#advanced-topics)
-    - [Cmdlet Reference](#cmdlet-reference)
-  - [Quick Reference](#quick-reference)
-    - [Main Cmdlets](#main-cmdlets)
-    - [Environment Variables](#environment-variables)
-    - [Connection References](#connection-references)
-    - [Common Tasks](#common-tasks)
-  - [Additional Resources](#additional-resources)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Rnwood.Dataverse.Data.PowerShell Documentation
 
-<!-- TOC -->
-<!-- /TOC -->
 
 Complete documentation for the Rnwood.Dataverse.Data.PowerShell module - a PowerShell module for connecting to Microsoft Dataverse and manipulating data.
 
@@ -40,11 +20,11 @@ Fundamental operations and concepts:
 - [Deleting Records](core-concepts/deleting.md) - Delete operations with safety features
 - [Error Handling and Batch Operations](core-concepts/error-handling.md) - Error handling and retry logic
 - [Environment Variables and Connection References](core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
+- [Solution Management](core-concepts/solution-management.md) - Import, export, and manage solutions
 
 ### [Advanced Topics](advanced/)
 Advanced features for power users:
 - [Parallelization](advanced/parallelization.md) - Parallel processing for best performance
-- [Solution Management](advanced/solution-management.md) - Import, export, and manage solutions
 
 ### [Cmdlet Reference](../Rnwood.Dataverse.Data.PowerShell/docs/)
 Complete reference documentation for all 390+ cmdlets.

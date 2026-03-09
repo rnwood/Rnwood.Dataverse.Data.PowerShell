@@ -1,6 +1,7 @@
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Query;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using Microsoft.Xrm.Sdk.Metadata;
@@ -39,10 +40,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "Return raw values instead of display values")]
         public SwitchParameter Raw { get; set; }
 
-
-        [Parameter(HelpMessage = "Allows unpublished records to be retrieved instead of the default published")]
-        public SwitchParameter Unpublished { get; set; }
-
+        /// <summary>
+        /// Gets or sets a value indicating whether to retrieve only published records.
+        /// </summary>
+        [Parameter(HelpMessage = "Allows published records to be retrieved instead of the default behavior that includes both published and unpublished records")]
+        public SwitchParameter Published { get; set; }
 
         /// <summary>
         /// Processes the cmdlet request.
@@ -95,7 +97,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             // Execute query with paging
             WriteVerbose("Executing query for appmodule");
-            var appModules = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose, Unpublished.IsPresent);
+            IEnumerable<Entity> appModules;
+            if (!Published.IsPresent)
+            {
+                // Get both unpublished and published, with deduplication (unpublished preferred)
+                appModules = QueryHelpers.ExecuteQueryWithPublishedAndUnpublished(query, Connection, WriteVerbose);
+            }
+            else
+            {
+                // Get only published records
+                appModules = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
+            }
 
             WriteVerbose($"Found {appModules.Count()} app module(s)");
 
@@ -136,8 +148,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                     WriteObject(psObject);
                 }
-
-
             }
         }
     }

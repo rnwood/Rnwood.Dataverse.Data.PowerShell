@@ -10,40 +10,61 @@ on:
     types: [published]
 
 jobs:
-  main:
-    permissions:
-      contents: write  # Required for creating GitHub releases
-      pull-requests: write
+  test:
     timeout-minutes: 60  # Fail fast if job exceeds 60 minutes
+    permissions:
+      contents: read
+      checks: write  # Required for test-reporter action to create check runs
+      pull-requests: read  # Required for test-reporter action to read PR info
     strategy:
       matrix:
         include:
           - os: ubuntu-latest
-            publish: false
-            powershell_version: "7.4.11"
+            powershell_version: "7.4.13"
+            dotnet_tfm: "net8.0"
+            test_set: e2e-minimal
           - os: windows-latest
-            publish: false
-            powershell_version: "7.4.11"
-          - os: ubuntu-latest
-            publish: false
-            powershell_version: latest
+            powershell_version: "7.4.13"
+            dotnet_tfm: "net8.0"
+            test_set: e2e-full
           - os: windows-latest
-            publish: false
-            powershell_version: latest
-          - os: windows-latest
-            publish: true
             powershell_version: '5'
-
+            dotnet_tfm: "net462"
+            test_set: e2e-minimal
+          - os: ubuntu-latest
+            powershell_version: "7.6.0-rc.1"
+            dotnet_tfm: "net10.0"
+            test_set: e2e-minimal
+          - os: windows-latest
+            powershell_version: "7.6.0-rc.1"
+            dotnet_tfm: "net10.0"
+            test_set: e2e-minimal
+          - os: ubuntu-latest
+            powershell_version: "7.5.4"
+            dotnet_tfm: "net9.0"
+            test_set: e2e-minimal
+          # Infrastructure tests + E2E full (all tests)
+          - os: windows-latest
+            powershell_version: "7.5.4"
+            dotnet_tfm: "net9.0"
+            test_set: e2e-minimal
+    
+    name: Test (${{ matrix.test_set }}, ${{ matrix.os }}, PS ${{ matrix.powershell_version }})
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
         with:
           fetch-depth: 0  # Fetch all history for tags
+          submodules: recursive  # Initialize and update submodules
       - if: ${{ matrix.powershell_version != '5' }}
         name: Install PowerShell ${{ matrix.powershell_version }}
         uses: PSModule/install-powershell@v1
         with:
           Version: ${{ matrix.powershell_version }}
+      - if: ${{ matrix.test_set == 'e2e-minimal' || matrix.test_set == 'e2e-full' }}
+        name: Install Azure Functions Core Tools (for AzureFunctionsCompatibilityTests)
+        shell: bash
+        run: npm install -g azure-functions-core-tools@4 --unsafe-perm true
       - name: Build
         shell: pwsh
         run: |       
@@ -133,6 +154,29 @@ jobs:
                 
                 # Filter to only prereleases that are based on or after the stable version
                 foreach ($tag in $tagsAfterStable) {
+                  # First, check if this prerelease tag is on a commit that comes AFTER the stable tag
+                  # Use git merge-base to verify the stable tag is an ancestor of this prerelease
+                  $tagCommit = git rev-list -n 1 $tag 2>$null
+                  $stableCommit = git rev-list -n 1 $latestStableTag 2>$null
+                  
+                  if ($tagCommit -and $stableCommit) {
+                    # Check if stable tag is an ancestor of this prerelease tag
+                    # If true, the prerelease was created AFTER the stable release
+                    git merge-base --is-ancestor $stableCommit $tagCommit 2>$null
+                    $isAfterStable = $LASTEXITCODE -eq 0
+                    
+                    if (-not $isAfterStable) {
+                      # Stable tag is NOT an ancestor, so this prerelease is not after it
+                      # Skip this prerelease tag
+                      continue
+                    }
+                    
+                    # Also verify the prerelease is not the same commit as the stable tag
+                    if ($tagCommit -eq $stableCommit) {
+                      continue
+                    }
+                  }
+                  
                   if ($tag -match '^v?(\d+)\.(\d+)\.(\d+)') {
                     $tagVersion = "$($matches[1]).$($matches[2]).$($matches[3])"
                     # Parse tag version
@@ -291,228 +335,314 @@ jobs:
             remove-item -force -recurse out/Rnwood.Dataverse.Data.PowerShell
           }
           copy-item -recurse Rnwood.Dataverse.Data.PowerShell\bin\Release\netstandard2.0 out/Rnwood.Dataverse.Data.PowerShell
-      - if: ${{ matrix.powershell_version != '5' }}
-        name: Test - pwsh
-        id: test-pwsh
-        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
+
+          # Build test projects to avoid rebuild during test execution
+          dotnet build -c Release -f ${{ matrix.dotnet_tfm }} ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj
+          if ("${{ matrix.test_set }}" -eq "e2e-minimal" -or "${{ matrix.test_set }}" -eq "e2e-full") {
+            dotnet build -c Release -f ${{ matrix.dotnet_tfm }} ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj
+          }
+
+      # Run xUnit tests - infrastructure and E2E tests run in parallel when applicable
+      - name: Test - xUnit (Infrastructure + E2E)
+        id: run-tests
+        timeout-minutes: 60
+        shell: pwsh
+        env:
+          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
+          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
+          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
+        run: |
+          Write-Host "Running xUnit tests (test_set: ${{ matrix.test_set }})..."
+          # Set TESTMODULEPATH for tests that need to load the module
+          $env:TESTMODULEPATH=(Resolve-Path "out/Rnwood.Dataverse.Data.PowerShell").Path
+          Write-Host "TESTMODULEPATH set to: $env:TESTMODULEPATH"
+          
+          # Create test results directories
+          New-Item -ItemType Directory -Force -Path TestResults | Out-Null
+          New-Item -ItemType Directory -Force -Path TestResults/E2E | Out-Null
+
+          # Track execution
+          $infraTestsExecuted = $false
+          $e2eTestsExecuted = $false
+          $infraJob = $null
+          $infraExitCode = 0
+          $e2eExitCode = 0
+          
+          # Determine if we need E2E tests
+          $runE2E = "${{ matrix.test_set }}" -eq "e2e-minimal" -or "${{ matrix.test_set }}" -eq "e2e-full"
+          
+          Write-Host "Using test TFM: ${{ matrix.dotnet_tfm }} for PS ${{ matrix.powershell_version }}"
+
+          # Determine E2E test filter
+          $testFilter = ""
+          if ("${{ matrix.test_set }}" -eq "e2e-minimal") {
+            $testFilter = "--filter `"Category=CrossPlatform`""
+            Write-Host "E2E: Running minimal tests (CrossPlatform only)"
+          } elseif ("${{ matrix.test_set }}" -eq "e2e-full") {
+            Write-Host "E2E: Running full test suite"
+          }
+          
+          if ($runE2E) {
+            # Run infrastructure tests in background, E2E in foreground
+            Write-Host "Starting infrastructure tests in background..."
+            $infraJob = Start-Job -ScriptBlock {
+              param($workDir, $testModulePath, $tfm)
+              Set-Location $workDir
+              $env:TESTMODULEPATH = $testModulePath
+              dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f $tfm --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-$tfm.trx" --results-directory TestResults 2>&1 | Write-Host
+              return $LASTEXITCODE
+            } -ArgumentList (Get-Location).Path, $env:TESTMODULEPATH, "${{ matrix.dotnet_tfm }}"
+            
+            $infraTestsExecuted = $true
+            Write-Host "Infrastructure tests started in background (Job ID: $($infraJob.Id))"
+            
+            # Run E2E tests in foreground
+            Write-Host "Running E2E tests..."
+            $testCommand = "dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -c Release -f ${{ matrix.dotnet_tfm }} --no-build --logger `"console;verbosity=normal`" --logger `"trx;LogFileName=e2e-test-results-${{ matrix.dotnet_tfm }}.trx`" --results-directory TestResults/E2E $testFilter"
+            Write-Host "Executing: $testCommand"
+            # Execute directly instead of using Invoke-Expression for better output capture
+            if ($testFilter) {
+              dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -c Release -f ${{ matrix.dotnet_tfm }} --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-${{ matrix.dotnet_tfm }}.trx" --results-directory TestResults/E2E --filter "Category=CrossPlatform"
+            } else {
+              dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -c Release -f ${{ matrix.dotnet_tfm }} --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=e2e-test-results-${{ matrix.dotnet_tfm }}.trx" --results-directory TestResults/E2E
+            }
+            $e2eExitCode = $LASTEXITCODE
+            $e2eTestsExecuted = $true
+            
+            # Wait for infrastructure tests
+            Write-Host "Waiting for infrastructure tests to complete..."
+            $infraJob | Wait-Job | Out-Null
+            $infraExitCode = Receive-Job -Job $infraJob
+            $infraJobState = $infraJob.State
+            Remove-Job -Job $infraJob
+            
+            if ($infraJobState -ne "Completed") {
+              Write-Error "Infrastructure tests job ended in state: $infraJobState"
+              $infraExitCode = 1
+            }
+            
+            Write-Host "Infrastructure tests completed with exit code: $infraExitCode"
+            Write-Host "E2E tests completed with exit code: $e2eExitCode"
+            
+          } else {
+            # Run only infrastructure tests
+            Write-Host "Running infrastructure tests only..."
+            dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -c Release -f ${{ matrix.dotnet_tfm }} --no-build --logger "console;verbosity=normal" --logger "trx;LogFileName=test-results-${{ matrix.dotnet_tfm }}.trx" --results-directory TestResults
+            $infraExitCode = $LASTEXITCODE
+            $infraTestsExecuted = $true
+          }
+          
+          # Record outputs
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "infra_tests_executed=$infraTestsExecuted"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "e2e_tests_executed=$e2eTestsExecuted"
+          
+          # Check for failures
+          if ($infraTestsExecuted -and $infraExitCode -ne 0) {
+            Write-Error "Infrastructure tests failed with exit code $infraExitCode"
+            exit $infraExitCode
+          }
+          
+          if ($e2eTestsExecuted -and $e2eExitCode -ne 0) {
+            Write-Error "E2E tests failed with exit code $e2eExitCode"
+            exit $e2eExitCode
+          }
+          
+          if ($infraTestsExecuted -or $e2eTestsExecuted) {
+            Write-Host "All tests completed successfully"
+          } else {
+            Write-Host "No tests executed in this matrix configuration"
+          }
+      
+
+      # Build and pack XrmToolbox Plugin (Windows only - requires .NET Framework 4.8)
+      - if: ${{ matrix.os == 'windows-latest' }}
+        name: Build and Pack XrmToolbox Plugin
         shell: pwsh
         run: |
-          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"    
-          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
-
-          Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          
-          # Run tests with CI-friendly output
-          # Each test file now includes Common.ps1 for setup, allowing Pester to run them independently
-          # Run test files in parallel using Start-Job for maximum performance
-          
-          Write-Host "Discovering test files..."
-          $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-          Write-Host "Found $($testFiles.Count) test files to run in parallel"
-          
-          # Start a job for each test file
-          $jobs = $testFiles | ForEach-Object {
-              $testFile = $_
-              Start-Job -ScriptBlock {
-                  param($testFilePath, $modulePath)
-                  
-                  $env:TESTMODULEPATH = $modulePath
-                  
-                  # Run each test file independently
-                  $config = New-PesterConfiguration
-                  $config.Run.Path = $testFilePath
-                  $config.Run.PassThru = $true
-                  $config.Output.Verbosity = 'Minimal'  # Show minimal output with errors
-                  $config.Should.ErrorAction = 'Continue'
-                  
-                  $result = Invoke-Pester -Configuration $config
-                  
-                  # Return result with filename for aggregation
-                  [PSCustomObject]@{
-                      File = (Split-Path $testFilePath -Leaf)
-                      TotalCount = $result.TotalCount
-                      PassedCount = $result.PassedCount
-                      FailedCount = $result.FailedCount
-                      SkippedCount = $result.SkippedCount
-                      DurationSeconds = $result.Duration.TotalSeconds
-                      Failed = $result.Failed
-                  }
-              } -ArgumentList $testFile, $env:TESTMODULEPATH
+          $version = ""
+          if ($env:GITHUB_REF -like "refs/tags/*") {
+             $version = $env:GITHUB_REF -replace "refs/tags/", ""
+          } elseif (Test-Path ci-version.txt) {
+             $version = Get-Content -Path ci-version.txt -Raw
+             $version = $version.Trim()
+          } else {
+             Write-Error "ci-version.txt not found and not a tag build. Cannot determine version."
+             exit 1
           }
           
-          Write-Host "Running $($jobs.Count) test files in parallel..."
+          if ([string]::IsNullOrWhiteSpace($version)) {
+             Write-Error "Version is empty. Cannot proceed with pack."
+             exit 1
+          }
           
-          # Wait for all jobs to complete and collect results
-          $results = $jobs | Wait-Job | Receive-Job
-          $jobs | Remove-Job
+          Write-Host "Using version: $version"
           
-          # Aggregate results
-          $totalTests = ($results | Measure-Object -Property TotalCount -Sum).Sum
-          $totalPassed = ($results | Measure-Object -Property PassedCount -Sum).Sum
-          $totalFailed = ($results | Measure-Object -Property FailedCount -Sum).Sum
-          $totalSkipped = ($results | Measure-Object -Property SkippedCount -Sum).Sum
-          $totalDurationSeconds = ($results | Measure-Object -Property DurationSeconds -Sum).Sum
+          $releaseNotes = ""
+          if (Test-Path release-notes.txt) {
+             $releaseNotes = Get-Content -Path release-notes.txt -Raw
+             # Remove list item hyphens at the start of lines that could be interpreted as switches
+             # Match start of line (or after newline) followed by optional whitespace, hyphen, and space
+             $releaseNotes = $releaseNotes -replace '(?m)^\s*-\s+', ''
+             # Replace newlines with space for single line
+             $releaseNotes = $releaseNotes -replace "`r`n", " " -replace "`n", " "
+             # Collapse multiple spaces
+             $releaseNotes = $releaseNotes -replace '\s+', ' '
+             $releaseNotes = $releaseNotes.Trim()
+          }
           
-          Write-Host ""
-          Write-Host "Parallel Test Execution Summary:" -ForegroundColor Cyan
-          Write-Host "  Total:   $totalTests" -ForegroundColor White
-          Write-Host "  Passed:  $totalPassed" -ForegroundColor Green
-          Write-Host "  Failed:  $totalFailed" -ForegroundColor $(if ($totalFailed -gt 0) { "Red" } else { "Green" })
-          Write-Host "  Skipped: $totalSkipped" -ForegroundColor Yellow
-          Write-Host "  Duration: $($totalDurationSeconds)s" -ForegroundColor White
+          Write-Host "Using release notes: $releaseNotes"
           
-          # Report failures if any
-          if ($totalFailed -gt 0) {
-              Write-Host ""
-              Write-Host "Failed Tests:" -ForegroundColor Red
-              foreach ($result in $results | Where-Object { $_.FailedCount -gt 0 }) {
-                  Write-Host "  File: $($result.File)" -ForegroundColor Yellow
-                  foreach ($test in $result.Failed) {
-                      Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
-                      if ($test.ErrorRecord) {
-                          Write-Host "      $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
-                      }
-                  }
-              }
+          # Build argument array to avoid shell parsing issues
+          # Use explicit quoting for release notes to handle special characters
+          
+          # Extract base version for assembly (without prerelease suffix)
+          # AssemblyVersion uses x.y.z.w format (prerelease suffixes like -ci20251127001 are not supported)
+          $assemblyVersion = $version -replace '-.*', ''
+          
+          # Ensure version has 4 parts (x.y.z.w) for XrmToolbox plugin store validation
+          # XrmToolbox does exact comparison between NuGet package version and assembly version
+          $versionParts = $assemblyVersion.Split('.')
+          while ($versionParts.Count -lt 4) {
+              $versionParts += '0'
+          }
+          $assemblyVersion = $versionParts -join '.'
+          Write-Host "Assembly version (4-part): $assemblyVersion"
+          
+          # Use the 4-part version for both package and assembly to ensure they match exactly
+          $packArgs = @(
+              'pack'
+              './Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.csproj'
+              '-c'
+              'Release'
+              "-p:PackageVersion=$assemblyVersion"
+              "-p:Version=$assemblyVersion"
+              '-o'
+              'out/nuget'
+          )
+          
+          # Only add release notes if they exist to avoid empty parameter issues
+          if (-not [string]::IsNullOrWhiteSpace($releaseNotes)) {
+              $escapedreleasenotes = $releaseNotes.Replace('"', '\"')
+              $packArgs += "-p:PackageReleaseNotes=`"$escapedreleasenotes`""
+          }
+          
+          & dotnet @packArgs
+          if ($LASTEXITCODE -ne 0) {
+              Write-Error "dotnet pack failed with exit code $LASTEXITCODE"
+              exit $LASTEXITCODE
+          }
+          
+          # Verify the nupkg was created
+          $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
+          if ($nupkgFiles) {
+              Write-Host "Successfully created package(s): $($nupkgFiles.Name -join ', ')"
+          } else {
+              Write-Error "No .nupkg file was created in out/nuget/"
               exit 1
           }
-      - if:  ${{ matrix.powershell_version == '5' }}
-        name: Test - powershell
-        id: test-powershell
-        timeout-minutes: 45  # Tests expected to complete in < 45 minutes
-        shell: powershell
-        run: |  
-            $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
-  
-            Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
+      
+      # Publish xUnit test results to GitHub
+      - name: Publish Infrastructure Test Results
+        uses: dorny/test-reporter@v1
+        if: ${{ always() && steps.run-tests.outputs.infra_tests_executed == 'true' }}
+        with:
+          name: Infrastructure Tests (${{ matrix.test_set }}, ${{ matrix.os }}, PS ${{ matrix.powershell_version }})
+          path: TestResults/*.trx
+          reporter: dotnet-trx
+          fail-on-error: false
+      
+      # Publish E2E test results to GitHub
+      - name: Publish E2E Test Results
+        uses: dorny/test-reporter@v1
+        if: ${{ always() && steps.run-tests.outputs.e2e_tests_executed == 'true' }}
+        with:
+          name: E2E Tests (${{ matrix.test_set }}, ${{ matrix.os }}, PS ${{ matrix.powershell_version }})
+          path: TestResults/E2E/*.trx
+          reporter: dotnet-trx
+          fail-on-error: false
+      
+      # Upload artifacts needed for publishing
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: module-${{ matrix.test_set }}-${{ matrix.os }}-${{ matrix.powershell_version }}
+          path: |
+            out/Rnwood.Dataverse.Data.PowerShell/
+            out/nuget/
+            release-notes.md
+            release-notes.txt
+            ci-version.txt
+          if-no-files-found: ignore
+          retention-days: 1      
+      
+      # Upload test failure reports as artifacts
+      - name: Upload test failure report
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v5
+        with:
+          name: test-failures-${{ matrix.test_set }}-${{ matrix.os }}-${{ matrix.powershell_version }}
+          path: test-failures-*.md
+          if-no-files-found: ignore
+      
+      # Comment on PR with test failures
+      - name: Comment on PR with test failures
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
             
-            # Run tests with CI-friendly output
-            # Each test file now includes Common.ps1 for setup, allowing Pester to run them independently
-            # Run test files in parallel using Start-Job for maximum performance
+            // Find failure report file
+            const files = fs.readdirSync('.');
+            const failureFile = files.find(f => f.startsWith('test-failures-'));
             
-            Write-Host "Discovering test files..."
-            $testFiles = Get-ChildItem 'tests/*.Tests.ps1' -Exclude 'Performance-Investigation.Tests.ps1' | Select-Object -ExpandProperty FullName
-            Write-Host "Found $($testFiles.Count) test files to run in parallel"
-            
-            # Start a job for each test file
-            $jobs = $testFiles | ForEach-Object {
-                $testFile = $_
-                Start-Job -ScriptBlock {
-                    param($testFilePath, $modulePath)
-                    
-                    $env:TESTMODULEPATH = $modulePath
-                    
-                    # Run each test file independently
-                    $config = New-PesterConfiguration
-                    $config.Run.Path = $testFilePath
-                    $config.Run.PassThru = $true
-                    $config.Output.Verbosity = 'Minimal'  # Show minimal output with errors
-                    $config.Should.ErrorAction = 'Continue'
-                    
-                    $result = Invoke-Pester -Configuration $config
-                    
-                    # Return result with filename for aggregation
-                    [PSCustomObject]@{
-                        File = (Split-Path $testFilePath -Leaf)
-                        TotalCount = $result.TotalCount
-                        PassedCount = $result.PassedCount
-                        FailedCount = $result.FailedCount
-                        SkippedCount = $result.SkippedCount
-                        DurationSeconds = $result.Duration.TotalSeconds
-                        Failed = $result.Failed
-                    }
-                } -ArgumentList $testFile, $env:TESTMODULEPATH
+            if (!failureFile) {
+              console.log('No test failure report found');
+              return;
             }
             
-            Write-Host "Running $($jobs.Count) test files in parallel..."
+            const failureContent = fs.readFileSync(failureFile, 'utf8');
             
-            # Wait for all jobs to complete and collect results
-            $results = $jobs | Wait-Job | Receive-Job
-            $jobs | Remove-Job
-            
-            # Aggregate results
-            $totalTests = ($results | Measure-Object -Property TotalCount -Sum).Sum
-            $totalPassed = ($results | Measure-Object -Property PassedCount -Sum).Sum
-            $totalFailed = ($results | Measure-Object -Property FailedCount -Sum).Sum
-            $totalSkipped = ($results | Measure-Object -Property SkippedCount -Sum).Sum
-            $totalDurationSeconds = ($results | Measure-Object -Property DurationSeconds -Sum).Sum
-            
-            Write-Host ""
-            Write-Host "Parallel Test Execution Summary:" -ForegroundColor Cyan
-            Write-Host "  Total:   $totalTests" -ForegroundColor White
-            Write-Host "  Passed:  $totalPassed" -ForegroundColor Green
-            Write-Host "  Failed:  $totalFailed" -ForegroundColor $(if ($totalFailed -gt 0) { "Red" } else { "Green" })
-            Write-Host "  Skipped: $totalSkipped" -ForegroundColor Yellow
-            Write-Host "  Duration: $($totalDurationSeconds)s" -ForegroundColor White
-            
-            # Report failures if any
-            if ($totalFailed -gt 0) {
-                Write-Host ""
-                Write-Host "Failed Tests:" -ForegroundColor Red
-                foreach ($result in $results | Where-Object { $_.FailedCount -gt 0 }) {
-                    Write-Host "  File: $($result.File)" -ForegroundColor Yellow
-                    foreach ($test in $result.Failed) {
-                        Write-Host "    - $($test.ExpandedPath)" -ForegroundColor Red
-                        if ($test.ErrorRecord) {
-                            Write-Host "      $($test.ErrorRecord.Exception.Message)" -ForegroundColor Gray
-                        }
-                    }
-                }
-                exit 1
-            }
-      - if: ${{ matrix.powershell_version != '5' }}
-        name: E2E Test - pwsh
-        shell: pwsh
-        env:
-          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
-          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
-          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
-        run: |  
-          Write-Host "Using PowerShell $($PSVersionTable.PSVersion)"
-          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+            // Create comment body with @copilot mention
+            const commentBody = `@copilot please investigate these test failures:
 
-          Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          
-          # Run e2e tests excluding long-running tests
-          $config = New-PesterConfiguration
-          $config.Run.Path = 'e2e-tests'
-          $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Detailed'
-          $config.Filter.ExcludeTag = 'LongRunning'
-          
-          $result = Invoke-Pester -Configuration $config
-          
-          if ($result.FailedCount -gt 0) {
-            throw "Tests failed"
-          }
-      - if:  ${{ matrix.powershell_version == '5' }}
-        name: E2E Test - powershell
-        shell: powershell
-        env:
-          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
-          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
-          E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
-        run: |  
-          $env:TESTMODULEPATH=(resolve-path "out/Rnwood.Dataverse.Data.PowerShell")
+            ${failureContent}
 
-          Install-Module -Force -Scope CurrentUser -SkipPublisherCheck Pester -MinimumVersion 5.0.0 -MaximumVersion 5.99.99
-          
-          # Run e2e tests excluding long-running tests
-          $config = New-PesterConfiguration
-          $config.Run.Path = 'e2e-tests'
-          $config.Run.PassThru = $true
-          $config.Output.Verbosity = 'Detailed'
-          $config.Filter.ExcludeTag = 'LongRunning'
-          
-          $result = Invoke-Pester -Configuration $config
-          
-          if ($result.FailedCount -gt 0) {
-            throw "Tests failed"
-          }      
-      - if: ${{ matrix.publish && github.event_name == 'release' && github.event.action == 'published' }}
-        name: Publish Release to PowerShell Gallery
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            **Commit:** ${{ github.sha }}
+            `;
+            
+            // Post comment to PR
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+
+  # Publish job - runs after all test jobs complete successfully
+  publish:
+    needs: test
+    if: github.event_name == 'release' && github.event.action == 'published'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: module-e2e-minimal-windows-latest-5
+          path: .
+      
+      - name: Publish to PS Gallery and Nuget (XrmToolbox Plugin)
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
+          NUGET_KEY_XRMTOOLBOX: ${{ secrets.NUGET_KEY_XRMTOOLBOX }}
         shell: pwsh
         run: |
           # Add release notes to module manifest
@@ -537,21 +667,94 @@ jobs:
           
           # Publish stable release to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
+
+          # Publish XrmToolbox Plugin to NuGet (if package exists)
+          $nupkgFiles = Get-ChildItem -Path 'out/nuget/*.nupkg' -ErrorAction SilentlyContinue
+          if ($nupkgFiles) {
+              Write-Host "Publishing XrmToolbox Plugin to NuGet..."
+              foreach ($nupkg in $nupkgFiles) {
+                  Write-Host "  Pushing $($nupkg.FullName)..."
+                  dotnet nuget push $nupkg.FullName -k $env:NUGET_KEY_XRMTOOLBOX -s https://api.nuget.org/v3/index.json --skip-duplicate
+              }
+          } else {
+              Write-Warning "No XrmToolbox Plugin nupkg found in out/nuget/ - skipping NuGet publish"
+          }
       
-      # CI Build Publishing (main branch only)
-      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-        name: Create CI Build Artifact
+      - name: Update GitHub Release Description
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Get the current release
+            const release = context.payload.release;
+            const version = release.tag_name.replace(/^v/, '');
+            
+            // Read existing release notes
+            const releaseNotes = fs.readFileSync('release-notes.md', 'utf8');
+            
+            // Build enhanced release body with PowerShell Gallery and installation links
+            const galleryUrl = `https://www.powershellgallery.com/packages/Rnwood.Dataverse.Data.PowerShell/${version}`;
+            const installDocsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/docs/getting-started/installation.md`;
+            const readmeUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}#installation`;
+            
+            // Preserve any existing body text
+            const existingBody = release.body || '';
+            
+            // Build enhanced release body
+            let enhancedBody = '## 📦 Installation\n\n';
+            enhancedBody += `View this release on PowerShell Gallery: [${version}](${galleryUrl})\n\n`;
+            enhancedBody += 'To install this release:\n';
+            enhancedBody += '```powershell\n';
+            enhancedBody += `Install-Module Rnwood.Dataverse.Data.PowerShell -RequiredVersion ${version} -Scope CurrentUser\n`;
+            enhancedBody += '```\n\n';
+            enhancedBody += 'For more installation options, see:\n';
+            enhancedBody += `- [Installation Guide](${installDocsUrl})\n`;
+            enhancedBody += `- [Quick Start in README](${readmeUrl})\n\n`;
+            enhancedBody += '## Changes\n\n';
+            enhancedBody += releaseNotes;
+            if (existingBody) {
+              enhancedBody += '\n\n---\n\n' + existingBody;
+            }
+            
+            // Update the release
+            await github.rest.repos.updateRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              release_id: release.id,
+              body: enhancedBody
+            });
+  
+  # CI Build Publishing (main branch only)
+  publish-ci:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      
+      - name: Download build artifacts
+        uses: actions/download-artifact@v5
+        with:
+          name: module-e2e-minimal-windows-latest-5
+          path: .
+      
+      - name: Create CI Build Artifact
         shell: pwsh
         run: |
           # Create a zip file of the module
           Compress-Archive -Path out/Rnwood.Dataverse.Data.PowerShell -DestinationPath Rnwood.Dataverse.Data.PowerShell-CI.zip -Force
       
-      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-        name: Create GitHub Release for CI Build
+      - name: Create GitHub Release for CI Build
         uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             const version = fs.readFileSync('ci-version.txt', 'utf8').trim();
             const shortSha = context.sha.substring(0, 7);
             const tagName = `v${version}`;
@@ -592,13 +795,35 @@ jobs:
             // Read release notes
             const releaseNotes = fs.readFileSync('release-notes.md', 'utf8');
             
+            // Build release body with PowerShell Gallery and installation links
+            const galleryUrl = `https://www.powershellgallery.com/packages/Rnwood.Dataverse.Data.PowerShell/${version}`;
+            const installDocsUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/blob/main/docs/getting-started/installation.md`;
+            const readmeUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}#installation`;
+            
+            let releaseBody = `Automated CI build from commit ${shortSha}\n\n`;
+            releaseBody += '**This is a prerelease version for testing purposes.**\n\n';
+            releaseBody += '## 📦 Installation\n\n';
+            releaseBody += `View this prerelease on PowerShell Gallery: [${version}](${galleryUrl})\n\n`;
+            releaseBody += 'To install this CI build:\n';
+            releaseBody += '```powershell\n';
+            releaseBody += `Install-Module Rnwood.Dataverse.Data.PowerShell -RequiredVersion ${version} -AllowPrerelease -Scope CurrentUser\n`;
+            releaseBody += '```\n\n';
+            releaseBody += 'For more installation options, see:\n';
+            releaseBody += `- [Installation Guide](${installDocsUrl})\n`;
+            releaseBody += `- [Quick Start in README](${readmeUrl})\n\n`;
+            releaseBody += '## Changes\n\n';
+            releaseBody += releaseNotes;
+            releaseBody += '\n\n---\n';
+            releaseBody += `**Commit:** ${context.sha}\n`;
+            releaseBody += '**Branch:** main';
+            
             // Create prerelease with release notes
             const release = await github.rest.repos.createRelease({
               owner: context.repo.owner,
               repo: context.repo.repo,
               tag_name: tagName,
               name: `CI Build ${version}`,
-              body: `Automated CI build from commit ${shortSha}\n\n**This is a prerelease version for testing purposes.**\n\n## Changes\n\n${releaseNotes}\n\n---\n**Commit:** ${context.sha}\n**Branch:** main`,
+              body: releaseBody,
               draft: false,
               prerelease: true,
               target_commitish: context.sha
@@ -613,11 +838,27 @@ jobs:
               name: 'Rnwood.Dataverse.Data.PowerShell-CI.zip',
               data: assetData
             });
+
+            // Upload the XrmToolbox Plugin NuGet package
+            const nugetDir = 'out/nuget';
+            if (fs.existsSync(nugetDir)) {
+              const nugetFiles = fs.readdirSync(nugetDir).filter(f => f.endsWith('.nupkg'));
+              for (const file of nugetFiles) {
+                const nugetData = fs.readFileSync(path.join(nugetDir, file));
+                await github.rest.repos.uploadReleaseAsset({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  release_id: release.data.id,
+                  name: file,
+                  data: nugetData
+                });
+              }
+            }
       
-      - if: ${{ matrix.publish && github.ref == 'refs/heads/main' && github.event_name == 'push' }}
-        name: Publish CI Build to PowerShell Gallery
+      - name: Publish CI Build to PowerShell Gallery
         env:
           NUGET_KEY: ${{ secrets.NUGET_KEY }}
+          NUGET_KEY_XRMTOOLBOX: ${{ secrets.NUGET_KEY_XRMTOOLBOX }}
         shell: pwsh
         run: |
           # Add release notes to module manifest
@@ -642,49 +883,7 @@ jobs:
           
           # Publish prerelease to PowerShell Gallery
           Publish-Module -Path out/Rnwood.Dataverse.Data.PowerShell -NuGetApiKey $env:NUGET_KEY -Verbose
-      
-      # Upload test failure reports as artifacts
-      - name: Upload test failure report
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/upload-artifact@v5
-        with:
-          name: test-failures-${{ matrix.os }}-${{ matrix.powershell_version }}
-          path: test-failures-*.md
-          if-no-files-found: ignore
-      
-      # Comment on PR with test failures
-      - name: Comment on PR with test failures
-        if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            const fs = require('fs');
-            const path = require('path');
-            
-            // Find failure report file
-            const files = fs.readdirSync('.');
-            const failureFile = files.find(f => f.startsWith('test-failures-'));
-            
-            if (!failureFile) {
-              console.log('No test failure report found');
-              return;
-            }
-            
-            const failureContent = fs.readFileSync(failureFile, 'utf8');
-            
-            // Create comment body with @copilot mention
-            const commentBody = `@copilot please investigate these test failures:
 
-            ${failureContent}
-
-            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-            **Commit:** ${{ github.sha }}
-            `;
-            
-            // Post comment to PR
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: commentBody
-            });
+          # NOTE: XrmToolbox Plugin is NOT published to NuGet from CI builds
+          # Only release builds (publish job) should push to NuGet to avoid 
+          # XrmToolbox plugin store validation issues with prerelease versions

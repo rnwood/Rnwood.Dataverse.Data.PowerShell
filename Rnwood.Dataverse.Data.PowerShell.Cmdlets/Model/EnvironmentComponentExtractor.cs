@@ -120,12 +120,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
                             var componentType = item.GetProperty("msdyn_componenttype").GetInt32();
                             var schemaName = item.TryGetProperty("msdyn_schemaname", out var sn) ? sn.GetString() : null;
                             var uniqueName = item.TryGetProperty("msdyn_uniquename", out var un) ? un.GetString() : null;
+                            var name = item.TryGetProperty("msdyn_name", out var n) ? n.GetString() : null;
                             var componentTypeName = item.TryGetProperty("msdyn_componenttypename", out var ctn) ? ctn.GetString() : null;
                             var isDefault = item.TryGetProperty("msdyn_isdefault", out var d) && d.ValueKind != JsonValueKind.Null ? d.GetBoolean() : (bool?)null;
                             var isCustom = item.TryGetProperty("msdyn_iscustom", out var c) && (c.ValueKind == JsonValueKind.True || c.ValueKind == JsonValueKind.False) ? c.GetBoolean() : (bool?)null;
                             var isCustomized = item.TryGetProperty("msdyn_hasactivecustomization", out var cz) && (cz.ValueKind == JsonValueKind.True || cz.ValueKind == JsonValueKind.False) ? cz.GetBoolean() : (bool?)null;
 
-                            string logicalName = schemaName ?? uniqueName;
+                            string logicalName = schemaName ?? uniqueName ?? name;
 
                             var component = new SolutionComponent
                             {
@@ -334,6 +335,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             var componentType = item.GetProperty("msdyn_componenttype").GetInt32();
 
             var schemaName = item.TryGetProperty("msdyn_schemaname", out var sn) ? sn.GetString() : null;
+            var name = item.TryGetProperty("msdyn_name", out var n) ? n.GetString() : null;
             var uniqueName = item.TryGetProperty("msdyn_uniquename", out var un) ? un.GetString() : null;
             var componentTypeName = item.TryGetProperty("msdyn_componenttypename", out var ctn) ? ctn.GetString() : null;
             var isDefault = item.TryGetProperty("msdyn_isdefault", out var d) && d.ValueKind != JsonValueKind.Null ? d.GetBoolean() : (bool?)null;
@@ -342,7 +344,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands.Model
             var isManaged = item.TryGetProperty("msdyn_ismanaged", out var m) && (m.ValueKind == JsonValueKind.True || m.ValueKind == JsonValueKind.False) ? m.GetBoolean() : (bool?)null;
 
             // Use msdyn_uniquename if available, otherwise use msdyn_schemaname
-            string logicalName = schemaName ?? uniqueName;
+            string logicalName = schemaName ?? uniqueName ?? name;
 
             subcomponents.Add(new SolutionComponent
             {

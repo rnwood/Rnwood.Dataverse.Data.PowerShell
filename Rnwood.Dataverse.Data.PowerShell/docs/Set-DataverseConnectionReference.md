@@ -21,21 +21,24 @@ Set-DataverseConnectionReference [-ConnectionReferenceLogicalName] <String> [-Co
 
 ### Multiple
 ```
-Set-DataverseConnectionReference -ConnectionReferences <Hashtable> [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+Set-DataverseConnectionReference -ConnectionReferences <Hashtable> [-SolutionUniqueName <String>]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
-Creates or updates connection reference values in Dataverse. Can set a single connection reference or multiple connection references at once. The single parameter set will create a connection reference if it does not exist, while the multiple parameter set only updates existing connection references.
+Creates or updates connection reference values in Dataverse. Can set a single connection reference or multiple connection references at once. 
 
-This cmdlet uses the same table and column names as the Import-DataverseSolution cmdlet for consistency:
-- Table: `connectionreference`
-- Columns: `connectionreferencelogicalname`, `connectionid`, `connectorid`, `connectionreferencedisplayname`, `description`
+The single parameter set will create a connection reference if it does not exist, or update the existing connection reference.
+
+The multiple parameter set only updates existing connection references if they are found. The keys in the hastable are the logical names of the connection references to update, and the values are the connection IDs to set.
+When using the multiple parameter set, connector names can be used as keys for fallback matching. If a key does not match any connection reference logical name, the cmdlet will query all existing connection references to get their connector IDs and check if the key matches a connector name. All connection references using that connector will be mapped to the specified connection ID.
+Specify the -SolutionUniqueName parameter to limit the search for connection references to those included in a specific solution.
 
 ## EXAMPLES
 
 ### Example 1: Create a new connection reference
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharedconnectionref" -ConnectionId "12345678-1234-1234-1234-123456789012" -ConnectorId "98765432-4321-4321-4321-210987654321" -DisplayName "Shared SharePoint Connection"
 ```
 
@@ -43,6 +46,7 @@ Creates a new connection reference with the specified logical name, connection I
 
 ### Example 2: Update an existing connection reference
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharedconnectionref" -ConnectionId "87654321-4321-4321-4321-210987654321"
 ```
 
@@ -50,6 +54,7 @@ Updates the connection ID of an existing connection reference. ConnectorId is no
 
 ### Example 3: Create connection reference with description
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sqlconnection" -ConnectionId "12345678-1234-1234-1234-123456789012" -ConnectorId "98765432-4321-4321-4321-210987654321" -DisplayName "Production SQL Database" -Description "Connection to the production SQL database server"
 ```
 
@@ -57,6 +62,7 @@ Creates a connection reference with display name and description.
 
 ### Example 4: Set multiple connection references
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseConnectionReference -ConnectionReferences @{
     'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
     'new_sql' = '87654321-4321-4321-4321-210987654321'
@@ -65,19 +71,36 @@ PS C:\> Set-DataverseConnectionReference -ConnectionReferences @{
 
 Sets multiple connection references at once using a hashtable.
 
-### Example 5: Set connection references with stored connection IDs
+### Example 5: Set connection references using connector name fallback
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseConnectionReference -ConnectionReferences @{
+    # All SharePoint connection references will use this connection
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    # All SQL connection references will use this connection  
+    'shared_sql' = '87654321-4321-4321-4321-210987654321'
+    # Override for a specific connection reference
+    'new_sharepoint_special' = '11111111-1111-1111-1111-111111111111'
+}
+```
+
+Sets connection references using connector names as fallback. All connection references using the SharePoint connector will be mapped to the first connection ID, except for 'new_sharepoint_special' which has a specific override. All SQL connection references will use the second connection ID.
+
+### Example 11: Set connection references with stored connection IDs
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $connectionIds = @{
-    'new_dataverse' = (Get-DataverseRecord -TableName connection -Filter "name eq 'Production Dataverse'").connectionid
-    'new_sharepoint' = (Get-DataverseRecord -TableName connection -Filter "name eq 'Production SharePoint'").connectionid
+    'new_dataverse' = (Get-DataverseRecord -TableName connection -FilterValues @{ name = 'Production Dataverse' }).connectionid
+    'new_sharepoint' = (Get-DataverseRecord -TableName connection -FilterValues @{ name = 'Production SharePoint' }).connectionid
 }
 PS C:\> Set-DataverseConnectionReference -ConnectionReferences $connectionIds
 ```
 
 Retrieves connection IDs by name and sets them for the connection references.
 
-### Example 6: Use with solution import workflow
+### Example 11: Use with solution import workflow
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Set connection references before importing solution
 PS C:\> Set-DataverseConnectionReference -ConnectionReferences @{
     'new_sharepoint' = '12345678-1234-1234-1234-123456789012'
@@ -88,8 +111,9 @@ PS C:\> Import-DataverseSolution -InFile "solution.zip"
 
 Sets connection references before importing a solution, ensuring they are configured correctly.
 
-### Example 7: View operation results
+### Example 11: View operation results
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $result = Set-DataverseConnectionReference -ConnectionReferenceLogicalName "new_sharedconnectionref" -ConnectionId "12345678-1234-1234-1234-123456789abc"
 PS C:\> Write-Host "Operation: $($result.Operation)"
 PS C:\> if ($result.PreviousConnectionId) {
@@ -101,23 +125,8 @@ Sets a connection reference and displays the operation type and connection ID ch
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -162,7 +171,45 @@ Accept wildcard characters: False
 ```
 
 ### -ConnectionReferences
-Hashtable of connection reference logical names to connection IDs (e.g., @{'new_sharedconnectionref' = '00000000-0000-0000-0000-000000000000'}).
+Hashtable of connection reference logical names or connector names to connection IDs. Used to set multiple connection references at once.
+
+Keys can be either:
+- Specific connection reference logical names (e.g., 'new_sharepoint_conn1')
+- Connector names for fallback matching (e.g., 'shared_sharepointonline')
+
+The connector name is the value after the last '/' in the full connector ID path. For example, if the full connector ID is '/providers/Microsoft.PowerApps/apis/shared_sharepointonline', the connector name is 'shared_sharepointonline'.
+
+When a hashtable key matches a connection reference logical name, it is used directly. If no direct match is found, the cmdlet queries all existing connection references to get their connector IDs and checks if the key matches a connector name. All connection references using that connector will be mapped to the specified connection ID.
+
+Logical name matches take precedence over connector name matches, allowing you to override the connector-level default for specific connection references.
+
+Example using logical names:
+
+
+@{
+    'new_sharepoint_conn1' = '12345678-1234-1234-1234-123456789012'
+    'new_sharepoint_conn2' = '87654321-4321-4321-4321-210987654321'
+}
+
+Example using connector name fallback:
+
+
+@{
+    # All SharePoint connection references will use this connection
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    # All SQL connection references will use this connection
+    'shared_sql' = '87654321-4321-4321-4321-210987654321'
+}
+
+Example mixing both approaches:
+
+
+@{
+    # Default for all SharePoint connection references
+    'shared_sharepointonline' = '12345678-1234-1234-1234-123456789012'
+    # Override for a specific SharePoint connection reference
+    'new_sharepoint_special' = '11111111-1111-1111-1111-111111111111'
+}
 
 ```yaml
 Type: Hashtable
@@ -221,13 +268,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases: wi
+Aliases: proga
 
 Required: False
 Position: Named
@@ -236,13 +283,43 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -SolutionUniqueName
+Solution unique name to filter connection references by. When specified, only connection references that are components of this solution will be processed.
 
 ```yaml
-Type: ActionPreference
+Type: String
+Parameter Sets: Multiple
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+```yaml
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
 
 Required: False
 Position: Named

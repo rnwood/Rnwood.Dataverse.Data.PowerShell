@@ -44,60 +44,67 @@ Use the IfExists parameter to suppress errors when attempting to remove componen
 
 ### Example 1: Remove a component by ID
 ```powershell
-PS C:\> $component = Get-DataverseAppModuleComponent -Connection $c -AppModuleUniqueName "myapp" | Where-Object { $_.ObjectId -eq $entityId }
-PS C:\> Remove-DataverseAppModuleComponent -Connection $c -Id $component.Id -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $component = Get-DataverseAppModuleComponent -AppModuleUniqueName "myapp" | Where-Object { $_.ObjectId -eq $entityId }
+PS C:\> Remove-DataverseAppModuleComponent -Id $component.Id -Confirm:$false
 ```
 
 Finds and removes a specific component from an app module using the component ID.
 
 ### Example 2: Remove component by app module unique name
 ```powershell
-PS C:\> $entityMetadata = Get-DataverseEntityMetadata -Connection $c -EntityName "contact"
-PS C:\> Remove-DataverseAppModuleComponent -Connection $c -AppModuleUniqueName "myapp" -ObjectId $entityMetadata.MetadataId -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $entityMetadata = Get-DataverseEntityMetadata -EntityName "contact"
+PS C:\> Remove-DataverseAppModuleComponent -AppModuleUniqueName "myapp" -ObjectId $entityMetadata.MetadataId -Confirm:$false
 ```
 
 Removes the contact entity from an app module by specifying the app's unique name and entity metadata ID.
 
 ### Example 3: Remove component by app module ID
 ```powershell
-PS C:\> $app = Get-DataverseAppModule -Connection $c -UniqueName "myapp"
-PS C:\> $form = Get-DataverseRecord -Connection $c -TableName systemform -FilterValues @{ name = "Contact Form" }
-PS C:\> Remove-DataverseAppModuleComponent -Connection $c -AppModuleId $app.Id -ObjectId $form.systemformid -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $app = Get-DataverseAppModule -UniqueName "myapp"
+PS C:\> $form = Get-DataverseRecord -TableName systemform -FilterValues @{ name = "Contact Form" }
+PS C:\> Remove-DataverseAppModuleComponent -AppModuleId $app.Id -ObjectId $form.systemformid -Confirm:$false
 ```
 
 Removes a form from an app module by specifying the app module ID and form ID.
 
 ### Example 4: Remove with IfExists flag
 ```powershell
-PS C:\> Remove-DataverseAppModuleComponent -Connection $c -Id $componentId -IfExists -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModuleComponent -Id $componentId -IfExists -Confirm:$false
 ```
 
 Attempts to remove a component but doesn't error if it doesn't exist.
 
 ### Example 5: Remove all components of a type
 ```powershell
-PS C:\> Get-DataverseAppModuleComponent -Connection $c -AppModuleUniqueName "myapp" -ComponentType Chart |
-    Remove-DataverseAppModuleComponent -Connection $c -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseAppModuleComponent -AppModuleUniqueName "myapp" -ComponentType Chart |
+    Remove-DataverseAppModuleComponent -Confirm:$false
 ```
 
 Removes all chart components from an app module using pipeline input with the ById parameter set.
 
 ### Example 6: Use WhatIf to preview
 ```powershell
-PS C:\> Remove-DataverseAppModuleComponent -Connection $c -AppModuleUniqueName "myapp" -ObjectId $entityId -WhatIf
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModuleComponent -AppModuleUniqueName "myapp" -ObjectId $entityId -WhatIf
 ```
 
 Shows what would happen without actually removing the component.
 
 ### Example 7: Remove multiple components safely
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $componentsToRemove = @(
     @{ AppModuleUniqueName = "myapp"; ObjectId = $entity1Id },
     @{ AppModuleUniqueName = "myapp"; ObjectId = $entity2Id },
     @{ AppModuleUniqueName = "myapp"; ObjectId = $formId }
 )
 PS C:\> $componentsToRemove | ForEach-Object {
-    Remove-DataverseAppModuleComponent -Connection $c -AppModuleUniqueName $_.AppModuleUniqueName -ObjectId $_.ObjectId -IfExists -Confirm:$false
+    Remove-DataverseAppModuleComponent -AppModuleUniqueName $_.AppModuleUniqueName -ObjectId $_.ObjectId -IfExists -Confirm:$false
 }
 ```
 
@@ -135,24 +142,8 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -212,14 +203,13 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases: wi
+Aliases: proga
 
 Required: False
 Position: Named
@@ -228,13 +218,29 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
 
 Required: False
 Position: Named

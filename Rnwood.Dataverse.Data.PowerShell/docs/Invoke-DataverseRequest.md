@@ -83,8 +83,9 @@ This cmdlet supports automatic retries for transient failures using exponential 
 
 ### Example 1
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $request = new-object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
-PS C:\> $response = Invoke-DataverseRequest -connection $c -request $request
+PS C:\> $response = Invoke-DataverseRequest -request $request
 PS C:\> $response.Results["UserId"]
 ```
 
@@ -92,7 +93,8 @@ Invokes `WhoAmIRequest` using the Request parameter set. The response is a raw `
 
 ### Example 2
 ```powershell
-PS C:\> $response = Invoke-DataverseRequest -connection $c -requestname "WhoAmI" -parameters @{}
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $response = Invoke-DataverseRequest -requestname "WhoAmI" -parameters @{}
 PS C:\> $response.UserId
 ```
 
@@ -100,7 +102,8 @@ Invokes `WhoAmI` using the NameAndInputs parameter set. The response is automati
 
 ### Example 3
 ```powershell
-PS C:\> $response = Invoke-DataverseRequest -connection $c -requestname "WhoAmI" -parameters @{} -Raw
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $response = Invoke-DataverseRequest -requestname "WhoAmI" -parameters @{} -Raw
 PS C:\> $response.Results["UserId"]
 ```
 
@@ -108,9 +111,10 @@ Invokes `WhoAmI` using the NameAndInputs parameter set with `-Raw` switch. The r
 
 ### Example 4
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $Target = new-object Microsoft.Xrm.Sdk.EntityReference "incident", "{DC66FE5D-B854-4F9D-BA63-4CEA4257A8E9}"
 PS C:\> $Priority = new-object Microsoft.Xrm.Sdk.OptionSetValue 1
-PS C:\> $response = Invoke-DataverseRequest -connection $c myapi_EscalateCase @{
+PS C:\> $response = Invoke-DataverseRequest myapi_EscalateCase @{
 	Target = $Target
 	Priority = $Priority
 }
@@ -133,7 +137,16 @@ PS C:\> invoke-dataverserequest -connection $c -method POST myapi_Example \
 
 Invokes the `POST` `myapi_Example` REST API using custom headers and body. REST responses are returned as JSON objects without conversion.
 
-### Example 6: Using retry logic for transient failures
+### Example 6: Calling a custom API on a specific record
+
+```powershell
+PS C:\> $id = "1d936fda-9076-ef11-a671-6045bd0ab99c"
+PS C:\> $response = Invoke-DataverseRequest -connection $c -method POST -path "sample_entities($id)/Microsoft.Dynamics.CRM.sample_MyCustomApi" -body @{ param1 = "value1" }
+```
+
+Invokes a custom API on a specific record using a navigation path. This pattern is useful for calling bound custom actions that operate on a specific entity instance.
+
+### Example 7: Using retry logic for transient failures
 
 ```powershell
 PS C:\> $request = New-Object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
@@ -283,7 +296,13 @@ Accept wildcard characters: False
 ```
 
 ### -Path
-Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').
+Resource name or navigation path for the REST API call (e.g., 'accounts', 'contacts', 'myapi_Example', or 'entities(id)/Microsoft.Dynamics.CRM.CustomAction'). 
+
+**Important:** Do not include the full API path starting with '/api/' or 'api/' (like '/api/data/v9.2/accounts'). The organization URL and API version are automatically added by the connection.
+
+Navigation paths with forward slashes are supported for calling custom APIs on specific records (e.g., 'sample_entities(guid)/Microsoft.Dynamics.CRM.sample_MyCustomApi').
+
+Query strings are allowed and may contain '/' characters (e.g., 'accounts?$filter=name eq ''test/value''').
 
 ```yaml
 Type: String
@@ -292,6 +311,21 @@ Aliases:
 
 Required: True
 Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -358,21 +392,6 @@ Aliases:
 Required: False
 Position: Named
 Default value: 0
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

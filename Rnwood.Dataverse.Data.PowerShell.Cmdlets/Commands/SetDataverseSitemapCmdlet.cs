@@ -83,7 +83,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Try to find existing sitemap by UniqueName
                 var query = new QueryExpression("sitemap")
                 {
-                    ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
+                    ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapnameunique", "sitemapxml"),
                     Criteria = new FilterExpression
                     {
                         Conditions =
@@ -134,7 +134,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     var existingQuery = new QueryExpression("sitemap")
                     {
-                        ColumnSet = new ColumnSet("sitemapid", "sitemapname"),
+                        ColumnSet = new ColumnSet("sitemapid", "sitemapname", "sitemapnameunique", "sitemapxml"),
                         Criteria = new FilterExpression
                         {
                             Conditions =
@@ -172,16 +172,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     existingSitemap = existingSitemaps.Entities[0];
                 }
 
-                WriteVerbose($"Updating sitemap...");
+                WriteVerbose($"Checking for changes to sitemap...");
 
                 var updateEntity = new Entity("sitemap", sitemapId);
+                string providedSitemapXml = SitemapXml; // Track if XML was provided
+                
+                // Only add attributes that have changed
                 if (!string.IsNullOrEmpty(Name))
                 {
-                    updateEntity["sitemapname"] = Name;
+                    var existingName = existingSitemap.GetAttributeValue<string>("sitemapname");
+                    if (existingName != Name)
+                    {
+                        updateEntity["sitemapname"] = Name;
+                    }
                 }
                 if (!string.IsNullOrEmpty(UniqueName))
                 {
-                    updateEntity["sitemapnameunique"] = UniqueName;
+                    var existingUniqueName = existingSitemap.GetAttributeValue<string>("sitemapnameunique");
+                    if (existingUniqueName != UniqueName)
+                    {
+                        updateEntity["sitemapnameunique"] = UniqueName;
+                    }
                 }
                 if (!string.IsNullOrEmpty(SitemapXml))
                 {
@@ -199,12 +210,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             SitemapXml));
                         return;
                     }
-                    updateEntity["sitemapxml"] = SitemapXml;
+                    
+                    var existingSitemapXml = existingSitemap.GetAttributeValue<string>("sitemapxml");
+                    if (existingSitemapXml != SitemapXml)
+                    {
+                        updateEntity["sitemapxml"] = SitemapXml;
+                    }
                 }
 
-                Connection.Update(updateEntity);
+                // Dataverse requires sitemapxml to be present when updating other sitemap properties
+                // If we're updating any attributes AND XML was provided, ensure XML is included even if unchanged
+                if (updateEntity.Attributes.Count > 0 && !string.IsNullOrEmpty(providedSitemapXml) && !updateEntity.Contains("sitemapxml"))
+                {
+                    WriteVerbose("Adding sitemapxml to update (required by Dataverse even when unchanged)");
+                    updateEntity["sitemapxml"] = providedSitemapXml;
+                }
 
-                WriteVerbose("Sitemap updated successfully.");
+                // Only call Update if there are changes
+                if (updateEntity.Attributes.Count > 0)
+                {
+                    WriteVerbose($"Updating sitemap with {updateEntity.Attributes.Count} changed attribute(s)...");
+                    Connection.Update(updateEntity);
+                    WriteVerbose("Sitemap updated successfully.");
+                }
+                else
+                {
+                    WriteVerbose("No changes detected. Skipping update.");
+                }
             }
             else
             {
@@ -269,6 +301,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
                 Connection.Execute(publishRequest);
                 WriteVerbose($"Published sitemap with ID: {sitemapId}");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
             }
 
             if (PassThru.IsPresent)

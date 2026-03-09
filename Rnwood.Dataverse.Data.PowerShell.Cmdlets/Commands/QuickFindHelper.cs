@@ -31,7 +31,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             XDocument doc = XDocument.Parse(fetchXml);
 
             // Get cached metadata
-            var metadata = entityMetadataFactory.GetMetadata(tableName);
+            var metadata = entityMetadataFactory.GetLimitedMetadata(tableName);
             var attributes = metadata.Attributes.ToDictionary(a => a.LogicalName);
 
             // Find conditions with placeholders
@@ -163,7 +163,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public static void PreprocessFilterForQuickFind(FilterExpression filter, string tableName, EntityMetadataFactory entityMetadataFactory, out Dictionary<string, string> placeholderMap)
         {
             placeholderMap = new Dictionary<string, string>();
-            var metadata = entityMetadataFactory.GetMetadata(tableName);
+            var metadata = entityMetadataFactory.GetLimitedMetadata(tableName);
             var attributes = metadata.Attributes.ToDictionary(a => a.LogicalName);
             PreprocessFilterRecursive(filter, placeholderMap, attributes);
         }

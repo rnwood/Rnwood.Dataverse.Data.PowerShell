@@ -46,9 +46,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 0, HelpMessage = "HTTP method to use for the REST API call (e.g., GET, POST, PATCH, DELETE).")]
 		public System.Net.Http.HttpMethod Method { get; set; }
 		/// <summary>
-		/// Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').
+		/// Resource name for the REST API call (e.g., 'accounts' or 'myapi_Example'). Do not include the full path like '/api/data/v9.2/accounts' as the organization URL and API version are automatically added.
 		/// </summary>
-		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Path portion of the REST API URL (e.g., 'api/data/v9.2/contacts' or 'myapi_Example').")]
+		[Parameter(ParameterSetName = "REST", Mandatory = true, Position = 1, HelpMessage = "Resource name for the REST API call (e.g., 'accounts' or 'myapi_Example'). Do not include the full path - the organization URL and API version are automatically added.")]
 		public string Path { get; set; }
 		/// <summary>
 		/// Body of the REST API request. Can be a string (JSON) or a PSObject which will be converted to JSON.
@@ -129,6 +129,23 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			if (ParameterSetName == "REST")
 			{
+				// Validate that the path does not start with /api/ or api/ which would indicate an absolute path
+				// The SDK does not support full absolute API paths like '/api/data/v9.2/accounts'
+				// However, we do allow navigation paths like 'entities(id)/Microsoft.Dynamics.CRM.action' for custom APIs
+				// Query strings (after '?') may contain '/' characters
+				string pathPortion = Path.Split('?')[0];
+				if (pathPortion.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) || 
+				    pathPortion.StartsWith("api/", StringComparison.OrdinalIgnoreCase))
+				{
+					throw new ArgumentException(
+						$"The Path parameter should not start with '/api/' or 'api/'. " +
+						$"Provide the resource name or navigation path (e.g., 'accounts', 'WhoAmI', or 'entities(id)/Microsoft.Dynamics.CRM.action') " +
+						$"rather than a full path like '/api/data/v9.2/accounts'. " +
+						$"The organization URL and API version are automatically added by the connection. " +
+						$"Current value: '{Path}'",
+						nameof(Path));
+				}
+
 				var headers = new Dictionary<string, List<string>>();
 				foreach (DictionaryEntry kvp in CustomHeaders.Cast<DictionaryEntry>())
 				{
@@ -143,14 +160,31 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 						bodyString = bs;
 					} else
 					{
-						bodyString = (string)InvokeCommand.NewScriptBlock("param($body); $body | ConvertTo-Json -Depth 100").Invoke(Body).First().ImmediateBaseObject;
+						// Detect PowerShell version - PowerShell 5.1 doesn't support -Depth parameter
+						var psVersionResult = InvokeCommand.NewScriptBlock("$PSVersionTable.PSVersion.Major").Invoke();
+						int psMajorVersion = (int)psVersionResult.FirstOrDefault()?.BaseObject;
+						
+						// PowerShell 5.1 doesn't support -Depth parameter, use it only for PS 6+
+						string convertToJsonScript = psMajorVersion >= 6 
+							? "param($body); $body | ConvertTo-Json -Depth 100" 
+							: "param($body); $body | ConvertTo-Json";
+						bodyString = (string)InvokeCommand.NewScriptBlock(convertToJsonScript).Invoke(Body).First().ImmediateBaseObject;
 					}
 				}
 
 				System.Net.Http.HttpResponseMessage response = Connection.ExecuteWebRequest(Method, Path, bodyString, headers);
 				response.EnsureSuccessStatusCode();
 				string responseBody = response.Content.ReadAsStringAsync().Result;
-				var result = InvokeCommand.NewScriptBlock("param($response); $response | ConvertFrom-Json -Depth 100").Invoke(responseBody);
+				
+				// Detect PowerShell version - PowerShell 5.1 doesn't support -Depth parameter
+				var psVersionResult2 = InvokeCommand.NewScriptBlock("$PSVersionTable.PSVersion.Major").Invoke();
+				int psMajorVersion2 = (int)psVersionResult2.FirstOrDefault()?.BaseObject;
+				
+				// PowerShell 5.1 doesn't support -Depth parameter, use it only for PS 6+
+				string convertFromJsonScript = psMajorVersion2 >= 6 
+					? "param($response); $response | ConvertFrom-Json -Depth 100" 
+					: "param($response); $response | ConvertFrom-Json";
+				var result = InvokeCommand.NewScriptBlock(convertFromJsonScript).Invoke(responseBody);
 				WriteObject(result);
 			}
 			else
@@ -158,7 +192,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				if (ParameterSetName == "NameAndInputs")
 				{
 					Request = new OrganizationRequest(RequestName);
-					Request.Parameters.AddRange(Parameters.Cast<DictionaryEntry>().Select(e => new KeyValuePair<string, object>((string)e.Key, e.Value)));
+					Request.Parameters.AddRange(Parameters.Cast<DictionaryEntry>().Select(e => new KeyValuePair<string, object>((string)e.Key, UnwrapPSObject(e.Value))));
 				}
 
 				// Apply bypass parameters to the request
@@ -230,6 +264,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			catch { }
 			base.StopProcessing();
+		}
+
+		/// <summary>
+		/// Unwraps a PSObject value to its base object if needed.
+		/// This prevents serialization errors when SDK objects like EntityReference or OptionSetValue
+		/// are wrapped in PSObject and passed to OrganizationRequest.Parameters.
+		/// </summary>
+		/// <param name="value">The value to unwrap</param>
+		/// <returns>The unwrapped base object if value is a PSObject wrapping a non-PSCustomObject, otherwise the original value</returns>
+		private static object UnwrapPSObject(object value)
+		{
+			// Unwrap PSObject if it's not wrapping a PSCustomObject
+			// This pattern matches the one used in DataverseEntityConverter.cs
+			if (value is PSObject psObject && !(psObject.BaseObject is PSCustomObject))
+			{
+				return psObject.BaseObject;
+			}
+			return value;
 		}
 	}
 }

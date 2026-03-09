@@ -1,31 +1,3 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Working with Metadata](#working-with-metadata)
-  - [Reading Metadata](#reading-metadata)
-    - [Entity Metadata](#entity-metadata)
-    - [Attribute Metadata](#attribute-metadata)
-    - [Relationship Metadata](#relationship-metadata)
-    - [Option Set Metadata](#option-set-metadata)
-  - [Metadata Caching](#metadata-caching)
-    - [How Caching Works](#how-caching-works)
-    - [Using the Cache](#using-the-cache)
-    - [Manual Cache Management](#manual-cache-management)
-    - [When to Use Caching](#when-to-use-caching)
-  - [Creating and Updating Metadata](#creating-and-updating-metadata)
-    - [Creating Entities](#creating-entities)
-    - [Creating Attributes](#creating-attributes)
-    - [Creating Relationships](#creating-relationships)
-    - [Creating Global Option Sets](#creating-global-option-sets)
-  - [Deleting Metadata](#deleting-metadata)
-  - [Common Patterns](#common-patterns)
-    - [Schema Documentation](#schema-documentation)
-    - [Schema Validation](#schema-validation)
-    - [Bulk Attribute Creation](#bulk-attribute-creation)
-  - [Related Resources](#related-resources)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Working with Metadata
 
@@ -224,7 +196,7 @@ Get-DataverseEntityMetadata |
 
 ### Creating Attributes
 
-Different attribute types require different parameters. See [Metadata CRUD Examples](../Metadata-CRUD-Examples.md) for comprehensive examples of all attribute types.
+Different attribute types require different parameters. See the docs for comprehensive examples of all attribute types.
 
 ```powershell
 # String attribute with format
@@ -259,7 +231,66 @@ Set-DataverseAttributeMetadata `
         @{Value=2; Label='Active'}
         @{Value=3; Label='Completed'}
     )
+
+# Lookup field with automatic relationship creation
+Set-DataverseAttributeMetadata `
+    -EntityName contact `
+    -AttributeName new_accountid `
+    -SchemaName new_AccountId `
+    -AttributeType Lookup `
+    -DisplayName "Account" `
+    -Targets @('account') `
+    -RequiredLevel None
+
+# Lookup with custom relationship name and cascade behaviors
+Set-DataverseAttributeMetadata `
+    -EntityName new_task `
+    -AttributeName new_projectid `
+    -SchemaName new_ProjectId `
+    -AttributeType Lookup `
+    -DisplayName "Project" `
+    -Targets @('new_project') `
+    -RelationshipSchemaName new_project_task `
+    -CascadeDelete Cascade `
+    -CascadeAssign Cascade `
+    -RequiredLevel ApplicationRequired
 ```
+
+**Lookup Attribute Features:**
+- Creates both the lookup attribute and OneToMany relationship in a single operation
+- **RelationshipSchemaName**: Optional parameter to specify a custom relationship name. If not provided, auto-generates as `{target}_{referencing}_{attribute}`
+- **Cascade behaviors**: Configure Assign, Share, Unshare, Reparent, Delete, and Merge operations
+- **Single-target only**: Multi-target (polymorphic) lookups not yet supported - use `Set-DataverseRelationshipMetadata` for complex scenarios
+- **Update support**: Can update display name, description, and required level of existing lookups
+- **Immutable properties**: Target entities, relationship name, and cascade behaviors cannot be changed after creation
+
+### Updating StatusCode Options
+
+For custom entities, you can update the statuscode attribute to define custom status values. Each status value must be associated with a state (0 = Active, 1 = Inactive).
+
+```powershell
+# Define status options with State property
+$statusOptions = @(
+    @{Value=1; Label='Draft'; State=0},
+    @{Value=807290000; Label='Approved'; State=0},
+    @{Value=807290001; Label='Filled'; State=0},
+    @{Value=2; Label='Closed'; State=1},
+    @{Value=807290002; Label='Cancelled'; State=1}
+)
+
+# Update statuscode options
+Set-DataverseAttributeMetadata `
+    -EntityName abc_position `
+    -AttributeName statuscode `
+    -Options $statusOptions
+```
+
+**StatusCode Options Requirements:**
+- **State property is required**: Each option must include a State value (0 for Active state, 1 for Inactive state)
+- **Value property is required**: Specify the numeric value for each status
+- **Label property is required**: Specify the display name for each status
+- **Custom values**: Use values 807290000 and higher to avoid conflicts with default values
+- **Cannot modify system entities**: This only works for custom entities (with new_ prefix)
 
 ### Creating Relationships
 
@@ -358,8 +389,54 @@ foreach ($def in $attributeDefinitions) {
 }
 ```
 
+### Alternate Keys
+
+Alternate keys allow records to be uniquely identified using a combination of attributes instead of the primary GUID key. They're particularly useful for data integration scenarios.
+
+```powershell
+# Create a single-attribute alternate key
+Set-DataverseEntityKeyMetadata `
+    -EntityName contact `
+    -SchemaName contact_email_key `
+    -KeyAttributes @('emailaddress1') `
+    -DisplayName "Email Key" `
+    -Publish
+
+# Create a composite alternate key (multiple attributes)
+Set-DataverseEntityKeyMetadata `
+    -EntityName contact `
+    -SchemaName contact_name_key `
+    -KeyAttributes @('firstname', 'lastname') `
+    -DisplayName "Name Key" `
+    -Publish
+
+# Retrieve all keys for an entity
+$keys = Get-DataverseEntityKeyMetadata -EntityName contact
+
+# Retrieve a specific key
+$emailKey = Get-DataverseEntityKeyMetadata -EntityName contact -KeyName contact_email_key
+
+# Access key properties
+$emailKey.LogicalName          # contact_email_key
+$emailKey.KeyAttributes         # Array of attribute names
+$emailKey.DisplayName.UserLocalizedLabel.Label
+
+# Delete an alternate key
+Remove-DataverseEntityKeyMetadata `
+    -EntityName contact `
+    -KeyName contact_email_key `
+    -Confirm:$false
+```
+
+**Important Notes:**
+- Keys must be published before they become active
+- Use `-Publish` parameter or manually publish customizations
+- Alternate keys **cannot be updated** after creation - you must remove and recreate them
+- Use `-Force` parameter to skip existence checks when creating keys
+- Keys enable efficient upsert operations using alternate key values instead of GUIDs
+
 ## Related Resources
 
-- [Metadata CRUD Examples](../Metadata-CRUD-Examples.md) - Comprehensive examples for all attribute types and scenarios
+<!-- Link to Metadata CRUD examples removed. See the docs for comprehensive examples of all attribute types and scenarios -->
 - [Microsoft SDK Documentation](https://docs.microsoft.com/en-us/dotnet/api/microsoft.xrm.sdk.metadata) - SDK metadata object reference
 - [Dataverse Metadata Reference](https://docs.microsoft.com/en-us/power-apps/developer/data-platform/metadata-services) - Overview of metadata concepts

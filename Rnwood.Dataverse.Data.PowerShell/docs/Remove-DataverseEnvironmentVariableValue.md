@@ -25,6 +25,7 @@ Use Remove-DataverseEnvironmentVariableDefinition to remove both the definition 
 
 ### Example 1: Remove an environment variable value
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEnvironmentVariableValue -SchemaName "new_apiurl"
 ```
 
@@ -32,6 +33,7 @@ Removes the value for the environment variable "new_apiurl", but preserves the d
 
 ### Example 2: Remove with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" -Confirm
 ```
 
@@ -39,6 +41,7 @@ Prompts for confirmation before removing the value.
 
 ### Example 3: Remove value with WhatIf
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" -WhatIf
 ```
 
@@ -46,6 +49,7 @@ Shows what would happen if the cmdlet runs without actually removing the value.
 
 ### Example 4: Remove from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue -SchemaName "new_test*" | 
     Remove-DataverseEnvironmentVariableValue
 ```
@@ -54,13 +58,13 @@ Removes values for all environment variables with schema names starting with "ne
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
+### -Connection
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
-Type: SwitchParameter
+Type: ServiceClient
 Parameter Sets: (All)
-Aliases: cf
+Aliases:
 
 Required: False
 Position: Named
@@ -69,13 +73,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: ServiceClient
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases:
+Aliases: proga
 
 Required: False
 Position: Named
@@ -99,13 +103,13 @@ Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -114,13 +118,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named

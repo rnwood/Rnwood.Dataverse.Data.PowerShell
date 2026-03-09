@@ -31,7 +31,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// SQL to execute. See Sql4Cds docs.
 		/// </summary>
-		[Parameter(Mandatory = true, HelpMessage = "SQL to execute. See Sql4Cds docs.", ValueFromRemainingArguments = true)]
+		[Parameter(Mandatory = true, Position = 0, HelpMessage = "SQL to execute. Use @paramname for parameters. Use datasourcename..tablename syntax for cross-datasource queries.", ValueFromRemainingArguments = true)]
 		public string Sql { get; set; }
 		/// <summary>
 		/// Uses the TDS endpoint for supported queries. See Sql4Cds docs
@@ -46,7 +46,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Specifies the values to use as parameters for the query. When reading from the pipelines, each input object will execute the query once.
 		/// </summary>
-		[Parameter(ValueFromPipeline = true, HelpMessage ="Specifies the values to use as parameters for the query. When reading from the pipelines, each input object will execute the query once.")]
+		[Parameter(ValueFromPipeline = true, HelpMessage ="Specifies values for @parameters in SQL query. Use hashtable or PSObject. Can be piped to execute query multiple times with different values.")]
 		public PSObject Parameters { get; set; }
 		/// <summary>
 		/// Sets the max batch size. See Sql4Cds docs
@@ -78,6 +78,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// </summary>
 		[Parameter(HelpMessage = "When working with date values, this property indicates the local time zone should be used. See Sql4Cds docs.")]
 		public SwitchParameter UseLocalTimezone { get; set; }
+		/// <summary>
+		/// Additional data sources to register with Sql4Cds, allowing queries across multiple connections. Hashtable where keys are data source names and values are ServiceClient connections.
+		/// </summary>
+		[Parameter(HelpMessage = "Hashtable of additional connections for cross-datasource queries. Keys become datasource names. Reference in SQL using datasourcename..tablename syntax (double-dot).")]
+		public Hashtable AdditionalConnections { get; set; }
+		/// <summary>
+		/// Specifies the name for the primary data source. If not specified, defaults to the organization unique name. Use this parameter to ensure consistent data source names across different environments for repeatable queries.
+		/// </summary>
+		[Parameter(HelpMessage = "Overrides primary datasource name (default: org unique name). Makes queries portable across environments. Use with datasourcename..tablename syntax.")]
+		public string DataSourceName { get; set; }
 
 		/// <summary>
 		/// Initializes the cmdlet.
@@ -89,7 +99,125 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			// Initialize cancellation token source for this pipeline invocation
 			_userCancellationCts = new System.Threading.CancellationTokenSource();
 
-			_sqlConnection = new Sql4CdsConnection(Connection);
+			// Create a DataSource with AccessTokenProvider to enable TDS endpoint support
+			// when CurrentAccessToken is not available (e.g., with token provider authentication)
+			var dataSource = new DataSource(Connection);
+			
+			// Set AccessTokenProvider to retrieve access token from ServiceClient
+			// This is used as a fallback when CurrentAccessToken is null
+			if (Connection is ServiceClient serviceClient)
+			{
+				dataSource.AccessTokenProvider = () => GetAccessToken(serviceClient);
+			}
+
+			// Override the data source name if specified by the user
+			// This ensures consistent naming across different environments for repeatable queries
+			if (!string.IsNullOrEmpty(DataSourceName))
+			{
+				WriteVerbose($"Overriding primary datasource name from '{dataSource.Name}' to '{DataSourceName}'");
+				dataSource.Name = DataSourceName;
+			}
+			else
+			{
+				// Explicitly use ConnectedOrgUniqueName to ensure consistent behaviour across all platforms.
+				// On net462 (PS5), the DataSource constructor checks for CrmServiceClient (old package), but we
+				// use ServiceClient (new package), so it falls back to the org friendly name instead of the
+				// unique name. Users querying cross-datasource use ConnectedOrgUniqueName in their SQL, so we
+				// must ensure the registered data source name matches.
+				var orgUniqueName = Connection.ConnectedOrgUniqueName;
+				if (!string.IsNullOrEmpty(orgUniqueName))
+				{
+					dataSource.Name = orgUniqueName;
+				}
+				WriteVerbose($"Using default datasource name '{dataSource.Name}' from connection");
+			}
+
+			// Create connection using the DataSource with AccessTokenProvider configured
+			var dataSources = new Dictionary<string, DataSource>(StringComparer.OrdinalIgnoreCase)
+			{
+				[dataSource.Name] = dataSource
+			};
+			
+			WriteVerbose($"Registered primary datasource with name: '{dataSource.Name}'");
+			WriteVerbose($"DataSources dictionary has {dataSources.Count} entries");
+			foreach (var ds in dataSources)
+			{
+				WriteVerbose($"  - Key: '{ds.Key}', Value.Name: '{ds.Value.Name}'");
+			}
+
+			// Add any additional connections provided by the user
+			if (AdditionalConnections != null)
+			{
+				foreach (DictionaryEntry entry in AdditionalConnections)
+				{
+					string name = entry.Key.ToString();
+					
+					ServiceClient additionalServiceClient = null;
+					IOrganizationService additionalOrgService = null;
+					
+					// Handle PSObject wrapping from PowerShell
+					if (entry.Value is PSObject psObject)
+					{
+						if (psObject.BaseObject is ServiceClient sc)
+						{
+							additionalServiceClient = sc;
+						}
+						else if (psObject.BaseObject is IOrganizationService orgSvc)
+						{
+							additionalOrgService = orgSvc;
+						}
+					}
+					else if (entry.Value is ServiceClient sc)
+					{
+						additionalServiceClient = sc;
+					}
+					else if (entry.Value is IOrganizationService orgSvc)
+					{
+						additionalOrgService = orgSvc;
+					}
+					
+					if (additionalServiceClient != null)
+					{
+						var additionalDataSource = new DataSource(additionalServiceClient);
+						additionalDataSource.Name = name;
+						
+						WriteVerbose($"Registered additional datasource with name: '{name}'");
+						
+						// Set AccessTokenProvider for TDS endpoint support
+						additionalDataSource.AccessTokenProvider = () => GetAccessToken(additionalServiceClient);
+						
+						dataSources[name] = additionalDataSource;
+					}
+					else if (additionalOrgService != null)
+					{
+						var additionalDataSource = new DataSource(additionalOrgService);
+						additionalDataSource.Name = name;
+						
+						// Set AccessTokenProvider if it's a ServiceClient
+						if (additionalOrgService is ServiceClient additionalSvcClient)
+						{
+							additionalDataSource.AccessTokenProvider = () => GetAccessToken(additionalSvcClient);
+						}
+						
+						dataSources[name] = additionalDataSource;
+					}
+					else
+					{
+						// Include type information in error message for debugging
+						string actualType = entry.Value?.GetType()?.FullName ?? "null";
+						string baseObjectType = (entry.Value is PSObject pso) ? (pso.BaseObject?.GetType()?.FullName ?? "null") : "N/A";
+						throw new ArgumentException($"AdditionalConnections value for key '{name}' must be a ServiceClient or IOrganizationService instance. Actual type: {actualType}, BaseObject type: {baseObjectType}");
+					}
+				}
+			}
+			
+			WriteVerbose($"After adding additional connections, DataSources dictionary has {dataSources.Count} entries");
+			foreach (var ds in dataSources)
+			{
+				WriteVerbose($"  - Key: '{ds.Key}', Value.Name: '{ds.Value.Name}'");
+			}
+			
+			_sqlConnection = new Sql4CdsConnection(dataSources);
 			_sqlConnection.UseTDSEndpoint = false;
 			_sqlConnection.Progress += OnSqlConnection_Progress;
 			_sqlConnection.UseTDSEndpoint = UseTdsEndpoint;
@@ -181,6 +309,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			try
 			{
 				_userCancellationCts?.Cancel();
+				_command?.Cancel();
 			}
 			catch { }
 			base.StopProcessing();
@@ -231,8 +360,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			Task<DbDataReader> task = Task.Run(() =>
 			{
-				//Despite the Async, seems to block until completion
-				return _command.ExecuteReaderAsync();
+				return _command.ExecuteReaderAsync(_userCancellationCts.Token);
 			});
 
 			while (!task.IsCompleted)
@@ -241,8 +369,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				if (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
 				{
 					WriteVerbose("SQL query execution cancelled by user");
-					// Note: Sql4Cds doesn't support cancellation tokens directly, so the task may continue
-					// but we'll stop processing results
 					return;
 				}
 
@@ -262,12 +388,39 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				}
 			}
 
-			using (DbDataReader reader = task.Result)
+			if (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested) || task.IsCanceled)
+			{
+				WriteVerbose("SQL query execution cancelled by user");
+				return;
+			}
+
+			using (DbDataReader reader = task.GetAwaiter().GetResult())
 			{
 				if (reader.HasRows)
 				{
-					while (reader.Read())
+					while (true)
 					{
+						bool hasRow;
+						try
+						{
+							hasRow = reader.Read();
+						}
+						catch (OperationCanceledException ex)
+						{
+							WriteVerbose($"SQL query result reading cancelled by user: {ex.Message}");
+							break;
+						}
+						catch (Exception ex) when (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
+						{
+							WriteVerbose($"SQL query result reading cancelled by user: {ex.Message}");
+							break;
+						}
+
+						if (!hasRow)
+						{
+							break;
+						}
+
 						// Check for cancellation during result reading
 						if (Stopping || (_userCancellationCts != null && _userCancellationCts.IsCancellationRequested))
 						{
@@ -279,7 +432,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 						for (int f = 0; f < reader.VisibleFieldCount; f++)
 						{
-							string fieldName = reader.GetName(f) ?? $"field{f}";
+							string fieldName = reader.GetName(f);
+							if (string.IsNullOrEmpty(fieldName))
+							{
+								fieldName = $"field{f}";
+                            } 
 							output.Properties.Add(new PSNoteProperty(fieldName, reader.GetValue(f)));
 						}
 
@@ -301,6 +458,55 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		{
 			WriteProgress(progressRecord);
 			WriteVerbose($"{progressRecord.Activity}: {progressRecord.StatusDescription} {progressRecord.PercentComplete}%");
+		}
+
+		/// <summary>
+		/// Gets an access token from the ServiceClient for TDS endpoint authentication.
+		/// </summary>
+		/// <param name="serviceClient">The ServiceClient instance to retrieve the token from</param>
+		/// <returns>The access token, or null if unavailable</returns>
+		private string GetAccessToken(ServiceClient serviceClient)
+		{
+			// If using ServiceClientWithTokenProvider, use the TokenProviderFunction
+			if (serviceClient is ServiceClientWithTokenProvider clientWithProvider && clientWithProvider.TokenProviderFunction != null)
+			{
+				try
+				{
+					// Call the token provider function with the service URL
+					// The function expects a URL parameter for scope resolution
+					var tokenTask = clientWithProvider.TokenProviderFunction(serviceClient.ConnectedOrgUriActual?.ToString() ?? string.Empty);
+					return tokenTask.GetAwaiter().GetResult();
+				}
+				catch
+				{
+					// If token retrieval fails, fall back to checking CurrentAccessToken
+				}
+			}
+
+			// Fallback: Try to get CurrentAccessToken using reflection
+			// This property is available but may be null when using external token management
+			try
+			{
+				var currentAccessTokenProperty = serviceClient.GetType().GetProperty("CurrentAccessToken",
+					System.Reflection.BindingFlags.Instance |
+					System.Reflection.BindingFlags.Public |
+					System.Reflection.BindingFlags.NonPublic);
+
+				if (currentAccessTokenProperty != null)
+				{
+					var token = currentAccessTokenProperty.GetValue(serviceClient) as string;
+					if (!string.IsNullOrEmpty(token))
+					{
+						return token;
+					}
+				}
+			}
+			catch
+			{
+				// If reflection fails, we'll return null and fall back to non-TDS mode
+			}
+
+			return null;
 		}
 	}
 }

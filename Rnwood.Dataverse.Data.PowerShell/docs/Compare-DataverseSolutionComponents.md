@@ -15,13 +15,25 @@ Compares a solution file with the state of that solution in the target environme
 ### FileToEnvironment
 ```
 Compare-DataverseSolutionComponents [-Connection <ServiceClient>] [-SolutionFile] <String> [-FileToEnvironment]
- [-ReverseComparison] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-ReverseComparison] [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### BytesToEnvironment
 ```
 Compare-DataverseSolutionComponents [-Connection <ServiceClient>] -SolutionBytes <Byte[]> [-BytesToEnvironment]
- [-ReverseComparison] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-ReverseComparison] [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### FileToFile
+```
+Compare-DataverseSolutionComponents [-SolutionFile] <String> [-FileToFile] [-TargetSolutionFile] <String>
+ [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+```
+
+### BytesToFile
+```
+Compare-DataverseSolutionComponents -SolutionBytes <Byte[]> [-BytesToFile] [-TargetSolutionFile] <String>
+ [-TestIfAdditive] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -56,14 +68,16 @@ Rootcomponentbehavior values:
 
 ### Example 1: Compare a solution file with the target environment
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> Compare-DataverseSolutionComponents -Connection $conn -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip"
+PS C:\> Compare-DataverseSolutionComponents -SolutionFile "C:\Solutions\MySolution_1_0_0_0.zip"
 ```
 
 This example compares the MySolution solution file with the state of the solution in the target environment.
 
 ### Example 2: Compare two solution files
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Compare-DataverseSolutionComponents -SolutionFile "C:\Solutions\MySolution_v1.zip" -TargetSolutionFile "C:\Solutions\MySolution_v2.zip"
 ```
 
@@ -71,16 +85,18 @@ This example compares two solution files to identify what changed between versio
 
 ### Example 3: Compare environment to file (reverse direction)
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> Compare-DataverseSolutionComponents -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip" -ReverseComparison
+PS C:\> Compare-DataverseSolutionComponents -SolutionFile "C:\Solutions\MySolution.zip" -ReverseComparison
 ```
 
 This example reverses the comparison to show what's in the environment compared to the file.
 
 ### Example 4: Filter results to show only added components
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> $results = Compare-DataverseSolutionComponents -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
+PS C:\> $results = Compare-DataverseSolutionComponents -SolutionFile "C:\Solutions\MySolution.zip"
 PS C:\> $results | Where-Object { $_.Status -eq "Added" } | Format-Table
 ```
 
@@ -88,6 +104,7 @@ This example shows only the components that have been added to the solution file
 
 ### Example 5: Identify behavior changes between solution versions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $results = Compare-DataverseSolutionComponents -SolutionFile "C:\v1\MySolution.zip" -TargetSolutionFile "C:\v2\MySolution.zip"
 PS C:\> $results | Where-Object { $_.Status -like "Behavior*" } | Format-Table
 ```
@@ -96,8 +113,9 @@ This example compares two solution versions and shows only components where the 
 
 ### Example 6: View subcomponents of entities
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> $results = Compare-DataverseSolutionComponents -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
+PS C:\> $results = Compare-DataverseSolutionComponents -SolutionFile "C:\Solutions\MySolution.zip"
 PS C:\> $results | Where-Object IsSubcomponent -eq $true | Format-Table ComponentTypeName, Status, ParentComponentTypeName
 ```
 
@@ -105,12 +123,32 @@ This example shows only subcomponents (attributes, views, forms, etc.) and their
 
 ### Example 7: Export comparison results to CSV
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
-PS C:\> $results = Compare-DataverseSolutionComponents -Connection $conn -SolutionFile "C:\Solutions\MySolution.zip"
+PS C:\> $results = Compare-DataverseSolutionComponents -SolutionFile "C:\Solutions\MySolution.zip"
 PS C:\> $results | Export-Csv -Path "C:\Reports\solution-comparison.csv" -NoTypeInformation
 ```
 
 This example exports the comparison results to a CSV file for further analysis.
+
+### Example 8: Test if changes are additive (file to environment)
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $conn = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
+PS C:\> $isAdditive = Compare-DataverseSolutionComponents -SolutionFile "C:\Solutions\MySolution.zip" -TestIfAdditive -Verbose
+```
+
+This example tests whether the solution file has only additive changes compared to the environment (no removed components or less inclusive behavior changes).
+Returns $true if additive, $false otherwise. Full comparison results are output to verbose stream.
+
+### Example 9: Test if changes are additive (file to file)
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $isAdditive = Compare-DataverseSolutionComponents -SolutionFile "C:\Solutions\MySolution_v1.zip" -TargetSolutionFile "C:\Solutions\MySolution_v2.zip" -FileToFile -TestIfAdditive -Verbose
+PS C:\> if ($isAdditive) { Write-Host "Update can use simple import mode" } else { Write-Host "Update requires stage and upgrade" }
+```
+
+This example tests whether changes between two solution files are additive. This is useful for determining whether a solution update can use simple import mode (faster) or requires stage and upgrade mode (slower but handles removals correctly).
 
 ## PARAMETERS
 
@@ -129,14 +167,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -BytesToFile
+Compare solution bytes with a target solution file.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: BytesToFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
-Parameter Sets: (All)
+Parameter Sets: FileToEnvironment, BytesToEnvironment
 Aliases:
 
 Required: False
@@ -161,46 +213,16 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ReverseComparison
-Compare environment to file instead of file to environment.
+### -FileToFile
+Compare two solution files.
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -SolutionBytes
-Solution file bytes to compare.
-
-```yaml
-Type: Byte[]
-Parameter Sets: BytesToEnvironment
+Parameter Sets: FileToFile
 Aliases:
 
 Required: True
 Position: Named
-Default value: None
-Accept pipeline input: True (ByValue)
-Accept wildcard characters: False
-```
-
-### -SolutionFile
-Path to the solution file (.zip) to compare.
-
-```yaml
-Type: String
-Parameter Sets: FileToEnvironment
-Aliases:
-
-Required: True
-Position: 0
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -221,6 +243,81 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ReverseComparison
+Compare environment to file instead of file to environment.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: FileToEnvironment, BytesToEnvironment
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SolutionBytes
+Solution file bytes to compare.
+
+```yaml
+Type: Byte[]
+Parameter Sets: BytesToEnvironment, BytesToFile
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: True (ByValue)
+Accept wildcard characters: False
+```
+
+### -SolutionFile
+Path to the solution file (.zip) to compare.
+
+```yaml
+Type: String
+Parameter Sets: FileToEnvironment, FileToFile
+Aliases:
+
+Required: True
+Position: 0
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TargetSolutionFile
+Path to the target solution file (.zip) to compare.
+
+```yaml
+Type: String
+Parameter Sets: FileToFile, BytesToFile
+Aliases:
+
+Required: True
+Position: 1
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -TestIfAdditive
+Test if changes are additive (no removed components or less inclusive behavior changes). Returns true/false, outputs full results to verbose.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### CommonParameters
 This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable, -InformationAction, -InformationVariable, -OutVariable, -OutBuffer, -PipelineVariable, -Verbose, -WarningAction, and -WarningVariable. For more information, see [about_CommonParameters](http://go.microsoft.com/fwlink/?LinkID=113216).
 
@@ -230,6 +327,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+### System.Boolean
 ## NOTES
 - **Status values**:
   - **Added**: Component exists in source but not in target
@@ -252,6 +350,13 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 - **Integration with Import-DataverseSolution**:
   - This cmdlet is used internally by `Import-DataverseSolution -UseUpdateIfAdditive` to determine if a solution update can use the simpler import mode
   - The -UseUpdateIfAdditive switch compares components and uses simple import if no components are removed or have less inclusive behavior changes
+
+- **TestIfAdditive switch**:
+  - When specified, returns $true or $false based on whether changes are additive only
+  - Returns $true if there are zero components with "InTargetOnly" status (removed) or "InSourceAndTarget_BehaviourLessInclusiveInSource" status (behavior became less inclusive)
+  - Full comparison results are output to the verbose stream for troubleshooting
+  - Uses the same logic as `Import-DataverseSolution -UseUpdateIfAdditive` to determine if simple import mode can be used
+  - Works with all parameter sets: FileToEnvironment, BytesToEnvironment, FileToFile, and BytesToFile
 
 ## RELATED LINKS
 

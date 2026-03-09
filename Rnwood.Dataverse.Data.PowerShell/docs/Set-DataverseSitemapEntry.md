@@ -16,19 +16,19 @@ Creates or updates an entry (Area, Group, or SubArea) in a Dataverse sitemap.
 ```
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
  [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-Area] -EntryId <String> [-ResourceId <String>]
- [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
- [-Icon <String>] [-Entity <String>] [-Url <String>] [-Index <Int32>] [-Before <String>] [-After <String>]
- [-IsDefault] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+ [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Titles <Hashtable>]
+ [-Descriptions <Hashtable>] [-Icon <String>] [-Entity <String>] [-Url <String>] [-Index <Int32>]
+ [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### Group
 ```
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
  [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-Group] -EntryId <String> [-ResourceId <String>]
- [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
- [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>] [-Index <Int32>]
- [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
+ [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Titles <Hashtable>]
+ [-Descriptions <Hashtable>] [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>]
+ [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -36,63 +36,89 @@ Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapIn
 ```
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
  [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-SubArea] -EntryId <String> [-ResourceId <String>]
- [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
- [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>] [-ParentGroupId <String>]
- [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault] [-PassThru] [-Connection <ServiceClient>]
- [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Titles <Hashtable>]
+ [-Descriptions <Hashtable>] [-Icon <String>] [-Entity <String>] [-Url <String>] [-ParentAreaId <String>]
+ [-ParentGroupId <String>] [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault] [-PassThru]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### Privilege
 ```
 Set-DataverseSitemapEntry [-InputObject <SitemapEntryInfo>] [-Sitemap <SitemapInfo>]
  [[-SitemapUniqueName] <String>] [-SitemapId <Guid>] [-Privilege] [-EntryId <String>] [-ResourceId <String>]
- [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Title <String>] [-Description <String>]
- [-Icon <String>] [-Entity <String>] [-Url <String>] -ParentSubAreaId <String> -PrivilegeEntity <String>
- -PrivilegeName <String> [-Index <Int32>] [-Before <String>] [-After <String>] [-IsDefault] [-PassThru]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-DescriptionResourceId <String>] [-ToolTipResourceId <String>] [-Titles <Hashtable>]
+ [-Descriptions <Hashtable>] [-Icon <String>] [-Entity <String>] [-Url <String>] -ParentSubAreaId <String>
+ -PrivilegeEntity <String> -PrivilegeName <String> [-Index <Int32>] [-Before <String>] [-After <String>]
+ [-IsDefault] [-PassThru] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
 The Set-DataverseSitemapEntry cmdlet creates or updates navigation entries (Areas, Groups, SubAreas) in a Dataverse sitemap. It automatically detects whether an entry exists and either creates a new entry or updates the existing one. The cmdlet supports precise positioning control when creating entries.
 
+**Multilingual Support:** Use the `-Titles` and `-Descriptions` parameters to specify multilingual labels keyed by LCID (Locale ID). Common LCIDs include:
+- 1033: English (US)
+- 1036: French
+- 1031: German
+- 1034: Spanish
+- 1041: Japanese
+
 ## EXAMPLES
 
-### Example 1: Create a new Area
+### Example 1: Create a new Area with multilingual titles
 ```powershell
-PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Area -EntryId "SalesArea" -Title "Sales" -Icon "/_imgs/area/sales_24x24.gif"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $titles.Add(1033, "Sales")
+PS C:\> $titles.Add(1036, "Ventes")
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Area -EntryId "SalesArea" -Titles $titles -Icon "/_imgs/area/sales_24x24.gif"
 ```
 
-Creates a new Area entry in the sitemap.
+Creates a new Area entry with titles in English and French.
 
-### Example 2: Create a Group with position control
+### Example 2: Create a Group with descriptions
 ```powershell
-PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Group -EntryId "LeadsGroup" -ParentAreaId "SalesArea" -Title "Leads" -Index 0
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $titles.Add(1033, "Leads")
+PS C:\> $descriptions = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $descriptions.Add(1033, "Manage potential customers")
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Group -EntryId "LeadsGroup" -ParentAreaId "SalesArea" -Titles $titles -Descriptions $descriptions -Index 0
 ```
 
-Creates a new Group at the first position (index 0) within the SalesArea.
+Creates a new Group at the first position (index 0) within the SalesArea with titles and descriptions.
 
-### Example 3: Create a SubArea before another entry
+### Example 3: Create a SubArea with entity reference
 ```powershell
-PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType SubArea -EntryId "AccountsSubarea" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $titles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $titles.Add(1033, "Accounts")
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -SubArea -EntryId "AccountsSubarea" `
     -ParentAreaId "SalesArea" -ParentGroupId "CustomersGroup" `
-    -Entity "account" -Title "Accounts" -Before "ContactsSubarea"
+    -Entity "account" -Titles $titles -Before "ContactsSubarea"
 ```
 
 Creates a new SubArea positioned before the "ContactsSubarea" entry.
 
-### Example 4: Update an existing entry
+### Example 4: Add French translation to existing entry
 ```powershell
-PS C:\> Set-DataverseSitemapEntry -SitemapName "MySitemap" -EntryType Area -EntryId "SalesArea" -Title "Sales & Marketing"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $frenchTitles = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $frenchTitles.Add(1036, "Ventes et Marketing")
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Area -EntryId "SalesArea" -Titles $frenchTitles
 ```
 
-Updates the title of an existing Area entry.
+Adds a French title to an existing Area entry (additively - English title is preserved).
 
-### Example 5: Use pipeline to update entry
+### Example 5: Remove a language translation
 ```powershell
-PS C:\> Get-DataverseSitemapEntry -SitemapName "MySitemap" -EntryId "SalesArea" | Set-DataverseSitemapEntry -Title "Updated Sales"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $removeFrench = New-Object 'System.Collections.Generic.Dictionary[[int],[string]]'
+PS C:\> $removeFrench.Add(1036, $null)
+PS C:\> Set-DataverseSitemapEntry -SitemapUniqueName "MySitemap" -Area -EntryId "SalesArea" -Titles $removeFrench
 ```
 
-Retrieves an entry and updates its title using the pipeline.
+Removes the French translation from an Area entry (setting a language to $null removes it).
 
 ## PARAMETERS
 
@@ -141,43 +167,12 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -Description
-The new description of the entry.
-
-```yaml
-Type: String
 Parameter Sets: (All)
 Aliases:
 
@@ -193,6 +188,23 @@ The resource ID for localized descriptions.
 
 ```yaml
 Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -Descriptions
+The descriptions of the entry as a dictionary keyed by LCID (Locale ID). Null values for a specific LCID will remove that LCID's description. Updates are additive - existing LCIDs are preserved unless explicitly set to null.
+
+Common LCIDs: 1033 (English), 1036 (French), 1031 (German), 1034 (Spanish), 1041 (Japanese)
+
+```yaml
+Type: Hashtable
 Parameter Sets: (All)
 Aliases:
 
@@ -426,6 +438,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+Determines how PowerShell responds to progress updates generated by the cmdlet.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -ResourceId
 The new resource ID for localized titles.
 
@@ -501,11 +528,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Title
-The new title/label of the entry.
+### -Titles
+The titles of the entry as a dictionary keyed by LCID (Locale ID). Null values for a specific LCID will remove that LCID's title. Updates are additive - existing LCIDs are preserved unless explicitly set to null.
+
+Common LCIDs: 1033 (English), 1036 (French), 1031 (German), 1034 (Spanish), 1041 (Japanese)
 
 ```yaml
-Type: String
+Type: Hashtable
 Parameter Sets: (All)
 Aliases:
 
@@ -546,14 +575,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -562,13 +590,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-Determines how PowerShell responds to progress updates generated by the cmdlet.
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named

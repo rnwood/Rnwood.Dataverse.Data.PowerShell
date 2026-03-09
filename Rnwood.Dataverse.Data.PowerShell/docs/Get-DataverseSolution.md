@@ -27,6 +27,7 @@ The cmdlet returns SolutionInfo objects with metadata about each solution includ
 
 ### Example 1: Retrieve all solutions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution
 
 UniqueName            Name                  Version    IsManaged PublisherName
@@ -40,6 +41,7 @@ Retrieves all solutions from the Dataverse environment.
 
 ### Example 2: Retrieve a specific solution by unique name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution -UniqueName "MySolution"
 
 UniqueName            : MySolution
@@ -56,6 +58,7 @@ Retrieves a specific solution by its unique name.
 
 ### Example 3: Get only managed solutions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution -Managed
 
 UniqueName            Name                  Version    IsManaged
@@ -68,6 +71,7 @@ Retrieves only managed solutions.
 
 ### Example 4: Get only unmanaged solutions, excluding system solutions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolution -Unmanaged -ExcludeSystemSolutions
 
 UniqueName            Name                  Version    IsManaged
@@ -78,8 +82,35 @@ CustomSolution        Custom Solution       1.2.0.0    False
 
 Retrieves only unmanaged solutions, excluding the Default, Active, and Basic system solutions.
 
-### Example 5: Check solution version before upgrade
+### Example 5: Get solutions using wildcard patterns
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseSolution -UniqueName "Contoso*"
+
+UniqueName            Name                  Version    IsManaged
+----------            ----                  -------    ---------
+ContosoSales          Contoso Sales         1.0.0.0    False
+ContosoMarketing      Contoso Marketing     2.1.0.0    False
+```
+
+Retrieves all solutions whose unique name starts with "Contoso".
+
+### Example 6: Filter solutions with multiple wildcards
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseSolution -UniqueName "*Custom*" -Unmanaged
+
+UniqueName            Name                  Version    IsManaged
+----------            ----                  -------    ---------
+MyCustomSolution      My Custom Solution    1.0.0.0    False
+TeamCustomization     Team Customization    1.5.0.0    False
+```
+
+Retrieves all unmanaged solutions whose unique name contains "Custom".
+
+### Example 7: Check solution version before upgrade
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $solution = Get-DataverseSolution -UniqueName "MySolution"
 PS C:\> if ($solution.Version -lt [Version]"2.0.0.0") {
 >>     Write-Host "Solution needs upgrade from $($solution.Version) to 2.0.0.0"
@@ -91,7 +122,7 @@ Retrieves a solution and checks if it needs to be upgraded.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -135,8 +166,25 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -UniqueName
-The unique name of the solution to retrieve. If not specified, all solutions are returned.
+The unique name of the solution to retrieve. Supports wildcards (* and ?). If not specified, all solutions are returned.
+
+Use `*` to match zero or more characters and `?` to match a single character.
 
 ```yaml
 Type: String
@@ -157,21 +205,6 @@ Filter to return only unmanaged solutions.
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
 
 Required: False
 Position: Named

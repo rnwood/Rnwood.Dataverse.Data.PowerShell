@@ -32,6 +32,7 @@ Use Set-DataverseEnvironmentVariableDefinition to create both the definition and
 
 ### Example 1: Set a single environment variable value
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" -Value "https://api.production.example.com"
 ```
 
@@ -39,6 +40,7 @@ Sets the value for the environment variable "new_apiurl". The definition must al
 
 ### Example 2: Set multiple environment variable values
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEnvironmentVariableValue -EnvironmentVariableValues @{
     'new_apiurl' = 'https://api.production.example.com'
     'new_apikey' = 'prod-key-12345'
@@ -50,6 +52,7 @@ Sets values for multiple environment variables at once using a hashtable.
 
 ### Example 3: Update value from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" | 
     Set-DataverseEnvironmentVariableValue -Value "https://api.staging.example.com"
 ```
@@ -58,6 +61,7 @@ Updates the value for an existing environment variable.
 
 ### Example 4: Set value with WhatIf
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" -Value "https://api.test.example.com" -WhatIf
 ```
 
@@ -65,23 +69,8 @@ Shows what would happen if the cmdlet runs without actually making changes.
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -110,13 +99,28 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SchemaName
 Schema name of the environment variable to set the value for (for single parameter set).
 
 ```yaml
 Type: String
 Parameter Sets: Single
-Aliases:
+Aliases: DefinitionSchemaName
 
 Required: True
 Position: 0
@@ -140,13 +144,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -155,13 +159,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named

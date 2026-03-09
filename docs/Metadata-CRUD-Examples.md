@@ -1,45 +1,9 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
 
-- [Metadata CRUD Cmdlets - Usage Examples](#metadata-crud-cmdlets---usage-examples)
-  - [Table of Contents](#table-of-contents)
-  - [Metadata Cache](#metadata-cache)
-    - [Using the Cache](#using-the-cache)
-    - [Cache Invalidation](#cache-invalidation)
-    - [Clearing the Cache](#clearing-the-cache)
-    - [Performance Benefits](#performance-benefits)
-  - [Get Cmdlets (Read Operations)](#get-cmdlets-read-operations)
-    - [Get-DataverseEntityMetadata](#get-dataverseentitymetadata)
-    - [Get-DataverseEntityMetadata](#get-dataverseentitymetadata-1)
-    - [Get-DataverseAttributeMetadata](#get-dataverseattributemetadata)
-    - [Get-DataverseOptionSetMetadata](#get-dataverseoptionsetmetadata)
-  - [Set Cmdlets (Create/Update Operations)](#set-cmdlets-createupdate-operations)
-    - [Set-DataverseAttributeMetadata](#set-dataverseattributemetadata)
-    - [Set-DataverseEntityMetadata](#set-dataverseentitymetadata)
-    - [Set-DataverseOptionSetMetadata](#set-dataverseoptionsetmetadata)
-  - [Remove Cmdlets (Delete Operations)](#remove-cmdlets-delete-operations)
-    - [Remove-DataverseAttributeMetadata](#remove-dataverseattributemetadata)
-    - [Remove-DataverseEntityMetadata](#remove-dataverseentitymetadata)
-  - [Advanced Scenarios](#advanced-scenarios)
-    - [Bulk Attribute Creation](#bulk-attribute-creation)
-    - [Clone Entity Structure](#clone-entity-structure)
-    - [Audit Metadata Changes](#audit-metadata-changes)
-  - [Notes](#notes)
+# Metadata CRUD Cmdlets - Removed
 
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
+This document was removed. Examples and usage information are now included in `docs/core-concepts/metadata.md`.
 
-# Metadata CRUD Cmdlets - Usage Examples
-
-This document provides examples of using the new comprehensive metadata CRUD cmdlets.
-
-## Table of Contents
-
-- [Metadata Cache](#metadata-cache)
-- [Get Cmdlets (Read Operations)](#get-cmdlets-read-operations)
-- [Set Cmdlets (Create/Update Operations)](#set-cmdlets-createupdate-operations)
-- [Remove Cmdlets (Delete Operations)](#remove-cmdlets-delete-operations)
-- [Advanced Scenarios](#advanced-scenarios)
+If you need the original examples, please open an issue requesting restoration or migration of specific examples to the core concepts pages.
 
 ## Metadata Cache
 
@@ -102,9 +66,14 @@ Using the metadata cache can significantly reduce API calls and improve performa
 ### Get-DataverseEntityMetadata
 Retrieves entity metadata with detailed information.
 
+**Note:** By default, these cmdlets retrieve unpublished (draft) metadata which includes all changes. Use the `-Published` switch to retrieve only published metadata.
+
 ```powershell
 # Get metadata for a specific entity
 Get-DataverseEntityMetadata -EntityName contact
+
+# Get only published metadata
+Get-DataverseEntityMetadata -EntityName contact -Published
 
 # Include attribute metadata
 Get-DataverseEntityMetadata -EntityName contact -IncludeAttributes
@@ -269,6 +238,51 @@ Set-DataverseAttributeMetadata -EntityName new_customentity `
     -DisplayName "Category" `
     -OptionSetName my_globalcategories
 
+# Create a lookup attribute to a single target entity
+Set-DataverseAttributeMetadata -EntityName new_customentity `
+    -AttributeName new_accountid `
+    -SchemaName new_AccountId `
+    -AttributeType Lookup `
+    -DisplayName "Account" `
+    -Description "Related account" `
+    -Targets @('account') `
+    -RequiredLevel None
+
+# Create a lookup with custom relationship name
+Set-DataverseAttributeMetadata -EntityName new_project `
+    -AttributeName new_parentprojectid `
+    -SchemaName new_ParentProjectId `
+    -AttributeType Lookup `
+    -DisplayName "Parent Project" `
+    -Targets @('new_project') `
+    -RelationshipSchemaName new_project_parentproject
+
+# Create a lookup with cascade delete behavior
+Set-DataverseAttributeMetadata -EntityName new_task `
+    -AttributeName new_projectid `
+    -SchemaName new_ProjectId `
+    -AttributeType Lookup `
+    -DisplayName "Project" `
+    -Targets @('new_project') `
+    -CascadeDelete Cascade `
+    -CascadeAssign Cascade `
+    -RequiredLevel ApplicationRequired
+
+# Create a lookup with all cascade behaviors specified
+Set-DataverseAttributeMetadata -EntityName new_lineitem `
+    -AttributeName new_orderid `
+    -SchemaName new_OrderId `
+    -AttributeType Lookup `
+    -DisplayName "Order" `
+    -Targets @('new_order') `
+    -CascadeDelete Cascade `
+    -CascadeAssign Cascade `
+    -CascadeShare Cascade `
+    -CascadeUnshare Cascade `
+    -CascadeReparent Cascade `
+    -CascadeMerge Cascade `
+    -IsSearchable
+
 # Create a file attribute
 Set-DataverseAttributeMetadata -EntityName new_customentity `
     -AttributeName new_attachment `
@@ -282,6 +296,13 @@ Set-DataverseAttributeMetadata -EntityName contact `
     -AttributeName firstname `
     -DisplayName "First Name (Updated)" `
     -Description "Updated description" `
+    -Force
+
+# Update a lookup attribute's display name
+Set-DataverseAttributeMetadata -EntityName contact `
+    -AttributeName parentcustomerid `
+    -DisplayName "Company Name" `
+    -Description "The parent company for this contact" `
     -Force
 
 # Update with -PassThru to get the result
@@ -466,3 +487,14 @@ foreach ($entity in $customEntities) {
 - The cmdlets handle all Dataverse attribute types comprehensively
 - Type-specific properties are validated based on the attribute type
 - Global option sets can be reused across multiple entities
+
+### Lookup Attribute Notes
+
+- **Creating Lookups**: When creating a lookup attribute, a OneToMany relationship is automatically created between the target and referencing entities
+- **Single-Target Lookups**: Currently, only single-target lookups are supported. Specify one entity in the `-Targets` parameter
+- **Multi-Target (Polymorphic) Lookups**: Not yet supported. Use `Set-DataverseRelationshipMetadata` to create multiple separate relationships if needed
+- **Relationship Names**: Use `-RelationshipSchemaName` to specify a custom relationship name, or let the cmdlet generate one automatically
+- **Cascade Behaviors**: Configure cascade behaviors for assign, share, unshare, reparent, delete, and merge operations using the `-Cascade*` parameters
+- **Updating Lookups**: You can update the display name, description, and required level of existing lookup attributes
+- **Immutable Properties**: Target entities and cascade behaviors cannot be changed after creation. Use `Set-DataverseRelationshipMetadata` to update cascade behaviors
+- **Publishing**: Use the `-Publish` switch to automatically publish the entity after creating or updating the lookup attribute

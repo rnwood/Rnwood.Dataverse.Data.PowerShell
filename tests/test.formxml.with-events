@@ -1,0 +1,63 @@
+<form showImage="true">
+    <formLibraries>
+        <Library name="new_/scripts/main.js" libraryUniqueId="{A1B2C3D4-E5F6-4789-ABCD-EF0123456789}" />
+        <Library name="new_/scripts/validation.js" libraryUniqueId="{B2C3D4E5-F6A7-4890-BCDE-F01234567890}" />
+    </formLibraries>
+    <events>
+        <event name="onload" application="false" active="true">
+            <Handlers>
+                <Handler functionName="FormOnLoad" libraryName="new_/scripts/main.js" handlerUniqueId="{C3D4E5F6-A7B8-4901-CDEF-012345678901}" enabled="true" parameters="" passExecutionContext="true" />
+                <Handler functionName="LoadValidation" libraryName="new_/scripts/validation.js" handlerUniqueId="{D4E5F6A7-B8C9-4012-DEF0-123456789012}" enabled="true" parameters="{'mode':'strict'}" passExecutionContext="false" />
+            </Handlers>
+        </event>
+        <event name="onsave" application="false" active="true">
+            <Handlers>
+                <Handler functionName="ValidateBeforeSave" libraryName="new_/scripts/validation.js" handlerUniqueId="{E5F6A7B8-C9D0-4123-EF01-234567890123}" enabled="true" parameters="" passExecutionContext="true" />
+            </Handlers>
+        </event>
+    </events>
+    <tabs>
+        <tab name="general" verticallayout="true" id="{9748ec98-3746-40cc-83bf-d15c7363166f}" IsUserDefined="0">
+            <labels>
+                <label description="General" languagecode="1033" />
+            </labels>
+            <columns>
+                <column width="100%">
+                    <sections>
+                        <section name="name" showlabel="false" showbar="false" id="{90b0776f-2977-4695-9cd4-73bb6c820f88}" IsUserDefined="0">
+                            <labels>
+                                <label description="Name" languagecode="1033" />
+                            </labels>
+                            <rows>
+                                <row>
+                                    <cell id="{90317617-38db-4734-aef8-4bb4e8cb9012}">
+                                        <labels>
+                                            <label description="First Name" languagecode="1033" />
+                                        </labels>
+                                        <control id="firstname" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="firstname">
+                                            <events>
+                                                <event name="onchange" application="false" active="true">
+                                                    <Handlers>
+                                                        <Handler functionName="OnFirstNameChange" libraryName="new_/scripts/main.js" handlerUniqueId="{F6A7B8C9-D0E1-4234-F012-345678901234}" enabled="true" parameters="" passExecutionContext="true" />
+                                                    </Handlers>
+                                                </event>
+                                            </events>
+                                        </control>
+                                    </cell>
+                                </row>
+                                <row>
+                                    <cell id="{8097efd5-8af7-4944-b7a5-42ece196e23d}">
+                                        <labels>
+                                            <label description="Last Name" languagecode="1033" />
+                                        </labels>
+                                        <control id="lastname" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}" datafieldname="lastname" />
+                                    </cell>
+                                </row>
+                            </rows>
+                        </section>
+                    </sections>
+                </column>
+            </columns>
+        </tab>
+    </tabs>
+</form>

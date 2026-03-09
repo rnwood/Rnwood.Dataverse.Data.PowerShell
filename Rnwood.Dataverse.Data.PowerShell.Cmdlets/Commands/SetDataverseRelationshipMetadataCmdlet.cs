@@ -198,6 +198,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 };
                 Connection.Execute(publishRequest);
                 WriteVerbose($"Published entities '{ReferencedEntity}' and '{ReferencingEntity}'");
+                
+                // Wait for publish to complete
+                PublishHelpers.WaitForPublishComplete(Connection, WriteVerbose);
             }
         }
 

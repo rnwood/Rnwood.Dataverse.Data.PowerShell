@@ -9,6 +9,7 @@ This document provides examples of common Dataverse operations using `Rnwood.Dat
 - [Querying Records](#querying-records)
 - [Batch Operations](#batch-operations)
 - [Working with Attachments](#working-with-attachments)
+- [Working with Web Resources](#working-with-web-resources)
 - [Invoking Custom Requests](#invoking-custom-requests)
 - [Metadata Operations](#metadata-operations)
 - [Solution Management](#solution-management)
@@ -21,6 +22,7 @@ This document provides examples of common Dataverse operations using `Rnwood.Dat
 - [Multi-Organization Operations](#multi-organization-operations)
 - [Duplicate Detection](#duplicate-detection)
 - [Business Process Flows](#business-process-flows)
+- [Form Management](#form-management)
 - [Ribbon Customizations](#ribbon-customizations)
 - [Views and Quick Find](#views-and-quick-find)
 - [Sitemap Management](#sitemap-management)
@@ -169,7 +171,7 @@ $contacts = Get-CrmRecordsByFetch -conn $conn -Fetch $fetch
 **Rnwood.Dataverse.Data.PowerShell:**
 ```powershell
 # Simple filter
-$contacts = Get-DataverseRecord -Connection $conn -TableName contact -Columns fullname -Filter @{
+$contacts = Get-DataverseRecord -Connection $conn -TableName contact -Columns fullname -FilterValues @{
   lastname = "Smith"
 }
 
@@ -337,6 +339,159 @@ $note = @{
 $noteId = Set-DataverseRecord -Connection $conn -TableName annotation -Fields $note
 ```
 
+## Working with Web Resources
+
+### Example: Create a Web Resource from a File
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires building Entity objects and manual base64 encoding
+$fileContent = [System.IO.File]::ReadAllBytes("C:\script.js")
+$base64 = [System.Convert]::ToBase64String($fileContent)
+
+$webResource = New-Object Microsoft.Xrm.Sdk.Entity("webresource")
+$webResource.Attributes["name"] = "new_/script.js"
+$webResource.Attributes["displayname"] = "My Script"
+$webResource.Attributes["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)  # JavaScript
+$webResource.Attributes["content"] = $base64
+
+$webResourceId = $conn.Create($webResource)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - automatically handles file reading and base64 encoding
+Set-DataverseWebResource -Connection $conn -Name "new_script" -Path "C:\script.js" `
+    -DisplayName "My Script" -PublisherPrefix "new"
+```
+
+### Example: Update a Web Resource
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires retrieving, modifying and updating
+$webResource = $conn.Retrieve("webresource", $webResourceId, (New-Object Microsoft.Xrm.Sdk.Query.ColumnSet($true)))
+$fileContent = [System.IO.File]::ReadAllBytes("C:\updated-script.js")
+$webResource.Attributes["content"] = [System.Convert]::ToBase64String($fileContent)
+$conn.Update($webResource)
+
+# Publish the web resource
+$publishRequest = New-Object Microsoft.Crm.Sdk.Messages.PublishXmlRequest
+$publishRequest.ParameterXml = "<importexportxml><webresources><webresource>$webResourceId</webresource></webresources></importexportxml>"
+$conn.Execute($publishRequest)
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - automatically updates by name and optionally publishes
+Set-DataverseWebResource -Connection $conn -Name "new_script" -Path "C:\updated-script.js" -Publish
+```
+
+### Example: Download a Web Resource
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires manual base64 decoding and file writing
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("webresource")
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet("name", "content")
+$query.Criteria.AddCondition("name", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, "new_/script.js")
+
+$result = $conn.RetrieveMultiple($query)
+if ($result.Entities.Count -gt 0) {
+    $webResource = $result.Entities[0]
+    $content = [System.Convert]::FromBase64String($webResource.Attributes["content"])
+    [System.IO.File]::WriteAllBytes("C:\downloaded-script.js", $content)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - automatically handles base64 decoding and file writing
+Get-DataverseWebResource -Connection $conn -Name "new_script" -Path "C:\downloaded-script.js"
+```
+
+### Example: Upload Multiple Web Resources from a Folder
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires looping and manual handling
+$files = Get-ChildItem -Path "C:\webresources" -File -Filter "*.js"
+foreach ($file in $files) {
+    $fileContent = [System.IO.File]::ReadAllBytes($file.FullName)
+    $base64 = [System.Convert]::ToBase64String($fileContent)
+    
+    $webResource = New-Object Microsoft.Xrm.Sdk.Entity("webresource")
+    $webResource.Attributes["name"] = "new_/$($file.Name)"
+    $webResource.Attributes["displayname"] = $file.BaseName
+    $webResource.Attributes["webresourcetype"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue(3)
+    $webResource.Attributes["content"] = $base64
+    
+    $conn.Create($webResource)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - single command processes entire folder
+Set-DataverseWebResource -Connection $conn -Folder "C:\webresources" `
+    -PublisherPrefix "new" -FileFilter "*.js" -Publish
+```
+
+### Example: Download Multiple Web Resources
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex - requires querying, looping, and manual file handling
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("webresource")
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet("name", "content")
+$query.Criteria.AddCondition("webresourcetype", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, 3)
+
+$results = $conn.RetrieveMultiple($query)
+foreach ($webResource in $results.Entities) {
+    $name = $webResource.Attributes["name"].Replace("/", "_")
+    $content = [System.Convert]::FromBase64String($webResource.Attributes["content"])
+    [System.IO.File]::WriteAllBytes("C:\download\$name", $content)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - automatically saves all matching resources
+Get-DataverseWebResource -Connection $conn -WebResourceType 3 -Folder "C:\download"
+
+# Or with wildcards for name filtering
+Get-DataverseWebResource -Connection $conn -Name "new_*" -Folder "C:\download"
+```
+
+### Example: Delete a Web Resource
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Must look up by name first, then delete
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression("webresource")
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet("webresourceid")
+$query.Criteria.AddCondition("name", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, "new_/script.js")
+
+$result = $conn.RetrieveMultiple($query)
+if ($result.Entities.Count -gt 0) {
+    $conn.Delete("webresource", $result.Entities[0].Id)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple - delete by name directly
+Remove-DataverseWebResource -Connection $conn -Name "new_script"
+
+# Or pipe from Get with name wildcard
+Get-DataverseWebResource -Connection $conn -Name "new_script*" |
+    Remove-DataverseWebResource -Connection $conn
+
+# Or by type
+Get-DataverseWebResource -Connection $conn -WebResourceType 3 |
+    Remove-DataverseWebResource -Connection $conn
+```
+
 ## Invoking Custom Requests
 
 ### Example: Close an Incident (Case)
@@ -502,7 +657,7 @@ if ($solutions.Count -eq 1) {
 $solutionUniqueName = 'mysolution'
 
 # Query for the solution
-$solution = Get-DataverseRecord -Connection $conn -TableName solution -Filter @{uniquename = $solutionUniqueName}
+$solution = Get-DataverseRecord -Connection $conn -TableName solution -FilterValues @{uniquename = $solutionUniqueName}
 
 if ($solution) {
     Remove-DataverseRecord -Connection $conn -TableName solution -Id $solution.Id
@@ -1580,6 +1735,412 @@ FROM processstage
 WHERE primaryentitytypecode = 'lead'
 ORDER BY stagename
 "@
+```
+
+## Form Management
+
+### Example: Get all forms for an entity
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Not directly supported - required direct SDK queries
+$query = New-Object Microsoft.Xrm.Sdk.Query.QueryExpression -ArgumentList "systemform"
+$query.ColumnSet = New-Object Microsoft.Xrm.Sdk.Query.ColumnSet($true)
+$query.Criteria.AddCondition("objecttypecode", [Microsoft.Xrm.Sdk.Query.ConditionOperator]::Equal, "contact")
+$forms = Get-CrmRecords -conn $conn -Query $query
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Using dedicated form cmdlet (simplest and recommended)
+$forms = Get-DataverseForm -Connection $conn -Entity 'contact'
+
+# Display form information
+$forms | Format-Table FormId, Name, Type, IsActive, IsDefault
+
+# Get only Main forms
+$mainForms = Get-DataverseForm -Connection $conn -Entity 'contact' -FormType 'Main'
+```
+
+### Example: Get a specific form with FormXml
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex SDK query required
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+$form = Get-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId -Fields formxml,name
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple and clean with dedicated cmdlet
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+$form = Get-DataverseForm -Connection $conn -Id $formId -IncludeFormXml
+
+# Parse FormXml structure
+$parsedForm = Get-DataverseForm -Connection $conn -Id $formId -ParseFormXml
+$parsedForm.ParsedForm.Tabs | ForEach-Object {
+    Write-Host "Tab: $($_.Name) - Expanded: $($_.Expanded)"
+    $_.Sections | ForEach-Object {
+        Write-Host "  Section: $($_.Name)"
+        $_.Controls | ForEach-Object {
+            Write-Host "    Control: $($_.DataField)"
+        }
+    }
+}
+```
+
+### Example: Create a new form
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Required manual SDK entity creation
+$form = New-Object Microsoft.Xrm.Sdk.Entity -ArgumentList "systemform"
+$form["name"] = "Custom Contact Form"
+$form["objecttypecode"] = "contact"
+$form["type"] = New-Object Microsoft.Xrm.Sdk.OptionSetValue -ArgumentList 2  # Main form
+$form["formxml"] = $formXmlContent
+$formId = Set-CrmRecord -conn $conn -CrmRecord $form
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Clean and simple with dedicated cmdlet
+$formId = Set-DataverseForm -Connection $conn `
+    -Entity 'contact' `
+    -Name 'Custom Contact Form' `
+    -FormType 'Main' `
+    -Description 'A custom form for contacts' `
+    -IsActive `
+    -PassThru
+
+# With custom FormXml
+$formXml = Get-Content -Path 'CustomForm.xml' -Raw
+$formId = Set-DataverseForm -Connection $conn `
+    -Entity 'contact' `
+    -Name 'Advanced Contact Form' `
+    -FormType 'Main' `
+    -FormXmlContent $formXml `
+    -Publish `
+    -PassThru
+```
+
+### Example: Update an existing form
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Manual SDK entity updates
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+$form = New-Object Microsoft.Xrm.Sdk.Entity -ArgumentList "systemform"
+$form.Id = $formId
+$form["name"] = "Updated Form Name"
+$form["description"] = "Updated description"
+Set-CrmRecord -conn $conn -CrmRecord $form
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple updates with dedicated cmdlet
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+Set-DataverseForm -Connection $conn `
+    -Id $formId `
+    -Name 'Updated Form Name' `
+    -Description 'Updated description' `
+    -IsDefault `
+    -Publish
+```
+
+### Example: Delete a form
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Manual SDK delete
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+Remove-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Clean deletion with dedicated cmdlet
+$formId = 'a1234567-89ab-cdef-0123-456789abcdef'
+Remove-DataverseForm -Connection $conn -Id $formId -Publish
+
+# Delete by name
+Remove-DataverseForm -Connection $conn -Entity 'contact' -Name 'Old Form' -IfExists
+
+# WhatIf support for safety
+Remove-DataverseForm -Connection $conn -Id $formId -WhatIf
+```
+
+### Example: Export and import forms
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex manual process with SDK
+$forms = Get-CrmRecords -conn $conn -EntityLogicalName systemform -FilterAttribute objecttypecode -FilterOperator eq -FilterValue contact -Fields formxml,name
+foreach ($form in $forms.CrmRecords) {
+    $formXml = $form.formxml
+    [System.IO.File]::WriteAllText("C:\FormExports\$($form.name).xml", $formXml)
+}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple and clean with dedicated cmdlets
+# Export forms
+$forms = Get-DataverseForm -Connection $conn -Entity 'contact' -IncludeFormXml
+$forms | ForEach-Object {
+    $safeFileName = $_.Name -replace '[\\/:*?"<>|]', '_'
+    $_.FormXml | Out-File -FilePath "C:\FormExports\$safeFileName.xml"
+}
+
+# Import forms to another environment
+$targetConn = Get-DataverseConnection -Url "https://target.crm.dynamics.com" -Interactive
+Get-ChildItem "C:\FormExports\*.xml" | ForEach-Object {
+    $formXml = Get-Content $_.FullName -Raw
+    $formName = [System.IO.Path]::GetFileNameWithoutExtension($_.Name)
+    Set-DataverseForm -Connection $targetConn `
+        -Entity 'contact' `
+        -Name $formName `
+        -FormType 'Main' `
+        -FormXmlContent $formXml `
+        -Publish
+}
+```
+
+### Example: Manage form tabs
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Complex manual FormXml manipulation required
+$form = Get-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId -Fields formxml
+$xml = [xml]$form.formxml
+$tab = $xml.CreateElement("tab")
+$tab.SetAttribute("name", "newtab")
+# ... extensive XML manipulation ...
+Set-CrmRecord -conn $conn -CrmRecord @{systemformid=$formId; formxml=$xml.OuterXml}
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple and intuitive with dedicated cmdlet
+# Add a new tab
+$tabId = Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -Name 'CustomTab' `
+    -Label 'Custom Information' `
+    -Expanded `
+    -Publish `
+    -PassThru
+
+# Update existing tab
+Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -TabId $tabId `
+    -Label 'Updated Label' `
+    -Visible:$false
+
+# Remove tab
+Remove-DataverseFormTab -Connection $conn -FormId $formId -TabName 'CustomTab' -Publish
+
+# Get all tabs
+$tabs = Get-DataverseFormTab -Connection $conn -FormId $formId
+$tabs | Format-Table Name, Expanded, Visible
+
+# Position tabs using Index, InsertBefore, or InsertAfter
+Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -Name 'FirstTab' `
+    -Label 'First Tab' `
+    -Index 0  # Insert at beginning
+
+Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -Name 'MiddleTab' `
+    -Label 'Middle Tab' `
+    -InsertBefore 'GeneralTab'  # Insert before specific tab
+
+Set-DataverseFormTab -Connection $conn `
+    -FormId $formId `
+    -Name 'AfterTab' `
+    -Label 'After Tab' `
+    -InsertAfter 'GeneralTab'  # Insert after specific tab
+```
+
+### Example: Manage form sections
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Requires manual FormXml parsing and manipulation
+$form = Get-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId -Fields formxml
+$xml = [xml]$form.formxml
+# ... complex XPath and XML manipulation ...
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Simple section management
+# Add a new section to a tab
+$sectionId = Set-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -TabName 'General' `
+    -Name 'custom_section' `
+    -Label 'Custom Fields' `
+    -Columns 2 `
+    -ShowLabel `
+    -Publish `
+    -PassThru
+
+# Update section properties
+Set-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -TabName 'General' `
+    -SectionId $sectionId `
+    -Label 'Updated Section' `
+    -Columns 3
+
+# Remove section
+Remove-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -SectionName 'custom_section' `
+    -Publish
+
+# Get all sections in a tab
+$sections = Get-DataverseFormSection -Connection $conn -FormId $formId -TabName 'General'
+$sections | Format-Table Name, ShowLabel, Columns
+
+# Position sections using Index, InsertBefore, or InsertAfter
+Set-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -TabName 'General' `
+    -Name 'top_section' `
+    -Label 'Top Section' `
+    -Index 0  # Insert at beginning
+
+Set-DataverseFormSection -Connection $conn `
+    -FormId $formId `
+    -TabName 'General' `
+    -Name 'middle_section' `
+    -Label 'Middle Section' `
+    -InsertAfter 'general_section'  # Insert after specific section
+```
+
+### Example: Manage form controls
+
+**Microsoft.Xrm.Data.PowerShell:**
+```powershell
+# Very complex - requires understanding FormXml schema and manual manipulation
+$form = Get-CrmRecord -conn $conn -EntityLogicalName systemform -Id $formId -Fields formxml
+$xml = [xml]$form.formxml
+# ... extensive XML creation with class IDs, attributes, cells, rows ...
+```
+
+**Rnwood.Dataverse.Data.PowerShell:**
+```powershell
+# Add standard controls with simple parameters
+# Add a text field
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'emailaddress1' `
+    -Label 'Email Address' `
+    -ControlType 'Standard' `
+    -IsRequired `
+    -Publish
+
+# Add a lookup field
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'parentcustomerid' `
+    -Label 'Parent Account' `
+    -ControlType 'Lookup'
+
+# Add a date/time picker
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'createdon' `
+    -Label 'Created On' `
+    -ControlType 'DateTime' `
+    -Disabled
+
+# Add a subgrid with parameters
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'related_section' `
+    -DataField 'contacts_subgrid' `
+    -ControlType 'Subgrid' `
+    -Parameters @{
+        TargetEntityType = 'contact'
+        ViewId = '{00000000-0000-0000-0000-000000000000}'
+    }
+
+# Update control properties
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -ControlId 'emailaddress1' `
+    -DataField 'emailaddress1' `
+    -Label 'Primary Email' `
+    -Visible:$false
+
+# Remove control
+Remove-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -DataField 'emailaddress1' `
+    -Publish
+
+# Get all controls in a section
+$controls = Get-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section'
+$controls | Format-Table DataField, Disabled, Visible, IsRequired
+
+# Position controls using Index, InsertBefore, or InsertAfter
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'firstname' `
+    -Label 'First Name' `
+    -Index 0  # Insert at beginning
+
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'lastname' `
+    -Label 'Last Name' `
+    -InsertAfter 'firstname'  # Insert after firstname
+
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -DataField 'emailaddress1' `
+    -Label 'Email' `
+    -InsertBefore 'telephone1'  # Insert before phone
+
+# Use raw XML for advanced control customization
+$controlXml = @'
+<control id="customfield" datafieldname="new_customfield" classid="{4273EDBD-AC1D-40d3-9FB2-095C621B552D}">
+  <labels>
+    <label description="Custom Field" languagecode="1033" />
+  </labels>
+  <parameters>
+    <MaxLength>100</MaxLength>
+    <Format>Text</Format>
+  </parameters>
+</control>
+'@
+
+Set-DataverseFormControl -Connection $conn `
+    -FormId $formId `
+    -SectionName 'general_section' `
+    -ControlXml $controlXml `
+    -InsertAfter 'emailaddress1' `
+    -Publish
+
+# Supported control types: Standard, Lookup, OptionSet, DateTime, Boolean, 
+# Subgrid, WebResource, QuickForm, Spacer, IFrame, Timer, KBSearch, Notes
 ```
 
 ## Ribbon Customizations

@@ -13,9 +13,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public class GetDataverseSolutionCmdlet : OrganizationServiceCmdlet
     {
         /// <summary>
-        /// Gets or sets the unique name of the solution to retrieve.
+        /// Gets or sets the unique name of the solution to retrieve. Supports wildcards (* and ?).
         /// </summary>
-        [Parameter(Position = 0, HelpMessage = "The unique name of the solution to retrieve. If not specified, all solutions are returned.")]
+        [Parameter(Position = 0, HelpMessage = "The unique name of the solution to retrieve. Supports wildcards (* and ?). If not specified, all solutions are returned.")]
         public string UniqueName { get; set; }
 
         /// <summary>
@@ -62,8 +62,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Add filters
             if (!string.IsNullOrEmpty(UniqueName))
             {
-                query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, UniqueName);
-                WriteVerbose($"Filtering by unique name: {UniqueName}");
+                // Check if UniqueName contains wildcards
+                if (UniqueName.Contains("*") || UniqueName.Contains("?"))
+                {
+                    // Convert wildcards to SQL LIKE pattern
+                    string likePattern = UniqueName.Replace("*", "%").Replace("?", "_");
+                    query.Criteria.AddCondition("uniquename", ConditionOperator.Like, likePattern);
+                    WriteVerbose($"Filtering by unique name pattern: {UniqueName} (LIKE: {likePattern})");
+                }
+                else
+                {
+                    query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, UniqueName);
+                    WriteVerbose($"Filtering by unique name: {UniqueName}");
+                }
             }
 
             if (Managed.IsPresent && !Unmanaged.IsPresent)

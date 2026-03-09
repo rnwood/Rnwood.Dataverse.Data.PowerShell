@@ -261,3 +261,4 @@ updatehelp.stamp
 
 # Coverage reports
 coverage/
+local-packages/

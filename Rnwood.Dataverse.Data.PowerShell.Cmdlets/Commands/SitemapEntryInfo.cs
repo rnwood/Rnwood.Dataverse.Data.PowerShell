@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
@@ -34,14 +35,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string ToolTipResourceId { get; set; }
 
         /// <summary>
-        /// Gets or sets the title/label of the entry.
+        /// Gets or sets the titles of the entry keyed by LCID.
+        /// Keys can be int or string representation of LCID (e.g., 1033 or "1033").
         /// </summary>
-        public string Title { get; set; }
+        public Hashtable Titles { get; set; }
 
         /// <summary>
-        /// Gets or sets the description of the entry.
+        /// Gets or sets the descriptions of the entry keyed by LCID.
+        /// Keys can be int or string representation of LCID (e.g., 1033 or "1033").
         /// </summary>
-        public string Description { get; set; }
+        public Hashtable Descriptions { get; set; }
 
         /// <summary>
         /// Gets or sets the icon path (for Areas and SubAreas).

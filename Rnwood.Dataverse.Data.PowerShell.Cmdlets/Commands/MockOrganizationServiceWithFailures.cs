@@ -103,20 +103,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         }
 
         // Delegate all other methods to inner service
+        
+        /// <inheritdoc />
         public void Associate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities) =>
             _innerService.Associate(entityName, entityId, relationship, relatedEntities);
 
+        /// <inheritdoc />
         public Guid Create(Entity entity) => _innerService.Create(entity);
 
+        /// <inheritdoc />
         public void Delete(string entityName, Guid id) => _innerService.Delete(entityName, id);
 
+        /// <inheritdoc />
         public void Disassociate(string entityName, Guid entityId, Relationship relationship, EntityReferenceCollection relatedEntities) =>
             _innerService.Disassociate(entityName, entityId, relationship, relatedEntities);
 
+        /// <inheritdoc />
         public Entity Retrieve(string entityName, Guid id, ColumnSet columnSet) => _innerService.Retrieve(entityName, id, columnSet);
 
+        /// <inheritdoc />
         public EntityCollection RetrieveMultiple(QueryBase query) => _innerService.RetrieveMultiple(query);
 
+        /// <inheritdoc />
         public void Update(Entity entity) => _innerService.Update(entity);
     }
 }

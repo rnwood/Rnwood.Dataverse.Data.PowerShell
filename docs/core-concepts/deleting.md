@@ -1,19 +1,6 @@
-<!-- START doctoc generated TOC please keep comment here to allow auto update -->
-<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-## Table of Contents
-
-- [Deleting Records](#deleting-records)
-      - [Deleting only if the record still exists](#deleting-only-if-the-record-still-exists)
-        - [SQL alternative — Delete](#sql-alternative--delete)
-
-<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # Deleting Records
 
-<!-- TOC -->
-    - [Deleting only if the record still exists](#deleting-only-if-the-record-still-exists)
-      - [SQL alternative — Delete](#sql-alternative-delete)
-<!-- /TOC -->
 
 > [!WARNING]
 > Deleting records is irreversible. Always preview deletions with `-WhatIf` and/or require confirmation with `-Confirm` when running destructive operations.
