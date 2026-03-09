@@ -31,6 +31,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the name or name pattern of the web resource to retrieve. Supports wildcards (* and ?).
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_QUERY, HelpMessage = "Name or name pattern of the web resource. Supports wildcards (* and ?)")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string Name { get; set; }
 
         /// <summary>
@@ -75,9 +76,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "If set, decodes the content from base64 and returns as byte array. Implies -IncludeContent.")]
         public SwitchParameter DecodeContent { get; set; }
 
+        /// <inheritdoc />
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            // Create metadata factory and converter once for all records
+            var metadataFactory = new EntityMetadataFactory(Connection);
+            var converter = new DataverseEntityConverter(Connection, metadataFactory);
 
             QueryExpression query = new QueryExpression("webresource");
             
@@ -223,7 +229,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         entity["content"] = response.Entity.GetAttributeValue<string>("content");
                     }
                     
-                    var psObject = ConvertEntityToPSObject(entity, includeContent);
+                    var psObject = ConvertEntityToPSObject(entity, includeContent, converter);
 
                     // Save to file if Path is specified and we have exactly one result
                     if (!string.IsNullOrEmpty(Path))
@@ -244,11 +250,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
-        private PSObject ConvertEntityToPSObject(Entity entity, bool includeContent)
+        private PSObject ConvertEntityToPSObject(Entity entity, bool includeContent, DataverseEntityConverter converter)
         {
-            var metadataFactory = new EntityMetadataFactory(Connection);
-            var converter = new DataverseEntityConverter(Connection, metadataFactory);
-            
             // Determine which columns to include in the PSObject
             ColumnSet columnSet;
             if (includeContent)

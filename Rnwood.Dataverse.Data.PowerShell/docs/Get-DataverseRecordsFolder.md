@@ -33,28 +33,14 @@ When used with the `-deletions` switch, it reads from the 'deletions' subfolder 
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataverseRecordsFolder -InputPath data/contacts | Set-DataverseRecord -connection $c
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecordsFolder -InputPath data/contacts | Set-DataverseRecord
 ```
 
 Reads files from `data/contacts` and uses them to create/update records in Dataverse using the existing connection `$c`.
 See documentation for `Set-DataverseRecord` as there are option to control how/if existing records will be matched and updated.
 
 ## PARAMETERS
-
-### -InputPath
-Path to folder to read JSON files from.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: True
-Position: 1
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -deletions
 If specified, reads from the 'deletions' subfolder instead of the main folder. This allows reading records that were present previously but have been deleted.
@@ -66,6 +52,21 @@ Aliases:
 
 Required: False
 Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -InputPath
+Path to folder to read JSON files from.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: True
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False

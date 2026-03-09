@@ -68,7 +68,7 @@ if (Test-Path $stampFile) {
 # Ensure output directory exists
 if (-not (Test-Path $OutDir)) { New-Item -ItemType Directory -Path $OutDir -Force | Out-Null }
 
-update-markdownhelpmodule -path $projectdir/docs -UpdateInputOutput
+update-markdownhelpmodule -path $projectdir/docs -UpdateInputOutput -AlphabeticParamsOrder -RefreshModulePage
 
 # After successful update, write/update the stamp so future runs can be skipped
 $now = (Get-Date).ToUniversalTime().ToString("o")

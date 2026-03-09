@@ -1,7 +1,14 @@
 
-# Plugin Management Cmdlets - Usage Examples
+# Plugin Management
 
-This document provides practical examples for managing Dataverse plugins using the new cmdlets.
+This document provides comprehensive guidance for managing Dataverse plugins, including both traditional plugin assemblies and dynamic plugin assemblies.
+
+## Overview
+
+The module provides two approaches to plugin development:
+
+1. **Dynamic Plugin Assemblies** (Recommended for rapid development) - Compile C# source code on-the-fly and deploy directly to Dataverse
+2. **Traditional Plugin Assemblies** - Upload pre-compiled DLL files to Dataverse
 
 ## Prerequisites
 
@@ -9,6 +16,363 @@ This document provides practical examples for managing Dataverse plugins using t
 # Connect to your Dataverse environment
 $connection = Get-DataverseConnection -Url "https://yourorg.crm.dynamics.com" -Interactive
 ```
+
+## Dynamic Plugin Assemblies
+
+Dynamic plugin assemblies allow you to write C# plugin code and deploy it to Dataverse without using Visual Studio or a separate build process. The cmdlets compile your source code using Roslyn, automatically manage strong name signing, embed metadata for later retrieval, and handle plugin type registration.
+
+### Benefits of Dynamic Plugin Assemblies
+
+- **Rapid Development**: Write and deploy plugins directly from PowerShell without a separate build process
+- **No Build Tools Required**: No need for Visual Studio or MSBuild
+- **Automatic Signing**: Strong name keys are automatically generated and persisted
+- **Source Code Preservation**: Original source code is embedded in the assembly and can be extracted later
+- **Consistent Updates**: Strong name key is automatically reused when updating, preventing "fully qualified name changed" errors
+- **Automatic Plugin Type Management**: Plugin types (classes implementing IPlugin) are automatically detected and registered
+- **Cross-Platform**: Works on Windows, Linux, and macOS
+
+### Creating a Dynamic Plugin Assembly
+
+```powershell
+# Define your plugin code
+$sourceCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class AccountPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            
+            if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
+            {
+                Entity entity = (Entity)context.InputParameters["Target"];
+                
+                // Your plugin logic here
+                if (entity.Contains("name"))
+                {
+                    string name = entity.GetAttributeValue<string>("name");
+                    entity["description"] = $"Created via plugin: {name}";
+                }
+            }
+        }
+    }
+}
+"@
+
+# Compile and upload to Dataverse
+Set-DataverseDynamicPluginAssembly -SourceCode $sourceCode -Name "MyCompany.Plugins" -Version "1.0.0.0" -Description "Account plugin"
+```
+
+This single command:
+1. Compiles the C# source code using Roslyn
+2. Generates a strong name key (or reuses existing one)
+3. Embeds metadata (source code, references, key) in the assembly
+4. Uploads the assembly to Dataverse
+5. Automatically creates plugin type records for all classes implementing IPlugin
+
+### Updating a Dynamic Plugin Assembly
+
+```powershell
+# Update with new source code - settings are automatically reused
+$updatedCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class AccountPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            
+            if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
+            {
+                Entity entity = (Entity)context.InputParameters["Target"];
+                
+                // Updated logic
+                if (entity.Contains("name"))
+                {
+                    string name = entity.GetAttributeValue<string>("name");
+                    entity["description"] = $"Updated via plugin v2: {name}";
+                }
+            }
+        }
+    }
+}
+"@
+
+# Simply provide the new source code and name - everything else is reused
+Set-DataverseDynamicPluginAssembly -SourceCode $updatedCode -Name "MyCompany.Plugins" -Version "2.0.0.0"
+```
+
+The strong name key, culture, and references are automatically reused from the existing assembly metadata, ensuring the public key token remains consistent.
+
+### Extracting Source Code from Dynamic Plugin Assembly
+
+```powershell
+# Download the assembly from Dataverse
+$assembly = Get-DataverseRecord -TableName pluginassembly -FilterValues @{ name = "MyCompany.Plugins" } -Columns content
+
+# Extract metadata and source code
+$bytes = [Convert]::FromBase64String($assembly.content)
+$metadata = Get-DataverseDynamicPluginAssembly -AssemblyBytes $bytes -OutputSourceFile "C:\Temp\Plugin.cs"
+
+# View the metadata
+Write-Host "Assembly: $($metadata.AssemblyName)"
+Write-Host "Version: $($metadata.Version)"
+Write-Host "Public Key Token: $($metadata.PublicKeyToken)"
+Write-Host "Framework References: $($metadata.FrameworkReferences -join ', ')"
+Write-Host "Source code saved to: C:\Temp\Plugin.cs"
+```
+
+### Exporting to Visual Studio Project
+
+For more advanced development workflows, you can export a dynamic plugin assembly to a complete Visual Studio project. This enables you to use standard .NET development tools, IDEs, and debugging capabilities.
+
+```powershell
+# Export plugin assembly directly from Dataverse to a VS project
+$connection = Get-DataverseConnection -Url "https://org.crm.dynamics.com" -Interactive
+
+Get-DataverseDynamicPluginAssembly -Connection $connection `
+    -Name "MyCompany.Plugins" `
+    -OutputProjectPath "C:\Dev\MyPlugin"
+```
+
+This creates a complete, buildable project structure:
+- **MyCompany.Plugins.csproj** - SDK-style project file targeting .NET Framework 4.6.2
+- **MyCompany.Plugins.cs** - Complete C# source code
+- **MyCompany.Plugins.snk** - Strong name key for assembly signing
+
+The generated project:
+- Builds successfully with `dotnet build` without modifications
+- Can be opened in Visual Studio or VS Code
+- Supports IntelliSense, debugging, and refactoring
+- Maintains the same PublicKeyToken as the original assembly
+
+### Complete Development Workflow with VS Project Export
+
+This workflow combines the rapid deployment benefits of dynamic plugins with the power of traditional IDE-based development:
+
+```powershell
+# Step 1: Create initial plugin with dynamic assembly
+$initialCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class AccountPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            var trace = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
+            
+            trace.Trace("AccountPlugin V1 executing");
+            
+            if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
+            {
+                var target = (Entity)context.InputParameters["Target"];
+                target["description"] = "Created by V1: " + DateTime.UtcNow.ToString();
+            }
+        }
+    }
+}
+"@
+
+Set-DataverseDynamicPluginAssembly -SourceCode $initialCode `
+    -Name "MyCompany.Plugins" `
+    -Version "1.0.0.0"
+
+# Step 2: Export to VS project for development
+Get-DataverseDynamicPluginAssembly -Name "MyCompany.Plugins" `
+    -OutputProjectPath "C:\Dev\MyPlugin"
+
+# Step 3: Modify source code in your preferred IDE
+#   - Open C:\Dev\MyPlugin\MyCompany.Plugins.csproj in Visual Studio or VS Code
+#   - Edit MyCompany.Plugins.cs with full IntelliSense support
+#   - Add more complex logic, error handling, etc.
+#   - Use debugging and testing tools
+
+# Example modification:
+$modifiedCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class AccountPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            var trace = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
+            
+            trace.Trace("AccountPlugin V2 executing - UPDATED VERSION!");
+            
+            if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
+            {
+                var target = (Entity)context.InputParameters["Target"];
+                // V2: Enhanced functionality with validation
+                if (target.Contains("revenue") && target.GetAttributeValue<Money>("revenue").Value < 0)
+                {
+                    throw new InvalidPluginExecutionException("Revenue cannot be negative");
+                }
+                target["description"] = "Created by V2 (enhanced!): " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC");
+            }
+        }
+    }
+}
+"@
+
+# Save modified code to the project file
+Set-Content -Path "C:\Dev\MyPlugin\MyCompany.Plugins.cs" -Value $modifiedCode
+
+# Step 4: Build using standard dotnet tools
+Push-Location C:\Dev\MyPlugin
+dotnet build
+Pop-Location
+
+# The build produces: C:\Dev\MyPlugin\bin\Debug\net462\MyCompany.Plugins.dll
+# This DLL is properly signed and ready to deploy
+
+# Step 5: Update plugin in Dataverse (incremental update - no deletion needed)
+$updatedSource = Get-Content "C:\Dev\MyPlugin\MyCompany.Plugins.cs" -Raw
+Set-DataverseDynamicPluginAssembly -SourceCode $updatedSource `
+    -Name "MyCompany.Plugins" `
+    -Version "2.0.0.0"
+
+# Plugin assembly is updated from version 1.0.0.0 to 2.0.0.0
+# Plugin steps remain registered - no need to recreate them
+# Public key token remains consistent
+```
+
+**Benefits of VS Project Export Workflow:**
+
+1. **IDE Support**: Full IntelliSense, syntax highlighting, and code navigation
+2. **Debugging**: Set breakpoints and debug plugins locally (with appropriate test harness)
+3. **Refactoring**: Use IDE refactoring tools for safer code changes
+4. **Testing**: Write and run unit tests alongside your plugin code
+5. **Version Control**: Commit the .csproj and .cs files to Git/source control
+6. **Team Collaboration**: Share buildable projects with team members
+7. **Standard Tooling**: Use familiar `dotnet build`, `dotnet test`, etc.
+8. **No Manual Configuration**: Generated project builds immediately without setup
+
+**When to Use VS Project Export:**
+- Developing complex plugins with multiple classes
+- Working with a team on shared plugin code
+- Maintaining plugins in source control systems
+- Need debugging and testing capabilities
+- Want IDE support for productivity
+- Building plugins with extensive business logic
+
+**When to Use Inline Source Code:**
+- Quick prototypes and simple plugins
+- Single-file plugins with minimal logic
+- CI/CD automation scenarios
+- Simple configuration changes
+- No local development environment needed
+
+### Working with Multiple Plugin Types
+
+```powershell
+# You can define multiple plugin classes in a single source file
+$sourceCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class PreValidationPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Pre-validation logic
+        }
+    }
+    
+    public class PostOperationPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            // Post-operation logic
+        }
+    }
+}
+"@
+
+Set-DataverseDynamicPluginAssembly -SourceCode $sourceCode -Name "MyCompany.Plugins"
+```
+
+Both plugin types are automatically detected and registered in Dataverse.
+
+### Using External NuGet Packages
+
+```powershell
+$sourceCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+using Newtonsoft.Json;
+
+namespace MyCompany.Plugins
+{
+    public class JsonPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var data = new { Name = "Test", Value = 123 };
+            string json = JsonConvert.SerializeObject(data);
+            // Use json...
+        }
+    }
+}
+"@
+
+# Specify package references
+Set-DataverseDynamicPluginAssembly -SourceCode $sourceCode -Name "JsonPlugin" `
+    -PackageReferences "Newtonsoft.Json@13.0.1"
+```
+
+### Strong Name Key Persistence
+
+One of the key features of dynamic plugin assemblies is **automatic strong name key persistence**:
+
+1. **First Upload**: If no strong name key is specified, a new key is automatically generated
+2. **Key Storage**: The key is embedded in the assembly metadata
+3. **Automatic Reuse**: When updating the assembly, the key is automatically extracted and reused
+4. **Consistent Identity**: This ensures the public key token remains the same across updates
+5. **No "Fully Qualified Name Changed" Errors**: Prevents the common error when updating plugins with different keys
+
+```powershell
+# First upload - key is generated
+Set-DataverseDynamicPluginAssembly -SourceCode $code -Name "MyPlugin"
+
+# Update - key is automatically reused from metadata
+Set-DataverseDynamicPluginAssembly -SourceCode $updatedCode -Name "MyPlugin" -Version "2.0.0.0"
+
+# The public key token remains consistent!
+```
+
+### Using Source Files
+
+```powershell
+# Instead of inline source code, you can use a source file
+Set-DataverseDynamicPluginAssembly -SourceFile "C:\Dev\MyPlugin.cs" -Name "MyPlugin"
+```
+
+### Providing Your Own Strong Name Key
+
+```powershell
+# Use a specific strong name key file
+Set-DataverseDynamicPluginAssembly -SourceCode $code -Name "MyPlugin" -StrongNameKeyFile "C:\Keys\mykey.snk"
+```
+
+## Traditional Plugin Assemblies
 
 ## Complete Plugin Registration Example
 

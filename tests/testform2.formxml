@@ -1,0 +1,173 @@
+<form headerdensity="HighWithControls">
+    <formLibraries>
+        <Library name="msdyn_/helplink.js" libraryUniqueId="{50b34ba9-25a4-4bf1-a3e1-001a4af8884b}" />
+    </formLibraries>
+    <tabs>
+        <tab id="{66E0821C-B498-4155-BA26-BB41EBB58D5E}" name="General" IsUserDefined="0"
+            visible="true">
+            <labels>
+                <label description="General" languagecode="1033" />
+            </labels>
+            <columns>
+                <column width="100%">
+                    <sections>
+                        <section id="{90A0BE68-ED4B-44C7-9B35-E89C600F1E88}" name="GeneralSection"
+                            showlabel="true">
+                            <labels>
+                                <label description="General" languagecode="1033" />
+                            </labels>
+                            <rows>
+                                <row />
+                                <row>
+                                    <cell id="17513822-2cec-460f-b140-e2c36acf12c3">
+                                        <labels>
+                                            <label description="Connections" languagecode="1033" />
+                                        </labels>
+                                        <control id="617cebe3-d935-4140-b02f-3e510e2f0f1c"
+                                            classid="{E7A81278-8635-4d9e-8D4D-59480B391C5B}"
+                                            indicationOfSubgrid="true">
+                                            <parameters>
+                                                <RelationshipName>contact_connections1</RelationshipName>
+                                                <TargetEntityType>connection</TargetEntityType>
+                                                <ViewId>{7C0E0725-CCD9-4525-9313-665FD075652F}</ViewId>
+                                                <ViewIds>{7C0E0725-CCD9-4525-9313-665FD075652F}</ViewIds>
+                                                <RecordsPerPage>4</RecordsPerPage>
+                                                <AutoExpand>Fixed</AutoExpand>
+                                                <EnableQuickFind>false</EnableQuickFind>
+                                                <EnableViewPicker>false</EnableViewPicker>
+                                                <EnableChartPicker>false</EnableChartPicker>
+                                            </parameters>
+                                        </control>
+                                    </cell>
+                                </row>
+                                <row>
+                                    <cell id="{45b2672b-b64b-48ce-ade8-7c3f2aec58c7}" locklevel="0"
+                                        colspan="1" rowspan="1">
+                                        <labels>
+                                            <label description="Marital Status" languagecode="1033" />
+                                        </labels>
+                                        <control id="familystatuscode"
+                                            classid="{3EF39988-22BB-4F0B-BBBE-64B5A3748AEE}"
+                                            datafieldname="familystatuscode" disabled="false" />
+                                    </cell>
+                                </row>
+                                <row>
+                                    <cell locklevel="0" id="{30e26c69-e1ff-4de6-ac1e-1b6f16f27224}"
+                                        rowspan="4" colspan="1" auto="false">
+                                        <labels>
+                                            <label description="New SG control 1763667421584"
+                                                languagecode="1033" />
+                                        </labels>
+                                        <control indicationOfSubgrid="true" id="Subgrid_new_1"
+                                            classid="{E7A81278-8635-4D9E-8D4D-59480B391C5B}">
+                                            <parameters>
+                                                <RecordsPerPage>4</RecordsPerPage>
+                                                <AutoExpand>Fixed</AutoExpand>
+                                                <EnableQuickFind>false</EnableQuickFind>
+                                                <EnableViewPicker>false</EnableViewPicker>
+                                                <EnableChartPicker>true</EnableChartPicker>
+                                                <ChartGridMode>All</ChartGridMode>
+                                                <RelationshipName>account_primary_contact</RelationshipName>
+                                                <TargetEntityType>account</TargetEntityType>
+                                                <ViewId>{15c63745-0a6e-4322-8416-a62c84d90279}</ViewId>
+                                                <ViewIds>{15c63745-0a6e-4322-8416-a62c84d90279}</ViewIds>
+                                                <VisualizationId>
+                                                    {74a622c0-5193-de11-97d4-00155da3b01e}</VisualizationId>
+                                            </parameters>
+                                        </control>
+                                    </cell>
+                                </row>
+                                <row />
+                                <row />
+                                <row />
+                                <row>
+                                    <cell id="{d21d3bb2-2726-4e21-8c42-1c873761d9c5}" locklevel="1"
+                                        colspan="1" rowspan="1">
+                                        <labels>
+                                            <label description="Department" languagecode="1033" />
+                                        </labels>
+                                        <control id="department"
+                                            classid="{4273EDBD-AC1D-40D3-9FB2-095C621B552D}"
+                                            datafieldname="department" disabled="false" />
+                                    </cell>
+                                </row>
+                            </rows>
+                        </section>
+                    </sections>
+                </column>
+            </columns>
+            <events>
+                <event name="tabstatechange" application="false" active="false">
+                    <Handlers>
+                        <Handler functionName="ontab" libraryName="msdyn_/helplink.js"
+                            handlerUniqueId="{403b0486-7487-4f91-8b7c-e6122a7d0fb5}" enabled="true"
+                            parameters="" passExecutionContext="false" />
+                    </Handlers>
+                </event>
+            </events>
+        </tab>
+    </tabs>
+    <header id="{087a1d34-a255-4fab-9468-86ea2687a06e}" celllabelposition="Top" columns="111"
+        labelwidth="115" celllabelalignment="Left">
+        <rows>
+            <row>
+                <cell id="{f07ce704-8a92-427c-9a5f-7ac443bb4ecd}" showlabel="false">
+                    <labels>
+                        <label description="" languagecode="1033" />
+                    </labels>
+                </cell>
+                <cell id="{db28822f-4e4a-4e2e-8729-dc82df1c04c2}" showlabel="false">
+                    <labels>
+                        <label description="" languagecode="1033" />
+                    </labels>
+                </cell>
+                <cell id="{7c561796-cade-4cd0-a83c-ab996e66338b}" showlabel="false">
+                    <labels>
+                        <label description="" languagecode="1033" />
+                    </labels>
+                </cell>
+            </row>
+        </rows>
+    </header>
+    <footer id="{6b39af2e-5779-4874-904d-6a0a926517ea}" celllabelposition="Top" columns="111"
+        labelwidth="115" celllabelalignment="Left">
+        <rows>
+            <row>
+                <cell id="{5cacbf47-d961-41d5-8807-e21e2c2e7b63}" showlabel="false">
+                    <labels>
+                        <label description="" languagecode="1033" />
+                    </labels>
+                </cell>
+                <cell id="{4377dae7-3053-4a95-9fd6-47dbb449bb7f}" showlabel="false">
+                    <labels>
+                        <label description="" languagecode="1033" />
+                    </labels>
+                </cell>
+                <cell id="{49b03ae1-d8ce-4bd0-b79f-0c0238615a32}" showlabel="false">
+                    <labels>
+                        <label description="" languagecode="1033" />
+                    </labels>
+                </cell>
+            </row>
+        </rows>
+    </footer>
+    <DisplayConditions Order="0" FallbackForm="true">
+        <Everyone />
+    </DisplayConditions>
+    <events>
+        <event name="onchange" application="false" active="false" attribute="department">
+            <Handlers>
+                <Handler functionName="ddd" libraryName="msdyn_/helplink.js"
+                    handlerUniqueId="{02c0f65b-99b5-49cd-97a9-ce1bd2e2119b}" enabled="true"
+                    parameters="1,2,3" passExecutionContext="false" />
+            </Handlers>
+        </event>
+        <event name="onsave" application="false" active="false">
+            <Handlers>
+                <Handler functionName="test" libraryName="msdyn_/helplink.js"
+                    handlerUniqueId="{2e750202-bc26-418a-a3e5-3fedd3258a28}" enabled="true"
+                    parameters="" passExecutionContext="false" />
+            </Handlers>
+        </event>
+    </events>
+</form>

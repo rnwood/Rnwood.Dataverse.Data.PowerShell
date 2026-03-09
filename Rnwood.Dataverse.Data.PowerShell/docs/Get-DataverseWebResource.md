@@ -34,35 +34,40 @@ Use -IncludeContent to include the content property or -Path/-Folder to save con
 
 ### Example 1: Get web resource metadata without content
 ```powershell
-PS C:\> Get-DataverseWebResource -Connection $conn -Name "new_myscript"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseWebResource -Name "new_myscript"
 ```
 
 Retrieves the web resource metadata without the content property.
 
 ### Example 2: Get web resource with content
 ```powershell
-PS C:\> Get-DataverseWebResource -Connection $conn -Name "new_myscript" -IncludeContent
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseWebResource -Name "new_myscript" -IncludeContent
 ```
 
 Retrieves the web resource including its base64-encoded content.
 
 ### Example 3: Download web resource to file
 ```powershell
-PS C:\> Get-DataverseWebResource -Connection $conn -Name "new_myscript" -Path "./local-script.js"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseWebResource -Name "new_myscript" -Path "./local-script.js"
 ```
 
 Downloads the web resource content to a local file. Content is automatically fetched even without -IncludeContent.
 
 ### Example 4: Get web resources by type
 ```powershell
-PS C:\> Get-DataverseWebResource -Connection $conn -WebResourceType JavaScript
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseWebResource -WebResourceType JavaScript
 ```
 
 Retrieves all JavaScript web resources (metadata only, no content).
 
 ### Example 5: Download multiple web resources to folder
 ```powershell
-PS C:\> Get-DataverseWebResource -Connection $conn -Name "new_*" -Folder "./webresources"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseWebResource -Name "new_*" -Folder "./webresources"
 ```
 
 Downloads all web resources matching the pattern to a folder.
@@ -70,8 +75,7 @@ Downloads all web resources matching the pattern to a folder.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -195,6 +199,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Unmanaged
 If set, filters to only unmanaged web resources
 
@@ -218,21 +237,6 @@ Type: WebResourceType
 Parameter Sets: Query
 Aliases:
 Accepted values: HTML, CSS, JavaScript, XML, PNG, JPG, GIF, XAP, XSL, ICO, SVG, RESX
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
 
 Required: False
 Position: Named

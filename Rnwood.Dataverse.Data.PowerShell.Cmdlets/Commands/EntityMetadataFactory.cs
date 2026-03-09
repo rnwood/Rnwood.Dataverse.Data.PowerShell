@@ -46,19 +46,81 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <returns>The attribute metadata, or null if not found.</returns>
 		public AttributeMetadata GetAttribute(string entityName, string columnName)
 		{
-			EntityMetadata entityMetadata = GetMetadata(entityName);
+			EntityMetadata entityMetadata = GetLimitedMetadata(entityName);
 
 			return entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == columnName);
 		}
 
 		private readonly IDictionary<string, EntityMetadata> _entities = new Dictionary<string, EntityMetadata>();
 
-		/// <summary>
-		/// Gets the entity metadata for the specified entity.
-		/// </summary>
-		/// <param name="entityName">The logical name of the entity.</param>
-		/// <returns>The entity metadata.</returns>
-		public EntityMetadata GetMetadata(string entityName)
+        /// <summary>
+        /// Gets the entity metadata for the specified entity.
+        /// </summary>
+        /// <param name="entityName">The logical name of the entity.</param>
+        /// <returns>The entity metadata.</returns>
+        public EntityMetadata GetLimitedMetadata(string entityName)
+        {
+            return GetLimitedMetadata(entityName, null);
+        }
+
+        /// <summary>
+        /// Gets the entity metadata for the specified entity with verbose logging.
+        /// </summary>
+        /// <param name="entityName">The logical name of the entity.</param>
+        /// <param name="writeVerbose">Optional delegate for verbose logging.</param>
+        /// <returns>The entity metadata.</returns>
+        public EntityMetadata GetLimitedMetadata(string entityName, Action<string> writeVerbose)
+        {
+            EntityMetadata result;
+            bool retrieveAsIfPublished = false; // Use published metadata for CRUD operations
+
+
+            // Try shared cache first if enabled
+            if (UseSharedCache && MetadataCache.TryGetEntityMetadata(ConnectionKey, entityName, EntityFilters.Attributes|EntityFilters.Relationships, retrieveAsIfPublished, out result))
+            {
+                writeVerbose?.Invoke($"Retrieved metadata for {entityName} from shared cache");
+                return result;
+            }
+
+
+            string cacheKey = $"{entityName}$limited";
+
+            // Try local cache
+            if (!_entities.TryGetValue(cacheKey, out result))
+            {
+                writeVerbose?.Invoke($"Retrieving metadata for entity: {entityName}");
+
+                RetrieveEntityRequest request = new RetrieveEntityRequest()
+                {
+                    EntityFilters = EntityFilters.All,
+                    RetrieveAsIfPublished = false,
+                    LogicalName = entityName
+                };
+
+                RetrieveEntityResponse response = (RetrieveEntityResponse)this.Connection.Execute(request);
+                result = response.EntityMetadata;
+                _entities.Add(cacheKey, result);
+
+                // Add to shared cache if enabled
+                if (UseSharedCache)
+                {
+                    MetadataCache.AddEntityMetadata(ConnectionKey, entityName, EntityFilters.Attributes|EntityFilters.Relationships, retrieveAsIfPublished, result);
+                }
+            }
+            else
+            {
+                writeVerbose?.Invoke($"Retrieved metadata for {entityName} from local cache");
+            }
+            return result;
+        }
+
+
+        /// <summary>
+        /// Gets the entity metadata for the specified entity.
+        /// </summary>
+        /// <param name="entityName">The logical name of the entity.</param>
+        /// <returns>The entity metadata.</returns>
+        public EntityMetadata GetMetadata(string entityName)
 		{
 			EntityMetadata result;
 			bool retrieveAsIfPublished = false; // Use published metadata for CRUD operations

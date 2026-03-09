@@ -8,7 +8,7 @@ schema: 2.0.0
 # Remove-DataverseWebResource
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Removes a web resource from a Dataverse environment.
 
 ## SYNTAX
 
@@ -31,37 +31,49 @@ Remove-DataverseWebResource -InputObject <PSObject> [-IfExists] [-Connection <Se
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Deletes a web resource from the Dataverse environment. Web resources can be identified by their ID, name,
+or by piping in a web resource object from Get-DataverseWebResource.
+
+Use with caution as deleting a web resource may break forms, model-driven apps, or other components that reference it.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Remove a web resource by name
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseWebResource -Name "new_myscript.js"
 ```
 
-{{ Add example description here }}
+Removes the web resource with the specified name.
+
+### Example 2: Remove a web resource by ID
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseWebResource -Id "12345678-1234-1234-1234-123456789abc"
+```
+
+Removes the web resource with the specified GUID.
+
+### Example 3: Remove from pipeline
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseWebResource -Name "old_*" | Remove-DataverseWebResource
+```
+
+Removes all web resources matching the pattern by piping them from Get-DataverseWebResource.
+
+### Example 4: Remove with IfExists to suppress errors
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseWebResource -Name "new_maynotexist.js" -IfExists
+```
+
+Attempts to remove the web resource but doesn't produce an error if it doesn't exist.
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -136,14 +148,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases: wi
+Aliases: proga
 
 Required: False
 Position: Named
@@ -152,13 +163,29 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
 
 Required: False
 Position: Named

@@ -224,13 +224,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
 
                 var metadataFactory = new EntityMetadataFactory(connectionObj);
-                var em = metadataFactory.GetMetadata(tableName);
+                var em = metadataFactory.GetLimitedMetadata(tableName);
                 if (em == null)
                 {
                     return Enumerable.Empty<CompletionResult>();
                 }
 
-                var allColumns = DataverseEntityConverter.GetAllColumnNames(em, false, null);
+                var allColumns = DataverseEntityConverter.GetAllColumnNames(em, false, null, true);
 
                 if (string.IsNullOrEmpty(wordToComplete))
                 {

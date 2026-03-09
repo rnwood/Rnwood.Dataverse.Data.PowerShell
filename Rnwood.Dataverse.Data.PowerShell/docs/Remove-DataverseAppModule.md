@@ -33,52 +33,40 @@ Use the IfExists parameter to suppress errors when attempting to remove apps tha
 
 ### Example 1: Remove an app module by ID
 ```powershell
-PS C:\> Remove-DataverseAppModule -Connection $c -Id "12345678-1234-1234-1234-123456789012" -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModule -Id "12345678-1234-1234-1234-123456789012" -Confirm:$false
 ```
 
 Removes the app module with the specified ID without confirmation.
 
 ### Example 2: Remove an app module by UniqueName
 ```powershell
-PS C:\> Remove-DataverseAppModule -Connection $c -UniqueName "myapp_unique" -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModule -UniqueName "myapp_unique" -Confirm:$false
 ```
 
 Removes the app module with the specified unique name.
 
 ### Example 3: Safe removal with IfExists
 ```powershell
-PS C:\> Remove-DataverseAppModule -Connection $c -UniqueName "maybe_exists" -IfExists -Confirm:$false
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModule -UniqueName "maybe_exists" -IfExists -Confirm:$false
 ```
 
 Attempts to remove the app but doesn't error if it doesn't exist.
 
 ### Example 4: Use WhatIf to preview
 ```powershell
-PS C:\> Remove-DataverseAppModule -Connection $c -UniqueName "myapp" -WhatIf
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseAppModule -UniqueName "myapp" -WhatIf
 ```
 
 Shows what would happen without actually removing the app.
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -123,6 +111,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -UniqueName
 Unique name of the app module to remove
 
@@ -138,14 +141,13 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -154,13 +156,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named

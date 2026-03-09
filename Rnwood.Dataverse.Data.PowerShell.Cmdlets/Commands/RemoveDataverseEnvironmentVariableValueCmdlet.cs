@@ -28,19 +28,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Looking for environment variable value for '{SchemaName}'");
 
-            // Query for the environment variable value
+            // Query for the environment variable value by joining with the parent definition
+            // and filtering by the definition's schemaname. This is more reliable than
+            // filtering by the value's schemaname, which may contain a GUID in older records.
             var valueQuery = new QueryExpression("environmentvariablevalue")
             {
-                ColumnSet = new ColumnSet("environmentvariablevalueid", "schemaname"),
-                Criteria = new FilterExpression
-                {
-                    Conditions =
-                    {
-                        new ConditionExpression("schemaname", ConditionOperator.Equal, SchemaName)
-                    }
-                },
+                ColumnSet = new ColumnSet("environmentvariablevalueid"),
                 TopCount = 1
             };
+
+            // Add link to environmentvariabledefinition and filter by its schemaname
+            var defLink = valueQuery.AddLink("environmentvariabledefinition", "environmentvariabledefinitionid", "environmentvariabledefinitionid");
+            defLink.Columns = new ColumnSet("schemaname");
+            defLink.EntityAlias = "def";
+            defLink.LinkCriteria.AddCondition("schemaname", ConditionOperator.Equal, SchemaName);
 
             var valueResults = Connection.RetrieveMultiple(valueQuery);
 

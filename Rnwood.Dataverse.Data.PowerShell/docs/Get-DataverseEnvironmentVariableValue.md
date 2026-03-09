@@ -25,6 +25,7 @@ Use Get-DataverseEnvironmentVariableDefinition to retrieve both definitions and 
 
 ### Example 1: Get all environment variable values
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue
 ```
 
@@ -32,6 +33,7 @@ Retrieves all environment variable values in the environment.
 
 ### Example 2: Get a specific environment variable value
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue -SchemaName "new_apiurl"
 ```
 
@@ -39,6 +41,7 @@ Retrieves the value for the environment variable with schema name "new_apiurl".
 
 ### Example 3: Get environment variable values with wildcard
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue -SchemaName "new_api*"
 ```
 
@@ -46,6 +49,7 @@ Retrieves all environment variable values where the schema name starts with "new
 
 ### Example 4: Get values from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> "new_apiurl", "new_apikey" | Get-DataverseEnvironmentVariableValue
 ```
 
@@ -54,12 +58,27 @@ Retrieves values for multiple environment variables via pipeline.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
 Parameter Sets: (All)
 Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
 
 Required: False
 Position: Named
@@ -80,21 +99,6 @@ Required: False
 Position: 0
 Default value: None
 Accept pipeline input: True (ByPropertyName, ByValue)
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
 Accept wildcard characters: False
 ```
 

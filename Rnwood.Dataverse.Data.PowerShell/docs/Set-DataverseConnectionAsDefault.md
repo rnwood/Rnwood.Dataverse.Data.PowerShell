@@ -12,9 +12,15 @@ Sets the specified Dataverse connection as the default connection for cmdlets th
 
 ## SYNTAX
 
+### Set
 ```
 Set-DataverseConnectionAsDefault -Connection <ServiceClient> [-ProgressAction <ActionPreference>]
  [<CommonParameters>]
+```
+
+### Clear
+```
+Set-DataverseConnectionAsDefault [-Clear] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -32,12 +38,27 @@ Sets the interactively authenticated connection as the default.
 
 ## PARAMETERS
 
+### -Clear
+Clear the default Dataverse connection.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: Clear
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Connection
 DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 ```yaml
 Type: ServiceClient
-Parameter Sets: (All)
+Parameter Sets: Set
 Aliases:
 
 Required: True

@@ -35,42 +35,30 @@ The Set-DataversePluginAssembly cmdlet creates a new plugin assembly or updates 
 
 ### Example 1: Create a new plugin assembly from file
 ```powershell
-PS C:\> Set-DataversePluginAssembly -Connection $connection -Name "MyPlugin" -FilePath "C:\Plugins\MyPlugin.dll" -IsolationMode 2
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginAssembly -Name "MyPlugin" -FilePath "C:\Plugins\MyPlugin.dll" -IsolationMode 2
 ```
 
 Creates a new plugin assembly by reading from a file with external isolation mode.
 
 ### Example 2: Update an existing plugin assembly
 ```powershell
-PS C:\> Set-DataversePluginAssembly -Connection $connection -Id 12345678-1234-1234-1234-123456789012 -Name "MyPlugin" -FilePath "C:\Plugins\MyPlugin.dll" -Version "2.0.0"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginAssembly -Id 12345678-1234-1234-1234-123456789012 -Name "MyPlugin" -FilePath "C:\Plugins\MyPlugin.dll" -Version "2.0.0"
 ```
 
 Updates an existing plugin assembly with new content and version.
 
 ### Example 3: Create plugin assembly with PassThru
 ```powershell
-PS C:\> $assembly = Set-DataversePluginAssembly -Connection $connection -Name "MyPlugin" -FilePath "C:\Plugins\MyPlugin.dll" -PassThru
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $assembly = Set-DataversePluginAssembly -Name "MyPlugin" -FilePath "C:\Plugins\MyPlugin.dll" -PassThru
 PS C:\> $assembly.Id
 ```
 
 Creates a new plugin assembly and returns the created object.
 
 ## PARAMETERS
-
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
 
 ### -Connection
 The Dataverse ServiceClient connection to use. If not specified, the default connection is used.
@@ -208,6 +196,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -PublicKeyToken
 The public key token of the assembly.
 
@@ -254,13 +257,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -269,13 +272,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named

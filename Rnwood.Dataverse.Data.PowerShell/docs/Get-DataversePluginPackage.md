@@ -37,7 +37,8 @@ Retrieves plugin packages by ID, unique name, or all packages.
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataversePluginPackage -Connection $connection -All
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataversePluginPackage -All
 ```
 
 Retrieves all plugin packages.
@@ -45,7 +46,7 @@ Retrieves all plugin packages.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -74,21 +75,6 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -UniqueName
-Unique name of the plugin package to retrieve
-
-```yaml
-Type: String
-Parameter Sets: ByName
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -98,6 +84,21 @@ Parameter Sets: (All)
 Aliases: proga
 
 Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UniqueName
+Unique name of the plugin package to retrieve
+
+```yaml
+Type: String
+Parameter Sets: ByName
+Aliases:
+
+Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False

@@ -9,3 +9,6 @@ using System.Runtime.InteropServices;
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
 [assembly: Guid("1546BF8D-B1AD-450F-832A-B35EAA8A5F05")]
+
+// Make internal types visible to test assembly
+[assembly: InternalsVisibleTo("Rnwood.Dataverse.Data.PowerShell.Tests")]

@@ -26,13 +26,16 @@ The Set-DataverseView cmdlet creates new views or updates existing ones using an
 
 The cmdlet supports both simplified syntax (using Columns and FilterValues parameters) and advanced FetchXML-based configuration. Column configurations can be specified as simple strings or detailed hashtables with width and other properties.
 
+When the Id parameter is provided, the cmdlet updates the existing view with that ID. When the Id parameter is not provided but Name and TableName are specified, the cmdlet searches for an existing view with that Name and TableName combination. If found, it updates that view; otherwise, it creates a new view. This prevents creating duplicate views when the same Name and TableName are used.
+
 When updating existing views, you can add, remove, or update specific columns without affecting other view properties.
 
 ## EXAMPLES
 
 ### Example 1: Create a basic personal view
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -PassThru `
     -Name "My Active Contacts" `
     -TableName contact `
  -Columns @("firstname", "lastname", "emailaddress1", "telephone1") `
@@ -43,7 +46,8 @@ Creates a personal view (default) showing active contacts with specified columns
 
 ### Example 2: Create a system view with column widths
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -PassThru `
   -Name "All Active Contacts" `
     -TableName contact `
     -ViewType "System" `
@@ -60,7 +64,8 @@ Creates a system view accessible to all users with specific column widths.
 
 ### Example 3: Update an existing view
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -Id $viewId `
     -ViewType "Personal" `
     -Name "Updated Contact View" `
     -Description "Shows active contacts with email"
@@ -68,9 +73,32 @@ PS C:\> Set-DataverseView -Connection $c -Id $viewId `
 
 Updates the name and description of an existing view. ViewType must be specified when updating.
 
-### Example 4: Add columns to a view
+### Example 4: Update or create a view by Name (upsert pattern)
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> # First call creates the view
+PS C:\> Set-DataverseView -PassThru `
+    -Name "Active Contacts" `
+    -TableName contact `
+    -ViewType "System" `
+    -Columns @("firstname", "lastname", "emailaddress1") `
+    -Description "Shows active contacts"
+
+PS C:\> # Second call with same Name and TableName updates the existing view
+PS C:\> Set-DataverseView -PassThru `
+    -Name "Active Contacts" `
+    -TableName contact `
+    -ViewType "System" `
+    -Columns @("firstname", "lastname", "emailaddress1", "telephone1") `
+    -Description "Updated to include telephone"
+```
+
+Demonstrates the upsert behavior when Name and TableName are provided without Id. The first call creates a new view. The second call finds the existing view by Name and TableName, then updates it instead of creating a duplicate. This is useful for configuration scripts that can be run multiple times.
+
+### Example 5: Add columns to a view
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -Id $viewId `
     -ViewType "Personal" `
     -AddColumns @(
         @{ name = "address1_city"; width = 150 },
@@ -80,9 +108,10 @@ PS C:\> Set-DataverseView -Connection $c -Id $viewId `
 
 Adds new columns to an existing view without affecting existing columns.
 
-### Example 5: Add columns at specific positions
+### Example 6: Add columns at specific positions
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -Id $viewId `
     -ViewType "Personal" `
     -AddColumns @("mobilephone", "fax") `
     -InsertColumnsAfter "telephone1"
@@ -90,9 +119,10 @@ PS C:\> Set-DataverseView -Connection $c -Id $viewId `
 
 Adds mobile phone and fax columns after the telephone1 column.
 
-### Example 6: Insert columns before a specific column
+### Example 7: Insert columns before a specific column
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -Id $viewId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -Id $viewId `
     -ViewType "Personal" `
     -AddColumns @("jobtitle") `
     -InsertColumnsBefore "emailaddress1"
@@ -100,10 +130,11 @@ PS C:\> Set-DataverseView -Connection $c -Id $viewId `
 
 Inserts the job title column before the email address column in the layout.
 
-### Example 7: Clone a view using Get-DataverseView output
+### Example 8: Clone a view using Get-DataverseView output
 ```powershell
-PS C:\> $originalView = Get-DataverseView -Connection $c -Id $originalViewId
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $originalView = Get-DataverseView -Id $originalViewId
+PS C:\> Set-DataverseView -PassThru `
     -Name "$($originalView.Name) (Copy)" `
     -TableName $originalView.TableName `
     -ViewType $originalView.ViewType `
@@ -115,9 +146,10 @@ PS C:\> Set-DataverseView -Connection $c -PassThru `
 
 Retrieves a view and creates a copy. The properties returned by Get-DataverseView (Columns, Filters, Links, OrderBy) are in the format expected by Set-DataverseView.
 
-### Example 8: Create view with complex filters
+### Example 9: Create view with complex filters
 ```powershell
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseView -PassThru `
     -Name "High Value Opportunities" `
     -TableName opportunity `
     -ViewType "System" `
@@ -135,8 +167,9 @@ PS C:\> Set-DataverseView -Connection $c -PassThru `
 
 Creates a system view with nested logical filter expressions using AND/OR operators.
 
-### Example 9: Use FetchXML for advanced queries
+### Example 10: Use FetchXML for advanced queries
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $fetchXml = @"
 <fetch>
   <entity name="contact">
@@ -152,7 +185,7 @@ PS C:\> $fetchXml = @"
 </fetch>
 "@
 
-PS C:\> Set-DataverseView -Connection $c -PassThru `
+PS C:\> Set-DataverseView -PassThru `
     -Name "Recent Contacts" `
     -TableName contact `
   -FetchXml $fetchXml
@@ -198,24 +231,8 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -458,6 +475,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -QueryType
 View type for different display contexts.
 Valid values: MainApplicationView, AdvancedSearch, SubGrid, QuickFindSearch, Reporting, OfflineFilters, LookupView, SMAppointmentBookView, MainApplicationViewWithoutSubject, SavedQueryTypeOther, InteractiveWorkflowView, OfflineTemplate, CustomDefinedView, ExportFieldTranslationsView, OutlookTemplate, AddressBookFilters, OutlookFilters, CopilotView.
@@ -543,14 +575,13 @@ Accept pipeline input: True (ByPropertyName)
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs.
-The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -559,13 +590,14 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -WhatIf
+Shows what would happen if the cmdlet runs.
+The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named

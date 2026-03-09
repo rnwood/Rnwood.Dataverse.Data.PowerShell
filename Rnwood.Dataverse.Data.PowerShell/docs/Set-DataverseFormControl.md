@@ -15,18 +15,18 @@ Creates or updates a control in a Dataverse form section or header.
 ### Standard (Default)
 ```
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- [-DataField <String>] [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
- [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
- [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
+ [-DataField <String>] [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Rows <Int32>]
+ [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>] [-PassThru]
+ [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### RawXml
 ```
 Set-DataverseFormControl -FormId <Guid> [-SectionName <String>] -TabName <String> [-ControlId <String>]
- -ControlXml <String> [-ControlType <String>] [-Label <String>] [-LanguageCode <Int32>] [-Disabled] [-Visible]
- [-Rows <Int32>] [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>]
- [-PassThru] [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
+ -ControlXml <String> [-ControlType <String>] [-Labels <Hashtable>] [-Disabled] [-Rows <Int32>]
+ [-ColSpan <Int32>] [-RowSpan <Int32>] [-ShowLabel] [-IsRequired] [-Parameters <Hashtable>] [-PassThru]
+ [-Row <Int32>] [-Column <Int32>] [-CellId <String>] [-Auto] [-LockLevel <Int32>] [-Hidden]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -41,91 +41,110 @@ You can specify control properties like data binding, positioning, visibility, l
 
 ### Example 1: Add a simple text field control
 ```powershell
-PS C:\> $form = Get-DataverseForm -Connection $c -Entity 'contact' -Name 'Information'
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $form.Id -SectionName 'GeneralSection' `
-    -DataField 'firstname' -Label 'First Name' -ShowLabel -Visible -PassThru
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $form = Get-DataverseForm -Entity 'contact' -Name 'Information'
+PS C:\> Set-DataverseFormControl -FormId $form.Id -SectionName 'GeneralSection' `
+    -DataField 'firstname' -Labels @{1033 = 'First Name'} -ShowLabel -PassThru
 ```
 
 Adds a text field control for the firstname attribute with a custom label.
 
 ### Example 2: Create a lookup control with custom properties
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'ContactInfo' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'ContactInfo' `
     -DataField 'parentcustomerid' -ControlType 'Lookup' `
-    -Label 'Parent Account' -ColSpan 2 -IsRequired -PassThru
+    -Labels @{1033 = 'Parent Account'} -ColSpan 2 -IsRequired -PassThru
 ```
 
 Creates a lookup control spanning 2 columns and marked as required.
 
 ### Example 3: Add a multiline text control
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'Details' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'Details' `
     -DataField 'description' -ControlType 'Standard' `
-    -Label 'Description' -Rows 4 -ColSpan 2 -PassThru
+    -Labels @{1033 = 'Description'} -Rows 4 -ColSpan 2 -PassThru
 ```
 
 Creates a multiline text area with 4 rows spanning 2 columns.
 
-### Example 4: Insert control at specific position
+### Example 4: Hide a control on the form
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'GeneralSection' `
-    -DataField 'emailaddress1' -Label 'Primary Email' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'Details' `
+    -DataField 'internalfield' -Labels @{1033 = 'Internal Field'} `
+    -Hidden -PassThru
+```
+
+Creates a hidden control that won't be visible to users on the form.
+
+### Example 5: Insert control at specific position
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'GeneralSection' `
+    -DataField 'emailaddress1' -Labels @{1033 = 'Primary Email'} `
     -InsertAfter 'lastname' -ColSpan 2 -PassThru
 ```
 
 Inserts an email control after the 'lastname' control.
 
-### Example 5: Create a subgrid control without DataField
+### Example 6: Create a subgrid control without DataField
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $parameters = @{
     'targetEntityType' = 'opportunity'
     'viewId' = '12345678-1234-1234-1234-123456789012'
     'RelationshipName' = 'contact_customer_opportunity'
 }
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'RelatedData' `
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'RelatedData' `
     -TabName 'General' -ControlType 'Subgrid' -ControlId 'opportunities_subgrid' `
-    -Label 'Related Opportunities' -Parameters $parameters -ColSpan 2 -PassThru
+    -Labels @{1033 = 'Related Opportunities'} -Parameters $parameters -ColSpan 2 -PassThru
 ```
 
 Creates a subgrid control showing related opportunities. Note: Subgrids don't require a DataField parameter since they're not bound to a single attribute.
 
-### Example 6: Create a web resource control without DataField
+### Example 7: Create a web resource control without DataField
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $webResourceParams = @{
     'src' = 'WebResources/custom_chart.html'
     'height' = '300'
     'scrolling' = 'no'
 }
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'Analytics' `
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'Analytics' `
     -TabName 'General' -ControlType 'WebResource' -ControlId 'chart_webresource' `
-    -Label 'Sales Chart' -Parameters $webResourceParams -ColSpan 2 -PassThru
+    -Labels @{1033 = 'Sales Chart'} -Parameters $webResourceParams -ColSpan 2 -PassThru
 ```
 
 Adds a web resource control displaying a custom HTML chart. Web resources don't require a DataField parameter.
 
 ### Example 7: Auto-create subgrid using relationship name
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'RelatedData' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'RelatedData' `
     -TabName 'General' -DataField 'contact_customer_accounts' `
-    -Label 'Related Accounts' -ColSpan 2 -PassThru
+    -Labels @{1033 = 'Related Accounts'} -ColSpan 2 -PassThru
 ```
 
 Creates a subgrid control by specifying a relationship name in DataField. When DataField contains a one-to-many or many-to-many relationship name, the cmdlet automatically determines the control type as Subgrid. No need to explicitly specify ControlType.
 
 ### Example 8: Update existing control properties
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'ContactInfo' `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'ContactInfo' `
     -ControlId 'existing-control-id' -DataField 'telephone1' `
-    -Label 'Primary Phone' -IsRequired -ColSpan 1 -Visible
+    -Labels @{1033 = 'Primary Phone'} -IsRequired -ColSpan 1
 ```
 
 Updates an existing control's label, requirement status, and layout.
 
 ### Example 9: Create control using raw XML for advanced configuration
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $controlXml = @"
 <control id="custom_datetime" classid="{5B773807-9FB2-42DB-97C3-7A91EFF8ADFF}" 
-         datafieldname="custom_datetime" disabled="false" visible="true">
+         datafieldname="custom_datetime" disabled="false">
   <labels>
     <label description="Custom Date/Time" languagecode="1033" />
   </labels>
@@ -135,18 +154,19 @@ PS C:\> $controlXml = @"
   </parameters>
 </control>
 "@
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId -SectionName 'CustomSection' `
+PS C:\> Set-DataverseFormControl -FormId $formId -SectionName 'CustomSection' `
     -ControlXml $controlXml -PassThru
 ```
 
 Creates a datetime control using raw XML for full control over configuration.
 
-### Example 10: Create control with cell-level attributes
+### Example 11: Create control with cell-level attributes
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId `
     -TabName 'General' -SectionName 'Details' `
     -DataField 'description' -ControlType 'Memo' `
-    -Label 'Notes' -ColSpan 2 -RowSpan 2 `
+    -Labels @{1033 = 'Notes'} -ColSpan 2 -RowSpan 2 `
     -Auto -LockLevel 0 -CellId 'cell_description' -PassThru
 ```
 
@@ -154,35 +174,39 @@ Creates a memo control with cell-level attributes including auto-sizing and cust
 
 ### Example 11: Update existing control to make it required
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId `
     -TabName 'General' -SectionName 'ContactInfo' `
     -DataField 'telephone1' -IsRequired -ShowLabel
 ```
 
 Updates an existing control to make it required. The cmdlet now supports updating existing controls without recreating them.
 
-### Example 12: Create Email control with validation
+### Example 13: Create Email control with validation
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId `
     -TabName 'General' -SectionName 'ContactInfo' `
     -DataField 'emailaddress1' -ControlType 'Email' `
-    -Label 'Primary Email' -IsRequired -ColSpan 2 -PassThru
+    -Labels @{1033 = 'Primary Email'} -IsRequired -ColSpan 2 -PassThru
 ```
 
 Creates an email control with built-in email validation.
 
-### Example 13: Create Money control for currency field
+### Example 14: Create Money control for currency field
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId `
     -TabName 'Financial' -SectionName 'Pricing' `
     -DataField 'revenue' -ControlType 'Money' `
-    -Label 'Annual Revenue' -ColSpan 1 -PassThru
+    -Labels @{1033 = 'Annual Revenue'} -ColSpan 1 -PassThru
 ```
 
 Creates a currency control with proper formatting.
 
-### Example 14: Bulk control creation with error handling
+### Example 15: Bulk control creation with error handling
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $controls = @(
     @{ DataField = 'firstname'; Label = 'First Name'; ColSpan = 1 }
     @{ DataField = 'lastname'; Label = 'Last Name'; ColSpan = 1; IsRequired = $true }
@@ -218,36 +242,39 @@ Creates multiple controls with error handling and conditional parameters.
 
 ### Example 15: Create header control (form header)
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId `
     -TabName '[Header]' -DataField 'emailaddress1' `
-    -ControlType 'Email' -Label 'Email' -Disabled -PassThru
+    -ControlType 'Email' -Labels @{1033 = 'Email'} -Disabled -PassThru
 ```
 
 Creates a read-only email control in the form header. Header controls are displayed at the top of the form across all tabs. The header section is automatically created if it doesn't exist.
 
-### Example 16: Create multiple header controls
+### Example 17: Create multiple header controls
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Create email control in header
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+PS C:\> Set-DataverseFormControl -FormId $formId `
     -TabName '[Header]' -DataField 'emailaddress1' `
-    -ControlType 'Email' -Label 'Email' -ColSpan 1 -Disabled
+    -ControlType 'Email' -Labels @{1033 = 'Email'} -ColSpan 1 -Disabled
 
 PS C:\> # Create owner control in header
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+PS C:\> Set-DataverseFormControl -FormId $formId `
     -TabName '[Header]' -DataField 'ownerid' `
-    -ControlType 'Lookup' -Label 'Owner' -ColSpan 1 -Disabled
+    -ControlType 'Lookup' -Labels @{1033 = 'Owner'} -ColSpan 1 -Disabled
 
 PS C:\> # Get all header controls
-PS C:\> Get-DataverseFormControl -Connection $c -FormId $formId -TabName '[Header]'
+PS C:\> Get-DataverseFormControl -FormId $formId -TabName '[Header]'
 ```
 
 Creates multiple controls in the form header with specific positioning.
 
 ### Example 17: Update existing header control
 ```powershell
-PS C:\> Set-DataverseFormControl -Connection $c -FormId $formId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseFormControl -FormId $formId `
     -TabName '[Header]' -DataField 'emailaddress1' `
-    -Label 'Primary Email' -ColSpan 2
+    -Labels @{1033 = 'Primary Email'} -ColSpan 2
 ```
 
 Updates an existing header control's label and cell span without recreating it.
@@ -314,24 +341,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -471,26 +482,11 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Label
-Label text for the control that will be displayed to users. Supports localization through LanguageCode parameter.
+### -Labels
+The labels for the control as a hashtable keyed by LCID. Example: @{1033 = 'English Label'; 1031 = 'German Label'}
 
 ```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -LanguageCode
-Language code for the label (default: 1033 for English US). Use this for localized forms.
-
-```yaml
-Type: Int32
+Type: Hashtable
 Parameter Sets: (All)
 Aliases:
 
@@ -546,6 +542,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+Controls how progress information is displayed during cmdlet execution.
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Row
 Zero-based row index where the control should be placed. New rows are added if needed.
 
@@ -561,8 +572,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -RowSpan
-Number of rows the control spans in the section layout. Useful for controls that need more vertical space.
+### -Rows
+Number of rows for multiline text controls. Controls the height of text areas and memo fields.
 
 ```yaml
 Type: Int32
@@ -576,8 +587,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Rows
-Number of rows for multiline text controls. Controls the height of text areas and memo fields.
+### -RowSpan
+Number of rows the control spans in the section layout. Useful for controls that need more vertical space.
 
 ```yaml
 Type: Int32
@@ -636,13 +647,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Visible
-Whether the control is visible
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases:
+Aliases: cf
 
 Required: False
 Position: Named
@@ -659,21 +670,6 @@ The cmdlet is not run.
 Type: SwitchParameter
 Parameter Sets: (All)
 Aliases: wi
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-Controls how progress information is displayed during cmdlet execution.
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
 
 Required: False
 Position: Named

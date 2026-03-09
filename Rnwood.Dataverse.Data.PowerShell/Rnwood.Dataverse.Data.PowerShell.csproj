@@ -16,9 +16,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Loader\Rnwood.Dataverse.Data.PowerShell.Loader.csproj" />
-    <ProjectReference Include="..\Rnwood.Dataverse.Data.PowerShell.Cmdlets\Rnwood.Dataverse.Data.PowerShell.Cmdlets.csproj">
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-    </ProjectReference>
   </ItemGroup>
 
   <ItemGroup>
@@ -40,6 +37,9 @@
     <None Update="ValidateVersion.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <Content Include="TestData\**">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
@@ -83,6 +83,19 @@
     </ItemGroup>
     <Copy SourceFiles="@(LoaderOutputs)" DestinationFolder="$(OutDir)\loader\%(RecursiveDir)" SkipUnchangedFiles="true" />
 
+  </Target>
+
+  <Target Name="BuildXrmToolboxPluginHost" AfterTargets="BuildCmdlets" Condition="$([MSBuild]::IsOSPlatform('Windows'))">
+    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration)" BuildInParallel="true">
+    </MSBuild>
+    <ItemGroup>
+      <XrmToolboxPluginHostOutputs Include="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost/bin/$(Configuration)/net48/**" />
+    </ItemGroup>
+    <!-- Copy to all Core TFM cmdlets folders so each runtime can find it -->
+    <Copy SourceFiles="@(XrmToolboxPluginHostOutputs)" DestinationFolder="$(OutDir)\cmdlets\net8.0\XrmToolboxPluginHost\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(XrmToolboxPluginHostOutputs)" DestinationFolder="$(OutDir)\cmdlets\net9.0\XrmToolboxPluginHost\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(XrmToolboxPluginHostOutputs)" DestinationFolder="$(OutDir)\cmdlets\net10.0\XrmToolboxPluginHost\%(RecursiveDir)" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="@(XrmToolboxPluginHostOutputs)" DestinationFolder="$(OutDir)\cmdlets\net462\XrmToolboxPluginHost\%(RecursiveDir)" SkipUnchangedFiles="true" />
   </Target>
 
   <!-- Use a stable intermediate-output stamp so MSBuild can compare inputs/outputs reliably across builds -->

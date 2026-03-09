@@ -33,6 +33,7 @@ By default, this cmdlet prompts for confirmation (ConfirmImpact = High). Use `-F
 
 ### Example 1: Delete an entity with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEntityMetadata -EntityName new_customentity
 
 Confirm
@@ -45,6 +46,7 @@ Deletes the entity `new_customentity` after prompting for confirmation.
 
 ### Example 2: Delete an entity without confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEntityMetadata -EntityName new_customentity -Force
 ```
 
@@ -52,6 +54,7 @@ Deletes the entity `new_customentity` without prompting for confirmation.
 
 ### Example 3: Delete multiple entities
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @("new_entity1", "new_entity2", "new_entity3") | Remove-DataverseEntityMetadata -Force
 ```
 
@@ -59,6 +62,7 @@ Deletes multiple entities by passing entity names through the pipeline.
 
 ### Example 4: Use WhatIf to preview deletion
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEntityMetadata -EntityName new_testentity -WhatIf
 
 What if: Performing the operation "Delete entity" on target "new_testentity".
@@ -68,15 +72,17 @@ Shows what would happen without actually deleting the entity.
 
 ### Example 5: Delete entity with specific connection
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
-PS C:\> Remove-DataverseEntityMetadata -Connection $conn -EntityName new_oldentity -Force
+PS C:\> Remove-DataverseEntityMetadata -EntityName new_oldentity -Force
 ```
 
 Deletes an entity using a specific connection.
 
 ### Example 6: Delete test entities matching a pattern
 ```powershell
-PS C:\> Get-DataverseEntityMetadata -Connection $conn | 
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseEntityMetadata | 
     Where-Object { $_.LogicalName -like "new_test*" } | 
     ForEach-Object { 
         Write-Host "Deleting $($_.LogicalName)..."
@@ -88,6 +94,7 @@ Finds and deletes all entities whose names start with "new_test".
 
 ### Example 7: Conditional deletion based on records
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $recordCount = (Get-DataverseRecord -TableName new_customentity).Count
 PS C:\> if ($recordCount -eq 0) {
     Write-Host "Entity is empty, safe to delete"
@@ -101,6 +108,7 @@ Checks if an entity is empty before deleting it.
 
 ### Example 8: Handle deletion errors
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> try {
     Remove-DataverseEntityMetadata -EntityName new_customentity -Force -ErrorAction Stop
     Write-Host "Entity deleted successfully"
@@ -113,25 +121,8 @@ Handles potential errors during entity deletion with proper error handling.
 
 ## PARAMETERS
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-**Note:** This cmdlet has ConfirmImpact = High, so confirmation is required by default unless `-Force` or `-Confirm:$false` is specified.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 If not provided, uses the default connection set via `Get-DataverseConnection -SetAsDefault`.
 
@@ -164,13 +155,13 @@ Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases: wi
+Aliases: proga
 
 Required: False
 Position: Named
@@ -179,13 +170,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+**Note:** This cmdlet has ConfirmImpact = High, so confirmation is required by default unless `-Force` or `-Confirm:$false` is specified.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
 
 Required: False
 Position: Named

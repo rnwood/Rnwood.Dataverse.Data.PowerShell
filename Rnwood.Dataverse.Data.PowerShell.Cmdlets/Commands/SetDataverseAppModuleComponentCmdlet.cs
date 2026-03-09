@@ -358,7 +358,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                                 TopCount = 1
                             };
 
-                            var results = Connection.RetrieveMultiple(query);
+                            // Note: appmodulecomponent entity does not support RetrieveUnpublishedMultiple
+                            // so we query published data directly
+                            var request = new RetrieveMultipleRequest { Query = query };
+                            var response = (RetrieveMultipleResponse)Connection.Execute(request);
+                            var results = response.EntityCollection;
+                            WriteVerbose($"Retrieved {results.Entities.Count} app module component(s)");
+
                             if (results.Entities.Count > 0)
                             {
                                 componentId = results.Entities[0].Id;

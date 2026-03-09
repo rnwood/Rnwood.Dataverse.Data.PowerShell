@@ -52,6 +52,9 @@ RequiredModules = @()
 PrivateData = @{
 	PSData = @{
 		ExternalModuleDependencies = @()
+		LicenseUri = 'https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell/blob/main/LICENSE'
+		ProjectUri = 'https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell'
+		IconUri = 'https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/main/icon.png'
 	}
 }
 

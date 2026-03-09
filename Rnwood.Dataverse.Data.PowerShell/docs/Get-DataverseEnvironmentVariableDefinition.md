@@ -24,6 +24,7 @@ Gets environment variable definitions from Dataverse. This cmdlet retrieves the 
 
 ### Example 1: Get all environment variable definitions
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableDefinition
 ```
 
@@ -31,6 +32,7 @@ Retrieves all environment variable definitions in the environment.
 
 ### Example 2: Get a specific environment variable definition
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl"
 ```
 
@@ -38,6 +40,7 @@ Retrieves the definition for the environment variable with schema name "new_apiu
 
 ### Example 3: Get environment variables by display name
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableDefinition -DisplayName "API*"
 ```
 
@@ -45,6 +48,7 @@ Retrieves all environment variable definitions where the display name starts wit
 
 ### Example 4: Get definitions from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> "new_apiurl", "new_apikey" | Get-DataverseEnvironmentVariableDefinition
 ```
 
@@ -53,8 +57,7 @@ Retrieves definitions for multiple environment variables via pipeline.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -84,21 +87,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -SchemaName
-Schema name of the environment variable to retrieve.
-
-```yaml
-Type: String
-Parameter Sets: (All)
-Aliases:
-
-Required: False
-Position: 0
-Default value: None
-Accept pipeline input: True (ByPropertyName, ByValue)
-Accept wildcard characters: False
-```
-
 ### -ProgressAction
 {{ Fill ProgressAction Description }}
 
@@ -111,6 +99,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SchemaName
+Schema name of the environment variable to retrieve.
+
+```yaml
+Type: String
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: 0
+Default value: None
+Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 

@@ -15,10 +15,7 @@
       ],
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false,
-      "console": "integratedTerminal",
-      "env": {
-        "TESTMODULEPATH": "${workspaceFolder}/Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0"
-      },
+      "console": "integratedTerminal"
       "justMyCode": false
     },
      {

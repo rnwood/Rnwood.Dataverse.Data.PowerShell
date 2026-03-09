@@ -28,7 +28,8 @@ Creates or updates plugin steps with comprehensive configuration including stage
 
 ### Example 1: Create a plugin step with filtering attributes
 ```powershell
-PS C:\> Set-DataversePluginStep -Connection $connection -Name "MyStep" -PluginTypeId $typeId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginStep -Name "MyStep" -PluginTypeId $typeId `
     -SdkMessageId $messageId -Stage 20 -Mode 0 `
     -FilteringAttributes "name","revenue","primarycontactid"
 ```
@@ -37,7 +38,8 @@ Creates a synchronous pre-operation plugin step with filtering attributes.
 
 ### Example 2: Create a plugin step without filtering
 ```powershell
-PS C:\> Set-DataversePluginStep -Connection $connection -Name "MyStep" -PluginTypeId $typeId `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginStep -Name "MyStep" -PluginTypeId $typeId `
     -SdkMessageId $messageId -Stage 20 -Mode 0
 ```
 
@@ -60,23 +62,8 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -211,6 +198,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Rank
 Execution order (rank). Default is 1.
 
@@ -333,13 +335,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
 
 ```yaml
 Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: wi
+Aliases: cf
 
 Required: False
 Position: Named
@@ -348,13 +350,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: wi
 
 Required: False
 Position: Named

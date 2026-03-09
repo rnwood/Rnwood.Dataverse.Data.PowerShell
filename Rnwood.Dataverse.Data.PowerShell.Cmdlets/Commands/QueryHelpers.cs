@@ -404,5 +404,53 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             return false;
         }
+
+        /// <summary>
+        /// Executes a query for both unpublished and published records, deduplicating results by ID.
+        /// Unpublished records take precedence over published records when both exist for the same ID.
+        /// Deduplication is based on entity ID (Guid), not entity type or logical name.
+        /// This method is designed for single-entity queries where all results share the same entity type.
+        /// </summary>
+        /// <param name="query">The query to execute (should target a single entity type)</param>
+        /// <param name="connection">The organization service connection</param>
+        /// <param name="writeVerbose">Action to write verbose messages</param>
+        /// <returns>Enumerable of deduplicated entities, with unpublished records preferred</returns>
+        public static IEnumerable<Entity> ExecuteQueryWithPublishedAndUnpublished(QueryBase query, IOrganizationService connection, Action<string> writeVerbose)
+        {
+            // Track IDs we've seen in unpublished results for deduplication
+            var unpublishedIds = new HashSet<Guid>();
+            int unpublishedCount = 0;
+
+            // First yield unpublished records - these take precedence
+            // Build the ID set as we stream through the results to minimize memory usage
+            foreach (var entity in ExecuteQueryWithPaging(query, connection, writeVerbose, unpublished: true))
+            {
+                unpublishedIds.Add(entity.Id);
+                unpublishedCount++;
+                yield return entity;
+            }
+            
+            writeVerbose($"Retrieved {unpublishedCount} unpublished record(s)");
+
+            // Now get published records and filter out duplicates
+            int publishedCount = 0;
+            int filteredCount = 0;
+            
+            foreach (var entity in ExecuteQueryWithPaging(query, connection, writeVerbose, unpublished: false))
+            {
+                publishedCount++;
+                // Only return if this ID wasn't in unpublished results
+                if (!unpublishedIds.Contains(entity.Id))
+                {
+                    yield return entity;
+                }
+                else
+                {
+                    filteredCount++;
+                }
+            }
+
+            writeVerbose($"Retrieved {publishedCount} published record(s), filtered {filteredCount} duplicate(s)");
+        }
     }
 }

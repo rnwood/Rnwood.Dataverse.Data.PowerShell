@@ -26,6 +26,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the name of the web resource to delete.
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_NAME, Mandatory = true, HelpMessage = "Name of the web resource to delete")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string Name { get; set; }
 
         /// <summary>
@@ -40,6 +41,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "If set, suppresses errors if the web resource doesn't exist")]
         public SwitchParameter IfExists { get; set; }
 
+        /// <inheritdoc />
         protected override void ProcessRecord()
         {
             base.ProcessRecord();

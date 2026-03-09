@@ -31,6 +31,7 @@ By default, this cmdlet prompts for confirmation (ConfirmImpact = High). Use `-F
 
 ### Example 1: Delete an attribute with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseAttributeMetadata -EntityName account -AttributeName new_customfield
 
 Confirm
@@ -43,6 +44,7 @@ Deletes the attribute `new_customfield` from the `account` entity after promptin
 
 ### Example 2: Delete an attribute without confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseAttributeMetadata -EntityName contact -AttributeName new_oldfield -Force
 ```
 
@@ -50,6 +52,7 @@ Deletes the attribute `new_oldfield` from the `contact` entity without prompting
 
 ### Example 3: Delete multiple attributes from an entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> @("new_field1", "new_field2", "new_field3") | 
     Remove-DataverseAttributeMetadata -EntityName account -Force
 ```
@@ -58,6 +61,7 @@ Deletes multiple attributes from the `account` entity.
 
 ### Example 4: Use WhatIf to preview deletion
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseAttributeMetadata -EntityName account -AttributeName new_testfield -WhatIf
 
 What if: Performing the operation "Delete attribute 'new_testfield'" on target "Entity 'account'".
@@ -67,6 +71,7 @@ Shows what would happen without actually deleting the attribute.
 
 ### Example 5: Delete all custom attributes from an entity
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $entity = Get-DataverseEntityMetadata -EntityName new_customentity
 PS C:\> $entity.Attributes | 
     Where-Object { $_.LogicalName -like "new_*" } |
@@ -81,6 +86,7 @@ Finds and deletes all custom attributes (starting with "new_") from an entity.
 
 ### Example 6: Conditional deletion based on data
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $records = Get-DataverseRecord -TableName account -Columns new_customfield
 PS C:\> $hasData = $records | Where-Object { $null -ne $_.new_customfield }
 
@@ -96,6 +102,7 @@ Checks if an attribute contains data before deleting it.
 
 ### Example 7: Delete with error handling
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> try {
     Remove-DataverseAttributeMetadata -EntityName account -AttributeName new_obsolete `
         -Force -ErrorAction Stop
@@ -113,6 +120,7 @@ Deletes an attribute with proper error handling and publishes customizations aft
 
 ### Example 8: Cleanup unused test fields
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $testFields = @("new_test1", "new_test2", "new_debug1", "new_temp")
 PS C:\> foreach ($field in $testFields) {
     Write-Host "Checking $field..."
@@ -131,6 +139,7 @@ Attempts to delete multiple test fields, handling cases where they may not exist
 
 ### Example 9: Delete lookup attribute
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> # Note: Deleting a lookup attribute also deletes the relationship
 PS C:\> Remove-DataverseAttributeMetadata -EntityName contact -AttributeName new_projectid -Force
 ```
@@ -139,8 +148,9 @@ Deletes a lookup attribute. Note that this also removes the associated relations
 
 ### Example 10: Use specific connection
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $conn = Get-DataverseConnection -Url "https://myorg.crm.dynamics.com" -Interactive
-PS C:\> Remove-DataverseAttributeMetadata -Connection $conn `
+PS C:\> Remove-DataverseAttributeMetadata `
     -EntityName account -AttributeName new_deprecated -Force
 ```
 
@@ -165,25 +175,8 @@ Accept pipeline input: True (ByPropertyName, ByValue)
 Accept wildcard characters: False
 ```
 
-### -Confirm
-Prompts you for confirmation before running the cmdlet.
-
-**Note:** This cmdlet has ConfirmImpact = High, so confirmation is required by default unless `-Force` or `-Confirm:$false` is specified.
-
-```yaml
-Type: SwitchParameter
-Parameter Sets: (All)
-Aliases: cf
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 
 If not provided, uses the default connection set via `Get-DataverseConnection -SetAsDefault`.
 
@@ -214,13 +207,13 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -WhatIf
-Shows what would happen if the cmdlet runs. The cmdlet is not run.
+### -ProgressAction
+{{ Fill ProgressAction Description }}
 
 ```yaml
-Type: SwitchParameter
+Type: ActionPreference
 Parameter Sets: (All)
-Aliases: wi
+Aliases: proga
 
 Required: False
 Position: Named
@@ -229,13 +222,30 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -ProgressAction
-{{ Fill ProgressAction Description }}
+### -Confirm
+Prompts you for confirmation before running the cmdlet.
+
+**Note:** This cmdlet has ConfirmImpact = High, so confirmation is required by default unless `-Force` or `-Confirm:$false` is specified.
 
 ```yaml
-Type: ActionPreference
+Type: SwitchParameter
 Parameter Sets: (All)
-Aliases: proga
+Aliases: cf
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -WhatIf
+Shows what would happen if the cmdlet runs. The cmdlet is not run.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases: wi
 
 Required: False
 Position: Named

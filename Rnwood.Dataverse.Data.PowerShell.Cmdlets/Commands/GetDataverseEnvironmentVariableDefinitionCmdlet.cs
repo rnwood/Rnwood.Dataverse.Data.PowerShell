@@ -125,7 +125,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private string GetTypeLabel(OptionSetValue optionSetValue)
         {
             if (optionSetValue == null) return null;
-            var entityMetadata = entityMetadataFactory.GetMetadata("environmentvariabledefinition");
+            var entityMetadata = entityMetadataFactory.GetLimitedMetadata("environmentvariabledefinition");
             var typeAttribute = (EnumAttributeMetadata)entityMetadata.Attributes.FirstOrDefault(a => a.LogicalName == "type");
             if (typeAttribute != null)
             {

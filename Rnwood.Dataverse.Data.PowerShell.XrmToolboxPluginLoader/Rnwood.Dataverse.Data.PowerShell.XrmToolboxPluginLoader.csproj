@@ -1,0 +1,146 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</AssemblyName>
+    <RootNamespace>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</RootNamespace>
+    
+    <!-- Version properties - set dynamically during CI build via -p:Version=x.y.z -->
+    <!-- XrmToolbox plugin store validation requires assembly version to match NuGet package version -->
+    <Version Condition="'$(Version)' == ''">1.0.0</Version>
+    <AssemblyVersion>$(Version)</AssemblyVersion>
+    <FileVersion>$(Version)</FileVersion>
+    
+    <PackageId>Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</PackageId>
+    <Authors>Rob Wood and project contributors</Authors>
+    <Description>PowerShell Scripting Workspace for XrmToolbox</Description>
+    <PackageTags>XrmToolBox;PowerShell;Dataverse;Scripting;Automation</PackageTags>
+    <IsPackable>true</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <RepositoryUrl>https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/rnwood/Rnwood.Dataverse.Data.PowerShell</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <XrmToolBoxVersion>1.2025.10.74</XrmToolBoxVersion>
+    <PackageIcon>icon_80.png</PackageIcon>
+    <PackageIconUrl>https://raw.githubusercontent.com/rnwood/Rnwood.Dataverse.Data.PowerShell/refs/heads/main/icon_80.png</PackageIconUrl>
+    <Title>PowerShell Scripting Workspace</Title>
+   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\icon_80.png" Pack="true" PackagePath="" />
+    <PackageReference Include="MscrmTools.Xrm.Connection" Version="1.2025.9.64" />
+    <PackageReference Include="XrmToolBoxPackage" Version="$(XrmToolBoxVersion)" />
+  </ItemGroup>
+
+  <!-- o.zip is generated during build from the plugin files in the plugin output folder -->
+  <ItemGroup>
+    <!-- Add compression assembly references for zip handling on .NET Framework -->
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Windows.Forms" />
+  </ItemGroup>
+
+  <!-- Add XrmToolBox as a package dependency (special case for XrmToolBox plugin store - not a real NuGet package) -->
+  <Target Name="AddXrmToolBoxDependency" AfterTargets="Pack">
+    <!-- Find the actual nupkg file since NuGet normalizes versions (e.g., 2.4.3.0 becomes 2.4.3) -->
+    <ItemGroup>
+      <_NupkgFiles Include="$(PackageOutputAbsolutePath)/$(PackageId).*.nupkg" />
+    </ItemGroup>
+    <PropertyGroup>
+      <_NupkgPath>@(_NupkgFiles)</_NupkgPath>
+    </PropertyGroup>
+    <Message Text="Adding XrmToolBox dependency to nupkg: $(_NupkgPath)" Importance="high" />
+    <!-- Pass AssemblyVersion to update package version in nuspec to match exactly (XrmToolbox does exact comparison) -->
+    <Exec Command="pwsh -NoProfile -File &quot;$(ProjectDir)Add-XrmToolBoxDependency.ps1&quot; -NupkgPath &quot;$(_NupkgPath)&quot; -Version &quot;$(XrmToolBoxVersion)&quot; -AssemblyVersion &quot;$(Version)&quot;" />
+  </Target>
+
+
+  
+  <Target Name="BuildXrmToolboxPlugin" AfterTargets="Build">
+    <MakeDir Directories="$(OutDir)plugins" />
+    <Copy SourceFiles="$(OutDir)Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader.dll" DestinationFolder="$(OutDir)plugins" SkipUnchangedFiles="true" />
+    <MSBuild Projects="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj" Targets="Restore;Build" Properties="Configuration=$(Configuration);Version=$(Version)" BuildInParallel="true">
+    </MSBuild>
+    <!-- Copy plugin files to plugins folder (cross-platform MSBuild task instead of robocopy) -->
+    <ItemGroup>
+      <XrmToolboxPluginFiles Include="$(ProjectDir)..\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin\bin\$(Configuration)\net48\**\*.*" />
+    </ItemGroup>
+    <MakeDir Directories="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader" />
+    <Copy SourceFiles="@(XrmToolboxPluginFiles)" DestinationFolder="$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader\%(RecursiveDir)" SkipUnchangedFiles="true" />
+  </Target>
+
+  <Target Name="CreatePluginZip" AfterTargets="BuildXrmToolboxPlugin" Condition=" '$(Configuration)' == 'Release' ">
+    <!-- plugin folder to compress -->
+    <PropertyGroup>
+      <PluginFolder>$(OutDir)plugins\Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginLoader</PluginFolder>
+      <PluginZip>$(PluginFolder)\o.zip</PluginZip>
+    </PropertyGroup>
+
+    <!-- Ensure folder exists -->
+    <MakeDir Directories="$(PluginFolder)" />
+
+    <!-- Create or update assemblyversion.stamp inside plugin folder -->
+    <WriteLinesToFile File="$(PluginFolder)\assemblyversion.stamp" Lines="$(Version)" Overwrite="true" Encoding="UTF-8" />
+
+    <!-- Remove any existing o.zip so Compress-Archive doesn't include it in itself -->
+    <Delete Files="$(PluginZip)" Condition="Exists('$(PluginZip)')" />
+
+    <!-- Compress the plugin folder into o.zip: use a project script to avoid escaping issues -->
+    <Exec Command="pwsh -NoProfile -File &quot;$(ProjectDir)Create-PluginZip.ps1&quot; -PluginFolder &quot;$(PluginFolder)&quot; -PluginZip &quot;$(PluginZip)&quot;" ContinueOnError="false" Condition="Exists('$(PluginFolder)')" />
+    <Exec Command="powershell.exe -NoProfile -File &quot;$(ProjectDir)Create-PluginZip.ps1&quot; -PluginFolder &quot;$(PluginFolder)&quot; -PluginZip &quot;$(PluginZip)&quot;" ContinueOnError="false" Condition=" '$(OS)' == 'Windows_NT' AND Exists('$(PluginFolder)') " />
+
+    <!-- Ensure compress created the file; if not, don't fail the build, but log it -->
+    <Message Text="Created plugin zip: $(PluginZip)" Condition="Exists('$(PluginZip)')" Importance="high" />
+
+    <!-- Delete all files and subdirectories in the plugin folder except o.zip -->
+    <Exec Command="powershell -Command &quot;Get-ChildItem -Path '$(PluginFolder)' -Exclude 'o.zip' | Remove-Item -Recurse -Force&quot;" />
+  </Target>
+
+  <Target Name="AddPluginFilesToPackage" BeforeTargets="GenerateNuspec" DependsOnTargets="BuildXrmToolboxPlugin">
+        <Message Text="Adding plugin files to package from $(OutDir)plugins" Importance="high" />
+    <ItemGroup>
+      <_PluginFiles Include="$(OutDir)plugins\**\*.*" Exclude="$(OutDir)plugins\manifest.json" />
+      <_PackageFiles Include="@(_PluginFiles)">
+        <PackagePath>lib\net48\Plugins\%(RecursiveDir)%(Filename)%(Extension)</PackagePath>
+        <BuildAction>Content</BuildAction>
+      </_PackageFiles>
+    </ItemGroup>
+    <Message Text="Included @(_PluginFiles-&gt;Count()) files" Importance="high" />
+  </Target>
+
+  <ItemGroup>
+    <ProjectReference Include="../Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin/Rnwood.Dataverse.Data.PowerShell.XrmToolboxPlugin.csproj">
+        <PrivateAssets>none</PrivateAssets>
+        <Private>false</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+
+  <!-- UsingTask for inline ZipFolder removed: we use a project script to do the zip instead for portability -->
+
+
+
+</Project>

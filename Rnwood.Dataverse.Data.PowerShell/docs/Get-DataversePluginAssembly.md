@@ -37,21 +37,24 @@ The Get-DataversePluginAssembly cmdlet retrieves plugin assembly records from a 
 
 ### Example 1: Get all plugin assemblies
 ```powershell
-PS C:\> Get-DataversePluginAssembly -Connection $connection -All
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataversePluginAssembly -All
 ```
 
 Retrieves all plugin assemblies in the environment.
 
 ### Example 2: Get plugin assembly by ID
 ```powershell
-PS C:\> Get-DataversePluginAssembly -Connection $connection -Id 12345678-1234-1234-1234-123456789012
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataversePluginAssembly -Id 12345678-1234-1234-1234-123456789012
 ```
 
 Retrieves a specific plugin assembly by its ID.
 
 ### Example 3: Get plugin assembly by name
 ```powershell
-PS C:\> Get-DataversePluginAssembly -Connection $connection -Name "MyPluginAssembly"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataversePluginAssembly -Name "MyPluginAssembly"
 ```
 
 Retrieves a plugin assembly by its name.

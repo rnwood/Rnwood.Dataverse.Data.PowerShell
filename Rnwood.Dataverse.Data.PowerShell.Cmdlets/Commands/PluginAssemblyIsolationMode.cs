@@ -6,18 +6,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     public enum PluginAssemblyIsolationMode
     {
         /// <summary>
-        /// None - The assembly runs without isolation.
+        /// None - The assembly runs without isolation (full trust). Not recommended for security.
         /// </summary>
-        None = 0,
+        None = 1,
 
         /// <summary>
         /// Sandbox - The assembly runs in a sandboxed environment (recommended for security).
         /// </summary>
-        Sandbox = 1,
+        Sandbox = 2,
 
         /// <summary>
         /// External - The assembly runs as an external process.
         /// </summary>
-        External = 2
+        External = 3
     }
 }

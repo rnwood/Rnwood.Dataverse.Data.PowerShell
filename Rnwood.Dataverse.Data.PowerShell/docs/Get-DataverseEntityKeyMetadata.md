@@ -8,7 +8,7 @@ schema: 2.0.0
 # Get-DataverseEntityKeyMetadata
 
 ## SYNOPSIS
-{{ Fill in the Synopsis }}
+Retrieves entity key (alternate key) metadata for a Dataverse table.
 
 ## SYNTAX
 
@@ -18,22 +18,42 @@ Get-DataverseEntityKeyMetadata [-EntityName] <String> [[-KeyName] <String>] [-Us
 ```
 
 ## DESCRIPTION
-{{ Fill in the Description }}
+Retrieves metadata about entity keys (alternate keys) defined on a Dataverse table. 
+Entity keys provide a way to uniquely identify records using columns other than the primary key.
+You can retrieve all keys for a table or a specific key by name.
+
+By default, unpublished (draft) metadata is retrieved. Use -Published to retrieve only published metadata.
 
 ## EXAMPLES
 
-### Example 1
+### Example 1: Get all keys for an entity
 ```powershell
-PS C:\> {{ Add example code here }}
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseEntityKeyMetadata -EntityName contact
 ```
 
-{{ Add example description here }}
+Retrieves all entity keys defined on the contact table.
+
+### Example 2: Get a specific entity key
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseEntityKeyMetadata -EntityName contact -KeyName emailaddress1_key
+```
+
+Retrieves metadata for a specific entity key.
+
+### Example 3: Get published keys with caching
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseEntityKeyMetadata -EntityName account -Published -UseMetadataCache
+```
+
+Retrieves published entity key metadata for the account table using the metadata cache for improved performance.
 
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -79,6 +99,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -ProgressAction
+{{ Fill ProgressAction Description }}
+
+```yaml
+Type: ActionPreference
+Parameter Sets: (All)
+Aliases: proga
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Published
 Retrieve only published metadata.
 By default, unpublished (draft) metadata is retrieved which includes all changes
@@ -90,7 +125,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
@@ -105,22 +140,7 @@ Aliases:
 
 Required: False
 Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-### -ProgressAction
-{{ Fill ProgressAction Description }}
-
-```yaml
-Type: ActionPreference
-Parameter Sets: (All)
-Aliases: proga
-
-Required: False
-Position: Named
-Default value: None
+Default value: False
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

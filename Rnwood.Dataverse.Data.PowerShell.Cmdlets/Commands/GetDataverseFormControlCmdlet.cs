@@ -20,30 +20,35 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the form ID.
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipelineByPropertyName = true, HelpMessage = "ID of the form")]
+        [ArgumentCompleter(typeof(FormIdArgumentCompleter))]
         public Guid FormId { get; set; }
 
         /// <summary>
         /// Gets or sets the tab name to filter controls. Use '[Header]' to get controls from the form header.
         /// </summary>
         [Parameter(HelpMessage = "Name of the tab containing the section. Use '[Header]' to get header controls.")]
+        [ArgumentCompleter(typeof(FormTabNameArgumentCompleter))]
         public string TabName { get; set; }
 
         /// <summary>
         /// Gets or sets the section name to filter controls. TabName must be provided when using SectionName (except for header).
         /// </summary>
         [Parameter(HelpMessage = "Name of the section containing the controls. TabName is required when using SectionName (not applicable for header).")]
+        [ArgumentCompleter(typeof(FormSectionNameArgumentCompleter))]
         public string SectionName { get; set; }
 
         /// <summary>
         /// Gets or sets the control ID to retrieve a specific control.
         /// </summary>
         [Parameter(HelpMessage = "ID of a specific control to retrieve")]
+        [ArgumentCompleter(typeof(FormControlIdArgumentCompleter))]
         public string ControlId { get; set; }
 
         /// <summary>
         /// Gets or sets the data field name to filter controls.
         /// </summary>
         [Parameter(HelpMessage = "Data field name to filter controls")]
+        [ArgumentCompleter(typeof(ColumnNameArgumentCompleter))]
         public string DataField { get; set; }
 
         /// <summary>

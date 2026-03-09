@@ -41,6 +41,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_OBJECT, HelpMessage = "Name of the web resource. Used to match existing resources if Id is not provided.")]
         [Parameter(ParameterSetName = PARAMSET_FILE, Mandatory = true, HelpMessage = "Name of the web resource. Used to match existing resources if Id is not provided.")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string Name { get; set; }
 
         /// <summary>
@@ -118,6 +119,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(ParameterSetName = PARAMSET_FOLDER, HelpMessage = "If set, only updates files that are newer than the corresponding web resources")]
         public SwitchParameter IfNewer { get; set; }
 
+        /// <inheritdoc />
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
