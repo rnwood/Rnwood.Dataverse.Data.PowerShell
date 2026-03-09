@@ -81,7 +81,7 @@ try {{
             result.StandardOutput.Should().Contain("additional connections", because: result.GetFullOutput());
         }
 
-        [Fact(Skip = "Fails on PS5 - ticket logged to investigate cross-datasource query issues")]
+        [Fact]
         public void CanExecuteCrossDatasourceQueryUsingAdditionalConnections()
         {
 

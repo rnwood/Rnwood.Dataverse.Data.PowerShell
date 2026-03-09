@@ -130,6 +130,154 @@ Write-Host "Framework References: $($metadata.FrameworkReferences -join ', ')"
 Write-Host "Source code saved to: C:\Temp\Plugin.cs"
 ```
 
+### Exporting to Visual Studio Project
+
+For more advanced development workflows, you can export a dynamic plugin assembly to a complete Visual Studio project. This enables you to use standard .NET development tools, IDEs, and debugging capabilities.
+
+```powershell
+# Export plugin assembly directly from Dataverse to a VS project
+$connection = Get-DataverseConnection -Url "https://org.crm.dynamics.com" -Interactive
+
+Get-DataverseDynamicPluginAssembly -Connection $connection `
+    -Name "MyCompany.Plugins" `
+    -OutputProjectPath "C:\Dev\MyPlugin"
+```
+
+This creates a complete, buildable project structure:
+- **MyCompany.Plugins.csproj** - SDK-style project file targeting .NET Framework 4.6.2
+- **MyCompany.Plugins.cs** - Complete C# source code
+- **MyCompany.Plugins.snk** - Strong name key for assembly signing
+
+The generated project:
+- Builds successfully with `dotnet build` without modifications
+- Can be opened in Visual Studio or VS Code
+- Supports IntelliSense, debugging, and refactoring
+- Maintains the same PublicKeyToken as the original assembly
+
+### Complete Development Workflow with VS Project Export
+
+This workflow combines the rapid deployment benefits of dynamic plugins with the power of traditional IDE-based development:
+
+```powershell
+# Step 1: Create initial plugin with dynamic assembly
+$initialCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class AccountPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            var trace = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
+            
+            trace.Trace("AccountPlugin V1 executing");
+            
+            if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
+            {
+                var target = (Entity)context.InputParameters["Target"];
+                target["description"] = "Created by V1: " + DateTime.UtcNow.ToString();
+            }
+        }
+    }
+}
+"@
+
+Set-DataverseDynamicPluginAssembly -SourceCode $initialCode `
+    -Name "MyCompany.Plugins" `
+    -Version "1.0.0.0"
+
+# Step 2: Export to VS project for development
+Get-DataverseDynamicPluginAssembly -Name "MyCompany.Plugins" `
+    -OutputProjectPath "C:\Dev\MyPlugin"
+
+# Step 3: Modify source code in your preferred IDE
+#   - Open C:\Dev\MyPlugin\MyCompany.Plugins.csproj in Visual Studio or VS Code
+#   - Edit MyCompany.Plugins.cs with full IntelliSense support
+#   - Add more complex logic, error handling, etc.
+#   - Use debugging and testing tools
+
+# Example modification:
+$modifiedCode = @"
+using System;
+using Microsoft.Xrm.Sdk;
+
+namespace MyCompany.Plugins
+{
+    public class AccountPlugin : IPlugin
+    {
+        public void Execute(IServiceProvider serviceProvider)
+        {
+            var context = (IPluginExecutionContext)serviceProvider.GetService(typeof(IPluginExecutionContext));
+            var trace = (ITracingService)serviceProvider.GetService(typeof(ITracingService));
+            
+            trace.Trace("AccountPlugin V2 executing - UPDATED VERSION!");
+            
+            if (context.InputParameters.Contains("Target") && context.InputParameters["Target"] is Entity)
+            {
+                var target = (Entity)context.InputParameters["Target"];
+                // V2: Enhanced functionality with validation
+                if (target.Contains("revenue") && target.GetAttributeValue<Money>("revenue").Value < 0)
+                {
+                    throw new InvalidPluginExecutionException("Revenue cannot be negative");
+                }
+                target["description"] = "Created by V2 (enhanced!): " + DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC");
+            }
+        }
+    }
+}
+"@
+
+# Save modified code to the project file
+Set-Content -Path "C:\Dev\MyPlugin\MyCompany.Plugins.cs" -Value $modifiedCode
+
+# Step 4: Build using standard dotnet tools
+Push-Location C:\Dev\MyPlugin
+dotnet build
+Pop-Location
+
+# The build produces: C:\Dev\MyPlugin\bin\Debug\net462\MyCompany.Plugins.dll
+# This DLL is properly signed and ready to deploy
+
+# Step 5: Update plugin in Dataverse (incremental update - no deletion needed)
+$updatedSource = Get-Content "C:\Dev\MyPlugin\MyCompany.Plugins.cs" -Raw
+Set-DataverseDynamicPluginAssembly -SourceCode $updatedSource `
+    -Name "MyCompany.Plugins" `
+    -Version "2.0.0.0"
+
+# Plugin assembly is updated from version 1.0.0.0 to 2.0.0.0
+# Plugin steps remain registered - no need to recreate them
+# Public key token remains consistent
+```
+
+**Benefits of VS Project Export Workflow:**
+
+1. **IDE Support**: Full IntelliSense, syntax highlighting, and code navigation
+2. **Debugging**: Set breakpoints and debug plugins locally (with appropriate test harness)
+3. **Refactoring**: Use IDE refactoring tools for safer code changes
+4. **Testing**: Write and run unit tests alongside your plugin code
+5. **Version Control**: Commit the .csproj and .cs files to Git/source control
+6. **Team Collaboration**: Share buildable projects with team members
+7. **Standard Tooling**: Use familiar `dotnet build`, `dotnet test`, etc.
+8. **No Manual Configuration**: Generated project builds immediately without setup
+
+**When to Use VS Project Export:**
+- Developing complex plugins with multiple classes
+- Working with a team on shared plugin code
+- Maintaining plugins in source control systems
+- Need debugging and testing capabilities
+- Want IDE support for productivity
+- Building plugins with extensive business logic
+
+**When to Use Inline Source Code:**
+- Quick prototypes and simple plugins
+- Single-file plugins with minimal logic
+- CI/CD automation scenarios
+- Simple configuration changes
+- No local development environment needed
+
 ### Working with Multiple Plugin Types
 
 ```powershell

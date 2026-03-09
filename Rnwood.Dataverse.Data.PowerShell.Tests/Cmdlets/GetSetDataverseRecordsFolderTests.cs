@@ -12,7 +12,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets;
 /// Tests for Get-DataverseRecordsFolder and Set-DataverseRecordsFolder script module cmdlets.
 /// These are PowerShell script modules (.psm1), so tests must execute in a child PowerShell process.
 /// </summary>
-public class GetSetDataverseRecordsFolderTests : TestBase
+public class GetSetDataverseRecordsFolderTests : TestBase, IDisposable
 {
     private string? _tempFolder;
     
