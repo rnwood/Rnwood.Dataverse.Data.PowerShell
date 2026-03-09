@@ -1,0 +1,8 @@
+# Azure Functions local settings (contains secrets, do not commit)
+local.settings.json
+
+# Managed module dependencies downloaded by Azure Functions
+.python_packages
+.python_packages/
+Modules/
+modules/

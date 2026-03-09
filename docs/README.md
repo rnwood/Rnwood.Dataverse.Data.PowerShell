@@ -20,11 +20,11 @@ Fundamental operations and concepts:
 - [Deleting Records](core-concepts/deleting.md) - Delete operations with safety features
 - [Error Handling and Batch Operations](core-concepts/error-handling.md) - Error handling and retry logic
 - [Environment Variables and Connection References](core-concepts/environment-variables-connection-references.md) - Managing configuration and connections
+- [Solution Management](core-concepts/solution-management.md) - Import, export, and manage solutions
 
 ### [Advanced Topics](advanced/)
 Advanced features for power users:
 - [Parallelization](advanced/parallelization.md) - Parallel processing for best performance
-- [Solution Management](advanced/solution-management.md) - Import, export, and manage solutions
 
 ### [Cmdlet Reference](../Rnwood.Dataverse.Data.PowerShell/docs/)
 Complete reference documentation for all 390+ cmdlets.

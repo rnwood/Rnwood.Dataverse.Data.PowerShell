@@ -341,6 +341,261 @@ Set-DataverseFormControl -Connection $conn `
     -Publish
 ```
 
+## Form Libraries and Event Handlers
+
+Forms support JavaScript libraries and event handlers for custom client-side logic. Libraries must be web resources, and handlers reference functions in these libraries.
+
+### Adding JavaScript Libraries
+
+Before adding event handlers, you must add the JavaScript library to the form:
+
+```powershell
+# Add a library to a form
+Set-DataverseFormLibrary -Connection $conn `
+    -FormId $formId `
+    -LibraryName "new_/scripts/validation.js" `
+    -Publish
+
+# Get all libraries on a form
+$libraries = Get-DataverseFormLibrary -Connection $conn -FormId $formId
+
+# Remove a library
+Remove-DataverseFormLibrary -Connection $conn `
+    -FormId $formId `
+    -LibraryName "new_/scripts/old_validation.js" `
+    -Publish
+```
+
+### Event Handler Types
+
+Dataverse forms support four types of event handlers, each at a different location in the FormXml:
+
+1. **Form-level events**: Events at the form root (e.g., onload, onsave)
+2. **Attribute-level events**: Events with an attribute property (e.g., onchange for specific fields)
+3. **Tab-level events**: Events within a tab element (e.g., tabstatechange)
+4. **Control-level events**: Events within a control element (e.g., onchange)
+
+### Form-Level Event Handlers
+
+Form-level handlers execute for events like onload and onsave:
+
+```powershell
+# Add an onload handler
+Set-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -EventName "onload" `
+    -FunctionName "OnFormLoad" `
+    -LibraryName "new_/scripts/main.js"
+
+# Add an onsave handler with parameters
+Set-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -EventName "onsave" `
+    -FunctionName "ValidateBeforeSave" `
+    -LibraryName "new_/scripts/validation.js" `
+    -Parameters "{'strictMode':true}"
+
+# Get all form-level handlers
+$handlers = Get-DataverseFormEventHandler -Connection $conn -FormId $formId
+
+# Remove a handler
+Remove-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -EventName "onload" `
+    -FunctionName "OnFormLoad" `
+    -LibraryName "new_/scripts/main.js"
+```
+
+### Attribute-Level Event Handlers
+
+Attribute-level handlers are tied to specific fields and are typically onchange events:
+
+```powershell
+# Add onchange handler for the department field
+Set-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -AttributeName "department" `
+    -EventName "onchange" `
+    -FunctionName "OnDepartmentChange" `
+    -LibraryName "new_/scripts/validation.js"
+
+# Get all handlers for a specific attribute
+$handlers = Get-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -AttributeName "emailaddress1"
+
+# Add handlers to multiple attributes
+$fields = @("firstname", "lastname", "emailaddress1")
+foreach ($field in $fields) {
+    Set-DataverseFormEventHandler -Connection $conn `
+        -FormId $formId `
+        -AttributeName $field `
+        -EventName "onchange" `
+        -FunctionName "ValidateField" `
+        -LibraryName "new_/scripts/validation.js"
+}
+
+# Remove an attribute handler
+Remove-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -AttributeName "department" `
+    -EventName "onchange" `
+    -FunctionName "OnDepartmentChange" `
+    -LibraryName "new_/scripts/validation.js"
+```
+
+### Tab-Level Event Handlers
+
+Tab-level handlers are useful for tabstatechange events:
+
+```powershell
+# Add tabstatechange handler
+Set-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -TabName "General" `
+    -EventName "tabstatechange" `
+    -FunctionName "OnTabChange" `
+    -LibraryName "new_/scripts/tabs.js"
+
+# Get handlers for a specific tab
+$handlers = Get-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -TabName "General"
+
+# Remove a tab handler
+Remove-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -TabName "General" `
+    -EventName "tabstatechange" `
+    -HandlerUniqueId $handlerId
+```
+
+### Control-Level Event Handlers
+
+Control-level handlers are attached to specific controls:
+
+```powershell
+# Add onchange handler to a control
+Set-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -ControlId "emailaddress1" `
+    -TabName "general_tab" `
+    -SectionName "contact_details" `
+    -EventName "onchange" `
+    -FunctionName "ValidateEmail" `
+    -LibraryName "new_/scripts/validation.js"
+
+# Get handlers for a specific control
+$handlers = Get-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -ControlId "emailaddress1" `
+    -TabName "general_tab" `
+    -SectionName "contact_details"
+
+# Remove a control handler
+Remove-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -ControlId "emailaddress1" `
+    -TabName "general_tab" `
+    -SectionName "contact_details" `
+    -EventName "onchange" `
+    -FunctionName "ValidateEmail" `
+    -LibraryName "new_/scripts/validation.js"
+```
+
+### Event Handler Properties
+
+Event handlers support several properties:
+
+```powershell
+# Add a handler with all options
+Set-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -EventName "onload" `
+    -FunctionName "Initialize" `
+    -LibraryName "new_/scripts/init.js" `
+    -Enabled $true `
+    -PassExecutionContext $true `
+    -Parameters "{'mode':'create'}" `
+    -HandlerUniqueId ([guid]::NewGuid())
+```
+
+**Handler Properties:**
+- **Enabled**: Whether the handler is active (default: true)
+- **PassExecutionContext**: Pass execution context to function (default: true)
+- **Parameters**: JSON parameters to pass to the function
+- **HandlerUniqueId**: Optional unique ID for the handler
+- **Application**: Whether event is application-managed (default: false)
+- **Active**: Whether event is active (default: true)
+
+### Understanding Event Output
+
+The Get-DataverseFormEventHandler cmdlet returns handlers with location information:
+
+```powershell
+# Get a handler and examine its properties
+$handler = Get-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -AttributeName "department" | Select-Object -First 1
+
+# Properties include:
+# - FormId: The form's ID
+# - EventName: The event (onload, onchange, etc.)
+# - Attribute: The attribute name (for attribute-level events)
+# - TabName: The tab name (for tab/control-level events)
+# - ControlId: The control ID (for control-level events)
+# - SectionName: The section name (for control-level events)
+# - FunctionName: The JavaScript function
+# - LibraryName: The web resource containing the function
+# - HandlerUniqueId: The handler's unique ID
+# - Enabled: Whether the handler is enabled
+# - Parameters: Parameters to pass to the function
+# - PassExecutionContext: Whether to pass execution context
+```
+
+### Complete Example: Setting Up Form Events
+
+```powershell
+$conn = Get-DataverseConnection -Interactive
+$formId = (Get-DataverseForm -Connection $conn -EntityName "contact" | Select-Object -First 1).FormId
+
+# Add JavaScript library
+Set-DataverseFormLibrary -Connection $conn `
+    -FormId $formId `
+    -LibraryName "new_/scripts/contact_validation.js"
+
+# Add form onload handler
+Set-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -EventName "onload" `
+    -FunctionName "ContactForm.OnLoad" `
+    -LibraryName "new_/scripts/contact_validation.js"
+
+# Add attribute handlers for validation
+$requiredFields = @("firstname", "lastname", "emailaddress1")
+foreach ($field in $requiredFields) {
+    Set-DataverseFormEventHandler -Connection $conn `
+        -FormId $formId `
+        -AttributeName $field `
+        -EventName "onchange" `
+        -FunctionName "ContactForm.ValidateRequired" `
+        -LibraryName "new_/scripts/contact_validation.js"
+}
+
+# Add tab handler for lazy loading
+Set-DataverseFormEventHandler -Connection $conn `
+    -FormId $formId `
+    -TabName "Related" `
+    -EventName "tabstatechange" `
+    -FunctionName "ContactForm.LoadRelatedData" `
+    -LibraryName "new_/scripts/contact_validation.js"
+
+# Publish the form
+Set-DataverseForm -Connection $conn -FormId $formId -Publish
+
+Write-Host "Form events configured successfully!" -ForegroundColor Green
+```
+
 ## Positioning Strategies
 
 All Set- cmdlets support flexible positioning:
@@ -515,4 +770,10 @@ Write-Host "Form created and published successfully!" -ForegroundColor Green
 - [Get-DataverseFormControl](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseFormControl.md)
 - [Set-DataverseFormControl](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseFormControl.md)
 - [Remove-DataverseFormControl](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseFormControl.md)
+- [Get-DataverseFormLibrary](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseFormLibrary.md)
+- [Set-DataverseFormLibrary](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseFormLibrary.md)
+- [Remove-DataverseFormLibrary](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseFormLibrary.md)
+- [Get-DataverseFormEventHandler](../../Rnwood.Dataverse.Data.PowerShell/docs/Get-DataverseFormEventHandler.md)
+- [Set-DataverseFormEventHandler](../../Rnwood.Dataverse.Data.PowerShell/docs/Set-DataverseFormEventHandler.md)
+- [Remove-DataverseFormEventHandler](../../Rnwood.Dataverse.Data.PowerShell/docs/Remove-DataverseFormEventHandler.md)
 - [Examples-Comparison.md](../../Examples-Comparison.md) - Side-by-side comparisons with Microsoft.Xrm.Data.PowerShell

@@ -33,7 +33,8 @@ When used with the `-deletions` switch, it reads from the 'deletions' subfolder 
 
 ### Example 1
 ```powershell
-PS C:\> Get-DataverseRecordsFolder -InputPath data/contacts | Set-DataverseRecord -connection $c
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Get-DataverseRecordsFolder -InputPath data/contacts | Set-DataverseRecord
 ```
 
 Reads files from `data/contacts` and uses them to create/update records in Dataverse using the existing connection `$c`.

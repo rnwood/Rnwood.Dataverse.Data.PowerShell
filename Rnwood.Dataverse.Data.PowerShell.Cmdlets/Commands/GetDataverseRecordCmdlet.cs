@@ -233,7 +233,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             get;
             set;
         }
-        
+
         /// <summary>
         /// Controls the maximum number of records to resolve in a single query when using MatchOn. Default is 500. Specify 1 to resolve one record at a time.
         /// </summary>
@@ -244,12 +244,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(HelpMessage = "Outputs Names for lookup values. The default behaviour is to output the ID.")]
         public SwitchParameter LookupValuesReturnName { get; set; }
+
         /// <summary>
-        /// Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.
+        /// Includes system columns in output. Default is all columns except system columns. Ignored if Columns parameter is used.
         /// </summary>
-        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
-        [Parameter(ParameterSetName = PARAMSET_MATCHON, HelpMessage = "Excludes system columns from output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Includes system columns in output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, HelpMessage = "Includes system columns in output. Default is all columns except system columns. Ignored if Columns parameter is used.")]
         public SwitchParameter IncludeSystemColumns { get; set; }
+
+        /// <summary>
+        /// Includes file and image columns in output. Default does not include them. Ignored if Columns parameter is used.
+        /// </summary>
+        [Parameter(ParameterSetName = PARAMSET_SIMPLE, HelpMessage = "Includes file and image metadata columns in output. Default does not include them. Ignored if Columns parameter is used.")]
+        [Parameter(ParameterSetName = PARAMSET_MATCHON, HelpMessage = "Includes file and image metadata columns in output. Default does not include them. Ignored if Columns parameter is used")]
+        public SwitchParameter IncludeFileAndImageMetadataColumns { get; set; }
 
         /// <summary>
         /// If specified, retrieves unpublished records instead of including published ones.
@@ -292,7 +300,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 entiyMetadataFactory = entiyMetadataFactory ?? new EntityMetadataFactory(Connection);
                 entityConverter = entityConverter ?? new DataverseEntityConverter(Connection, entiyMetadataFactory);
-                entityMetadata = entityMetadata ?? entiyMetadataFactory.GetMetadata(TableName);
+                entityMetadata = entityMetadata ?? entiyMetadataFactory.GetLimitedMetadata(TableName);
 
                 // Convert InputObject to Entity to extract match values
                 var conversionOptions = new ConvertToDataverseEntityOptions();
@@ -366,12 +374,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private string GetColumnSuffix(string columnName)
         {
             if (Columns == null || columnName == null) return null;
-            
-            var matchingColumn = Columns.FirstOrDefault(c => 
+
+            var matchingColumn = Columns.FirstOrDefault(c =>
                 c.Split(':')[0].Equals(columnName, StringComparison.OrdinalIgnoreCase));
-            
+
             if (matchingColumn == null) return null;
-            
+
             var parts = matchingColumn.Split(':');
             if (parts.Length > 1)
             {
@@ -379,7 +387,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 if (suffix == "raw") return "Raw";
                 if (suffix == "display") return "Display";
             }
-            
+
             return null;
         }
 
@@ -419,15 +427,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 case PARAMSET_FETCHXML:
                     query = GetFetchXmlQuery();
                     Columns = query.ColumnSet.AllColumns ? null : query.ColumnSet.Columns.ToArray();   // Capture columns requested in FetchXML for use when converting to PSObject
-                    entityMetadata = entiyMetadataFactory.GetMetadata(query.EntityName);
+                    entityMetadata = entiyMetadataFactory.GetLimitedMetadata(query.EntityName);
                     break;
                 case PARAMSET_SIMPLE:
-                    entityMetadata = entiyMetadataFactory.GetMetadata(TableName);
+                    entityMetadata = entiyMetadataFactory.GetLimitedMetadata(TableName);
                     query = GetSimpleQuery();
+                    Columns = query.ColumnSet.AllColumns ? null : query.ColumnSet.Columns.ToArray();
                     break;
                 case PARAMSET_MATCHON:
-                    entityMetadata = entiyMetadataFactory.GetMetadata(TableName);
+                    entityMetadata = entiyMetadataFactory.GetLimitedMetadata(TableName);
                     query = GetMatchOnQuery();
+                    Columns = query.ColumnSet.AllColumns ? null : query.ColumnSet.Columns.ToArray();
                     break;
                 default:
                     throw new NotImplementedException($"ParameterSetName not implemented: {ParameterSetName}");
@@ -530,7 +540,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             var recValue = entity.GetAttributeValue<object>(matchColumn);
                             if (recValue is EntityReference er2) recValue = er2.Id;
                             if (recValue is OptionSetValue osv2) recValue = osv2.Value;
-                            
+
                             if (QueryHelpers.AreValuesEqual(itemValue, recValue))
                             {
                                 item.MatchedRecords.Add(entity);
@@ -593,7 +603,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                                 return QueryHelpers.AreValuesEqual(itemValue, recValue);
                             });
-                            
+
                             if (allMatch)
                             {
                                 item.MatchedRecords.Add(entity);
@@ -647,7 +657,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private QueryExpression GetSimpleQuery()
         {
             QueryExpression query = new QueryExpression(TableName);
-            query.ColumnSet = Columns != null && !Columns.Any(c => c.Split(':')[0].Equals("calendarrules", StringComparison.OrdinalIgnoreCase)) ? new ColumnSet(StripColumnSuffixes(Columns)) : new ColumnSet(!RecordCount);
+            if (RecordCount)
+            {
+                query.ColumnSet = new ColumnSet(false);
+            }
+            else if (Columns != null && !Columns.Any(c => c.Split(':')[0].Equals("calendarrules", StringComparison.OrdinalIgnoreCase)))
+            {
+                query.ColumnSet = new ColumnSet(StripColumnSuffixes(Columns));
+            }
+            else
+            {
+                query.ColumnSet = new ColumnSet(DataverseEntityConverter.GetAllColumnNames(entityMetadata, IncludeSystemColumns, ExcludeColumns, IncludeFileAndImageMetadataColumns));
+            }
             query.Criteria.FilterOperator = LogicalOperator.And;
 
             if (Id != null)
@@ -683,12 +704,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (ExcludeFilterValues != null)
             {
-                    // Build the inverted exclude filters. Top-level combination across the exclude
-                    // hashtables is AND by default (a record is excluded only if it matches all
-                    // provided hashtables). When -ExcludeFilterOr is specified the top-level
-                    // combination becomes OR (a record is excluded if it matches any provided hashtable).
-                    FilterExpression excludesFilterExpression = query.Criteria.AddFilter(ExcludeFilterOr.IsPresent ? LogicalOperator.Or : LogicalOperator.And);
-                    FilterHelpers.ProcessHashFilterValues(excludesFilterExpression, ExcludeFilterValues, true);
+                // Build the inverted exclude filters. Top-level combination across the exclude
+                // hashtables is AND by default (a record is excluded only if it matches all
+                // provided hashtables). When -ExcludeFilterOr is specified the top-level
+                // combination becomes OR (a record is excluded if it matches any provided hashtable).
+                FilterExpression excludesFilterExpression = query.Criteria.AddFilter(ExcludeFilterOr.IsPresent ? LogicalOperator.Or : LogicalOperator.And);
+                FilterHelpers.ProcessHashFilterValues(excludesFilterExpression, ExcludeFilterValues, true);
             }
 
             if (Criteria != null)
@@ -765,7 +786,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         finalQuery.Criteria.AddCondition(candidateQuery.Attributes[i], ConditionOperator.Equal, candidateQuery.Values[i]);
                     }
-                    
+
                     // Apply ordering, top, and page size if specified
                     ApplyOutputParameters(finalQuery);
                     break;
@@ -782,7 +803,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         {
                             finalQuery.Criteria.AddCondition(candidateQuery.Attributes[i], ConditionOperator.Equal, candidateQuery.Values[i]);
                         }
-                        
+
                         // Apply ordering, top, and page size if specified
                         ApplyOutputParameters(finalQuery);
                         break;
@@ -896,7 +917,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
         private void AddActiveFilter(FilterExpression criteria, string entityName)
         {
-            EntityMetadata entityMetadata = entiyMetadataFactory.GetMetadata(entityName);
+            EntityMetadata entityMetadata = entiyMetadataFactory.GetLimitedMetadata(entityName);
 
             if (entityMetadata.Attributes.Any(
                     a => string.Equals(a.LogicalName, "statecode", StringComparison.OrdinalIgnoreCase)))
@@ -925,7 +946,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 columnNames = Columns.Select(f => f.Split(':')[0]).Except(ExcludeColumns ?? new string[0]).ToArray();
             }
 
-            return new ColumnSet((columnNames ?? DataverseEntityConverter.GetAllColumnNames(entityMetadata, IncludeSystemColumns, ExcludeColumns)).Where(c => getPath(c) == path).ToArray());
+            return new ColumnSet((columnNames ?? DataverseEntityConverter.GetAllColumnNames(entityMetadata, IncludeSystemColumns, ExcludeColumns, IncludeFileAndImageMetadataColumns)).Where(c => getPath(c) == path).ToArray());
         }
     }
 }

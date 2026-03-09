@@ -28,7 +28,21 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		/// <summary>
 		/// Initializes a new instance of the ConnectionStore class.
 		/// </summary>
-		public ConnectionStore()
+	public ConnectionStore() : this(null)
+	{
+	}
+	
+	/// <summary>
+	/// Initializes a new instance of the ConnectionStore class with a custom cache directory.
+	/// </summary>
+	/// <param name="cacheDirectory">Optional custom cache directory path. If null, uses the default platform-appropriate location.</param>
+	public ConnectionStore(string cacheDirectory)
+	{
+		if (cacheDirectory != null)
+		{
+			_cacheDirectory = cacheDirectory;
+		}
+		else
 		{
 			// Use platform-appropriate directory for cache storage
 			string appDataPath;
@@ -45,64 +59,64 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			
 			_cacheDirectory = Path.Combine(appDataPath, "Rnwood.Dataverse.Data.PowerShell");
-			_cacheFilePath = Path.Combine(_cacheDirectory, CacheFileName);
-			_metadataFilePath = Path.Combine(_cacheDirectory, MetadataFileName);
-			
-			// Ensure directory exists
-			Directory.CreateDirectory(_cacheDirectory);
 		}
 		
-		/// <summary>
-		/// Encrypts a string using platform-specific best practices.
-		/// Windows: Uses Data Protection API (DPAPI)
-		/// Linux/macOS: Uses AES with a machine-specific key
-		/// </summary>
-		private string EncryptString(string plainText)
+		_cacheFilePath = Path.Combine(_cacheDirectory, CacheFileName);
+		_metadataFilePath = Path.Combine(_cacheDirectory, MetadataFileName);
+		
+		// Ensure directory exists
+		Directory.CreateDirectory(_cacheDirectory);
+	}
+
+	/// <summary>
+	/// Encrypts a string using platform-appropriate encryption.
+	/// </summary>
+	private string EncryptString(string plainText)
+	{
+		if (string.IsNullOrEmpty(plainText))
 		{
-			if (string.IsNullOrEmpty(plainText))
+			return plainText;
+		}
+		
+		byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
+		byte[] encryptedBytes;
+		
+		if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+		{
+			// Windows: Use DPAPI
+			encryptedBytes = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);
+		}
+		else
+		{
+			// Linux/macOS: Use AES with machine-specific key
+			byte[] key = GetMachineKey();
+			using (Aes aes = Aes.Create())
 			{
-				return plainText;
-			}
-			
-			byte[] plainBytes = Encoding.UTF8.GetBytes(plainText);
-			byte[] encryptedBytes;
-			
-			if (Environment.OSVersion.Platform == PlatformID.Win32NT)
-			{
-				// Windows: Use DPAPI
-				encryptedBytes = ProtectedData.Protect(plainBytes, null, DataProtectionScope.CurrentUser);
-			}
-			else
-			{
-				// Linux/macOS: Use AES with machine-specific key
-				// This provides basic encryption, though not as secure as OS keyring
-				byte[] key = GetMachineKey();
-				using (Aes aes = Aes.Create())
+				aes.Key = key;
+				aes.GenerateIV();
+				
+				using (var encryptor = aes.CreateEncryptor())
+				using (var ms = new MemoryStream())
 				{
-					aes.Key = key;
-					aes.GenerateIV();
+					// Prepend IV to encrypted data
+					ms.Write(aes.IV, 0, aes.IV.Length);
 					
-					using (var encryptor = aes.CreateEncryptor())
-					using (var ms = new MemoryStream())
+					using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
 					{
-						// Prepend IV to encrypted data
-						ms.Write(aes.IV, 0, aes.IV.Length);
-						using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-						{
-							cs.Write(plainBytes, 0, plainBytes.Length);
-						}
-						encryptedBytes = ms.ToArray();
+						cs.Write(plainBytes, 0, plainBytes.Length);
 					}
+					encryptedBytes = ms.ToArray();
 				}
 			}
-			
-			return Convert.ToBase64String(encryptedBytes);
 		}
 		
-		/// <summary>
-		/// Decrypts a string that was encrypted with EncryptString.
-		/// </summary>
-		private string DecryptString(string encryptedText)
+		return Convert.ToBase64String(encryptedBytes);
+	}
+	
+	/// <summary>
+	/// Decrypts a string that was encrypted with EncryptString.
+	/// </summary>
+	private string DecryptString(string encryptedText)
 		{
 			if (string.IsNullOrEmpty(encryptedText))
 			{

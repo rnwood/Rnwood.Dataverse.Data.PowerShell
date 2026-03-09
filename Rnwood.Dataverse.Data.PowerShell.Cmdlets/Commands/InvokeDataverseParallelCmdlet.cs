@@ -56,6 +56,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         private CancellationTokenSource _cancellationTokenSource;
         private Task _outputWriterTask;
         private object _tasksLock = new object();
+        private object _connectionCloneLock = new object(); // Serialize connection cloning to avoid initialization race conditions
         private ConcurrentQueue<PSObject> _outputObjectQueue = new ConcurrentQueue<PSObject>();
         private ConcurrentQueue<ErrorRecord> _errorQueue = new ConcurrentQueue<ErrorRecord>();
         private ConcurrentQueue<string> _verboseQueue = new ConcurrentQueue<string>();
@@ -73,10 +74,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         {
             base.BeginProcessing();
 
+            // Warn if affinity cookie is enabled (default) when using parallelization
+            if (MaxDegreeOfParallelism > 1 && Connection != null && Connection.EnableAffinityCookie)
+            {
+                WriteWarning("Using parallelization with affinity cookie enabled may reduce performance. Consider using Get-DataverseConnection with -DisableAffinityCookie for better parallel performance. Note: Disabling affinity cookie may result in eventual consistency issues.");
+            }
 
             // Initialize runspace pool for streaming chunk processing
             var initialSessionState = InitialSessionState.CreateDefault();
             initialSessionState.ThreadOptions = PSThreadOptions.UseNewThread;
+
+            // Add Set-DataverseConnectionAsDefault cmdlet to the worker runspaces
+            // This is required for the worker script to set the connection
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Set-DataverseConnectionAsDefault", typeof(SetDataverseConnectionAsDefaultCmdlet), null));
 
             // Build list of module patterns to exclude (always include Pester)
             var excludePatterns = new List<string> { "Pester" };
@@ -195,6 +206,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             _cancellationTokenSource.Cancel();
             _outputWriterTask.Wait();
 
+            // Final drain after output writer completes to catch any items
+            // enqueued between the last DrainQueues and the writer finishing
+            DrainQueues();
+
             // Clean up runspace pool
             if (_runspacePool != null)
             {
@@ -241,6 +256,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         WriteVerbose($"Error stopping PowerShell task: {ex.Message}");
                     }
+
+                    try
+                    {
+                        taskInfo.ClonedConnection?.Dispose();
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteVerbose($"Error disposing cloned connection: {ex.Message}");
+                    }
                 }
                 _activeTasks.Clear();
             }
@@ -280,29 +304,58 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var ps = System.Management.Automation.PowerShell.Create();
             ps.RunspacePool = _runspacePool;
 
-            // Try to clone the connection for this runspace
-            ServiceClient connectionToUse;
-            try
+            // Try to clone the connection for this runspace so each chunk has its own independent
+            // ServiceClient instance. Serialise cloning to avoid MSAL token-refresh race conditions
+            // where concurrent clone initialisations can interfere with each other or with the
+            // original connection's authentication state.
+            ServiceClient connectionToUse = Connection; // Default to original connection
+            ServiceClient clonedConnection = null;
+
+            lock (_connectionCloneLock)
             {
-                connectionToUse = Connection.Clone();
-            }
-            catch (Exception ex) when (ex is NotImplementedException ||
-                                        ex.Message.Contains("On-Premises Connections are not supported") ||
-                                        ex.InnerException is NotImplementedException)
-            {
-                // Mock connections don't support cloning - use the original connection
-                // With thread-safe proxy, this is now safe for mock connections
-                connectionToUse = Connection;
-                _verboseQueue.Enqueue($"Connection cloning not supported");
+                try
+                {
+                    clonedConnection = DataverseConnectionExtensions.CloneConnection(Connection);
+
+                    // Force initialization of the cloned connection while holding the lock.
+                    // ServiceClient uses lazy initialization; triggering it here (serialized)
+                    // prevents concurrent MSAL token-refresh races that would otherwise occur
+                    // if multiple clones initialized simultaneously in worker threads.
+                    var _ = clonedConnection.IsReady;
+
+                    _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Cloned connection successfully");
+                    connectionToUse = clonedConnection;
+                }
+                catch (Exception ex) when (ex is NotImplementedException ||
+                                            ex.Message.Contains("On-Premises Connections are not supported") ||
+                                            ex.InnerException is NotImplementedException)
+                {
+                    // On-premises connections don't support cloning
+                    _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Connection cloning not supported, using shared connection");
+                    clonedConnection?.Dispose();
+                    clonedConnection = null;
+                    connectionToUse = Connection;
+                }
+                catch (Exception ex)
+                {
+                    // Clone or initialization failed - fall back to original connection
+                    _verboseQueue.Enqueue($"Chunk {currentChunkNum}: Clone failed: {ex.Message}. Using shared connection.");
+                    _warningQueue.Enqueue($"Connection cloning failed ({ex.Message}). Workers will share the original connection.");
+                    clonedConnection?.Dispose();
+                    clonedConnection = null;
+                    connectionToUse = Connection;
+                }
             }
 
-            ps.AddScript(@"param($Chunk, $connection ); 
+            var workerScript = @"param($Chunk, $connection ); 
             Set-DataverseConnectionAsDefault -Connection $connection
             $psVar = New-Object System.Management.Automation.PSVariable -ArgumentList '_', $Chunk
             $varList = New-Object 'System.Collections.Generic.List[System.Management.Automation.PSVariable]'
             $varList.Add($psVar)
             {" + ScriptBlock + @"}.InvokeWithContext($null, $varList)
-");
+";
+            _verboseQueue.Enqueue($"Worker script for chunk {currentChunkNum}: {workerScript}");
+            ps.AddScript(workerScript);
             // Convert chunk to array to ensure it's fully materialized before passing to PowerShell
             var chunkArray = chunk.ToArray();
 
@@ -315,9 +368,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             var taskInfo = new TaskInfo
             {
                 PowerShell = ps,
-                OutputCollection = outputCollection,
-                ChunkNumber = currentChunkNum,
-                RecordCount = chunk.Count
+                OutputCollection = outputCollection,            ChunkNumber = currentChunkNum,
+                RecordCount = chunk.Count,
+                ClonedConnection = clonedConnection
             };
 
             taskInfo.OutputHandler = (sender, e) => { _outputObjectQueue.Enqueue(outputCollection[e.Index]); taskInfo.LastOutputIndex = e.Index; };
@@ -427,8 +480,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         taskToComplete.PowerShell.Streams.Debug.DataAdded -= taskToComplete.DebugHandler;
                         taskToComplete.PowerShell.Streams.Information.DataAdded -= taskToComplete.InformationHandler;
 
-                        taskToComplete.PowerShell.Dispose();
-                        taskToComplete.OutputCollection.Dispose();
+                        DisposeTask(taskToComplete);
                     }
                 }
                 else
@@ -453,25 +505,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 {
                     foreach (var taskInfo in _activeTasks)
                     {
-                        try
-                        {
-                            taskInfo.PowerShell.Dispose();
-                        }
-                        catch (Exception ex)
-                        {
-                            _verboseQueue.Enqueue($"Error disposing PowerShell task: {ex.Message}");
-                        }
-                    }
-                    foreach (var taskInfo in _activeTasks)
-                    {
-                        try
-                        {
-                            taskInfo.OutputCollection.Dispose();
-                        }
-                        catch (Exception ex)
-                        {
-                            _verboseQueue.Enqueue($"Error disposing output collection: {ex.Message}");
-                        }
+                        DisposeTask(taskInfo);
                     }
                     _activeTasks.Clear();
                 }
@@ -491,6 +525,18 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
         }
 
+
+        private void DisposeTask(TaskInfo taskInfo)
+        {
+            try { taskInfo.PowerShell.Dispose(); }
+            catch (Exception ex) { _verboseQueue.Enqueue($"Error disposing PowerShell task: {ex.Message}"); }
+
+            try { taskInfo.OutputCollection.Dispose(); }
+            catch (Exception ex) { _verboseQueue.Enqueue($"Error disposing output collection: {ex.Message}"); }
+
+            try { taskInfo.ClonedConnection?.Dispose(); }
+            catch (Exception ex) { _verboseQueue.Enqueue($"Error disposing cloned connection: {ex.Message}"); }
+        }
 
         private void DrainQueues()
         {

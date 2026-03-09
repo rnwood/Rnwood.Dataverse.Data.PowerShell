@@ -27,6 +27,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// </summary>
         [Parameter(Mandatory = true, ValueFromPipeline = true, ValueFromRemainingArguments = true,
             HelpMessage = "Object containing values to be used. Property names must match the logical names of Dataverse columns in the specified table and the property values are used to set the values of the Dataverse record being created/updated. The properties may include ownerid, statecode and statuscode which will assign and change the record state/status.")]
+        [Alias("Values")]
         public PSObject InputObject { get; set; }
         /// <summary>
         /// The logical name of the table to operate on.
@@ -157,6 +158,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(HelpMessage = "If specified, duplicate detection will be enabled by setting SuppressDuplicateDetection to false in create, update, and upsert requests.")]
         public SwitchParameter EnableDuplicateDetection { get; set; }
 
+        /// <summary>
+        /// Path to a directory containing file attachments to upload. When a file column value (GUID) changes, 
+        /// the cmdlet looks for a subfolder with the matching GUID inside this directory and uploads the single file found there.
+        /// This is designed to work with folders created by Set-DataverseRecordsFolder.
+        /// </summary>
+        [Parameter(HelpMessage = "Path to a directory containing file attachments. When a file column value (GUID) changes, looks for a subfolder with the matching GUID and uploads the file found there.")]
+        public string FileDirectory { get; set; }
+
         // Explicit interface implementations for ISetOperationParameters
         bool ISetOperationParameters.NoUpdate => NoUpdate.IsPresent;
         bool ISetOperationParameters.NoCreate => NoCreate.IsPresent;
@@ -173,6 +182,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         Guid ISetOperationParameters.Id => Id;
         bool ISetOperationParameters.AllowMultipleMatches => AllowMultipleMatches.IsPresent;
         bool ISetOperationParameters.EnableDuplicateDetection => EnableDuplicateDetection.IsPresent;
+        string ISetOperationParameters.FileDirectory => FileDirectory;
 
         private SetBatchProcessor _setBatchProcessor;
         private RetrievalBatchProcessor _retrievalBatchProcessor;
@@ -194,6 +204,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             recordCount = 0;
             entityMetadataFactory = new EntityMetadataFactory(Connection);
             entityConverter = new DataverseEntityConverter(Connection, entityMetadataFactory);
+
+            // Warn if affinity cookie is enabled (default) when using parallelization
+            if (MaxDegreeOfParallelism > 1 && Connection != null && Connection.EnableAffinityCookie)
+            {
+                WriteWarning("Using parallelization with affinity cookie enabled may reduce performance. Consider using Get-DataverseConnection with -DisableAffinityCookie for better parallel performance. Note: Disabling affinity cookie may result in eventual consistency issues.");
+            }
 
             // Initialize retrieval batch processor
             _retrievalBatchProcessor = new RetrievalBatchProcessor(
@@ -395,7 +411,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            EntityMetadata entityMetadata = entityMetadataFactory.GetMetadata(TableName);
+            EntityMetadata entityMetadata = entityMetadataFactory.GetLimitedMetadata(TableName);
 
             // Create a context to access utility methods
             var context = new SetOperationContext(

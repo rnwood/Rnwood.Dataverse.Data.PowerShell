@@ -180,7 +180,7 @@ Connection references need valid connection IDs. To find available connections:
 
 ```powershell
 # Query connections by name
-$conn = Get-DataverseRecord -TableName connection -Filter "name eq 'Production SharePoint'"
+$conn = Get-DataverseRecord -TableName connection -FilterValues @{ name = 'Production SharePoint' }
 Write-Host "Connection ID: $($conn.connectionid)"
 
 # List all connections

@@ -1,4 +1,4 @@
-# File Attachments
+﻿# File Attachments
 
 File columns in Dataverse allow you to store files directly in table columns, providing a modern alternative to Notes/Annotations. This document covers how to work with file columns using PowerShell cmdlets.
 
@@ -16,6 +16,9 @@ File columns provide:
 - **[Get-DataverseFileData](Get-DataverseFileData.md)** - Download file data from a file column
 - **[Set-DataverseFileData](Set-DataverseFileData.md)** - Upload file data to a file column
 - **[Remove-DataverseFileData](Remove-DataverseFileData.md)** - Delete file data from a file column
+- **[Set-DataverseRecord](Set-DataverseRecord.md)** - Create/update records with automatic file uploads using `-FileDirectory` parameter
+- **[Set-DataverseRecordsFolder](Set-DataverseRecordsFolder.md)** - Export records with file attachments to folder structure
+- **[Get-DataverseRecordsFolder](Get-DataverseRecordsFolder.md)** - Import records with file attachments from folder structure
 
 ## Common Scenarios
 
@@ -54,14 +57,14 @@ Download to a folder with automatic filename:
 
 ```powershell
 # Download to folder (uses original filename)
-Get-DataverseFileData -Connection $conn -TableName "account" -Id $accountId -ColumnName "contractdocument" -FolderPath "C:\Downloads"
+Get-DataverseFileData -Connection $conn -TableName account -Id $accountId -ColumnName contractdocument -FolderPath "C:\Downloads"
 ```
 
 Get file as byte array for processing:
 
 ```powershell
 # Get file content as bytes
-$bytes = Get-DataverseFileData -Connection $conn -TableName "account" -Id $accountId -ColumnName "contractdocument" -AsBytes
+$bytes = Get-DataverseFileData -Connection $conn -TableName account -Id $accountId -ColumnName contractdocument -AsBytes
 
 # Process the content
 $content = [System.Text.Encoding]::UTF8.GetString($bytes)
@@ -73,13 +76,63 @@ Delete file data from a column:
 
 ```powershell
 # Delete file
-Remove-DataverseFileData -Connection $conn -TableName "account" -Id $accountId -ColumnName "contractdocument"
+Remove-DataverseFileData -Connection $conn -TableName account -Id $accountId -ColumnName contractdocument
 
 # Delete with confirmation
-Remove-DataverseFileData -Connection $conn -TableName "account" -Id $accountId -ColumnName "contractdocument" -Confirm
+Remove-DataverseFileData -Connection $conn -TableName account -Id $accountId -ColumnName contractdocument -Confirm
 
 # Delete only if exists (no error if empty)
-Remove-DataverseFileData -Connection $conn -TableName "account" -Id $accountId -ColumnName "contractdocument" -IfExists
+Remove-DataverseFileData -Connection $conn -TableName account -Id $accountId -ColumnName contractdocument -IfExists
+```
+
+## Bulk Operations with File Attachments
+
+
+### Importing Records with Files
+
+Use `Set-DataverseRecord -FileDirectory` to upload files as part of creating/updating record generally.
+The GUID in each file column should reference a folder in the provided directory and that directory must contain a single file.
+
+**Folder structure expected:**
+```
+files/
+├── file1-guid/
+│   └── contract.pdf
+└── file2-guid/
+    └── report.docx
+```
+
+```
+    Set-DataverseRecord -Connection $conn -TableName document `
+        -FileDirectory "backup/documents/files" `
+        -MatchOn documentnumber
+```
+
+
+
+**How it works:**
+1. Reads JSON records from the folder
+2. Detects file column GUIDs in the records
+3. Looks for matching GUID subfolders in FileDirectory
+4. Creates/updates the record
+5. Uploads files from the GUID subfolders after record operation
+
+**Requirements:**
+- FileDirectory must contain subfolders named with file GUIDs
+- Each GUID subfolder must contain exactly one file
+- File column values must be valid GUIDs
+
+This also works nicely with `Get-DataverseRecordsFolder` (based on files created by `Set-DataverseRecordsFolder`  to roundtrip via files.
+
+```powershell
+# Import large batch of records with files
+Get-DataverseRecordsFolder -InputPath "data/contracts" |
+    Set-DataverseRecord -Connection $conn -TableName new_contract `
+        -FileDirectory "data/contracts/files" `
+        -MatchOn contractnumber `
+        -BatchSize 50 `
+        -MaxDegreeOfParallelism 4 `
+        -Verbose
 ```
 
 ## Pipeline Support

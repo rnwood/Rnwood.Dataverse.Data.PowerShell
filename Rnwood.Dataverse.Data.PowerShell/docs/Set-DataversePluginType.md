@@ -25,7 +25,8 @@ Creates or updates plugin types with association to a plugin assembly.
 
 ### Example 1
 ```powershell
-PS C:\> Set-DataversePluginType -Connection $connection -PluginAssemblyId $assemblyId -TypeName "MyNamespace.MyPlugin"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginType -PluginAssemblyId $assemblyId -TypeName "MyNamespace.MyPlugin"
 ```
 
 Creates a new plugin type.
@@ -33,7 +34,7 @@ Creates a new plugin type.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient

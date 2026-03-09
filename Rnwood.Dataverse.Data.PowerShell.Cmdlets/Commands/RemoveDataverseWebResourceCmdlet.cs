@@ -26,6 +26,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the name of the web resource to delete.
         /// </summary>
         [Parameter(ParameterSetName = PARAMSET_NAME, Mandatory = true, HelpMessage = "Name of the web resource to delete")]
+        [ArgumentCompleter(typeof(WebResourceNameArgumentCompleter))]
         public string Name { get; set; }
 
         /// <summary>

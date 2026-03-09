@@ -37,6 +37,7 @@ This is useful for inspecting solution files before importing them or for automa
 
 ### Example 1: Parse a solution file from disk
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSolutionFile -Path "C:\Solutions\MySolution_1_0_0_0.zip"
 
 UniqueName            : MySolution
@@ -53,6 +54,7 @@ Parses the solution file and displays all metadata.
 
 ### Example 2: Parse a solution file from bytes in pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $bytes = [System.IO.File]::ReadAllBytes("C:\Solutions\MySolution.zip")
 PS C:\> $bytes | Get-DataverseSolutionFile
 
@@ -66,6 +68,7 @@ Reads solution bytes and pipes them to the cmdlet for parsing.
 
 ### Example 3: Check if a solution is managed
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $info = Get-DataverseSolutionFile -Path "C:\Solutions\MySolution.zip"
 PS C:\> if ($info.IsManaged) {
 >>     Write-Host "Solution is managed"

@@ -94,6 +94,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// Gets or sets the name of the form to retrieve.
         /// </summary>
         [Parameter(ParameterSetName = "ByName", Mandatory = true, HelpMessage = "Name of the form to retrieve")]
+        [ArgumentCompleter(typeof(FormNameArgumentCompleter))]
         public string Name { get; set; }
 
         /// <summary>

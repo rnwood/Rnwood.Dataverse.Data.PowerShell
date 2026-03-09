@@ -32,22 +32,27 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
             {
                 if (args.Length < 3)
                 {
-                    Console.Error.WriteLine("Usage: XrmToolboxPluginHost <plugin-directory> <pipe-name> <url> [name]");
-                    Console.Error.WriteLine("  plugin-directory: Path to the directory containing the plugin DLLs");
+                    Console.Error.WriteLine("Usage: XrmToolboxPluginHost <runtime-root-path> <pipe-name> <url> [name]");
+                    Console.Error.WriteLine("  runtime-root-path: Path to the runtime root directory (contains Plugins, Settings, Logs, Connections subfolders)");
                     Console.Error.WriteLine("  pipe-name: Named pipe to use for token retrieval");
                     Console.Error.WriteLine("  url: Dataverse organization URL");
                     Console.Error.WriteLine("  name: Optional name of the plugin to load if multiple are present");
                     return 1;
                 }
 
-                string pluginDirectory = args[0];
+                string runtimeRootPath = args[0];
                 _pipeName = args[1];
                 string url = args[2];
                 string name = args.Length > 3 && !string.IsNullOrEmpty(args[3]) ? args[3] : null;
 
                 Console.WriteLine($"XrmToolbox Plugin Host starting...");
-                Console.WriteLine($"Plugin directory: {pluginDirectory}");
+                Console.WriteLine($"Runtime root path: {runtimeRootPath}");
                 Console.WriteLine($"Named pipe: {_pipeName}");
+
+                // Override the XrmToolBox Paths class to use our runtime directory
+                // This ensures plugins that use Paths.PluginsPath, Paths.SettingsPath, etc. work correctly
+                XrmToolBox.Extensibility.Paths.OverrideRootPath(runtimeRootPath);
+                Console.WriteLine($"XrmToolBox paths configured with root: {runtimeRootPath}");
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
@@ -58,7 +63,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.XrmToolboxPluginHost
                 PluginManagerExtended.Instance.Plugins = [];
                 PluginManagerExtended.Instance.PluginsExt = [];
 
-                // Load the plugin
+                // Load the plugin from the Plugins subfolder
+                string pluginDirectory = Path.Combine(runtimeRootPath, "Plugins");
                 var pluginLoader = new PluginLoader();
                 var plugin = pluginLoader.LoadPlugin(pluginDirectory, name);
 

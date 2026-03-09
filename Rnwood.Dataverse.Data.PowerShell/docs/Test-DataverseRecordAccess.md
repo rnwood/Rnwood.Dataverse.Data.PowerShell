@@ -38,6 +38,7 @@ This is useful for verifying permissions, debugging security issues, and impleme
 
 ### Example 1: Check user access to a specific account record
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $userId = "87654321-4321-4321-4321-210987654321"
 PS C:\> $access = Test-DataverseRecordAccess -TableName account -Id "12345678-1234-1234-1234-123456789012" -Principal $userId
 PS C:\> $access
@@ -48,6 +49,7 @@ Tests what access rights the specified user has for the account record.
 
 ### Example 2: Check if a user has write access
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $userId = "22222222-2222-2222-2222-222222222222"
 PS C:\> $access = Test-DataverseRecordAccess -TableName contact -Id "11111111-1111-1111-1111-111111111111" -Principal $userId
 PS C:\> if ($access -band [Microsoft.Crm.Sdk.Messages.AccessRights]::WriteAccess) {
@@ -61,6 +63,7 @@ Checks if a user has write access to a contact record.
 
 ### Example 3: Check access for current user
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $whoAmI = Get-DataverseWhoAmI
 PS C:\> $access = Test-DataverseRecordAccess -TableName opportunity -Id "33333333-3333-3333-3333-333333333333" -Principal $whoAmI.UserId
 PS C:\> $access
@@ -71,6 +74,7 @@ Checks what access the current authenticated user has to an opportunity record.
 
 ### Example 4: Pipeline usage
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $contacts = Get-DataverseRecord -TableName contact -FilterValues @{statecode=0} -Columns contactid
 PS C:\> $userId = "44444444-4444-4444-4444-444444444444"
 PS C:\> $contacts | ForEach-Object {

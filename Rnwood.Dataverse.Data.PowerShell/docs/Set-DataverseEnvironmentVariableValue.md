@@ -32,6 +32,7 @@ Use Set-DataverseEnvironmentVariableDefinition to create both the definition and
 
 ### Example 1: Set a single environment variable value
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" -Value "https://api.production.example.com"
 ```
 
@@ -39,6 +40,7 @@ Sets the value for the environment variable "new_apiurl". The definition must al
 
 ### Example 2: Set multiple environment variable values
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEnvironmentVariableValue -EnvironmentVariableValues @{
     'new_apiurl' = 'https://api.production.example.com'
     'new_apikey' = 'prod-key-12345'
@@ -50,6 +52,7 @@ Sets values for multiple environment variables at once using a hashtable.
 
 ### Example 3: Update value from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" | 
     Set-DataverseEnvironmentVariableValue -Value "https://api.staging.example.com"
 ```
@@ -58,6 +61,7 @@ Updates the value for an existing environment variable.
 
 ### Example 4: Set value with WhatIf
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEnvironmentVariableValue -SchemaName "new_apiurl" -Value "https://api.test.example.com" -WhatIf
 ```
 
@@ -66,7 +70,7 @@ Shows what would happen if the cmdlet runs without actually making changes.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -116,7 +120,7 @@ Schema name of the environment variable to set the value for (for single paramet
 ```yaml
 Type: String
 Parameter Sets: Single
-Aliases:
+Aliases: DefinitionSchemaName
 
 Required: True
 Position: 0

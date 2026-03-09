@@ -26,7 +26,8 @@ Creates or updates plugin step images (pre-image or post-image) with attribute f
 
 ### Example 1: Create a pre-image with specific attributes
 ```powershell
-PS C:\> Set-DataversePluginStepImage -Connection $connection `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginStepImage `
     -SdkMessageProcessingStepId $stepId `
     -EntityAlias "PreImage" `
     -ImageType 0 `
@@ -37,7 +38,8 @@ Creates a pre-image with specific attributes.
 
 ### Example 2: Create a post-image with all attributes
 ```powershell
-PS C:\> Set-DataversePluginStepImage -Connection $connection `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataversePluginStepImage `
     -SdkMessageProcessingStepId $stepId `
     -EntityAlias "PostImage" `
     -ImageType 1
@@ -63,7 +65,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient

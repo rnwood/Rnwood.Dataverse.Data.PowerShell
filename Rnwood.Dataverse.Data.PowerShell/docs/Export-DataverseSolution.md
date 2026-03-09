@@ -12,12 +12,24 @@ Exports a solution from Dataverse using an asynchronous job with progress report
 
 ## SYNTAX
 
+### ToFile (Default)
 ```
 Export-DataverseSolution [-SolutionName] <String> [-Managed] [-TargetVersion <String>]
  [-ExportAutoNumberingSettings] [-ExportCalendarSettings] [-ExportCustomizationSettings]
  [-ExportEmailTrackingSettings] [-ExportGeneralSettings] [-ExportMarketingSettings]
  [-ExportOutlookSynchronizationSettings] [-ExportRelationshipRoles] [-ExportIsvConfig] [-ExportSales]
  [-ExportExternalApplications] [-OutFile <String>] [-PassThru] [-PollingIntervalSeconds <Int32>]
+ [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
+ [-Confirm] [<CommonParameters>]
+```
+
+### ToFolder
+```
+Export-DataverseSolution [-SolutionName] <String> [-TargetVersion <String>] [-ExportAutoNumberingSettings]
+ [-ExportCalendarSettings] [-ExportCustomizationSettings] [-ExportEmailTrackingSettings]
+ [-ExportGeneralSettings] [-ExportMarketingSettings] [-ExportOutlookSynchronizationSettings]
+ [-ExportRelationshipRoles] [-ExportIsvConfig] [-ExportSales] [-ExportExternalApplications] -OutFolder <String>
+ [-UnpackMsApp] [-PackageType <SolutionPackageType>] [-PollingIntervalSeconds <Int32>]
  [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
  [-Confirm] [<CommonParameters>]
 ```
@@ -39,6 +51,7 @@ This is particularly useful for exporting large solutions where the synchronous 
 
 ### Example 1: Export an unmanaged solution to a file
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Export-DataverseSolution -SolutionName "MySolution" -OutFile "C:\Exports\MySolution.zip"
 ```
 
@@ -46,6 +59,7 @@ Exports the unmanaged version of "MySolution" and saves it to the specified file
 
 ### Example 2: Export a managed solution with progress monitoring
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Export-DataverseSolution -SolutionName "MySolution" -Managed -OutFile "C:\Exports\MySolution_managed.zip" -Verbose
 ```
 
@@ -53,6 +67,7 @@ Exports the managed version of "MySolution" with verbose output showing the expo
 
 ### Example 3: Export solution with settings included
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Export-DataverseSolution -SolutionName "MySolution" -ExportAutoNumberingSettings -ExportCalendarSettings -OutFile "C:\Exports\MySolution.zip"
 ```
 
@@ -60,6 +75,7 @@ Exports "MySolution" including auto-numbering and calendar settings.
 
 ### Example 4: Export solution and return bytes to pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $solutionBytes = Export-DataverseSolution -SolutionName "MySolution" -PassThru
 PS C:\> [System.IO.File]::WriteAllBytes("C:\Exports\MySolution.zip", $solutionBytes)
 ```
@@ -68,6 +84,7 @@ Exports "MySolution" and captures the raw bytes in a variable for further proces
 
 ### Example 5: Export solution with custom timeout
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Export-DataverseSolution -SolutionName "LargeSolution" -OutFile "C:\Exports\LargeSolution.zip" -TimeoutSeconds 1200 -PollingIntervalSeconds 10
 ```
 
@@ -76,7 +93,7 @@ Exports a large solution with a 20-minute timeout and checks status every 10 sec
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -260,7 +277,7 @@ Export as a managed solution. Default is unmanaged (false).
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: ToFile
 Aliases:
 
 Required: False
@@ -275,7 +292,7 @@ Path where the exported solution file should be saved.
 
 ```yaml
 Type: String
-Parameter Sets: (All)
+Parameter Sets: ToFile
 Aliases:
 
 Required: False
@@ -285,12 +302,43 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -OutFolder
+Path where the exported solution will be unpacked.
+
+```yaml
+Type: String
+Parameter Sets: ToFolder
+Aliases:
+
+Required: True
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -PackageType
+Package type: 'Unmanaged', 'Managed', or 'Both' (default) for dual Managed and Unmanaged operation. Controls which solution types are exported and unpacked.
+
+```yaml
+Type: SolutionPackageType
+Parameter Sets: ToFolder
+Aliases:
+Accepted values: Unmanaged, Managed, Both
+
+Required: False
+Position: Named
+Default value: Both
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -PassThru
 Output the solution file bytes to the pipeline.
 
 ```yaml
 Type: SwitchParameter
-Parameter Sets: (All)
+Parameter Sets: ToFile
 Aliases:
 
 Required: False
@@ -371,6 +419,21 @@ Aliases:
 Required: False
 Position: Named
 Default value: 600
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -UnpackMsApp
+Unpack .msapp files found in the solution into folders.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: ToFolder
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
 ```

@@ -43,6 +43,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         [Parameter(ParameterSetName = "CreateWithXml", Mandatory = true, HelpMessage = "Name of the form")]
         [Parameter(ParameterSetName = "Update", HelpMessage = "Name of the form")]
         [Parameter(ParameterSetName = "UpdateWithXml", HelpMessage = "Name of the form")]
+        [ArgumentCompleter(typeof(FormNameArgumentCompleter))]
         public string Name { get; set; }
 
         /// <summary>

@@ -18,102 +18,100 @@ See the examples for this pattern below.
 
 ### Get default connection
 ```
-Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseConnection [-GetDefault] [-SetAsDefault] [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with username and password
 ```
 Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>]
- -Username <String> -Password <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ -Username <String> -Password <String> [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client secret
 ```
-Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> -Url <Uri>
- -ClientSecret <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
+ -ClientSecret <String> [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with client certificate
 ```
-Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> -Url <Uri>
+Get-DataverseConnection [-SetAsDefault] [-SaveCredentials] [-Name <String>] -ClientId <Guid> [-Url <Uri>]
  -CertificatePath <String> [-CertificatePassword <String>] [-CertificateThumbprint <String>]
  [-CertificateStoreLocation <StoreLocation>] [-CertificateStoreName <StoreName>] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate interactively
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-Interactive] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Interactive] [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate using the device code flow
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-ClientId <Guid>] [-Url <Uri>] [-Username <String>]
- [-DeviceCode] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-DeviceCode] [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with DefaultAzureCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-DefaultAzureCredential]
- [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>]
+ [<CommonParameters>]
 ```
 
 ### Authenticate with ManagedIdentityCredential
 ```
 Get-DataverseConnection [-SetAsDefault] [-Name <String>] [-Url <Uri>] [-ManagedIdentity]
- [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+ [-ManagedIdentityClientId <String>] [-Timeout <UInt32>] [-TenantId <Guid>] [-DisableAffinityCookie]
+ [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Load a saved named connection
 ```
-Get-DataverseConnection [-SetAsDefault] -Name <String> [-Timeout <UInt32>] [-ProgressAction <ActionPreference>]
- [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] -Name <String> [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Delete a saved named connection
 ```
 Get-DataverseConnection [-SetAsDefault] -Name <String> [-DeleteConnection] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+ [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Clear all saved connections
 ```
-Get-DataverseConnection [-SetAsDefault] [-ClearAllConnections] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-ClearAllConnections] [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### List saved named connections
 ```
-Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
-```
-
-### Return a mock connection
-```
-Get-DataverseConnection [-SetAsDefault] -Mock <EntityMetadata[]> [-RequestInterceptor <ScriptBlock>] -Url <Uri>
- [-Timeout <UInt32>] [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-ListConnections] [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with access token script block
 ```
-Get-DataverseConnection [-SetAsDefault] -Url <Uri> -AccessToken <ScriptBlock> [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-Url <Uri>] -AccessToken <ScriptBlock> [-Timeout <UInt32>]
+ [-TenantId <Guid>] [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Authenticate with Dataverse SDK connection string.
 ```
-Get-DataverseConnection [-SetAsDefault] -ConnectionString <String> [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] -ConnectionString <String> [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ### Load connection from PAC CLI profile
 ```
-Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout <UInt32>]
- [-ProgressAction <ActionPreference>] [<CommonParameters>]
+Get-DataverseConnection [-SetAsDefault] [-FromPac] [-Profile <String>] [-Timeout <UInt32>] [-TenantId <Guid>]
+ [-DisableAffinityCookie] [-ProgressAction <ActionPreference>] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -154,6 +152,13 @@ PS C:\> $c = Get-DataverseConnection -url "https://myorg.crm4.dynamics.com" -cli
 ```
 
 Gets a connection to MYORG using Service Principal client ID and secret auth and stores the result in the `$c` variable for later use.
+
+### Example 2b
+```powershell
+PS C:\> $c = Get-DataverseConnection -clientid "3004eb1e-7a00-45e0-a1dc-6703735eac18" -clientsecret "itsasecret"
+```
+
+Authenticates with client ID and secret without specifying a URL. The cmdlet will use the service principal credentials to discover available environments, then you can select which environment to connect to. Both discovery and the final connection use the same client secret authentication.
 
 ### Example 3
 ```powershell
@@ -217,6 +222,13 @@ PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Clie
 ```
 
 Gets a connection to MYORG using client certificate authentication with an unencrypted certificate file (no password required).
+
+### Example 11b
+```powershell
+PS C:\> $c = Get-DataverseConnection -ClientId "12345678-1234-1234-1234-123456789abc" -CertificatePath "./mycert.pfx"
+```
+
+Authenticates with client certificate without specifying a URL. The cmdlet will use the certificate credentials to discover available environments, then you can select which environment to connect to. Both discovery and the final connection use the same client certificate authentication.
 
 ### Example 12: Save a named connection
 ```powershell
@@ -301,6 +313,30 @@ PS C:\> $c = Get-DataverseConnection -FromPac -Profile "MyDevProfile"
 ```
 
 Connects to Dataverse using a specific named PAC CLI profile. The profile name must match one of the profiles created with `pac auth create --name <profilename>`. Alternatively, you can specify the index of the profile (e.g., "0" for the first profile).
+
+### Example 24: Disable affinity cookie for maximum performance
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ClientId "3004eb1e-7a00-45e0-a1dc-6703735eac18" -ClientSecret "itsasecret" -DisableAffinityCookie
+```
+
+Connects to MYORG with affinity cookie disabled for maximum performance. This allows each call to Dataverse to be routed to any available server node, which can improve performance in parallel operations. However, this may result in eventual consistency issues where recently created or updated data may not be immediately visible on subsequent requests.
+
+### Example 25: Using parallelization without DisableAffinityCookie (will show warning)
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive
+PS C:\> Get-DataverseRecord -Connection $c -TableName account -Top 1000 | Set-DataverseRecord -Connection $c -TableName account -MaxDegreeOfParallelism 4
+WARNING: Using parallelization with affinity cookie enabled may reduce performance. Consider using Get-DataverseConnection with -DisableAffinityCookie for better parallel performance. Note: Disabling affinity cookie may result in eventual consistency issues.
+```
+
+When using parallelization with MaxDegreeOfParallelism > 1, the cmdlets will emit a warning if affinity cookie is enabled (the default). This is because affinity cookie prefers routing all requests to the same server node, which can reduce parallel performance.
+
+### Example 26: Using parallelization with DisableAffinityCookie (optimal for performance)
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Interactive -DisableAffinityCookie
+PS C:\> Get-DataverseRecord -Connection $c -TableName account -Top 1000 | Set-DataverseRecord -Connection $c -TableName account -MaxDegreeOfParallelism 4
+```
+
+When using parallelization with DisableAffinityCookie, the cmdlets will NOT emit a warning. Each parallel worker can be routed to any available server node, maximizing throughput. Note that this may result in eventual consistency where data updated by one worker may not be immediately visible to another worker.
 
 ## PARAMETERS
 
@@ -513,6 +549,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -DisableAffinityCookie
+Disables the affinity cookie to maximize performance at the cost of potential data consistency issues. By default, affinity cookie is enabled to ensure connections prefer a specific server node for better consistency. Only disable this if you need maximum performance and understand the tradeoffs with eventual consistency.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -FromPac
 Load connection from a Power Platform CLI (PAC) authentication profile. This uses the authentication profiles created with `pac auth create` and leverages the cached tokens from PAC CLI. The environment URL is determined from the profile's selected organization (set via `pac org select`).
 
@@ -603,21 +654,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -Mock
-Entity metadata for mock connection. Used for testing purposes. Provide entity metadata objects to configure the mock connection with.
-
-```yaml
-Type: EntityMetadata[]
-Parameter Sets: Return a mock connection
-Aliases:
-
-Required: True
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -Name
 Name to save this connection under for later retrieval. Allows you to persist and reuse connections.
 
@@ -690,21 +726,6 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
-### -RequestInterceptor
-ScriptBlock to intercept and modify requests. The ScriptBlock receives the OrganizationRequest and can throw exceptions or return modified responses.
-
-```yaml
-Type: ScriptBlock
-Parameter Sets: Return a mock connection
-Aliases:
-
-Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
 ### -SaveCredentials
 WARNING: Saves the client secret with the connection. This is NOT RECOMMENDED for security reasons. Only use for testing or non-production scenarios.
 
@@ -735,6 +756,21 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -TenantId
+{{ Fill TenantId Description }}
+
+```yaml
+Type: Guid
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -Timeout
 Timeout for authentication operations. Defaults to 5 minutes.
 
@@ -755,22 +791,10 @@ URL of the Dataverse environment to connect to. For example https://myorg.crm11.
 
 ```yaml
 Type: Uri
-Parameter Sets: Authenticate with username and password, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential
+Parameter Sets: Authenticate with username and password, Authenticate with client secret, Authenticate with client certificate, Authenticate interactively, Authenticate using the device code flow, Authenticate with DefaultAzureCredential, Authenticate with ManagedIdentityCredential, Authenticate with access token script block
 Aliases:
 
 Required: False
-Position: Named
-Default value: None
-Accept pipeline input: False
-Accept wildcard characters: False
-```
-
-```yaml
-Type: Uri
-Parameter Sets: Authenticate with client secret, Authenticate with client certificate, Return a mock connection, Authenticate with access token script block
-Aliases:
-
-Required: True
 Position: Named
 Default value: None
 Accept pipeline input: False

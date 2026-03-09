@@ -52,6 +52,7 @@ The cmdlet supports the -IfExists parameter to suppress errors when removing ent
 
 ### Example 1: Remove an Area from a sitemap
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSitemapEntry -SitemapName "Default" -EntryType Area -EntryId "Sales"
 ```
 
@@ -59,6 +60,7 @@ Removes the Area with ID "Sales" from the sitemap named "Default".
 
 ### Example 2: Remove a SubArea using pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseSitemapEntry -SitemapName "Default" -EntryType SubArea -EntryId "Contacts" | Remove-DataverseSitemapEntry
 ```
 
@@ -66,6 +68,7 @@ Retrieves a specific SubArea entry and removes it via pipeline.
 
 ### Example 3: Remove an entry with -IfExists for idempotent scripts
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseSitemapEntry -SitemapName "Default" -EntryType Group -EntryId "Marketing" -IfExists
 ```
 
@@ -89,8 +92,7 @@ Accept wildcard characters: False
 ```
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml

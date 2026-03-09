@@ -83,8 +83,9 @@ This cmdlet supports automatic retries for transient failures using exponential 
 
 ### Example 1
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $request = new-object Microsoft.Crm.Sdk.Messages.WhoAmIRequest
-PS C:\> $response = Invoke-DataverseRequest -connection $c -request $request
+PS C:\> $response = Invoke-DataverseRequest -request $request
 PS C:\> $response.Results["UserId"]
 ```
 
@@ -92,7 +93,8 @@ Invokes `WhoAmIRequest` using the Request parameter set. The response is a raw `
 
 ### Example 2
 ```powershell
-PS C:\> $response = Invoke-DataverseRequest -connection $c -requestname "WhoAmI" -parameters @{}
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $response = Invoke-DataverseRequest -requestname "WhoAmI" -parameters @{}
 PS C:\> $response.UserId
 ```
 
@@ -100,7 +102,8 @@ Invokes `WhoAmI` using the NameAndInputs parameter set. The response is automati
 
 ### Example 3
 ```powershell
-PS C:\> $response = Invoke-DataverseRequest -connection $c -requestname "WhoAmI" -parameters @{} -Raw
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $response = Invoke-DataverseRequest -requestname "WhoAmI" -parameters @{} -Raw
 PS C:\> $response.Results["UserId"]
 ```
 
@@ -108,9 +111,10 @@ Invokes `WhoAmI` using the NameAndInputs parameter set with `-Raw` switch. The r
 
 ### Example 4
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $Target = new-object Microsoft.Xrm.Sdk.EntityReference "incident", "{DC66FE5D-B854-4F9D-BA63-4CEA4257A8E9}"
 PS C:\> $Priority = new-object Microsoft.Xrm.Sdk.OptionSetValue 1
-PS C:\> $response = Invoke-DataverseRequest -connection $c myapi_EscalateCase @{
+PS C:\> $response = Invoke-DataverseRequest myapi_EscalateCase @{
 	Target = $Target
 	Priority = $Priority
 }

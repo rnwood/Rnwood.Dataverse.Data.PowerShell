@@ -171,8 +171,11 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return "default";
             }
 
-            // Use the connection string or org URL as the cache key
-            return connection.ConnectedOrgUniqueName ?? connection.ConnectedOrgUriActual?.ToString() ?? "default";
+            // Use the org URI as the cache key. Prefer ConnectedOrgUriActual which is available
+            // without triggering a WCF SOAP call (ConnectedOrgUniqueName lazy-initialises via
+            // RefreshInstanceDetails and can fail when called from worker threads that don't have
+            // the WCF channel authentication context available).
+            return connection.ConnectedOrgUriActual?.ToString() ?? "default";
         }
     }
 }

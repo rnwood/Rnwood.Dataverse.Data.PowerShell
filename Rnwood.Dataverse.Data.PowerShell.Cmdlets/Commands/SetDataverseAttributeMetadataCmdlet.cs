@@ -4,6 +4,7 @@ using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Metadata;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Management.Automation;
 using System.ServiceModel;
@@ -162,7 +163,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         /// <summary>
         /// Gets or sets the options for picklist attributes.
         /// </summary>
-        [Parameter(HelpMessage = "Array of hashtables defining options: @(@{Value=1; Label='Option 1'}, @{Value=2; Label='Option 2'})")]
+        [Parameter(HelpMessage = "Array of hashtables defining options: @(@{Value=1; Label='Option 1'}, @{Value=2; Label='Option 2'}). For statuscode attributes, include State: @{Value=1; Label='Draft'; State=0}")]
         public Hashtable[] Options { get; set; }
 
         // Lookup-specific properties
@@ -792,9 +793,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                         continue;
                     }
 
-                    var optionMetadata = value.HasValue 
-                        ? new OptionMetadata(new Label(label, _baseLanguageCode), value.Value)
-                        : new OptionMetadata(new Label(label, _baseLanguageCode), null);
+                    OptionMetadata optionMetadata;
+                    
+                    // Check if this is a status option with State property
+                    if (option.ContainsKey("State") && option["State"] != null)
+                    {
+                        var state = Convert.ToInt32(option["State"]);
+                        var statusOption = new StatusOptionMetadata
+                        {
+                            Value = value,
+                            Label = new Label(label, _baseLanguageCode),
+                            State = state
+                        };
+                        optionMetadata = statusOption;
+                    }
+                    else
+                    {
+                        optionMetadata = value.HasValue 
+                            ? new OptionMetadata(new Label(label, _baseLanguageCode), value.Value)
+                            : new OptionMetadata(new Label(label, _baseLanguageCode), null);
+                    }
 
                     optionSet.Options.Add(optionMetadata);
                 }
@@ -991,6 +1009,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Attribute updated successfully");
 
+            // Handle statuscode options if provided
+            if (existingAttribute is StatusAttributeMetadata && Options != null && Options.Length > 0)
+            {
+                UpdateStatusCodeOptions();
+            }
+
             // Invalidate cache for this entity
             InvalidateEntityCache();
 
@@ -1148,6 +1172,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 PicklistAttributeMetadata picklistAttr = existingAttribute as PicklistAttributeMetadata;
                 MultiSelectPicklistAttributeMetadata multiPicklistAttr = existingAttribute as MultiSelectPicklistAttributeMetadata;
+                StatusAttributeMetadata statusAttr = existingAttribute as StatusAttributeMetadata;
                 LookupAttributeMetadata lookupAttr = existingAttribute as LookupAttributeMetadata;
                 
                 if (picklistAttr != null || multiPicklistAttr != null)
@@ -1171,6 +1196,20 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             ErrorCategory.InvalidOperation,
                             null));
                     }
+                }
+                else if (statusAttr != null)
+                {
+                    // StatusAttributeMetadata allows updating options with State property
+                    if (MyInvocation.BoundParameters.ContainsKey(nameof(OptionSetName)))
+                    {
+                        ThrowTerminatingError(new ErrorRecord(
+                            new InvalidOperationException($"Cannot change OptionSetName for statuscode attributes."),
+                            "ImmutableOptionSetName",
+                            ErrorCategory.InvalidOperation,
+                            OptionSetName));
+                    }
+                    
+                    // Options are allowed for statuscode - will be handled in UpdateTypeSpecificProperties
                 }
                 else if (lookupAttr != null)
                 {
@@ -1302,6 +1341,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     OptionSet = picklistAttr.OptionSet
                 };
             }
+            else if (existing is StatusAttributeMetadata statusAttr)
+            {
+                cloned = new StatusAttributeMetadata
+                {
+                    OptionSet = statusAttr.OptionSet
+                };
+            }
             else if (existing is LookupAttributeMetadata lookupAttr)
             {
                 // Lookup attributes can have their display name, description, and required level updated
@@ -1410,8 +1456,131 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     hasChanges = true;
                 }
             }
+            else if (attribute is StatusAttributeMetadata statusAttr && Options != null && Options.Length > 0)
+            {
+                // For statuscode attributes, we cannot update options via UpdateAttributeRequest
+                // We need to use InsertStatusValueRequest and UpdateStateValueRequest instead
+                // This is handled separately after the attribute update
+                
+                WriteVerbose($"StatusCode options will be managed using specialized SDK messages");
+                
+                // We'll handle this in the UpdateAttribute method by using InsertStatusValueRequest
+                // Mark that we have changes but don't modify the OptionSet here
+                hasChanges = true;
+            }
 
             return hasChanges;
+        }
+
+        private void UpdateStatusCodeOptions()
+        {
+            WriteVerbose($"Updating statuscode options for entity '{EntityName}'");
+
+            // Get existing statuscode metadata to see what options already exist
+            var retrieveRequest = new RetrieveAttributeRequest
+            {
+                EntityLogicalName = EntityName,
+                LogicalName = "statuscode",
+                RetrieveAsIfPublished = false
+            };
+
+            var retrieveResponse = (RetrieveAttributeResponse)Connection.Execute(retrieveRequest);
+            var existingStatusAttr = retrieveResponse.AttributeMetadata as StatusAttributeMetadata;
+
+            if (existingStatusAttr == null || existingStatusAttr.OptionSet == null)
+            {
+                WriteWarning("Could not retrieve existing statuscode metadata");
+                return;
+            }
+
+            // Get existing option values
+            var existingValues = new HashSet<int>(
+                existingStatusAttr.OptionSet.Options
+                    .Cast<StatusOptionMetadata>()
+                    .Select(o => o.Value.Value)
+            );
+
+            // Process each option
+            foreach (var option in Options)
+            {
+                var value = option["Value"] != null ? Convert.ToInt32(option["Value"]) : (int?)null;
+                var label = option["Label"] as string;
+
+                if (string.IsNullOrWhiteSpace(label) || !value.HasValue)
+                {
+                    WriteWarning($"Skipping invalid option - Value and Label are required");
+                    continue;
+                }
+
+                // State is required for statuscode options
+                if (!option.ContainsKey("State") || option["State"] == null)
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new ArgumentException($"State property is required for statuscode option '{label}' (Value={value.Value}). Example: @{{Value=1; Label='Draft'; State=0}}"),
+                        "StateRequired",
+                        ErrorCategory.InvalidArgument,
+                        option));
+                    return;
+                }
+
+                var state = Convert.ToInt32(option["State"]);
+
+                // Check if option already exists
+                if (existingValues.Contains(value.Value))
+                {
+                    // Update existing option
+                    WriteVerbose($"Updating existing statuscode option: Value={value.Value}, Label='{label}', State={state}");
+                    
+                    var updateRequest = new UpdateStateValueRequest
+                    {
+                        EntityLogicalName = EntityName,
+                        AttributeLogicalName = "statuscode",
+                        Value = value.Value,
+                        Label = new Label(label, _baseLanguageCode)
+                    };
+
+                    try
+                    {
+                        Connection.Execute(updateRequest);
+                        WriteVerbose($"Updated statuscode option {value.Value}");
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteWarning($"Failed to update statuscode option {value.Value}: {ex.Message}");
+                    }
+                }
+                else
+                {
+                    // Insert new option
+                    WriteVerbose($"Inserting new statuscode option: Value={value.Value}, Label='{label}', State={state}");
+                    
+                    var insertRequest = new InsertStatusValueRequest
+                    {
+                        EntityLogicalName = EntityName,
+                        AttributeLogicalName = "statuscode",
+                        Label = new Label(label, _baseLanguageCode),
+                        StateCode = state
+                    };
+
+                    // Optionally specify the value if provided
+                    if (value.HasValue && value.Value >= 0)
+                    {
+                        insertRequest.Value = value.Value;
+                    }
+
+                    try
+                    {
+                        var insertResponse = (InsertStatusValueResponse)Connection.Execute(insertRequest);
+                        WriteVerbose($"Inserted statuscode option with value {insertResponse.NewOptionValue}");
+                    }
+                    catch (Exception ex)
+                    {
+                        WriteWarning($"Failed to insert statuscode option: {ex.Message}");
+                    }
+                }
+            }
+
+            WriteVerbose($"Completed statuscode options update");
         }
 
         private PSObject ConvertAttributeMetadataToPSObject(AttributeMetadata attr)

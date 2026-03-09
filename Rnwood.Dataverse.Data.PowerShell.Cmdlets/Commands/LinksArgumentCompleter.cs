@@ -81,7 +81,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 EntityMetadata metadata = null;
                 try
                 {
-                    metadata = metadataFactory.GetMetadata(tableName);
+                    metadata = metadataFactory.GetLimitedMetadata(tableName);
                 }
                 catch
                 {
@@ -114,7 +114,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                             try
                             {
                                 // Get metadata for target entity to find its primary key
-                                var targetMetadata = metadataFactory.GetMetadata(targetEntity);
+                                var targetMetadata = metadataFactory.GetLimitedMetadata(targetEntity);
                                 if (targetMetadata != null && !string.IsNullOrEmpty(targetMetadata.PrimaryIdAttribute))
                                 {
                                     string fromSpec = $"{tableName}.{lookupAttr.LogicalName}";

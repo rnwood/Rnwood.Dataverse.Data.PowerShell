@@ -14,7 +14,7 @@ Creates or updates environment variable definitions in Dataverse.
 
 ```
 Set-DataverseEnvironmentVariableDefinition [-SchemaName] <String> [-DisplayName <String>]
- [-Description <String>] [-Type <String>] [-DefaultValue <String>] [-Connection <ServiceClient>]
+ [-Description <String>] [-Type <String>] [-DefaultValue <String>] [-PassThru] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -25,6 +25,7 @@ Creates or updates environment variable definitions in Dataverse. If the definit
 
 ### Example 1: Create a new environment variable definition
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl" -DisplayName "API URL" -Description "The URL for the external API"
 ```
 
@@ -32,6 +33,7 @@ Creates a new environment variable definition with the specified schema name, di
 
 ### Example 2: Update an existing environment variable definition
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl" -Description "Updated description for the API URL"
 ```
 
@@ -39,6 +41,7 @@ Updates the description of an existing environment variable definition.
 
 ### Example 3: Create definition with specific type
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Set-DataverseEnvironmentVariableDefinition -SchemaName "new_timeout" -DisplayName "Timeout" -Type "Number"
 ```
 
@@ -47,7 +50,7 @@ Creates an environment variable definition with a specific type (in this case, N
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient
@@ -103,6 +106,21 @@ Required: False
 Position: Named
 Default value: None
 Accept pipeline input: True (ByPropertyName)
+Accept wildcard characters: False
+```
+
+### -PassThru
+If specified, returns the environment variable definition record as a PSObject after creation/update.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: None
+Accept pipeline input: False
 Accept wildcard characters: False
 ```
 

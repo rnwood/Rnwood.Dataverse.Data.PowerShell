@@ -13,7 +13,7 @@ Updates organization settings in the single organization record in a Dataverse e
 ## SYNTAX
 
 ```
-Set-DataverseOrganizationSettings -InputObject <PSObject> [-OrgDbOrgSettings] [-PassThru]
+Set-DataverseOrganizationSettings -InputObject <Object> [-OrgDbOrgSettings] [-PassThru]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -25,49 +25,66 @@ When -OrgDbOrgSettings IS specified: Updates OrgDbOrgSettings XML. Property name
 
 The cmdlet compares existing values with new values and only updates changed values. Verbose output shows what changed.
 
+InputObject can be either a PSCustomObject or a Hashtable. Hashtables provide a more concise syntax.
+
 ## EXAMPLES
 
 ### Example 1: Update organization table columns
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $connection = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
 PS C:\> $updates = [PSCustomObject]@{ name = "Contoso Corporation" }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -Confirm:$false -Verbose
+PS C:\> Set-DataverseOrganizationSettings -InputObject $updates -Confirm:$false -Verbose
 VERBOSE: Column 'name': Changing from '"Contoso"' to '"Contoso Corporation"'
 VERBOSE: Updated 1 attribute(s) in organization record ...
 ```
 
-Updates the organization name. Only changed values are updated.
+Updates the organization name using a PSCustomObject. Only changed values are updated.
+
+### Example 1B: Update organization table columns using Hashtable
+```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $updates = @{ name = "Contoso Corporation" }
+PS C:\> Set-DataverseOrganizationSettings -InputObject $updates -Confirm:$false -Verbose
+VERBOSE: Column 'name': Changing from '"Contoso"' to '"Contoso Corporation"'
+VERBOSE: Updated 1 attribute(s) in organization record ...
+```
+
+Updates the organization name using a Hashtable. Hashtables provide a more concise syntax.
 
 ### Example 2: Update OrgDbOrgSettings
 ```powershell
-PS C:\> $settings = [PSCustomObject]@{
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $settings = @{
     MaxUploadFileSize = 10485760
     EnableBingMapsIntegration = $true
 }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $settings -OrgDbOrgSettings -Confirm:$false -Verbose
+PS C:\> Set-DataverseOrganizationSettings -InputObject $settings -OrgDbOrgSettings -Confirm:$false -Verbose
 VERBOSE: Setting 'MaxUploadFileSize': Changing from '5242880' to '10485760'
 VERBOSE: Setting 'EnableBingMapsIntegration': No change (value is 'true')
 VERBOSE: Updated 1 attribute(s) in organization record ...
 ```
 
-Updates OrgDbOrgSettings. Only changed settings are updated.
+Updates OrgDbOrgSettings using a Hashtable. Only changed settings are updated.
 
 ### Example 3: Remove an OrgDbOrgSettings setting
 ```powershell
-PS C:\> $updates = [PSCustomObject]@{
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $updates = @{
     ObsoleteGetting = $null
 }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -OrgDbOrgSettings -Confirm:$false -Verbose
+PS C:\> Set-DataverseOrganizationSettings -InputObject $updates -OrgDbOrgSettings -Confirm:$false -Verbose
 VERBOSE: Setting 'ObsoleteGetting': Removing (was 'oldvalue')
 VERBOSE: Updated 1 attribute(s) in organization record ...
 ```
 
-Removes a setting from OrgDbOrgSettings by passing $null.
+Removes a setting from OrgDbOrgSettings by passing $null using a Hashtable.
 
 ### Example 4: Update with PassThru
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $updates = [PSCustomObject]@{ name = "New Name" }
-PS C:\> $result = Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -PassThru -Confirm:$false
+PS C:\> $result = Set-DataverseOrganizationSettings -InputObject $updates -PassThru -Confirm:$false
 PS C:\> $result.name
 New Name
 ```
@@ -76,8 +93,9 @@ Updates and returns the updated record.
 
 ### Example 5: Use WhatIf to preview changes
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $updates = [PSCustomObject]@{ MaxUploadFileSize = 10485760 }
-PS C:\> Set-DataverseOrganizationSettings -Connection $connection -InputObject $updates -OrgDbOrgSettings -WhatIf
+PS C:\> Set-DataverseOrganizationSettings -InputObject $updates -OrgDbOrgSettings -WhatIf
 What if: Performing the operation "Update organization settings" on target "OrgDbOrgSettings in organization record ..."
 ```
 
@@ -86,8 +104,7 @@ Previews what would be updated without making actual changes.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g.
-http://server.com/MyOrg/).
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet.
 If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
@@ -108,8 +125,10 @@ Object containing values to update.
 When -OrgDbOrgSettings is NOT specified: Property names must match organization table column names.
 When -OrgDbOrgSettings IS specified: Property names are OrgDbOrgSettings setting names. Use $null values to remove settings.
 
+Accepts either PSCustomObject or Hashtable. Hashtables provide a more concise syntax: `@{ name = "value" }` instead of `[PSCustomObject]@{ name = "value" }`.
+
 ```yaml
-Type: PSObject
+Type: Object
 Parameter Sets: (All)
 Aliases:
 
@@ -203,7 +222,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.Management.Automation.PSObject
+### System.Object
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject

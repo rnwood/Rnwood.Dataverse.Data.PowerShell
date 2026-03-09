@@ -37,8 +37,9 @@ If the component doesn't exist in the solution, it is simply added. If it exists
 
 ### Example 1: Add a table (entity) to a solution
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $connection = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
-PS C:\> Set-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+PS C:\> Set-DataverseSolutionComponent -SolutionName "MySolution" `
     -ComponentId "dfe12c85-55b3-4c77-9c04-7d5d06d2e9e2" -ComponentType 1 -Behavior 0
 ```
 
@@ -46,7 +47,8 @@ Adds an entity (ComponentType 1) to "MySolution" with behavior "Include Subcompo
 
 ### Example 2: Change component behavior from Include to Do Not Include Subcomponents
 ```powershell
-PS C:\> Set-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseSolutionComponent -SolutionName "MySolution" `
     -ComponentId "dfe12c85-55b3-4c77-9c04-7d5d06d2e9e2" -ComponentType 1 -Behavior 1 -PassThru
 
 SolutionName  : MySolution
@@ -62,7 +64,8 @@ Changes the behavior of an existing component. The cmdlet removes and re-adds th
 
 ### Example 3: Add a component and include required dependencies
 ```powershell
-PS C:\> Set-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseSolutionComponent -SolutionName "MySolution" `
     -ComponentId "8a9b7c6d-5e4f-3a2b-1c0d-9e8f7a6b5c4d" -ComponentType 26 `
     -AddRequiredComponents -Behavior 0
 ```
@@ -71,7 +74,8 @@ Adds a view (ComponentType 26) and automatically includes any required component
 
 ### Example 4: Preview changes with WhatIf
 ```powershell
-PS C:\> Set-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Set-DataverseSolutionComponent -SolutionName "MySolution" `
     -ComponentId "dfe12c85-55b3-4c77-9c04-7d5d06d2e9e2" -ComponentType 1 -Behavior 2 -WhatIf
 
 What if: Performing the operation "Add to solution 'MySolution' with behavior: Include As Shell" 
@@ -82,13 +86,14 @@ Shows what would happen without making changes.
 
 ### Example 5: Add multiple components from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $components = @(
     @{ ComponentId = "guid1"; ComponentType = 1 }
     @{ ComponentId = "guid2"; ComponentType = 26 }
     @{ ComponentId = "guid3"; ComponentType = 60 }
 )
 PS C:\> $components | ForEach-Object { 
-    Set-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+    Set-DataverseSolutionComponent -SolutionName "MySolution" `
         -ComponentId $_.ComponentId -ComponentType $_.ComponentType -Behavior 0
 }
 ```

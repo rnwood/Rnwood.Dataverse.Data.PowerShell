@@ -24,6 +24,7 @@ Removes environment variable definitions from Dataverse. This will also remove a
 
 ### Example 1: Remove an environment variable definition
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl"
 ```
 
@@ -31,6 +32,7 @@ Removes the environment variable definition "new_apiurl" and any associated valu
 
 ### Example 2: Remove with confirmation
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl" -Confirm
 ```
 
@@ -38,6 +40,7 @@ Prompts for confirmation before removing the definition.
 
 ### Example 3: Remove with WhatIf
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Remove-DataverseEnvironmentVariableDefinition -SchemaName "new_apiurl" -WhatIf
 ```
 
@@ -45,6 +48,7 @@ Shows what would happen if the cmdlet runs without actually removing anything.
 
 ### Example 4: Remove from pipeline
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> Get-DataverseEnvironmentVariableDefinition -SchemaName "new_test*" | 
     Remove-DataverseEnvironmentVariableDefinition
 ```
@@ -54,7 +58,7 @@ Removes all environment variable definitions with schema names starting with "ne
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient

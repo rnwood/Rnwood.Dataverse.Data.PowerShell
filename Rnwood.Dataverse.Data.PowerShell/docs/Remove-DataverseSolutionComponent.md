@@ -32,9 +32,10 @@ This cmdlet removes a solution component from an unmanaged Dataverse solution.
 
 ### Example 1: Remove an entity component from a solution
 ```powershell
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
 PS C:\> $connection = Get-DataverseConnection -Url "https://contoso.crm.dynamics.com" -Interactive
-PS C:\> $entityMetadata = Get-DataverseEntityMetadata -Connection $connection -EntityName "new_customtable"
-PS C:\> Remove-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+PS C:\> $entityMetadata = Get-DataverseEntityMetadata -EntityName "new_customtable"
+PS C:\> Remove-DataverseSolutionComponent -SolutionName "MySolution" `
     -ComponentId $entityMetadata.MetadataId -ComponentType 1
 ```
 
@@ -42,9 +43,10 @@ Removes an entity component from the solution. The entity itself remains in the 
 
 ### Example 2: Remove an attribute component
 ```powershell
-PS C:\> $attributeMetadata = Get-DataverseAttributeMetadata -Connection $connection `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $attributeMetadata = Get-DataverseAttributeMetadata `
     -EntityName "account" -AttributeName "new_customfield"
-PS C:\> Remove-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+PS C:\> Remove-DataverseSolutionComponent -SolutionName "MySolution" `
     -ComponentId $attributeMetadata.MetadataId -ComponentType 2 -Confirm:$false
 ```
 
@@ -52,9 +54,10 @@ Removes an attribute component from the solution without confirmation prompt.
 
 ### Example 3: Remove multiple components from pipeline
 ```powershell
-PS C:\> $components = Get-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution"
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $components = Get-DataverseSolutionComponent -SolutionName "MySolution"
 PS C:\> $components | Where-Object { $_.ComponentType -eq 26 } | ForEach-Object {
-    Remove-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+    Remove-DataverseSolutionComponent -SolutionName "MySolution" `
         -ComponentId $_.ObjectId -ComponentType $_.ComponentType -Confirm:$false
 }
 ```
@@ -63,7 +66,8 @@ Removes all view components (type 26) from a solution.
 
 ### Example 4: Use IfExists to avoid errors
 ```powershell
-PS C:\> Remove-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseSolutionComponent -SolutionName "MySolution" `
     -ComponentId $componentId -ComponentType 1 -IfExists
 ```
 
@@ -71,7 +75,8 @@ Removes the component if it exists in the solution, or does nothing if it doesn'
 
 ### Example 5: Preview with WhatIf
 ```powershell
-PS C:\> Remove-DataverseSolutionComponent -Connection $connection -SolutionName "MySolution" `
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataverseSolutionComponent -SolutionName "MySolution" `
     -ComponentId $componentId -ComponentType 1 -WhatIf
 
 What if: Performing the operation "Remove from solution 'MySolution'" 

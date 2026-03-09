@@ -24,7 +24,8 @@ Deletes a plugin type from Dataverse.
 
 ### Example 1
 ```powershell
-PS C:\> Remove-DataversePluginType -Connection $connection -Id 12345678-1234-1234-1234-123456789012
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> Remove-DataversePluginType -Id 12345678-1234-1234-1234-123456789012
 ```
 
 Removes the specified plugin type.
@@ -32,7 +33,7 @@ Removes the specified plugin type.
 ## PARAMETERS
 
 ### -Connection
-DataverseConnection instance obtained from Get-DataverseConnection cmdlet, or string specifying Dataverse organization URL (e.g. http://server.com/MyOrg/). If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
+DataverseConnection instance obtained from Get-DataverseConnection cmdlet. If not provided, uses the default connection set via Get-DataverseConnection -SetAsDefault.
 
 ```yaml
 Type: ServiceClient

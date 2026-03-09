@@ -146,8 +146,8 @@ This PR adds support for batch operations and fixes a connection timeout issue.
 ### Testing
 
 - Add tests for all new functionality
-- Use Pester 5.x format
-- Run tests via `tests/All.Tests.ps1`
+- Add xUnit tests in Rnwood.Dataverse.Data.PowerShell.Tests/ for infrastructure/cmdlet logic
+- Add xUnit E2E tests in Rnwood.Dataverse.Data.PowerShell.E2ETests/ for real environment scenarios
 - Use FakeXrmEasy for mocking
 
 ## Building and Testing
@@ -156,39 +156,15 @@ This PR adds support for batch operations and fixes a connection timeout issue.
 
 - .NET SDK 8.0+
 - PowerShell 7+ or PowerShell 5.1+
-- Pester 5.x
-- Git (for submodule management)
 
 ### Build
-
-**Important: Sql4Cds Dependency**
-
-This project depends on a local build of the Sql4Cds submodule. The build process has been automated to handle this dependency:
 
 ```bash
 # Clean
 dotnet clean
 
-# Build (automatically builds Sql4Cds submodule on first build)
+# Build
 dotnet build
-```
-
-The build system will automatically:
-1. Initialize the Sql4Cds git submodule if needed
-2. Build the MarkMpn.Sql4Cds.Engine project
-3. Create a NuGet package in `local-packages/`
-4. Use this local package for the main build
-
-**Manual Sql4Cds Build (Optional)**
-
-If you need to rebuild Sql4Cds manually:
-
-```bash
-# Build Sql4Cds and create NuGet package
-pwsh -File Build-Sql4Cds.ps1
-
-# Or with options
-pwsh -File Build-Sql4Cds.ps1 -Configuration Debug -Force
 ```
 
 ### Test
@@ -197,19 +173,17 @@ pwsh -File Build-Sql4Cds.ps1 -Configuration Debug -Force
 # Set module path
 $env:TESTMODULEPATH = (Resolve-Path "Rnwood.Dataverse.Data.PowerShell/bin/Debug/netstandard2.0")
 
-# Install Pester
-Install-Module -Force -Scope CurrentUser Pester -MinimumVersion 5.0
+# Run xUnit infrastructure tests (net8.0)
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net8.0 --logger "console;verbosity=normal"
 
-# Run all tests (5+ minutes)
-$config = New-PesterConfiguration
-$config.Run.Path = 'tests/All.Tests.ps1'
-$config.Run.PassThru = $true
-$config.Output.Verbosity = 'Normal'
-$result = Invoke-Pester -Configuration $config
+# Run xUnit infrastructure tests (net462, Windows only)
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.Tests/Rnwood.Dataverse.Data.PowerShell.Tests.csproj -f net462 --logger "console;verbosity=normal"
 
-# Or run filtered tests (20-30 seconds)
-$config.Filter.FullName = '*YourFeature*'
-$result = Invoke-Pester -Configuration $config
+# Run E2E tests (requires credentials)
+$env:E2ETESTS_URL = "https://yourorg.crm.dynamics.com"
+$env:E2ETESTS_CLIENTID = "your-client-id"
+$env:E2ETESTS_CLIENTSECRET = "your-client-secret"
+dotnet test ./Rnwood.Dataverse.Data.PowerShell.E2ETests/Rnwood.Dataverse.Data.PowerShell.E2ETests.csproj -f net8.0 --logger "console;verbosity=normal"
 ```
 
 ## Documentation
@@ -218,6 +192,7 @@ $result = Invoke-Pester -Configuration $config
 - Update markdown docs in `Rnwood.Dataverse.Data.PowerShell/docs/`
 - Run `updatehelp.ps1` to sync documentation
 - Add examples that demonstrate the new functionality
+- Update README features list and docs/ files.
 
 ## Questions?
 

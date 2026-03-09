@@ -60,24 +60,27 @@ Individual batch items can be automatically retried on failure using exponential
 
 ### Example 1
 ```powershell
-PS C:\> get-dataverserecord -connection $c -tablename contact | remove-dataverserecord -connection $c
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> get-dataverserecord -tablename contact | remove-dataverserecord
 ```
 
 Deletes all contact records.
 
 ### Example 2
 ```powershell
-PS C:\> remove-dataverserecord -connection $c -tablename contact -id 4CE66D51-C605-4429-8565-8C7AFA4B9550
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> remove-dataverserecord -tablename contact -id 4CE66D51-C605-4429-8565-8C7AFA4B9550
 ```
 
 Deletes the single contact with the specified ID.
 
 ### Example 3: Handle errors in batch delete operations
 ```powershell
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ lastname = "TestUser" }
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $recordsToDelete = Get-DataverseRecord -TableName contact -FilterValues @{ lastname = "TestUser" }
 
 PS C:\> $errors = @()
-PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -ErrorVariable +errors -ErrorAction SilentlyContinue
+PS C:\> $recordsToDelete | Remove-DataverseRecord -ErrorVariable +errors -ErrorAction SilentlyContinue
 
 PS C:\> # Process any errors that occurred
 PS C:\> foreach ($err in $errors) {
@@ -90,10 +93,11 @@ Demonstrates batch error handling for delete operations. When using batching (de
 
 ### Example 4: Access full error details from server
 ```powershell
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Top 10
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $recordsToDelete = Get-DataverseRecord -TableName contact -Top 10
 
 PS C:\> $errors = @()
-PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -ErrorVariable +errors -ErrorAction SilentlyContinue
+PS C:\> $recordsToDelete | Remove-DataverseRecord -ErrorVariable +errors -ErrorAction SilentlyContinue
 
 PS C:\> # Access detailed error information from the server
 PS C:\> foreach ($err in $errors) {
@@ -117,10 +121,11 @@ Demonstrates how to access comprehensive error details from the Dataverse server
 
 ### Example 5: Stop on first delete error with BatchSize 1
 ```powershell
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Top 100
+PS C:\> Get-DataverseConnection -Url https://myorg.crm.dynamics.com -Interactive -SetAsDefault
+PS C:\> $recordsToDelete = Get-DataverseRecord -TableName contact -Top 100
 
 PS C:\> try {
-    $recordsToDelete | Remove-DataverseRecord -Connection $c -BatchSize 1 -ErrorAction Stop
+    $recordsToDelete | Remove-DataverseRecord -BatchSize 1 -ErrorAction Stop
 } catch {
     Write-Host "Error deleting record: $($_.TargetObject.Id)"
     Write-Host "Remaining records were not deleted"
@@ -145,7 +150,7 @@ Removes a many-to-many association by deleting the corresponding record from the
 
 ### Example 7: Using retry logic for transient delete failures
 ```powershell
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ lastname = "TestUser" }
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ lastname = "TestUser" }
 
 PS C:\> # Retry each failed delete up to 3 times with exponential backoff
 PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -Retries 3 -InitialRetryDelay 500 -Verbose
@@ -196,7 +201,7 @@ Attempts to match first on emailaddress1, then falls back to matching on firstna
 
 ### Example 13: Delete large dataset with parallel processing
 ```powershell
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -Filter @{ lastname = "TestUser" }
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName contact -FilterValues @{ lastname = "TestUser" }
 
 PS C:\> # Delete using 4 parallel workers for improved performance
 PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 4 -Verbose
@@ -207,7 +212,7 @@ Deletes multiple contact records using parallel processing with 4 concurrent wor
 ### Example 14: Combine parallel processing with batching for maximum throughput
 ```powershell
 PS C:\> # Get large dataset of records to delete
-PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName account -Filter @{ statuscode = 2 }
+PS C:\> $recordsToDelete = Get-DataverseRecord -Connection $c -TableName account -FilterValues @{ statuscode = 2 }
 
 PS C:\> # Delete using 8 parallel workers, each using batch size of 200
 PS C:\> $recordsToDelete | Remove-DataverseRecord -Connection $c -MaxDegreeOfParallelism 8 -BatchSize 200 -Verbose
