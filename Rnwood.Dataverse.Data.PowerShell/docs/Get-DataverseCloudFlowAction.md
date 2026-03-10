@@ -29,28 +29,28 @@ Extracts and displays individual actions from a cloud flow's definition. Actions
 
 ## EXAMPLES
 
-### Example 1 - Get all actions in a flow
+### Example 1: Get all actions in a flow
 ```powershell
 PS C:\> Get-DataverseCloudFlowAction -FlowName "My Flow"
 ```
 
 Returns all actions in the cloud flow named "My Flow".
 
-### Example 2 - Get a specific action
+### Example 2: Get a specific action
 ```powershell
 PS C:\> Get-DataverseCloudFlowAction -FlowId "00000000-0000-0000-0000-000000000000" -ActionName "Send_email"
 ```
 
 Returns the "Send_email" action from the specified flow.
 
-### Example 3 - Get actions matching a pattern
+### Example 3: Get actions matching a pattern
 ```powershell
 PS C:\> Get-DataverseCloudFlowAction -FlowName "My Flow" -ActionName "Send*"
 ```
 
 Returns all actions whose names start with "Send" in the flow.
 
-### Example 4 - View action details
+### Example 4: View action details
 ```powershell
 PS C:\> Get-DataverseCloudFlowAction -FlowName "My Flow" | Select-Object Name, Type, Description
 ```

@@ -29,28 +29,28 @@ Permanently deletes a cloud flow from Dataverse. Use with caution as this operat
 
 ## EXAMPLES
 
-### Example 1 - Remove a flow by ID
+### Example 1: Remove a flow by ID
 ```powershell
 PS C:\> Remove-DataverseCloudFlow -Id "00000000-0000-0000-0000-000000000000"
 ```
 
 Deletes the cloud flow with the specified ID. Will prompt for confirmation.
 
-### Example 2 - Remove a flow by name
+### Example 2: Remove a flow by name
 ```powershell
 PS C:\> Remove-DataverseCloudFlow -Name "My Flow"
 ```
 
 Deletes the cloud flow named "My Flow". Will prompt for confirmation.
 
-### Example 3 - Remove without confirmation
+### Example 3: Remove without confirmation
 ```powershell
 PS C:\> Remove-DataverseCloudFlow -Name "My Flow" -Confirm:$false
 ```
 
 Deletes the flow without prompting for confirmation.
 
-### Example 4 - Preview deletion with WhatIf
+### Example 4: Preview deletion with WhatIf
 ```powershell
 PS C:\> Remove-DataverseCloudFlow -Name "My Flow" -WhatIf
 ```

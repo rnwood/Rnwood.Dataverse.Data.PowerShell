@@ -270,6 +270,321 @@ Write-Host 'Success: Get-DataverseCloudFlowAction by FlowName works correctly'
         }
 
         [Fact]
+        public void SetDataverseCloudFlow_CreateNew_Should_CreateFlowWhenNotExists()
+        {
+            var flowName = $"E2E Test Create {System.Guid.NewGuid():N}";
+            var script = GetConnectionScript($@"
+$flowName = '{flowName}'
+Write-Host ""Creating new cloud flow: $flowName""
+
+# Verify flow doesn't exist yet
+$existing = Get-DataverseCloudFlow -Connection $connection -Name $flowName
+if ($existing.Count -gt 0) {{
+    throw ""Flow '$flowName' already exists before creation test""
+}}
+
+# Create the flow
+$flowId = Set-DataverseCloudFlow -Connection $connection -Name $flowName -Description 'E2E test flow' -PassThru
+Write-Host ""Created flow with ID: $flowId""
+
+if (-not $flowId) {{
+    throw 'Expected flow ID to be returned'
+}}
+
+# Verify the flow now exists
+$created = Get-DataverseCloudFlow -Connection $connection -Name $flowName
+if ($created.Count -ne 1) {{
+    throw ""Expected 1 flow named '$flowName', found $($created.Count)""
+}}
+if ($created.Id -ne $flowId) {{
+    throw ""Flow ID mismatch: expected $flowId, got $($created.Id)""
+}}
+if ($created.State -ne 'Draft') {{
+    throw ""Expected new flow to be in Draft state, got $($created.State)""
+}}
+
+# Clean up
+Remove-DataverseCloudFlow -Connection $connection -Id $flowId -Confirm:$false
+Write-Host 'Success: Flow created, verified, and deleted'
+");
+
+            var result = RunScript(script);
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("Success");
+        }
+
+        [Fact]
+        public void SetDataverseCloudFlow_CreateNew_IsIdempotent()
+        {
+            var flowName = $"E2E Test Idempotent {System.Guid.NewGuid():N}";
+            var script = GetConnectionScript($@"
+$flowName = '{flowName}'
+Write-Host ""Testing idempotent create for: $flowName""
+
+# Create the flow twice
+$flowId1 = Set-DataverseCloudFlow -Connection $connection -Name $flowName -PassThru
+Write-Host ""First call created/found flow: $flowId1""
+
+$flowId2 = Set-DataverseCloudFlow -Connection $connection -Name $flowName -PassThru
+Write-Host ""Second call found flow: $flowId2""
+
+if ($flowId1 -ne $flowId2) {{
+    # Clean up before throwing
+    try {{ Remove-DataverseCloudFlow -Connection $connection -Id $flowId1 -Confirm:$false }} catch {{}}
+    try {{ Remove-DataverseCloudFlow -Connection $connection -Id $flowId2 -Confirm:$false }} catch {{}}
+    throw ""Expected same ID on second call, got different IDs: $flowId1 vs $flowId2""
+}}
+
+# Clean up
+Remove-DataverseCloudFlow -Connection $connection -Id $flowId1 -Confirm:$false
+Write-Host 'Success: Idempotent create returns same flow ID'
+");
+
+            var result = RunScript(script);
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("Success");
+        }
+
+        [Fact]
+        public void SetDataverseCloudFlow_CreateNew_WhatIf_Should_NotCreateFlow()
+        {
+            var flowName = $"E2E WhatIf {System.Guid.NewGuid():N}";
+            var script = GetConnectionScript($@"
+$flowName = '{flowName}'
+Write-Host ""Testing WhatIf for create: $flowName""
+
+# Use WhatIf - should not create
+Set-DataverseCloudFlow -Connection $connection -Name $flowName -WhatIf
+
+# Verify flow was NOT created
+$existing = Get-DataverseCloudFlow -Connection $connection -Name $flowName
+if ($existing.Count -gt 0) {{
+    # Clean up
+    Remove-DataverseCloudFlow -Connection $connection -Id $existing[0].Id -Confirm:$false
+    throw 'WhatIf created a flow!'
+}}
+
+Write-Host 'Success: WhatIf does not create flow'
+");
+
+            var result = RunScript(script);
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("Success");
+        }
+
+        [Fact]
+        public void SetDataverseCloudFlowAction_CreateNew_Should_AddActionToFlow()
+        {
+            var flowName = $"E2E Action Test {System.Guid.NewGuid():N}";
+            var script = GetConnectionScript($@"
+$flowName = '{flowName}'
+Write-Host ""Creating test flow: $flowName""
+
+# Create a flow to test with
+$flowId = Set-DataverseCloudFlow -Connection $connection -Name $flowName -PassThru
+Write-Host ""Created flow: $flowId""
+
+try {{
+    # Create a new action in the flow
+    Write-Host 'Creating new action in flow...'
+    Set-DataverseCloudFlowAction -Connection $connection -FlowId $flowId -ActionId 'Initialize_Counter' -Type 'InitializeVariable' -Inputs @{{variables=@(@{{name='counter';type='Integer';value=0}})}} -Description 'Counter variable'
+
+    # Verify the action was created
+    $actions = Get-DataverseCloudFlowAction -Connection $connection -FlowId $flowId
+    $newAction = $actions | Where-Object {{ $_.ActionId -eq 'Initialize_Counter' }}
+
+    if (-not $newAction) {{
+        throw 'Action was not found after creation'
+    }}
+    if ($newAction.Type -ne 'InitializeVariable') {{
+        throw ""Expected action type 'InitializeVariable', got '$($newAction.Type)'""
+    }}
+    if ($newAction.Description -ne 'Counter variable') {{
+        throw ""Expected description 'Counter variable', got '$($newAction.Description)'""
+    }}
+
+    Write-Host ""Success: Action '$($newAction.ActionId)' of type '$($newAction.Type)' created successfully""
+}} finally {{
+    try {{ Remove-DataverseCloudFlow -Connection $connection -Id $flowId -Confirm:$false }} catch {{}}
+}}
+");
+
+            var result = RunScript(script);
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("Success");
+        }
+
+        [Fact]
+        public void SetDataverseCloudFlowAction_UpdateExisting_Should_UpdateActionInFlow()
+        {
+            var flowName = $"E2E Action Update {System.Guid.NewGuid():N}";
+            var script = GetConnectionScript($@"
+$flowName = '{flowName}'
+$flowId = Set-DataverseCloudFlow -Connection $connection -Name $flowName -PassThru
+Write-Host ""Created flow: $flowId""
+
+try {{
+    # Create initial action
+    Set-DataverseCloudFlowAction -Connection $connection -FlowId $flowId -ActionId 'My_Action' -Type 'Compose' -Inputs @{{method='GET'; uri='https://example.com'}} -Description 'Initial description'
+
+    # Update the action's description and inputs
+    Set-DataverseCloudFlowAction -Connection $connection -FlowId $flowId -ActionId 'My_Action' -Inputs @{{method='POST'; uri='https://example.com/update'}} -Description 'Updated description'
+
+    # Verify update
+    $actions = Get-DataverseCloudFlowAction -Connection $connection -FlowId $flowId
+    $updatedAction = $actions | Where-Object {{ $_.ActionId -eq 'My_Action' }}
+
+    if (-not $updatedAction) {{
+        throw 'Action not found after update'
+    }}
+    if ($updatedAction.Description -ne 'Updated description') {{
+        throw ""Expected description 'Updated description', got '$($updatedAction.Description)'""
+    }}
+
+    Write-Host 'Success: Action updated with new description and inputs'
+}} finally {{
+    try {{ Remove-DataverseCloudFlow -Connection $connection -Id $flowId -Confirm:$false }} catch {{}}
+}}
+");
+
+            var result = RunScript(script);
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("Success");
+        }
+
+        [Fact]
+        public void SetDataverseCloudFlowAction_CreateNew_RequiresType()
+        {
+            var flowName = $"E2E Action NoType {System.Guid.NewGuid():N}";
+            var script = GetConnectionScript($@"
+$flowName = '{flowName}'
+$flowId = Set-DataverseCloudFlow -Connection $connection -Name $flowName -PassThru
+
+try {{
+    # Try to create an action without specifying -Type (should fail)
+    try {{
+        Set-DataverseCloudFlowAction -Connection $connection -FlowId $flowId -ActionId 'New_Action' -Inputs 'value'
+        throw 'Expected error for missing -Type but no error was thrown'
+    }} catch {{
+        if ($_.ToString() -like '*-Type parameter is required*' -or $_.ToString() -like '*TypeRequiredForCreate*') {{
+            Write-Host 'Success: Got expected error for missing -Type'
+        }} else {{
+            throw ""Unexpected error: $_""
+        }}
+    }}
+}} finally {{
+    try {{ Remove-DataverseCloudFlow -Connection $connection -Id $flowId -Confirm:$false }} catch {{}}
+}}
+");
+
+            var result = RunScript(script);
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("Success");
+        }
+
+        [Fact]
+        public void SetDataverseCloudFlowAction_CreateNew_WhatIf_Should_NotCreateAction()
+        {
+            var flowName = $"E2E Action WhatIf {System.Guid.NewGuid():N}";
+            var script = GetConnectionScript($@"
+$flowName = '{flowName}'
+$flowId = Set-DataverseCloudFlow -Connection $connection -Name $flowName -PassThru
+
+try {{
+    # Use WhatIf - should not create action
+    Set-DataverseCloudFlowAction -Connection $connection -FlowId $flowId -ActionId 'WhatIf_Action' -Type 'Compose' -Inputs 'test' -WhatIf
+
+    # Verify action was NOT created
+    $actions = Get-DataverseCloudFlowAction -Connection $connection -FlowId $flowId
+    $whatIfAction = $actions | Where-Object {{ $_.ActionId -eq 'WhatIf_Action' }}
+
+    if ($whatIfAction) {{
+        throw 'WhatIf created an action!'
+    }}
+
+    Write-Host 'Success: WhatIf does not create action'
+}} finally {{
+    try {{ Remove-DataverseCloudFlow -Connection $connection -Id $flowId -Confirm:$false }} catch {{}}
+}}
+");
+
+            var result = RunScript(script);
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("Success");
+        }
+
+        [Fact]
+        public void SetDataverseCloudFlowAction_ByFlowName_Should_Work()
+        {
+            var flowName = $"E2E Action ByName {System.Guid.NewGuid():N}";
+            var script = GetConnectionScript($@"
+$flowName = '{flowName}'
+$flowId = Set-DataverseCloudFlow -Connection $connection -Name $flowName -PassThru
+
+try {{
+    # Create action by flow name
+    Set-DataverseCloudFlowAction -Connection $connection -FlowName $flowName -ActionId 'Test_Action' -Type 'Compose' -Inputs @{{value='hello'}}
+
+    # Verify action exists
+    $actions = Get-DataverseCloudFlowAction -Connection $connection -FlowId $flowId
+    $action = $actions | Where-Object {{ $_.ActionId -eq 'Test_Action' }}
+
+    if (-not $action) {{
+        throw 'Action not found after creation by flow name'
+    }}
+
+    Write-Host 'Success: Action created using FlowName parameter'
+}} finally {{
+    try {{ Remove-DataverseCloudFlow -Connection $connection -Id $flowId -Confirm:$false }} catch {{}}
+}}
+");
+
+            var result = RunScript(script);
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("Success");
+        }
+
+        [Fact]
+        public void SetDataverseCloudFlow_WithClientData_Should_UpdateFlowDefinition()
+        {
+            var flowName = $"E2E ClientData {System.Guid.NewGuid():N}";
+            var script = GetConnectionScript($@"
+$flowName = '{flowName}'
+$flowId = Set-DataverseCloudFlow -Connection $connection -Name $flowName -PassThru
+Write-Host ""Created flow: $flowId""
+
+try {{
+    # Get the current flow definition
+    $flowData = Get-DataverseCloudFlow -Connection $connection -Id $flowId -IncludeClientData
+
+    # Parse and modify the clientdata to add an action
+    $def = $flowData.ClientData | ConvertFrom-Json
+    $def.properties.definition.actions | Add-Member -NotePropertyName 'Test_Compose' -NotePropertyValue ([PSCustomObject]@{{type='Compose';runAfter=@{{}};inputs='hello'}})
+    $newClientData = $def | ConvertTo-Json -Depth 20 -Compress
+
+    # Update the flow with new clientdata
+    Set-DataverseCloudFlow -Connection $connection -Id $flowId -ClientData $newClientData
+
+    # Verify the action is now in the flow
+    $actions = Get-DataverseCloudFlowAction -Connection $connection -FlowId $flowId
+    $action = $actions | Where-Object {{ $_.ActionId -eq 'Test_Compose' }}
+
+    if (-not $action) {{
+        throw 'Action not found after clientdata update'
+    }}
+
+    Write-Host 'Success: Flow definition updated via -ClientData parameter'
+}} finally {{
+    try {{ Remove-DataverseCloudFlow -Connection $connection -Id $flowId -Confirm:$false }} catch {{}}
+}}
+");
+
+            var result = RunScript(script);
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("Success");
+        }
+
+        [Fact]
         public void SetDataverseCloudFlow_WhatIf_Should_NotModifyFlow()
         {
             var script = GetConnectionScript(@"

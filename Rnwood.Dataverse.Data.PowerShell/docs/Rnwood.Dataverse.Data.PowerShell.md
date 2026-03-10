@@ -329,10 +329,10 @@ Creates or updates an attribute (column) in Dataverse.
 Creates or updates a Canvas app in a Dataverse environment.
 
 ### [Set-DataverseCloudFlow](Set-DataverseCloudFlow.md)
-Updates properties of a cloud flow in Dataverse or changes its state.
+Creates or updates a cloud flow in Dataverse.
 
 ### [Set-DataverseCloudFlowAction](Set-DataverseCloudFlowAction.md)
-Updates an action within a cloud flow in Dataverse.
+Creates or updates an action within a cloud flow in Dataverse.
 
 ### [Set-DataverseConnectionAsDefault](Set-DataverseConnectionAsDefault.md)
 Sets the specified Dataverse connection as the default connection for cmdlets that don't specify a connection.
