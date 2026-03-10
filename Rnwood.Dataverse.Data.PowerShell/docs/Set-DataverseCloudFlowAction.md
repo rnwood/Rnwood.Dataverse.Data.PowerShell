@@ -33,14 +33,14 @@ Can set or update action inputs, description metadata, and type.
 
 ## EXAMPLES
 
-### Example 1 - Create a new action in a flow
+### Example 1: Create a new action in a flow
 ```powershell
 PS C:\> Set-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Initialize_Counter" -Type "InitializeVariable" -Inputs @{variables=@(@{name="counter";type="Integer";value=0})}
 ```
 
 Creates a new InitializeVariable action named "Initialize_Counter" in the specified flow.
 
-### Example 2 - Update action inputs with hashtable
+### Example 2: Update action inputs with hashtable
 ```powershell
 PS C:\> $inputs = @{ to = "user@example.com"; subject = "New Subject" }
 PS C:\> Set-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email" -Inputs $inputs
@@ -48,7 +48,7 @@ PS C:\> Set-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email" 
 
 Updates the inputs for the "Send_email" action using a hashtable.
 
-### Example 3 - Update action inputs with JSON string
+### Example 3: Update action inputs with JSON string
 ```powershell
 PS C:\> $json = '{"to":"user@example.com","subject":"New Subject"}'
 PS C:\> Set-DataverseCloudFlowAction -FlowId "00000000-0000-0000-0000-000000000000" -ActionId "Send_email" -Inputs $json
@@ -56,14 +56,14 @@ PS C:\> Set-DataverseCloudFlowAction -FlowId "00000000-0000-0000-0000-0000000000
 
 Updates the inputs for the "Send_email" action using a JSON string.
 
-### Example 4 - Update action description
+### Example 4: Update action description
 ```powershell
 PS C:\> Set-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email" -Description "Send notification email"
 ```
 
 Updates the description metadata for the action.
 
-### Example 5 - Use WhatIf to preview changes
+### Example 5: Use WhatIf to preview changes
 ```powershell
 PS C:\> Set-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email" -Inputs $inputs -WhatIf
 ```

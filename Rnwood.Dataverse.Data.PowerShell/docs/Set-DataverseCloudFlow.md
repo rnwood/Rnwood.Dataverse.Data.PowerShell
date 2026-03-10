@@ -37,14 +37,14 @@ Supports WhatIf and Confirm for safe execution. Use `-PassThru` to return the ID
 
 ## EXAMPLES
 
-### Example 1 - Create a new flow (or update if it already exists)
+### Example 1: Create a new flow (or update if it already exists)
 ```powershell
 PS C:\> $flowId = Set-DataverseCloudFlow -Name "My Flow" -Description "My flow description" -PassThru
 ```
 
 Creates a new cloud flow named "My Flow" if it does not already exist, or updates the description if it does. Returns the flow ID.
 
-### Example 2 - Create a flow with a custom definition
+### Example 2: Create a flow with a custom definition
 ```powershell
 PS C:\> $clientData = Get-Content -Raw 'myflow.json'
 PS C:\> Set-DataverseCloudFlow -Name "My Custom Flow" -ClientData $clientData
@@ -52,35 +52,35 @@ PS C:\> Set-DataverseCloudFlow -Name "My Custom Flow" -ClientData $clientData
 
 Creates a new cloud flow with a custom flow definition JSON, or updates the definition of an existing flow with that name.
 
-### Example 3 - Rename a flow
+### Example 3: Rename a flow
 ```powershell
 PS C:\> Set-DataverseCloudFlow -Name "My Flow" -NewName "My Renamed Flow"
 ```
 
 Renames the existing cloud flow from "My Flow" to "My Renamed Flow".
 
-### Example 4 - Activate a flow
+### Example 4: Activate a flow
 ```powershell
 PS C:\> Set-DataverseCloudFlow -Id "00000000-0000-0000-0000-000000000000" -Activate
 ```
 
 Activates (turns on) the cloud flow with the specified ID.
 
-### Example 5 - Deactivate a flow
+### Example 5: Deactivate a flow
 ```powershell
 PS C:\> Set-DataverseCloudFlow -Name "My Flow" -Deactivate
 ```
 
 Deactivates (turns off) the cloud flow named "My Flow".
 
-### Example 6 - Update description
+### Example 6: Update description
 ```powershell
 PS C:\> Set-DataverseCloudFlow -Name "My Flow" -Description "Updated description"
 ```
 
 Updates the description of the existing cloud flow.
 
-### Example 7 - Use WhatIf to preview changes
+### Example 7: Use WhatIf to preview changes
 ```powershell
 PS C:\> Set-DataverseCloudFlow -Name "My Flow" -Activate -WhatIf
 ```

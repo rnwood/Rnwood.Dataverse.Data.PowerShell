@@ -29,28 +29,28 @@ Removes an action from a cloud flow's definition by modifying the flow's clientd
 
 ## EXAMPLES
 
-### Example 1 - Remove an action by flow name
+### Example 1: Remove an action by flow name
 ```powershell
 PS C:\> Remove-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email"
 ```
 
 Removes the "Send_email" action from the flow. Will prompt for confirmation.
 
-### Example 2 - Remove an action by flow ID
+### Example 2: Remove an action by flow ID
 ```powershell
 PS C:\> Remove-DataverseCloudFlowAction -FlowId "00000000-0000-0000-0000-000000000000" -ActionId "Old_action"
 ```
 
 Removes the "Old_action" from the specified flow.
 
-### Example 3 - Remove without confirmation
+### Example 3: Remove without confirmation
 ```powershell
 PS C:\> Remove-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email" -Confirm:$false
 ```
 
 Removes the action without prompting for confirmation.
 
-### Example 4 - Preview removal with WhatIf
+### Example 4: Preview removal with WhatIf
 ```powershell
 PS C:\> Remove-DataverseCloudFlowAction -FlowName "My Flow" -ActionId "Send_email" -WhatIf
 ```
