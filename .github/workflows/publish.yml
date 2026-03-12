@@ -52,7 +52,7 @@ jobs:
     name: Test (${{ matrix.test_set }}, ${{ matrix.os }}, PS ${{ matrix.powershell_version }})
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Fetch all history for tags
           submodules: recursive  # Initialize and update submodules
@@ -629,7 +629,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       
@@ -733,7 +733,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       
