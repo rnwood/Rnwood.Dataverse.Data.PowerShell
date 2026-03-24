@@ -56,6 +56,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
                     return null;
                 }
 
+                // System.Data.SqlClient is bypassed here (and in CmdletsLoadContext.Load) so the host
+                // (e.g. PowerShell 7) supplies its own compatible version. The NuGet 4.8.x copy shipped
+                // in cmdlets/net8.0/ throws PlatformNotSupportedException for SqlConnection.AccessToken
+                // on Linux/macOS, breaking TDS endpoint support. PowerShell 7 ships version 4.6.1.6
+                // which supports AccessToken on all platforms.
+                if (assemblyName.Name != null && assemblyName.Name.Equals("System.Data.SqlClient", StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+
                 string path = Path.Combine(basePath, assemblyName.Name + ".dll");
 
                 if (File.Exists(path))
@@ -176,6 +186,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.FrameworkSpecific.Loader
                 // Returning null here makes CmdletsLoadContext fall back to that DEFAULT ALC copy, ensuring
                 // ServiceClient and PS scripts share the same type identity (one copy, no ALC duplication).
                 if (assemblyName.Name != null && assemblyName.Name.Equals("Microsoft.Crm.Sdk.Proxy", StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+
+                // System.Data.SqlClient is bypassed so the host (e.g. PowerShell 7) supplies its own
+                // compatible version instead of the NuGet 4.8.x copy in cmdlets/net8.0/. The NuGet copy
+                // throws PlatformNotSupportedException for SqlConnection.AccessToken on Linux/macOS,
+                // which breaks TDS endpoint support. PowerShell 7 ships version 4.6.1.6 which supports
+                // AccessToken on all platforms, enabling cross-platform TDS endpoint usage.
+                if (assemblyName.Name != null && assemblyName.Name.Equals("System.Data.SqlClient", StringComparison.OrdinalIgnoreCase))
                 {
                     return null;
                 }

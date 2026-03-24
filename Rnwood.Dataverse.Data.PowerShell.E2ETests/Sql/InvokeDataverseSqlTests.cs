@@ -253,5 +253,62 @@ Write-Host ""Query with DataSourceName='main' returned $(($results | Measure-Obj
             result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
             result.StandardOutput.Should().Contain("DataSourceName", because: result.GetFullOutput());
         }
+
+        [Fact]
+        public void CanUseDateFromPartsAndEoMonthViaTdsEndpoint()
+        {
+            var script = GetConnectionScript(@"
+try {
+    Invoke-WithRetry {
+        # Test DATEFROMPARTS(2024, 3, 1) = 2024-03-01
+        $dateResult = Invoke-DataverseSql -Connection $connection -UseTdsEndpoint -Sql ""SELECT DATEFROMPARTS(2024, 3, 1) AS testdate""
+        if ($null -eq $dateResult) {
+            throw ""DATEFROMPARTS returned no result""
+        }
+        $d = [datetime]$dateResult.testdate
+        if ($d.Year -ne 2024 -or $d.Month -ne 3 -or $d.Day -ne 1) {
+            throw ""DATEFROMPARTS returned unexpected value: $($dateResult.testdate)""
+        }
+        Write-Host ""DATEFROMPARTS result: $($dateResult.testdate)""
+
+        # Test EOMONTH('2024-03-01') = 2024-03-31
+        $eomResult = Invoke-DataverseSql -Connection $connection -UseTdsEndpoint -Sql ""SELECT EOMONTH('2024-03-01') AS endofmonth""
+        if ($null -eq $eomResult) {
+            throw ""EOMONTH returned no result""
+        }
+        $eom = [datetime]$eomResult.endofmonth
+        if ($eom.Year -ne 2024 -or $eom.Month -ne 3 -or $eom.Day -ne 31) {
+            throw ""EOMONTH returned unexpected value: $($eomResult.endofmonth)""
+        }
+        Write-Host ""EOMONTH result: $($eomResult.endofmonth)""
+
+        # Test EOMONTH(DATEFROMPARTS(2024, 1, 15), 2) = 2024-03-31 (end of March, 2 months after January)
+        $eomOffsetResult = Invoke-DataverseSql -Connection $connection -UseTdsEndpoint -Sql ""SELECT EOMONTH(DATEFROMPARTS(2024, 1, 15), 2) AS d""
+        if ($null -eq $eomOffsetResult) {
+            throw ""EOMONTH with offset returned no result""
+        }
+        $eomOffset = [datetime]$eomOffsetResult.d
+        if ($eomOffset.Year -ne 2024 -or $eomOffset.Month -ne 3 -or $eomOffset.Day -ne 31) {
+            throw ""EOMONTH with offset returned unexpected value: $($eomOffsetResult.d)""
+        }
+        Write-Host ""EOMONTH with offset result: $($eomOffsetResult.d)""
+
+        # Test in a WHERE clause filtering real Dataverse records
+        $filterResult = Invoke-DataverseSql -Connection $connection -UseTdsEndpoint -Sql ""SELECT TOP 1 fullname FROM systemuser WHERE createdon >= DATEFROMPARTS(2020, 1, 1) AND createdon <= EOMONTH(GETDATE())""
+        Write-Host ""Filter with DATEFROMPARTS+EOMONTH returned records""
+    }
+} catch {
+    Write-ErrorDetails $_
+    throw
+}
+");
+
+            var result = RunScript(script);
+
+            result.Success.Should().BeTrue($"Script should succeed.\nStdOut: {result.StandardOutput}\nStdErr: {result.StandardError}");
+            result.StandardOutput.Should().Contain("DATEFROMPARTS result:", because: result.GetFullOutput());
+            result.StandardOutput.Should().Contain("EOMONTH result:", because: result.GetFullOutput());
+            result.StandardOutput.Should().Contain("EOMONTH with offset result:", because: result.GetFullOutput());
+        }
     }
 }
