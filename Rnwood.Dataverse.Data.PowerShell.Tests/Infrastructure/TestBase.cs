@@ -5,13 +5,9 @@ using System.Linq;
 using System.Net.Http;
 using System.Reflection;
 using System.Runtime.Serialization;
+using System.ServiceModel;
 using FakeItEasy;
-using FakeXrmEasy.Abstractions;
-using FakeXrmEasy.Abstractions.Enums;
-using FakeXrmEasy.FakeMessageExecutors;
-using FakeXrmEasy.Middleware;
-using FakeXrmEasy.Middleware.Crud;
-using FakeXrmEasy.Middleware.Messages;
+using Fake4Dataverse;
 using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Extensions.Logging;
 using Microsoft.PowerPlatform.Dataverse.Client;
@@ -23,16 +19,8 @@ using Microsoft.Xrm.Sdk.Query;
 namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 {
     /// <summary>
-    /// Base class for all tests providing FakeXrmEasy mock connection infrastructure.
-    /// Mirrors the functionality of Common.ps1's getMockConnection() function.
+    /// Base class for all tests providing Fake4Dataverse mock connection infrastructure.
     /// </summary>
-    /// <remarks>
-    /// Note: PowerShell cmdlet invocation is NOT available in xUnit tests because
-    /// Microsoft.PowerShell.SDK only provides reference assemblies, not runtime assemblies.
-    /// Use this base class for testing internal cmdlet logic via FakeXrmEasy.
-    /// For full cmdlet integration testing, use E2E tests in Rnwood.Dataverse.Data.PowerShell.E2ETests/
-    /// which use PowerShellProcessRunner to execute cmdlets in child PowerShell processes.
-    /// </remarks>
     public abstract class TestBase : IDisposable
     {
         private static readonly Dictionary<string, EntityMetadata> MetadataCache = new();
@@ -62,14 +50,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         private readonly Guid _mockOrganizationId = Guid.NewGuid();
         
         /// <summary>
-        /// Gets the current test's organization service (wrapped with interceptor).
+        /// Gets the current test's organization service.
         /// </summary>
         protected IOrganizationService? Service { get; private set; }
 
         /// <summary>
-        /// Gets the current test's XrmFakedContext.
+        /// Gets the current test's FakeDataverseEnvironment.
         /// </summary>
-        protected IXrmFakedContext? Context { get; private set; }
+        protected FakeDataverseEnvironment? Environment { get; private set; }
 
         /// <summary>
         /// Gets the current test's ServiceClient (wrapper around mock service).
@@ -103,8 +91,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         /// Creates a mock connection with a request interceptor and specified entities' metadata loaded.
         /// </summary>
         /// <param name="requestInterceptor">
-        /// Optional delegate to intercept requests before FakeXrmEasy handles them.
-        /// Return an OrganizationResponse to short-circuit, or null to let FakeXrmEasy handle it.
+        /// Optional delegate to intercept requests before Fake4Dataverse handles them.
+        /// Return an OrganizationResponse to short-circuit, or null to let Fake4Dataverse handle it.
         /// </param>
         /// <param name="entities">Entity names to load metadata for (default: "contact")</param>
         /// <returns>A mock ServiceClient</returns>
@@ -133,199 +121,53 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 
         /// <summary>
         /// Creates a mock connection with custom metadata.
-        /// Use this when you need to modify entity metadata (e.g., add alternate keys) without affecting other tests.
         /// </summary>
-        /// <param name="requestInterceptor">
-        /// Optional delegate to intercept requests before FakeXrmEasy handles them.
-        /// Return an OrganizationResponse to short-circuit, or null to let FakeXrmEasy handle it.
-        /// </param>
-        /// <param name="customMetadata">Custom entity metadata collection for this connection</param>
-        /// <returns>A mock ServiceClient</returns>
         protected ServiceClient CreateMockConnectionWithCustomMetadata(
             Func<OrganizationRequest, OrganizationResponse?>? requestInterceptor,
             List<EntityMetadata> customMetadata)
         {
             _loadedMetadata = customMetadata;
 
-            // Create XrmFakedContext with middleware - same approach as Get-DataverseConnection -Mock
-            var context = MiddlewareBuilder
-                .New()
-                .AddCrud()
-                .AddFakeMessageExecutors(Assembly.GetAssembly(typeof(RetrieveEntityRequestExecutor)))
-                .UseMessages()
-                .UseCrud()
-                .SetLicense(FakeXrmEasyLicense.NonCommercial)
-                .Build();
+            // Create Fake4Dataverse environment
+            var env = new FakeDataverseEnvironment();
+            env.OrganizationId = _mockOrganizationId;
+            env.OrganizationName = "MockOrganization";
+            Environment = env;
 
-            // Initialize metadata
-            context.InitializeMetadata(customMetadata);
+            // Initialize metadata into Fake4Dataverse's MetadataStore
+            InitializeMetadataInStore(env, customMetadata);
 
-            Context = context;
-            var baseService = context.GetOrganizationService();
+            // Register custom handlers for requests not natively supported by Fake4Dataverse
+            RegisterDefaultHandlers(env, customMetadata);
 
-            // Combine user interceptor with default interceptors for unsupported FakeXrmEasy requests
-            // This mirrors Common.ps1's getMockConnection behavior
-            OrganizationResponse? CombinedInterceptor(OrganizationRequest request)
+            // Seed organization record for SQL4Cds and other queries
+            env.Seed(new Entity("organization", _mockOrganizationId)
             {
-                // First try the user's custom interceptor - it takes priority
-                if (requestInterceptor != null)
-                {
-                    var customResult = requestInterceptor(request);
-                    if (customResult != null)
-                    {
-                        return customResult;
-                    }
-                }
+                ["name"] = "MockOrganization",
+                ["localeid"] = 1033,
+                ["languagecode"] = 1033
+            });
 
-                if (request is RetrieveRequest retrieveRequest && retrieveRequest.Target != null)
-                {
-                    var target = retrieveRequest.Target;
-                    if (target.LogicalName is "systemuser" or "team")
-                    {
-                        var entity = GetOrCreateEntity(context, target.LogicalName, target.Id);
-                        var response = new RetrieveResponse();
-                        response.Results["Entity"] = entity;
-                        return response;
-                    }
+            // Seed a systemuser for the mock user
+            env.Seed(new Entity("systemuser", _mockUserId)
+            {
+                ["fullname"] = "Mock User",
+                ["domainname"] = "mockuser@fakeorg.onmicrosoft.com"
+            });
 
-                    if (target.LogicalName == "contact" && target.Id == Guid.Empty)
-                    {
-                        var entity = GetOrCreateEntity(context, target.LogicalName, target.Id);
-                        var response = new RetrieveResponse();
-                        response.Results["Entity"] = entity;
-                        return response;
-                    }
-                }
+            // Create the organization service with our mock user ID
+            var fakeService = env.CreateOrganizationService(_mockUserId);
+            fakeService.BusinessUnitId = _mockBusinessUnitId;
 
-                if (request is RetrieveMultipleRequest retrieveMultipleRequest)
-                {
-                    // Handle RetrieveMultiple for organization entity (used by SQL4Cds DataSource constructor)
-                    if (retrieveMultipleRequest.Query is QueryExpression qe && qe.EntityName == "organization")
-                    {
-                        var orgEntity = new Entity("organization", _mockOrganizationId)
-                        {
-                            ["name"] = "MockOrganization",
-                            ["localeid"] = 1033 // English
-                        };
-                        var response = new RetrieveMultipleResponse();
-                        response.Results["EntityCollection"] = new EntityCollection(new List<Entity> { orgEntity });
-                        return response;
-                    }
-
-                    if (retrieveMultipleRequest.Query is QueryExpression qe2 && qe2.EntityName is "systemuser" or "team")
-                    {
-                        var targetId = ExtractIdFromFilters(qe2.Criteria);
-                        var entity = GetOrCreateEntity(context, qe2.EntityName, targetId);
-                        var response = new RetrieveMultipleResponse();
-                        response.Results["EntityCollection"] = new EntityCollection(new List<Entity> { entity });
-                        return response;
-                    }
-
-                    if (retrieveMultipleRequest.Query is QueryByAttribute qba && qba.EntityName is "systemuser" or "team")
-                    {
-                        var targetId = ExtractIdFromQueryByAttribute(qba);
-                        var entity = GetOrCreateEntity(context, qba.EntityName, targetId);
-                        var response = new RetrieveMultipleResponse();
-                        response.Results["EntityCollection"] = new EntityCollection(new List<Entity> { entity });
-                        return response;
-                    }
-                }
-
-                // Handle AssignRequest by updating ownerid on the target entity
-                if (request is AssignRequest assignRequest && assignRequest.Target != null && assignRequest.Assignee != null)
-                {
-                    var target = assignRequest.Target;
-                    var assignee = assignRequest.Assignee;
-
-                    var targetId = ResolveTargetId(target, context);
-                    var entity = baseService.Retrieve(target.LogicalName, targetId, new ColumnSet(true));
-                    entity["ownerid"] = new EntityReference(assignee.LogicalName, assignee.Id);
-                    baseService.Update(entity);
-
-                    return new AssignResponse { ResponseName = "Assign" };
-                }
-
-                // Handle SetStateRequest by setting statecode/statuscode on the entity
-                if (request is SetStateRequest setStateRequest && setStateRequest.EntityMoniker != null)
-                {
-                    var target = setStateRequest.EntityMoniker;
-                    var targetId = ResolveTargetId(target, context);
-                    var entity = baseService.Retrieve(target.LogicalName, targetId, new ColumnSet(true));
-
-                    if (setStateRequest.State != null)
-                    {
-                        entity["statecode"] = setStateRequest.State;
-                    }
-                    if (setStateRequest.Status != null)
-                    {
-                        entity["statuscode"] = setStateRequest.Status;
-                    }
-
-                    baseService.Update(entity);
-                    return new SetStateResponse { ResponseName = "SetState" };
-                }
-
-                // Handle RetrieveUnpublishedMultipleRequest by delegating to regular RetrieveMultiple
-                // This allows tests to work with forms and other components that query unpublished data first
-                var requestTypeName = request.GetType().Name;
-                if (requestTypeName == "RetrieveUnpublishedMultipleRequest")
-                {
-                    // Extract the Query property and execute as regular RetrieveMultiple
-                    var queryProperty = request.GetType().GetProperty("Query");
-                    if (queryProperty != null)
-                    {
-                        var query = queryProperty.GetValue(request) as QueryBase;
-                        if (query != null)
-                        {
-                            var rmRequest = new RetrieveMultipleRequest { Query = query };
-                            var rmResponse = baseService.Execute(rmRequest) as RetrieveMultipleResponse;
-                            var response = new RetrieveUnpublishedMultipleResponse();
-                            response.Results["EntityCollection"] = rmResponse?.EntityCollection ?? new EntityCollection();
-                            return response;
-                        }
-                    }
-                    // Fallback to empty collection if we can't extract query
-                    var emptyResponse = new RetrieveUnpublishedMultipleResponse();
-                    emptyResponse.Results["EntityCollection"] = new EntityCollection();
-                    return emptyResponse;
-                }
-
-                // Handle RetrieveUnpublishedRequest similarly
-                if (requestTypeName == "RetrieveUnpublishedRequest")
-                {
-                    var targetProperty = request.GetType().GetProperty("Target");
-                    var columnSetProperty = request.GetType().GetProperty("ColumnSet");
-                    if (targetProperty != null && columnSetProperty != null)
-                    {
-                        var target = targetProperty.GetValue(request) as EntityReference;
-                        var columnSet = columnSetProperty.GetValue(request) as ColumnSet;
-                        if (target != null && columnSet != null)
-                        {
-                            try
-                            {
-                                var entity = baseService.Retrieve(target.LogicalName, target.Id, columnSet);
-                                var response = new RetrieveUnpublishedResponse();
-                                response.Results["Entity"] = entity;
-                                return response;
-                            }
-                            catch (System.ServiceModel.FaultException)
-                            {
-                                // Entity not found - re-throw the fault so cmdlet can handle it properly
-                                throw;
-                            }
-                        }
-                    }
-                }
-
-                // Handle unsupported requests that FakeXrmEasy doesn't support
-                return DefaultInterceptor(request, customMetadata, _mockUserId, _mockBusinessUnitId, _mockOrganizationId);
+            // If there's a custom interceptor, wrap the service
+            if (requestInterceptor != null)
+            {
+                Service = new MockOrganizationServiceWithInterceptor(fakeService, requestInterceptor);
             }
-
-            // Wrap service layers:
-            // 1. ThreadSafeOrganizationService - allows parallel operations without Clone()
-            // 2. MockOrganizationServiceWithInterceptor - handles unsupported FakeXrmEasy requests
-            var threadSafeService = new ThreadSafeOrganizationService(baseService);
-            Service = new MockOrganizationServiceWithInterceptor(threadSafeService, CombinedInterceptor);
+            else
+            {
+                Service = fakeService;
+            }
 
             // Create CloneableMockServiceClient that supports cloning for parallel operations
             var httpClient = new HttpClient(new FakeHttpMessageHandler());
@@ -340,259 +182,89 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         }
 
         /// <summary>
-        /// Default request interceptor that handles unsupported FakeXrmEasy requests.
-        /// Mirrors the behavior from Common.ps1's getMockConnection.
+        /// Initializes entity metadata from SDK EntityMetadata objects into the Fake4Dataverse MetadataStore.
         /// </summary>
-        protected static OrganizationResponse? DefaultInterceptor(
-            OrganizationRequest request, 
-            IEnumerable<EntityMetadata> loadedMetadata,
-            Guid mockUserId,
-            Guid mockBusinessUnitId,
-            Guid mockOrganizationId)
+        private static void InitializeMetadataInStore(FakeDataverseEnvironment env, List<EntityMetadata> metadataList)
         {
-            var requestTypeName = request.GetType().Name;
-
-            // Note: RetrieveUnpublishedMultipleRequest and RetrieveUnpublishedRequest are handled 
-            // in CombinedInterceptor where we have access to the base service
-
-            // Handle RetrieveAllEntitiesRequest - return loaded metadata
-            if (requestTypeName == "RetrieveAllEntitiesRequest")
+            foreach (var entityMeta in metadataList)
             {
-                var response = new RetrieveAllEntitiesResponse();
-                response.Results["EntityMetadata"] = loadedMetadata.ToArray();
-                return response;
-            }
+                if (string.IsNullOrEmpty(entityMeta.LogicalName))
+                    continue;
 
-            // Handle ValidateAppRequest - return success response
-            if (requestTypeName == "ValidateAppRequest")
-            {
-                var response = new ValidateAppResponse();
-                // Create minimal validation response indicating success
-                var validationResponseType = typeof(ValidateAppResponse).Assembly
-                    .GetType("Microsoft.Crm.Sdk.Messages.AppValidationResponse");
-                if (validationResponseType != null)
+                var builder = env.MetadataStore.AddEntity(entityMeta.LogicalName);
+
+                if (!string.IsNullOrEmpty(entityMeta.SchemaName))
+                    builder.WithSchemaName(entityMeta.SchemaName);
+
+                if (!string.IsNullOrEmpty(entityMeta.PrimaryIdAttribute))
+                    builder.WithPrimaryIdAttribute(entityMeta.PrimaryIdAttribute);
+
+                if (!string.IsNullOrEmpty(entityMeta.PrimaryNameAttribute))
+                    builder.WithPrimaryNameAttribute(entityMeta.PrimaryNameAttribute);
+
+                if (entityMeta.ObjectTypeCode.HasValue)
+                    builder.WithObjectTypeCode(entityMeta.ObjectTypeCode.Value);
+
+                // Add attributes - use typed builder methods for attributes that need more detail
+                if (entityMeta.Attributes != null)
                 {
-                    var validationResponse = Activator.CreateInstance(validationResponseType);
-                    var listProp = validationResponseType.GetProperty("ValidationIssueList");
-                    listProp?.SetValue(validationResponse, Array.Empty<object>());
-                    response.Results["AppValidationResponse"] = validationResponse;
-                }
-                return response;
-            }
-
-            // Handle PublishXmlRequest - return empty response
-            if (requestTypeName == "PublishXmlRequest")
-            {
-                return new PublishXmlResponse();
-            }
-
-            // Handle UpdateEntityRequest - return empty response
-            if (requestTypeName == "UpdateEntityRequest")
-            {
-                return new UpdateEntityResponse();
-            }
-
-            // Handle RetrieveRequest for organization entity (used by GetBaseLanguageCode)
-            if (request is RetrieveRequest retrieveRequest && 
-                retrieveRequest.Target?.LogicalName == "organization")
-            {
-                var orgEntity = new Entity("organization", retrieveRequest.Target.Id)
-                {
-                    ["languagecode"] = 1033 // English
-                };
-                var response = new RetrieveResponse();
-                response.Results["Entity"] = orgEntity;
-                return response;
-            }
-
-            // Handle RetrieveEntityRequest - return entity metadata from cache
-            if (request is RetrieveEntityRequest retrieveEntityRequest)
-            {
-                foreach (var meta in loadedMetadata)
-                {
-                    if (meta.LogicalName == retrieveEntityRequest.LogicalName)
+                    foreach (var attr in entityMeta.Attributes)
                     {
-                        var response = new RetrieveEntityResponse();
-                        response.Results["EntityMetadata"] = meta;
-                        return response;
-                    }
-                }
-                // If entity not found, throw not found exception so cmdlet knows to create it
-                throw new System.ServiceModel.FaultException<OrganizationServiceFault>(
-                    new OrganizationServiceFault 
-                    { 
-                        ErrorCode = -2147220969, // Entity not found error code
-                        Message = $"Entity '{retrieveEntityRequest.LogicalName}' does not exist"
-                    },
-                    new System.ServiceModel.FaultReason($"Entity '{retrieveEntityRequest.LogicalName}' does not exist"));
-            }
+                        if (string.IsNullOrEmpty(attr.LogicalName))
+                            continue;
 
-            // Handle RetrieveAttributeRequest - return attribute metadata from entity metadata
-            if (request is RetrieveAttributeRequest retrieveAttributeRequest)
-            {
-                foreach (var meta in loadedMetadata)
-                {
-                    if (meta.LogicalName == retrieveAttributeRequest.EntityLogicalName)
-                    {
-                        var attribute = meta.Attributes?.FirstOrDefault(
-                            a => a.LogicalName == retrieveAttributeRequest.LogicalName);
-                        if (attribute != null)
+                        var attrType = attr.AttributeType ?? AttributeTypeCode.String;
+
+                        if (attr is LookupAttributeMetadata lookupAttr && lookupAttr.Targets?.Length > 0)
                         {
-                            var response = new RetrieveAttributeResponse();
-                            response.Results["AttributeMetadata"] = attribute;
-                            return response;
+                            builder.WithLookupAttribute(attr.LogicalName, lookupAttr.Targets);
                         }
-                        // Attribute not found - throw not found exception
-                        throw new System.ServiceModel.FaultException<OrganizationServiceFault>(
-                            new OrganizationServiceFault 
-                            { 
-                                ErrorCode = -2147220969,
-                                Message = $"Attribute '{retrieveAttributeRequest.LogicalName}' does not exist on entity '{retrieveAttributeRequest.EntityLogicalName}'"
-                            },
-                            new System.ServiceModel.FaultReason($"Attribute '{retrieveAttributeRequest.LogicalName}' does not exist"));
+                        else if (attr is PicklistAttributeMetadata picklistAttr && picklistAttr.OptionSet?.Options?.Count > 0)
+                        {
+                            var values = picklistAttr.OptionSet.Options
+                                .Where(o => o.Value.HasValue)
+                                .Select(o => o.Value!.Value)
+                                .ToArray();
+                            builder.WithOptionSetAttribute(attr.LogicalName, values);
+                        }
+                        else if (attrType == AttributeTypeCode.Boolean)
+                        {
+                            builder.WithBooleanAttribute(attr.LogicalName);
+                        }
+                        else
+                        {
+                            builder.WithAttribute(attr.LogicalName, attrType);
+                        }
                     }
                 }
-                // Entity not found - throw not found exception
-                throw new System.ServiceModel.FaultException<OrganizationServiceFault>(
-                    new OrganizationServiceFault 
-                    { 
-                        ErrorCode = -2147220969,
-                        Message = $"Entity '{retrieveAttributeRequest.EntityLogicalName}' does not exist"
-                    },
-                    new System.ServiceModel.FaultReason($"Entity '{retrieveAttributeRequest.EntityLogicalName}' does not exist"));
-            }
 
-            // Handle AddAppComponentsRequest and RemoveAppComponentsRequest
-            if (requestTypeName == "AddAppComponentsRequest" || requestTypeName == "RemoveAppComponentsRequest")
-            {
-                return new OrganizationResponse();
-            }
-
-            // Handle WhoAmIRequest - return mock identity (by type or RequestName)
-            if (request is WhoAmIRequest || request.RequestName == "WhoAmI")
-            {
-                var response = new WhoAmIResponse
+                // Add alternate keys
+                if (entityMeta.Keys != null)
                 {
-                    Results =
+                    foreach (var key in entityMeta.Keys)
                     {
-                        ["UserId"] = mockUserId,
-                        ["BusinessUnitId"] = mockBusinessUnitId,
-                        ["OrganizationId"] = mockOrganizationId
+                        if (!string.IsNullOrEmpty(key.LogicalName) && key.KeyAttributes?.Length > 0)
+                        {
+                            builder.WithAlternateKey(key.LogicalName, key.KeyAttributes);
+                        }
                     }
-                };
-                return response;
-            }
-
-            // Handle CreateAttributeRequest - return mock UUID
-            if (requestTypeName == "CreateAttributeRequest" || request.RequestName == "CreateAttribute")
-            {
-                var response = new OrganizationResponse { ResponseName = "CreateAttribute" };
-                response.Results["AttributeId"] = Guid.NewGuid();
-                return response;
-            }
-
-            // Handle UpdateAttributeRequest - return empty response
-            if (requestTypeName == "UpdateAttributeRequest" || request.RequestName == "UpdateAttribute")
-            {
-                return new OrganizationResponse { ResponseName = "UpdateAttribute" };
-            }
-
-            // Handle DeleteAttributeRequest - return empty response
-            if (requestTypeName == "DeleteAttributeRequest" || request.RequestName == "DeleteAttribute")
-            {
-                return new OrganizationResponse { ResponseName = "DeleteAttribute" };
-            }
-
-            // Handle CreateEntityKeyRequest (by type name or RequestName property)
-            if (requestTypeName == "CreateEntityKeyRequest" || request.RequestName == "CreateEntityKey")
-            {
-                // Return a CreateEntityKeyResponse with proper type
-                var response = new CreateEntityKeyResponse();
-                response.Results["EntityKeyId"] = Guid.NewGuid();
-                return response;
-            }
-
-            // Handle DeleteEntityKeyRequest (by type name or RequestName property)
-            if (requestTypeName == "DeleteEntityKeyRequest" || request.RequestName == "DeleteEntityKey")
-            {
-                return new OrganizationResponse { ResponseName = "DeleteEntityKey" };
-            }
-
-            // Handle RetrieveEntityKeyRequest - return not found by default
-            // Tests that need specific keys should provide their own interceptor
-
-            // Handle RetrieveMissingDependenciesRequest - return empty collection by default
-            if (request is RetrieveMissingDependenciesRequest || requestTypeName == "RetrieveMissingDependenciesRequest")
-            {
-                var response = new RetrieveMissingDependenciesResponse();
-                response.Results["EntityCollection"] = new EntityCollection();
-                return response;
-            }
-
-            // Handle RetrieveDependenciesForUninstallRequest - return empty collection by default
-            if (request is RetrieveDependenciesForUninstallRequest || requestTypeName == "RetrieveDependenciesForUninstallRequest")
-            {
-                var response = new RetrieveDependenciesForUninstallResponse();
-                response.Results["EntityCollection"] = new EntityCollection();
-                return response;
-            }
-
-            // Handle CreateEntityRequest - return mock entity metadata ID
-            if (requestTypeName == "CreateEntityRequest" || request.RequestName == "CreateEntity")
-            {
-                var response = new CreateEntityResponse();
-                response.Results["EntityId"] = Guid.NewGuid();
-                response.Results["AttributeId"] = Guid.NewGuid();
-                return response;
-            }
-
-            // Handle CreateManyToManyRequest - return mock relationship ID
-            if (requestTypeName == "CreateManyToManyRequest" || request.RequestName == "CreateManyToMany")
-            {
-                var response = new CreateManyToManyResponse();
-                response.Results["ManyToManyRelationshipId"] = Guid.NewGuid();
-                return response;
-            }
-
-            // Handle CreateOneToManyRequest - return mock relationship ID
-            if (requestTypeName == "CreateOneToManyRequest" || request.RequestName == "CreateOneToMany")
-            {
-                var response = new CreateOneToManyResponse();
-                response.Results["RelationshipId"] = Guid.NewGuid();
-                response.Results["AttributeId"] = Guid.NewGuid();
-                return response;
-            }
-
-            // Handle QueryExpressionToFetchXmlRequest - convert QueryExpression to FetchXML
-            if (request is QueryExpressionToFetchXmlRequest qeToFetchXmlRequest)
-            {
-                var queryExpression = qeToFetchXmlRequest.Query as QueryExpression;
-                if (queryExpression == null)
-                {
-                    throw new ArgumentException("Query must be a QueryExpression");
                 }
-                var fetchXml = ConvertQueryExpressionToFetchXml(queryExpression);
-                var response = new QueryExpressionToFetchXmlResponse();
-                response.Results["FetchXml"] = fetchXml;
-                return response;
             }
 
-            // Handle RetrieveRelationshipRequest - return not found by default
-            // Tests that need existing relationships should provide their own test data
-            if (request is RetrieveRelationshipRequest || requestTypeName == "RetrieveRelationshipRequest" || request.RequestName == "RetrieveRelationship")
-            {
-                // Throw not found exception so cmdlet knows to create rather than update
-                throw new System.ServiceModel.FaultException<OrganizationServiceFault>(
-                    new OrganizationServiceFault 
-                    { 
-                        ErrorCode = -2147220969, // Not found error code
-                        Message = "Relationship not found"
-                    },
-                    new System.ServiceModel.FaultReason("Relationship not found"));
-            }
+            // Add well-known system entities if not already present
+            EnsureSystemEntity(env, "systemuser", "SystemUser", "systemuserid", "fullname", 8);
+            EnsureSystemEntity(env, "team", "Team", "teamid", "name", 9);
+            EnsureSystemEntity(env, "organization", "Organization", "organizationid", "name", 1);
+        }
 
-            // Don't return anything - let FakeXrmEasy handle the request
-            return null;
+        private static void EnsureSystemEntity(FakeDataverseEnvironment env, string logicalName, string schemaName, string primaryIdAttr, string primaryNameAttr, int objectTypeCode)
+        {
+            // AddEntity returns existing builder if already added, so this is safe to call multiple times
+            env.MetadataStore.AddEntity(logicalName)
+                .WithSchemaName(schemaName)
+                .WithPrimaryIdAttribute(primaryIdAttr)
+                .WithPrimaryNameAttribute(primaryNameAttr)
+                .WithObjectTypeCode(objectTypeCode);
         }
 
         /// <summary>
@@ -753,204 +425,153 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             prop?.SetValue(target, value);
         }
 
-        private static Guid ResolveTargetId(EntityReference target, IXrmFakedContext context)
-        {
-            if (target.Id != Guid.Empty)
-            {
-                return target.Id;
-            }
-
-            var existing = context.CreateQuery(target.LogicalName).FirstOrDefault();
-            if (existing != null)
-            {
-                return existing.Id;
-            }
-
-            // If nothing exists yet, create a placeholder so follow-up requests succeed
-            var placeholder = new Entity(target.LogicalName) { Id = Guid.NewGuid() };
-            context.Initialize(new[] { placeholder });
-            return placeholder.Id;
-        }
-
-        private static Entity GetOrCreateEntity(IXrmFakedContext context, string logicalName, Guid id)
-        {
-            var entity = id != Guid.Empty
-                ? context.CreateQuery(logicalName).FirstOrDefault(e => e.Id == id)
-                : context.CreateQuery(logicalName).FirstOrDefault();
-
-            if (entity != null)
-            {
-                return entity;
-            }
-
-            var placeholder = new Entity(logicalName)
-            {
-                Id = id == Guid.Empty ? Guid.NewGuid() : id
-            };
-            context.Initialize(new[] { placeholder });
-            return placeholder;
-        }
-
-        private static Guid ExtractIdFromFilters(FilterExpression criteria)
-        {
-            foreach (var condition in criteria.Conditions)
-            {
-                if (condition.AttributeName.Equals("systemuserid", StringComparison.OrdinalIgnoreCase) ||
-                    condition.AttributeName.Equals("teamid", StringComparison.OrdinalIgnoreCase) ||
-                    condition.AttributeName.Equals("id", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (condition.Values.Count > 0 && condition.Values[0] is Guid guid)
-                    {
-                        return guid;
-                    }
-                }
-            }
-
-            foreach (var filter in criteria.Filters)
-            {
-                var nested = ExtractIdFromFilters(filter);
-                if (nested != Guid.Empty)
-                {
-                    return nested;
-                }
-            }
-
-            return Guid.Empty;
-        }
-
-        private static Guid ExtractIdFromQueryByAttribute(QueryByAttribute query)
-        {
-            for (int i = 0; i < query.Attributes.Count; i++)
-            {
-                var attr = query.Attributes[i] as string;
-                if (attr != null && (attr.Equals("systemuserid", StringComparison.OrdinalIgnoreCase)
-                    || attr.Equals("teamid", StringComparison.OrdinalIgnoreCase)
-                    || attr.Equals("id", StringComparison.OrdinalIgnoreCase)))
-                {
-                    if (i < query.Values.Count && query.Values[i] is Guid guid)
-                    {
-                        return guid;
-                    }
-                }
-            }
-
-            return Guid.Empty;
-        }
-
         /// <summary>
-        /// Converts a QueryExpression to FetchXML. This is a simplified conversion
-        /// for testing purposes that handles common scenarios.
+        /// Registers custom API handlers for request types not natively supported by Fake4Dataverse
+        /// but used by the cmdlets under test.
         /// </summary>
-        private static string ConvertQueryExpressionToFetchXml(QueryExpression query)
+        private static void RegisterDefaultHandlers(
+            FakeDataverseEnvironment env,
+            List<EntityMetadata> customMetadata)
         {
-            var fetchXml = new System.Xml.Linq.XElement("fetch",
-                new System.Xml.Linq.XAttribute("mapping", "logical"));
-
-            var entity = new System.Xml.Linq.XElement("entity",
-                new System.Xml.Linq.XAttribute("name", query.EntityName));
-
-            // Add columns
-            if (query.ColumnSet.AllColumns)
+            // RetrieveUnpublishedMultipleRequest → delegate to RetrieveMultiple
+            env.RegisterCustomApi("RetrieveUnpublishedMultiple", (request, service) =>
             {
-                entity.Add(new System.Xml.Linq.XElement("all-attributes"));
-            }
-            else
+                var query = (QueryBase)request["Query"];
+                var result = service.RetrieveMultiple(query);
+                var response = new RetrieveUnpublishedMultipleResponse();
+                response.Results["EntityCollection"] = result;
+                return response;
+            });
+
+            // RetrieveUnpublishedRequest → delegate to Retrieve
+            env.RegisterCustomApi("RetrieveUnpublished", (request, service) =>
             {
-                foreach (var column in query.ColumnSet.Columns)
+                var target = (EntityReference)request["Target"];
+                var columnSet = (ColumnSet)request["ColumnSet"];
+                var entity = service.Retrieve(target.LogicalName, target.Id, columnSet);
+                var response = new RetrieveUnpublishedResponse();
+                response.Results["Entity"] = entity;
+                return response;
+            });
+
+            // RetrieveMissingDependenciesRequest → empty collection
+            env.RegisterCustomApi("RetrieveMissingDependencies", (request, service) =>
+            {
+                var response = new RetrieveMissingDependenciesResponse();
+                response.Results["EntityCollection"] = new EntityCollection();
+                return response;
+            });
+
+            // RetrieveDependenciesForUninstallRequest → empty collection
+            env.RegisterCustomApi("RetrieveDependenciesForUninstall", (request, service) =>
+            {
+                var response = new RetrieveDependenciesForUninstallResponse();
+                response.Results["EntityCollection"] = new EntityCollection();
+                return response;
+            });
+
+            // ValidateAppRequest → return success with empty validation list
+            env.RegisterCustomApi("ValidateApp", (request, service) =>
+            {
+                var response = new ValidateAppResponse();
+                response.Results["AppValidationResponse"] = new AppValidationResponse
                 {
-                    entity.Add(new System.Xml.Linq.XElement("attribute",
-                        new System.Xml.Linq.XAttribute("name", column)));
-                }
-            }
+                    ValidationSuccess = true,
+                    ValidationIssueList = Array.Empty<ValidationIssue>()
+                };
+                return response;
+            });
 
-            // Add orders
-            foreach (var order in query.Orders)
+            // AddAppComponentsRequest → no-op
+            env.RegisterCustomApi("AddAppComponents", (request, service) =>
             {
-                entity.Add(new System.Xml.Linq.XElement("order",
-                    new System.Xml.Linq.XAttribute("attribute", order.AttributeName),
-                    new System.Xml.Linq.XAttribute("descending", order.OrderType == OrderType.Descending ? "true" : "false")));
-            }
+                return new AddAppComponentsResponse();
+            });
 
-            // Add filter conditions (simplified)
-            if (query.Criteria != null && (query.Criteria.Conditions.Count > 0 || query.Criteria.Filters.Count > 0))
+            // RemoveAppComponentsRequest → no-op
+            env.RegisterCustomApi("RemoveAppComponents", (request, service) =>
             {
-                var filter = ConvertFilterExpressionToFetchXml(query.Criteria);
-                entity.Add(filter);
-            }
+                return new RemoveAppComponentsResponse();
+            });
 
-            fetchXml.Add(entity);
-            return fetchXml.ToString();
-        }
-
-        /// <summary>
-        /// Converts a FilterExpression to a FetchXML filter element.
-        /// </summary>
-        private static System.Xml.Linq.XElement ConvertFilterExpressionToFetchXml(FilterExpression filterExpression)
-        {
-            var filter = new System.Xml.Linq.XElement("filter",
-                new System.Xml.Linq.XAttribute("type", filterExpression.FilterOperator == LogicalOperator.And ? "and" : "or"));
-
-            foreach (var condition in filterExpression.Conditions)
+            // Override RetrieveEntity to return full SDK metadata from XML files.
+            // The Fake4Dataverse MetadataStore uses a lossy internal format that strips
+            // option set labels, boolean options, and typed attribute subclasses.
+            // By returning the original SDK EntityMetadata, we preserve all details.
+            // Falls back to the MetadataStore for entities not in XML files (e.g. newly created).
+            env.RegisterCustomApi("RetrieveEntity", (request, service) =>
             {
-                var conditionElement = new System.Xml.Linq.XElement("condition",
-                    new System.Xml.Linq.XAttribute("attribute", condition.AttributeName),
-                    new System.Xml.Linq.XAttribute("operator", GetFetchXmlOperator(condition.Operator)));
+                var logicalName = request.Parameters.ContainsKey("LogicalName")
+                    ? (string?)request["LogicalName"] : null;
 
-                if (condition.Values != null && condition.Values.Count > 0)
+                EntityMetadata? match = null;
+                if (!string.IsNullOrEmpty(logicalName))
                 {
-                    if (condition.Values.Count == 1)
+                    match = customMetadata.FirstOrDefault(m =>
+                        string.Equals(m.LogicalName, logicalName, StringComparison.OrdinalIgnoreCase));
+                }
+
+                if (match != null)
+                {
+                    var response = new RetrieveEntityResponse();
+                    response.Results["EntityMetadata"] = match;
+                    return response;
+                }
+
+                // Fall back to MetadataStore for entities not in XML files
+                // (e.g. newly created via CreateEntityRequest).
+                // Bypass our custom API override and use the built-in typed handler.
+                var typedRequest = new RetrieveEntityRequest
+                {
+                    LogicalName = logicalName,
+                    EntityFilters = request.Parameters.ContainsKey("EntityFilters")
+                        ? (Microsoft.Xrm.Sdk.Metadata.EntityFilters)request["EntityFilters"]
+                        : Microsoft.Xrm.Sdk.Metadata.EntityFilters.All
+                };
+                return (RetrieveEntityResponse)env.HandlerRegistry.ExecuteSkippingCustomApis(typedRequest, service);
+            });
+
+            // Override RetrieveAllEntities to return full SDK metadata
+            env.RegisterCustomApi("RetrieveAllEntities", (request, service) =>
+            {
+                var response = new RetrieveAllEntitiesResponse();
+                response.Results["EntityMetadata"] = customMetadata.ToArray();
+                return response;
+            });
+
+            // Override RetrieveAttribute to return full SDK attribute metadata from XML files.
+            // This preserves SchemaName, MaxLength, option set labels, boolean options, etc.
+            // Falls back to the MetadataStore for attributes not in XML files (e.g. newly created).
+            env.RegisterCustomApi("RetrieveAttribute", (request, service) =>
+            {
+                var entityLogicalName = (string?)request["EntityLogicalName"];
+                var logicalName = (string?)request["LogicalName"];
+
+                var entityMeta = customMetadata.FirstOrDefault(m =>
+                    string.Equals(m.LogicalName, entityLogicalName, StringComparison.OrdinalIgnoreCase));
+
+                if (entityMeta?.Attributes != null && !string.IsNullOrEmpty(logicalName))
+                {
+                    var attr = entityMeta.Attributes.FirstOrDefault(a =>
+                        string.Equals(a.LogicalName, logicalName, StringComparison.OrdinalIgnoreCase));
+
+                    if (attr != null)
                     {
-                        conditionElement.Add(new System.Xml.Linq.XAttribute("value", condition.Values[0]?.ToString() ?? ""));
-                    }
-                    else
-                    {
-                        foreach (var value in condition.Values)
-                        {
-                            conditionElement.Add(new System.Xml.Linq.XElement("value", value?.ToString() ?? ""));
-                        }
+                        var response = new RetrieveAttributeResponse();
+                        response.Results["AttributeMetadata"] = attr;
+                        return response;
                     }
                 }
 
-                filter.Add(conditionElement);
-            }
-
-            foreach (var nestedFilter in filterExpression.Filters)
-            {
-                filter.Add(ConvertFilterExpressionToFetchXml(nestedFilter));
-            }
-
-            return filter;
-        }
-
-        /// <summary>
-        /// Maps ConditionOperator to FetchXML operator string.
-        /// </summary>
-        private static string GetFetchXmlOperator(ConditionOperator op)
-        {
-            return op switch
-            {
-                ConditionOperator.Equal => "eq",
-                ConditionOperator.NotEqual => "ne",
-                ConditionOperator.GreaterThan => "gt",
-                ConditionOperator.GreaterEqual => "ge",
-                ConditionOperator.LessThan => "lt",
-                ConditionOperator.LessEqual => "le",
-                ConditionOperator.Like => "like",
-                ConditionOperator.NotLike => "not-like",
-                ConditionOperator.In => "in",
-                ConditionOperator.NotIn => "not-in",
-                ConditionOperator.Null => "null",
-                ConditionOperator.NotNull => "not-null",
-                ConditionOperator.Between => "between",
-                ConditionOperator.NotBetween => "not-between",
-                ConditionOperator.Contains => "like",
-                ConditionOperator.DoesNotContain => "not-like",
-                ConditionOperator.BeginsWith => "begins-with",
-                ConditionOperator.DoesNotBeginWith => "not-begin-with",
-                ConditionOperator.EndsWith => "ends-with",
-                ConditionOperator.DoesNotEndWith => "not-end-with",
-                _ => "eq"
-            };
+                // Fall back to MetadataStore for attributes not in XML files
+                // (e.g. newly created via CreateAttributeRequest).
+                var typedRequest = new RetrieveAttributeRequest
+                {
+                    EntityLogicalName = entityLogicalName,
+                    LogicalName = logicalName
+                };
+                return (RetrieveAttributeResponse)env.HandlerRegistry.ExecuteSkippingCustomApis(typedRequest, service);
+            });
         }
 
         /// <summary>
@@ -994,7 +615,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             Rnwood.Dataverse.Data.PowerShell.Commands.SetDataverseConnectionAsDefaultCmdlet.ClearDefault();
 
             Service = null;
-            Context = null;
+            Environment = null;
             Connection = null;
             GC.SuppressFinalize(this);
         }

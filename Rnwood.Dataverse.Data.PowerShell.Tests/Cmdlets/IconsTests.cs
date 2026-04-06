@@ -70,9 +70,9 @@ public class IconsTests : TestBase
         // Assert - Check for errors and display them if present
         if (ps.HadErrors)
         {
-            var errors = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => 
-                $"{e.Exception.GetType().Name}: {e.Exception.Message}{Environment.NewLine}{e.Exception.StackTrace}"));
-            Assert.Fail($"Cmdlet execution failed with errors:{Environment.NewLine}{errors}");
+            var errors = string.Join(System.Environment.NewLine, ps.Streams.Error.Select(e => 
+                $"{e.Exception.GetType().Name}: {e.Exception.Message}{System.Environment.NewLine}{e.Exception.StackTrace}"));
+            Assert.Fail($"Cmdlet execution failed with errors:{System.Environment.NewLine}{errors}");
         }
 
         // Assert - Verify web resource was created

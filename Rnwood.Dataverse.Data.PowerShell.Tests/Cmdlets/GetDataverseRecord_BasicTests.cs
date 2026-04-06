@@ -933,12 +933,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             var results = ps.Invoke();
 
             // Assert - Should return all 3: Joe One, Rob Two, Mary Two (NOT matching the exclude)
+            // Order is not guaranteed, so check contents rather than positions
             ps.HadErrors.Should().BeFalse();
             results.Should().HaveCount(3);
-            results[0].Properties["firstname"].Value.Should().Be("Joe");
-            results[1].Properties["firstname"].Value.Should().Be("Rob");
-            results[1].Properties["lastname"].Value.Should().Be("Two");
-            results[2].Properties["firstname"].Value.Should().Be("Mary");
+            var firstnames = results.Select(r => (string)r.Properties["firstname"].Value).ToList();
+            firstnames.Should().BeEquivalentTo(new[] { "Joe", "Rob", "Mary" });
+            var robTwo = results.First(r => (string)r.Properties["firstname"].Value == "Rob");
+            ((string)robTwo.Properties["lastname"].Value).Should().Be("Two");
         }
 
         #endregion
@@ -1240,8 +1241,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             ps.HadErrors.Should().BeFalse();
             results.Should().HaveCount(3);
             results.Select(r => r.Properties["firstname"].Value).Should().BeEquivalentTo(new[] { "Joe", "Rob", "Rob" });
-            // Joined column should use alias prefix
-            results[2].Properties["parentcontact.firstname"].Value.Should().Be("Joe");
+            // Joined column should use alias prefix - find the result that has the joined data
+            var joinedResult = results.FirstOrDefault(r => r.Properties["parentcontact.firstname"] != null);
+            joinedResult.Should().NotBeNull("at least one result should have joined parentcontact data");
+            joinedResult!.Properties["parentcontact.firstname"].Value.Should().Be("Joe");
         }
 
         [Fact]
@@ -1333,8 +1336,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             // Assert
             ps.HadErrors.Should().BeFalse();
             results.Should().HaveCount(2);
-            results[0].Properties["Id"].Value.Should().Be(id1);
-            results[1].Properties["Id"].Value.Should().Be(id2);
+            var returnedIds = results.Select(r => (Guid)r.Properties["Id"].Value).ToList();
+            returnedIds.Should().Contain(id1);
+            returnedIds.Should().Contain(id2);
         }
 
         #endregion

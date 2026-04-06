@@ -1,5 +1,4 @@
 using Xunit;
-using FakeXrmEasy.Abstractions;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Crm.Sdk.Messages;
 using System;

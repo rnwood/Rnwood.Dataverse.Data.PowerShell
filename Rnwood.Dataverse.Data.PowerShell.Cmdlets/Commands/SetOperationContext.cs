@@ -877,6 +877,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 // Detect and queue file uploads before creating the record
                 DetectAndQueueFileUploads(Target, null);
 
+                // Pre-assign an ID so that subsequent requests in the same batch
+                // (e.g. AssignRequest, SetStateRequest) can reference this entity
+                // via Target.ToEntityReference() before the batch is executed.
+                // Real Dataverse accepts client-assigned IDs on Create.
+                if (Target.Id == Guid.Empty)
+                    Target.Id = Guid.NewGuid();
+
                 // Handle regular entity creation
                 Entity targetCreate = new Entity(Target.LogicalName) { Id = Target.Id };
                 targetCreate.Attributes.AddRange(Target.Attributes.Where(a =>
