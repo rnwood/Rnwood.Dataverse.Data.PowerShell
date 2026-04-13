@@ -1,0 +1,64 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
+    <RootNamespace>Fake4Dataverse.Spkl</RootNamespace>
+    <AssemblyName>Fake4Dataverse.Spkl</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <PackageId>Fake4Dataverse.Spkl</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Fake4Dataverse Contributors</Authors>
+    <Description>SPKL-style plugin registration attributes and auto-registration extensions for Fake4Dataverse pipeline testing.</Description>
+    <PackageTags>dataverse;dynamics365;testing;fake;plugin;spkl;xrm</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fake4Dataverse\Fake4Dataverse.csproj" />
+  </ItemGroup>
+
+  <!--
+    Reference the spkl package only to obtain the package installation path via $(Pkgspkl).
+    IncludeAssets=none: no library assets, tools, or build targets are imported.
+    PrivateAssets=all: the dependency is not propagated to consumers.
+  -->
+  <ItemGroup>
+    <PackageReference Include="spkl" Version="1.0.640" GeneratePathProperty="true">
+      <IncludeAssets>none</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <!--
+    Generate CrmPluginRegistrationAttribute.g.cs from the spkl content file.
+    Prepend #nullable disable so the unannotated source compiles cleanly under our nullable-enabled project.
+  -->
+  <Target Name="GenerateSpklAttributeSource"
+          BeforeTargets="CoreCompile"
+          DependsOnTargets="ResolvePackageAssets"
+          Inputs="$(Pkgspkl)/content/CrmPluginRegistrationAttribute.cs"
+          Outputs="$(IntermediateOutputPath)CrmPluginRegistrationAttribute.g.cs">
+
+    <ReadLinesFromFile File="$(Pkgspkl)/content/CrmPluginRegistrationAttribute.cs">
+      <Output TaskParameter="Lines" ItemName="_SpklAttrContent" />
+    </ReadLinesFromFile>
+
+    <ItemGroup>
+      <_SpklAttrHeader Include="// &lt;auto-generated/&gt; Source: spkl 1.0.640 content/CrmPluginRegistrationAttribute.cs — do not edit." />
+      <_SpklAttrHeader Include="#nullable disable" />
+      <_SpklAttrHeader Include="#pragma warning disable CS1591,CS1573" />
+    </ItemGroup>
+
+    <WriteLinesToFile
+      File="$(IntermediateOutputPath)CrmPluginRegistrationAttribute.g.cs"
+      Lines="@(_SpklAttrHeader);@(_SpklAttrContent)"
+      Overwrite="true" />
+
+    <ItemGroup>
+      <Compile Include="$(IntermediateOutputPath)CrmPluginRegistrationAttribute.g.cs" />
+      <FileWrites Include="$(IntermediateOutputPath)CrmPluginRegistrationAttribute.g.cs" />
+    </ItemGroup>
+  </Target>
+
+</Project>

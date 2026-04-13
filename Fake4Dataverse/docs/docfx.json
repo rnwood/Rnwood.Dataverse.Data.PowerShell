@@ -1,0 +1,35 @@
+{
+  "metadata": [
+    {
+      "src": [
+        {
+          "files": ["src/Fake4Dataverse/**/*.cs"],
+          "src": ".."
+        }
+      ],
+      "dest": "api"
+    }
+  ],
+  "build": {
+    "content": [
+      {
+        "files": ["api/**.yml", "api/index.md"]
+      },
+      {
+        "files": ["docs/**.md", "docs/**/toc.yml", "*.md", "toc.yml"]
+      }
+    ],
+    "resource": [
+      {
+        "files": ["images/**"]
+      }
+    ],
+    "output": "_site",
+    "template": ["default", "modern"],
+    "globalMetadata": {
+      "_appTitle": "Fake4Dataverse",
+      "_appFooter": "Fake4Dataverse - In-Memory Fake IOrganizationService + IOrganizationServiceAsync2 for Dataverse Testing",
+      "_enableSearch": true
+    }
+  }
+}

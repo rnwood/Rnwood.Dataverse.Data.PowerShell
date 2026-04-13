@@ -1,0 +1,46 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net462;net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>Fake4Dataverse</RootNamespace>
+    <AssemblyName>Fake4Dataverse</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>Fake4Dataverse</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Fake4Dataverse Contributors</Authors>
+    <Description>An in-memory fake IOrganizationService and IOrganizationServiceAsync2 for testing Dataverse applications without a live connection. Supports CRUD, QueryExpression, FetchXml, pipeline hooks, metadata validation, security roles, and more.</Description>
+    <PackageTags>dataverse;dynamics365;crm;testing;fake;mock;xrm;unit-test;power-platform</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageIcon>logo.png</PackageIcon>
+    <PackageProjectUrl>https://github.com/nicknow/Fake4Dataverse</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nicknow/Fake4Dataverse.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>Copyright (c) Fake4Dataverse Contributors</Copyright>
+
+    <!-- SourceLink for debugging -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Fake4Dataverse.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\logo.png" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CrmSdk.CoreAssemblies" Version="9.0.2.*" />
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.*" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.*" PrivateAssets="All" />
+    <PackageReference Include="System.Text.Json" Version="9.*" />
+  </ItemGroup>
+
+</Project>

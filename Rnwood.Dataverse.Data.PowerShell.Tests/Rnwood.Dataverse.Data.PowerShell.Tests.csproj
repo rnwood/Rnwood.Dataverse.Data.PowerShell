@@ -59,7 +59,7 @@
   
   <!-- Fake4Dataverse for mocking -->
   <ItemGroup>
-    <ProjectReference Include="..\..\fake4dataverse\src\Fake4Dataverse\Fake4Dataverse.csproj" />
+    <ProjectReference Include="..\Fake4Dataverse\src\Fake4Dataverse\Fake4Dataverse.csproj" />
   </ItemGroup>
   
   <!-- Project reference to cmdlets -->

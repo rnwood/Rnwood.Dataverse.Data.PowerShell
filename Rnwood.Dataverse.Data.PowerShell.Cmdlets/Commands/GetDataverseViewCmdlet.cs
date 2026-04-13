@@ -135,8 +135,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             }
 
             // Execute query with paging
+            // savedquery (system views) is solution-aware; userquery (personal views) is not
             WriteVerbose($"Executing query for {entityName} views");
-            var views = QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
+            bool unpublished = entityName == "savedquery";
+            var views = unpublished ?
+            QueryHelpers.ExecuteQueryWithPublishedAndUnpublished(query, Connection, WriteVerbose) :
+            QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose);
 
             WriteVerbose($"Found views in {entityName}");
 

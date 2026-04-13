@@ -4,6 +4,7 @@ using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using FluentAssertions;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Query;
@@ -49,8 +50,18 @@ public class AppModulesTests : TestBase
         return ps;
     }
 
+    // Helper: retrieve unpublished appmodule record (cmdlet-created records go to unpublished store)
+    private Entity RetrieveUnpublishedAppModule(Guid id)
+    {
+        var request = new RetrieveUnpublishedRequest
+        {
+            Target = new EntityReference("appmodule", id),
+            ColumnSet = new ColumnSet(true)
+        };
+        return ((RetrieveUnpublishedResponse)Connection!.Execute(request)).Entity;
+    }
+
     // Set-DataverseAppModule Tests
-    // Note: TestBase has interceptors for RetrieveUnpublishedMultiple/Request that delegate to regular CRUD
 
     [Fact]
     public void SetDataverseAppModule_CreatesAppModuleWithUniqueName()
@@ -74,8 +85,8 @@ public class AppModulesTests : TestBase
         var createdId = (Guid)results[0].BaseObject;
         createdId.Should().NotBe(Guid.Empty);
         
-        // Verify the record was created
-        var created = Service!.Retrieve("appmodule", createdId, new ColumnSet(true));
+        // Verify the record was created (cmdlet creates to unpublished store)
+        var created = RetrieveUnpublishedAppModule(createdId);
         created.Should().NotBeNull();
         created!.GetAttributeValue<string>("uniquename").Should().Be("new_test_app");
         created.GetAttributeValue<string>("name").Should().Be("New Test App");
@@ -100,7 +111,7 @@ public class AppModulesTests : TestBase
         results.Should().HaveCount(1);
         var createdId = (Guid)results[0].BaseObject;
         
-        var created = Service!.Retrieve("appmodule", createdId, new ColumnSet(true));
+        var created = RetrieveUnpublishedAppModule(createdId);
         created.Should().NotBeNull();
         created!.GetAttributeValue<string>("uniquename").Should().Be("minimal_app");
     }
@@ -131,7 +142,7 @@ public class AppModulesTests : TestBase
         results.Should().HaveCount(1);
         var createdId = (Guid)results[0].BaseObject;
         
-        var created = Service!.Retrieve("appmodule", createdId, new ColumnSet(true));
+        var created = RetrieveUnpublishedAppModule(createdId);
         created.Should().NotBeNull();
         created!.GetAttributeValue<string>("uniquename").Should().Be("full_app");
         created.GetAttributeValue<string>("name").Should().Be("Full Test App");
@@ -164,7 +175,7 @@ public class AppModulesTests : TestBase
         var createdId = (Guid)results[0].BaseObject;
         createdId.Should().NotBe(Guid.Empty);
         
-        var created = Service!.Retrieve("appmodule", createdId, new ColumnSet(true));
+        var created = RetrieveUnpublishedAppModule(createdId);
         created.Should().NotBeNull();
         created!.GetAttributeValue<string>("uniquename").Should().Be("auto_id_app");
     }
@@ -196,7 +207,8 @@ public class AppModulesTests : TestBase
         ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
         results.Should().HaveCount(1);
         
-        var updated = Service!.Retrieve("appmodule", existingApp.Id, new ColumnSet(true));
+        // Update routes to unpublished store
+        var updated = RetrieveUnpublishedAppModule(existingApp.Id);
         updated.Should().NotBeNull();
         updated!.GetAttributeValue<string>("name").Should().Be("Updated Name");
     }
@@ -228,7 +240,8 @@ public class AppModulesTests : TestBase
         ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
         results.Should().HaveCount(1);
         
-        var updated = Service!.Retrieve("appmodule", existingApp.Id, new ColumnSet(true));
+        // Update routes to unpublished store
+        var updated = RetrieveUnpublishedAppModule(existingApp.Id);
         updated.Should().NotBeNull();
         updated!.GetAttributeValue<string>("name").Should().Be("Updated By UniqueName");
     }

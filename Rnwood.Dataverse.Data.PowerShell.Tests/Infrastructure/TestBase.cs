@@ -134,8 +134,26 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             env.OrganizationName = "MockOrganization";
             Environment = env;
 
-            // Initialize metadata into Fake4Dataverse's MetadataStore
-            InitializeMetadataInStore(env, customMetadata);
+            // Register full-fidelity SDK metadata directly — preserves option-set labels and all
+            // typed attribute subclasses. Also imports structural metadata for query-engine validation.
+            foreach (var metadata in customMetadata)
+            {
+                env.MetadataStore.RegisterSdkEntityMetadata(metadata);
+            }
+
+            // Ensure minimal metadata for essential system entities used by the runtime
+            foreach (var (logicalName, schemaName, primaryId, primaryName, code) in new (string, string, string, string, int)[] {
+                ("systemuser", "SystemUser", "systemuserid", "fullname", 8),
+                ("team", "Team", "teamid", "name", 9),
+                ("organization", "Organization", "organizationid", "name", 1)
+            })
+            {
+                env.MetadataStore.AddEntity(logicalName)
+                    .WithSchemaName(schemaName)
+                    .WithPrimaryIdAttribute(primaryId)
+                    .WithPrimaryNameAttribute(primaryName)
+                    .WithObjectTypeCode(code);
+            }
 
             // Register custom handlers for requests not natively supported by Fake4Dataverse
             RegisterDefaultHandlers(env, customMetadata);
@@ -179,92 +197,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                 A.Fake<ILogger>());
 
             return Connection;
-        }
-
-        /// <summary>
-        /// Initializes entity metadata from SDK EntityMetadata objects into the Fake4Dataverse MetadataStore.
-        /// </summary>
-        private static void InitializeMetadataInStore(FakeDataverseEnvironment env, List<EntityMetadata> metadataList)
-        {
-            foreach (var entityMeta in metadataList)
-            {
-                if (string.IsNullOrEmpty(entityMeta.LogicalName))
-                    continue;
-
-                var builder = env.MetadataStore.AddEntity(entityMeta.LogicalName);
-
-                if (!string.IsNullOrEmpty(entityMeta.SchemaName))
-                    builder.WithSchemaName(entityMeta.SchemaName);
-
-                if (!string.IsNullOrEmpty(entityMeta.PrimaryIdAttribute))
-                    builder.WithPrimaryIdAttribute(entityMeta.PrimaryIdAttribute);
-
-                if (!string.IsNullOrEmpty(entityMeta.PrimaryNameAttribute))
-                    builder.WithPrimaryNameAttribute(entityMeta.PrimaryNameAttribute);
-
-                if (entityMeta.ObjectTypeCode.HasValue)
-                    builder.WithObjectTypeCode(entityMeta.ObjectTypeCode.Value);
-
-                // Add attributes - use typed builder methods for attributes that need more detail
-                if (entityMeta.Attributes != null)
-                {
-                    foreach (var attr in entityMeta.Attributes)
-                    {
-                        if (string.IsNullOrEmpty(attr.LogicalName))
-                            continue;
-
-                        var attrType = attr.AttributeType ?? AttributeTypeCode.String;
-
-                        if (attr is LookupAttributeMetadata lookupAttr && lookupAttr.Targets?.Length > 0)
-                        {
-                            builder.WithLookupAttribute(attr.LogicalName, lookupAttr.Targets);
-                        }
-                        else if (attr is PicklistAttributeMetadata picklistAttr && picklistAttr.OptionSet?.Options?.Count > 0)
-                        {
-                            var values = picklistAttr.OptionSet.Options
-                                .Where(o => o.Value.HasValue)
-                                .Select(o => o.Value!.Value)
-                                .ToArray();
-                            builder.WithOptionSetAttribute(attr.LogicalName, values);
-                        }
-                        else if (attrType == AttributeTypeCode.Boolean)
-                        {
-                            builder.WithBooleanAttribute(attr.LogicalName);
-                        }
-                        else
-                        {
-                            builder.WithAttribute(attr.LogicalName, attrType);
-                        }
-                    }
-                }
-
-                // Add alternate keys
-                if (entityMeta.Keys != null)
-                {
-                    foreach (var key in entityMeta.Keys)
-                    {
-                        if (!string.IsNullOrEmpty(key.LogicalName) && key.KeyAttributes?.Length > 0)
-                        {
-                            builder.WithAlternateKey(key.LogicalName, key.KeyAttributes);
-                        }
-                    }
-                }
-            }
-
-            // Add well-known system entities if not already present
-            EnsureSystemEntity(env, "systemuser", "SystemUser", "systemuserid", "fullname", 8);
-            EnsureSystemEntity(env, "team", "Team", "teamid", "name", 9);
-            EnsureSystemEntity(env, "organization", "Organization", "organizationid", "name", 1);
-        }
-
-        private static void EnsureSystemEntity(FakeDataverseEnvironment env, string logicalName, string schemaName, string primaryIdAttr, string primaryNameAttr, int objectTypeCode)
-        {
-            // AddEntity returns existing builder if already added, so this is safe to call multiple times
-            env.MetadataStore.AddEntity(logicalName)
-                .WithSchemaName(schemaName)
-                .WithPrimaryIdAttribute(primaryIdAttr)
-                .WithPrimaryNameAttribute(primaryNameAttr)
-                .WithObjectTypeCode(objectTypeCode);
         }
 
         /// <summary>
@@ -433,27 +365,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             FakeDataverseEnvironment env,
             List<EntityMetadata> customMetadata)
         {
-            // RetrieveUnpublishedMultipleRequest → delegate to RetrieveMultiple
-            env.RegisterCustomApi("RetrieveUnpublishedMultiple", (request, service) =>
-            {
-                var query = (QueryBase)request["Query"];
-                var result = service.RetrieveMultiple(query);
-                var response = new RetrieveUnpublishedMultipleResponse();
-                response.Results["EntityCollection"] = result;
-                return response;
-            });
-
-            // RetrieveUnpublishedRequest → delegate to Retrieve
-            env.RegisterCustomApi("RetrieveUnpublished", (request, service) =>
-            {
-                var target = (EntityReference)request["Target"];
-                var columnSet = (ColumnSet)request["ColumnSet"];
-                var entity = service.Retrieve(target.LogicalName, target.Id, columnSet);
-                var response = new RetrieveUnpublishedResponse();
-                response.Results["Entity"] = entity;
-                return response;
-            });
-
             // RetrieveMissingDependenciesRequest → empty collection
             env.RegisterCustomApi("RetrieveMissingDependencies", (request, service) =>
             {
@@ -492,85 +403,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             env.RegisterCustomApi("RemoveAppComponents", (request, service) =>
             {
                 return new RemoveAppComponentsResponse();
-            });
-
-            // Override RetrieveEntity to return full SDK metadata from XML files.
-            // The Fake4Dataverse MetadataStore uses a lossy internal format that strips
-            // option set labels, boolean options, and typed attribute subclasses.
-            // By returning the original SDK EntityMetadata, we preserve all details.
-            // Falls back to the MetadataStore for entities not in XML files (e.g. newly created).
-            env.RegisterCustomApi("RetrieveEntity", (request, service) =>
-            {
-                var logicalName = request.Parameters.ContainsKey("LogicalName")
-                    ? (string?)request["LogicalName"] : null;
-
-                EntityMetadata? match = null;
-                if (!string.IsNullOrEmpty(logicalName))
-                {
-                    match = customMetadata.FirstOrDefault(m =>
-                        string.Equals(m.LogicalName, logicalName, StringComparison.OrdinalIgnoreCase));
-                }
-
-                if (match != null)
-                {
-                    var response = new RetrieveEntityResponse();
-                    response.Results["EntityMetadata"] = match;
-                    return response;
-                }
-
-                // Fall back to MetadataStore for entities not in XML files
-                // (e.g. newly created via CreateEntityRequest).
-                // Bypass our custom API override and use the built-in typed handler.
-                var typedRequest = new RetrieveEntityRequest
-                {
-                    LogicalName = logicalName,
-                    EntityFilters = request.Parameters.ContainsKey("EntityFilters")
-                        ? (Microsoft.Xrm.Sdk.Metadata.EntityFilters)request["EntityFilters"]
-                        : Microsoft.Xrm.Sdk.Metadata.EntityFilters.All
-                };
-                return (RetrieveEntityResponse)env.HandlerRegistry.ExecuteSkippingCustomApis(typedRequest, service);
-            });
-
-            // Override RetrieveAllEntities to return full SDK metadata
-            env.RegisterCustomApi("RetrieveAllEntities", (request, service) =>
-            {
-                var response = new RetrieveAllEntitiesResponse();
-                response.Results["EntityMetadata"] = customMetadata.ToArray();
-                return response;
-            });
-
-            // Override RetrieveAttribute to return full SDK attribute metadata from XML files.
-            // This preserves SchemaName, MaxLength, option set labels, boolean options, etc.
-            // Falls back to the MetadataStore for attributes not in XML files (e.g. newly created).
-            env.RegisterCustomApi("RetrieveAttribute", (request, service) =>
-            {
-                var entityLogicalName = (string?)request["EntityLogicalName"];
-                var logicalName = (string?)request["LogicalName"];
-
-                var entityMeta = customMetadata.FirstOrDefault(m =>
-                    string.Equals(m.LogicalName, entityLogicalName, StringComparison.OrdinalIgnoreCase));
-
-                if (entityMeta?.Attributes != null && !string.IsNullOrEmpty(logicalName))
-                {
-                    var attr = entityMeta.Attributes.FirstOrDefault(a =>
-                        string.Equals(a.LogicalName, logicalName, StringComparison.OrdinalIgnoreCase));
-
-                    if (attr != null)
-                    {
-                        var response = new RetrieveAttributeResponse();
-                        response.Results["AttributeMetadata"] = attr;
-                        return response;
-                    }
-                }
-
-                // Fall back to MetadataStore for attributes not in XML files
-                // (e.g. newly created via CreateAttributeRequest).
-                var typedRequest = new RetrieveAttributeRequest
-                {
-                    EntityLogicalName = entityLogicalName,
-                    LogicalName = logicalName
-                };
-                return (RetrieveAttributeResponse)env.HandlerRegistry.ExecuteSkippingCustomApis(typedRequest, service);
             });
         }
 

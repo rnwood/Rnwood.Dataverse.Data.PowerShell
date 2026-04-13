@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Fake4Dataverse.Tool</RootNamespace>
+    <AssemblyName>fake4dataverse</AssemblyName>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!-- dotnet tool packaging -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>fake4dataverse</ToolCommandName>
+    <PackageId>Fake4Dataverse.Tool</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Fake4Dataverse Contributors</Authors>
+    <Description>CLI tool for exporting Dataverse table metadata to XML files for use with Fake4Dataverse in unit tests.</Description>
+    <PackageTags>dataverse;dynamics365;crm;testing;fake;metadata;tool</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/nicknow/Fake4Dataverse</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/nicknow/Fake4Dataverse.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <Copyright>Copyright (c) Fake4Dataverse Contributors</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Dataverse connectivity with interactive auth -->
+    <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.*" />
+    <!-- CLI parsing -->
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <!-- Interactive browser / device-code authentication -->
+    <PackageReference Include="Azure.Identity" Version="1.13.*" />
+  </ItemGroup>
+
+</Project>

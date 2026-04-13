@@ -1,0 +1,28 @@
+{
+  "stryker-config": {
+    "project": "src/Fake4Dataverse/Fake4Dataverse.csproj",
+    "test-projects": [
+      "tests/Fake4Dataverse.Tests/Fake4Dataverse.Tests.csproj"
+    ],
+    "target-framework": "net10.0",
+    "mutation-level": "Standard",
+    "reporters": [
+      "html",
+      "progress",
+      "cleartext"
+    ],
+    "thresholds": {
+      "high": 80,
+      "low": 60,
+      "break": 50
+    },
+    "ignore-mutations": [
+      "string",
+      "linq"
+    ],
+    "ignore-methods": [
+      "ToString",
+      "GetHashCode"
+    ]
+  }
+}
