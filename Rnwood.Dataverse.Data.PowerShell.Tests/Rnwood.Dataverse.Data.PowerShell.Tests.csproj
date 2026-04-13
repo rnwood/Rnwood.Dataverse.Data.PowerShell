@@ -57,12 +57,9 @@
     <PackageReference Include="Microsoft.PowerPlatform.Dataverse.Client" Version="1.2.10" />
   </ItemGroup>
   
-  <!-- FakeXrmEasy for mocking - version depends on target framework -->
-  <ItemGroup Condition="'$(TargetFramework)' != 'net462'">
-    <PackageReference Include="FakeXrmEasy.v9" Version="3.7.0" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' == 'net462'">
-    <PackageReference Include="FakeXrmEasy.v9" Version="2.8.0" />
+  <!-- Fake4Dataverse for mocking -->
+  <ItemGroup>
+    <ProjectReference Include="..\Fake4Dataverse\src\Fake4Dataverse\Fake4Dataverse.csproj" />
   </ItemGroup>
   
   <!-- Project reference to cmdlets -->

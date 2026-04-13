@@ -52,15 +52,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             // Output errors for debugging
             if (ps.HadErrors)
             {
-                var errorMessages = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => $"{e}: {e.Exception}"));
-                throw new Exception($"PowerShell had errors:{Environment.NewLine}{errorMessages}");
+                var errorMessages = string.Join(System.Environment.NewLine, ps.Streams.Error.Select(e => $"{e}: {e.Exception}"));
+                throw new Exception($"PowerShell had errors:{System.Environment.NewLine}{errorMessages}");
             }
 
             // Output verbose messages for debugging
             if (ps.Streams.Verbose.Count > 0)
             {
-                var verboseMessages = string.Join(Environment.NewLine, ps.Streams.Verbose.Select(v => v.Message));
-                Console.WriteLine($"Verbose messages:{Environment.NewLine}{verboseMessages}");
+                var verboseMessages = string.Join(System.Environment.NewLine, ps.Streams.Verbose.Select(v => v.Message));
+                Console.WriteLine($"Verbose messages:{System.Environment.NewLine}{verboseMessages}");
             }
 
             // Assert
@@ -107,8 +107,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             // Output errors for debugging
             if (ps.HadErrors)
             {
-                var errorMessages = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => $"{e}: {e.Exception}"));
-                throw new Exception($"PowerShell had errors:{Environment.NewLine}{errorMessages}");
+                var errorMessages = string.Join(System.Environment.NewLine, ps.Streams.Error.Select(e => $"{e}: {e.Exception}"));
+                throw new Exception($"PowerShell had errors:{System.Environment.NewLine}{errorMessages}");
             }
 
             // Assert
@@ -152,8 +152,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             // Output errors for debugging
             if (ps.HadErrors)
             {
-                var errorMessages = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => $"{e}: {e.Exception}"));
-                throw new Exception($"PowerShell had errors:{Environment.NewLine}{errorMessages}");
+                var errorMessages = string.Join(System.Environment.NewLine, ps.Streams.Error.Select(e => $"{e}: {e.Exception}"));
+                throw new Exception($"PowerShell had errors:{System.Environment.NewLine}{errorMessages}");
             }
 
             // Assert
@@ -223,22 +223,22 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             // Capture and display all streams for diagnostics
             if (ps.Streams.Verbose.Count > 0)
             {
-                var verboseOutput = string.Join(Environment.NewLine, ps.Streams.Verbose.Select(v => $"VERBOSE: {v.Message}"));
+                var verboseOutput = string.Join(System.Environment.NewLine, ps.Streams.Verbose.Select(v => $"VERBOSE: {v.Message}"));
                 Console.WriteLine(verboseOutput);
             }
 
             if (ps.Streams.Warning.Count > 0)
             {
-                var warningOutput = string.Join(Environment.NewLine, ps.Streams.Warning.Select(w => $"WARNING: {w.Message}"));
+                var warningOutput = string.Join(System.Environment.NewLine, ps.Streams.Warning.Select(w => $"WARNING: {w.Message}"));
                 Console.WriteLine(warningOutput);
             }
 
             // Output errors for debugging
             if (ps.HadErrors)
             {
-                var errorMessages = string.Join(Environment.NewLine, ps.Streams.Error.Select(e => $"ERROR: {e}: {e.Exception?.Message}" + Environment.NewLine + e.Exception?.StackTrace));
+                var errorMessages = string.Join(System.Environment.NewLine, ps.Streams.Error.Select(e => $"ERROR: {e}: {e.Exception?.Message}" + System.Environment.NewLine + e.Exception?.StackTrace));
                 Console.WriteLine(errorMessages);
-                throw new Exception($"PowerShell had errors:{Environment.NewLine}{errorMessages}");
+                throw new Exception($"PowerShell had errors:{System.Environment.NewLine}{errorMessages}");
             }
 
             Console.WriteLine($"Results: {string.Join(", ", results.Select(r => r.BaseObject))}");

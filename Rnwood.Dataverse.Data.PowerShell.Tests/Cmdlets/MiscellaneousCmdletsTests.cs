@@ -67,7 +67,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["connectionreferencedisplayname"] = "My Connection Reference",
             ["connectorid"] = "/providers/Microsoft.PowerApps/apis/shared_commondataservice"
         };
-        Context!.Initialize(new[] { connRef });
+        Environment!.Seed(connRef);
         
         // Act
         ps.AddCommand("Get-DataverseConnectionReference")
@@ -98,7 +98,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["connectionreferencelogicalname"] = "new_connref2",
             ["connectionreferencedisplayname"] = "Connection Ref 2"
         };
-        Context!.Initialize(new[] { connRef1, connRef2 });
+        Environment!.Seed(connRef1, connRef2);
         
         // Act - Filter by schema name
         ps.AddCommand("Get-DataverseConnectionReference")
@@ -136,7 +136,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["environmentvariabledefinitionid"] = new EntityReference("environmentvariabledefinition", definitionId),
             ["value"] = "https://old-api.example.com"
         };
-        Context!.Initialize(new Entity[] { definition, existingValue });
+        Environment!.Seed(definition, existingValue);
         
         // Act
         ps.AddCommand("Set-DataverseEnvironmentVariableValue")
@@ -164,7 +164,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["displayname"] = "New Variable",
             ["type"] = new OptionSetValue(100000000) // String
         };
-        Context!.Initialize(new[] { definition });
+        Environment!.Seed(definition);
         
         // Act
         ps.AddCommand("Set-DataverseEnvironmentVariableValue")
@@ -192,7 +192,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["displayname"] = "Connection Reference Variable",
             ["type"] = new OptionSetValue(100000003) // ConnectionReference type
         };
-        Context!.Initialize(new[] { definition });
+        Environment!.Seed(definition);
         
         // Act
         ps.AddCommand("Set-DataverseEnvironmentVariableValue")
@@ -220,7 +220,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["displayname"] = "Data Source Variable",
             ["type"] = new OptionSetValue(100000002) // DataSource type
         };
-        Context!.Initialize(new[] { definition });
+        Environment!.Seed(definition);
         
         // Act
         ps.AddCommand("Set-DataverseEnvironmentVariableValue")
@@ -248,7 +248,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["displayname"] = "WhatIf Variable",
             ["type"] = new OptionSetValue(100000000)
         };
-        Context!.Initialize(new[] { definition });
+        Environment!.Seed(definition);
         
         // Act
         ps.AddCommand("Set-DataverseEnvironmentVariableValue")
@@ -278,7 +278,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["displayname"] = "Test Variable",
             ["type"] = new OptionSetValue(100000000)
         };
-        Context!.Initialize(new[] { definition });
+        Environment!.Seed(definition);
         
         // Act
         ps.AddCommand("Get-DataverseEnvironmentVariableDefinition")
@@ -311,7 +311,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["environmentvariabledefinitionid"] = new EntityReference("environmentvariabledefinition", definitionId),
             ["value"] = "test value"
         };
-        Context!.Initialize(new Entity[] { definition, value });
+        Environment!.Seed(definition, value);
         
         // Act
         ps.AddCommand("Get-DataverseEnvironmentVariableValue")
@@ -345,7 +345,7 @@ public class MiscellaneousCmdletsTests : TestBase
             ["environmentvariabledefinitionid"] = new EntityReference("environmentvariabledefinition", definitionId),
             ["value"] = "to be deleted"
         };
-        Context!.Initialize(new Entity[] { definition, value });
+        Environment!.Seed(definition, value);
         
         // Act - Remove by SchemaName (the cmdlet requires SchemaName, not Id)
         ps.AddCommand("Remove-DataverseEnvironmentVariableValue")

@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.PowerPlatform.Dataverse.Client;
 using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
 using System.Management.Automation;
@@ -14,6 +15,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
     /// </summary>
     public class RemoveDataverseEntityKeyMetadataTests : TestBase
     {
+        /// <summary>
+        /// Seeds the test alternate key that tests expect to exist on the contact entity.
+        /// </summary>
+        private ServiceClient CreateMockConnectionWithTestKey(params string[] entities)
+        {
+            var conn = entities.Length > 0 ? CreateMockConnection(entities) : CreateMockConnection();
+            Environment!.MetadataStore.AddEntity("contact")
+                .WithAlternateKey("contact_emailaddress1_key", "emailaddress1");
+            return conn;
+        }
+
         private static PS CreatePowerShellWithCmdlets()
         {
             var initialSessionState = InitialSessionState.CreateDefault();
@@ -45,7 +57,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             using var ps = PS.Create();
             ps.Runspace = runspace;
 
-            var mockConnection = CreateMockConnection();
+            var mockConnection = CreateMockConnectionWithTestKey();
 
             // Act - Delete the key
             ps.AddCommand("Remove-DataverseEntityKeyMetadata")
@@ -74,7 +86,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             using var ps = PS.Create();
             ps.Runspace = runspace;
 
-            var mockConnection = CreateMockConnection();
+            var mockConnection = CreateMockConnectionWithTestKey();
 
             // Act - Delete with specific entity name
             ps.AddCommand("Remove-DataverseEntityKeyMetadata")
@@ -102,7 +114,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             using var ps = PS.Create();
             ps.Runspace = runspace;
 
-            var mockConnection = CreateMockConnection();
+            var mockConnection = CreateMockConnectionWithTestKey();
 
             // Act - Delete with specific key name
             ps.AddCommand("Remove-DataverseEntityKeyMetadata")
@@ -122,7 +134,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         {
             // Arrange
             using var ps = CreatePowerShellWithCmdlets();
-            var mockConnection = CreateMockConnection("contact");
+            var mockConnection = CreateMockConnectionWithTestKey("contact");
 
             // Set default connection via static helper
             SetDataverseConnectionAsDefaultCmdlet.SetDefault(mockConnection);
@@ -154,7 +166,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             using var ps = PS.Create();
             ps.Runspace = runspace;
 
-            var mockConnection = CreateMockConnection();
+            var mockConnection = CreateMockConnectionWithTestKey();
 
             // Act - Delete with WhatIf
             ps.AddCommand("Remove-DataverseEntityKeyMetadata")
@@ -182,7 +194,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             using var ps = PS.Create();
             ps.Runspace = runspace;
 
-            var mockConnection = CreateMockConnection();
+            var mockConnection = CreateMockConnectionWithTestKey();
 
             // Act - Delete with Confirm:$false
             ps.AddCommand("Remove-DataverseEntityKeyMetadata")
@@ -212,7 +224,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             using var ps = PS.Create();
             ps.Runspace = runspace;
 
-            var mockConnection = CreateMockConnection();
+            var mockConnection = CreateMockConnectionWithTestKey();
 
             // Act - Pass entity name via pipeline
             ps.AddScript("'contact'")

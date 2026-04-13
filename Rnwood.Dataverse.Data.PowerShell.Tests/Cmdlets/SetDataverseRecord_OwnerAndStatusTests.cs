@@ -122,12 +122,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             var ownerId = Guid.NewGuid();
             Service!.Create(new Entity("systemuser") { Id = ownerId, ["fullname"] = "Object Owner" });
 
-            var updateObj = PSObject.AsPSObject(new
-            {
-                firstname = "Ref",
-                lastname = "Owner",
-                ownerid = new { LogicalName = "systemuser", Id = ownerId }
-            });
+            var ownerRef = new PSObject();
+            ownerRef.Properties.Add(new PSNoteProperty("LogicalName", "systemuser"));
+            ownerRef.Properties.Add(new PSNoteProperty("Id", ownerId));
+
+            var updateObj = new PSObject();
+            updateObj.Properties.Add(new PSNoteProperty("firstname", "Ref"));
+            updateObj.Properties.Add(new PSNoteProperty("lastname", "Owner"));
+            updateObj.Properties.Add(new PSNoteProperty("ownerid", ownerRef));
 
             ps.AddCommand("Set-DataverseRecord")
               .AddParameter("Connection", mockConnection)

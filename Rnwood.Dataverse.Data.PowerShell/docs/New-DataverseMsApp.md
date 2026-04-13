@@ -141,9 +141,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
+
 ## OUTPUTS
 
 ### System.IO.FileInfo
+
 ## NOTES
 The created .msapp file includes:
 - Header.json with current timestamp and metadata

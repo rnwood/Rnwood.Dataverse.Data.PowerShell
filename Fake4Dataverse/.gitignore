@@ -1,0 +1,28 @@
+## Build outputs
+**/bin/
+**/obj/
+
+## NuGet
+*.nupkg
+*.snupkg
+**/packages/
+
+## IDE
+.vs/
+*.user
+*.suo
+*.userprefs
+*.sln.docstates
+
+## Rider
+.idea/
+*.sln.iml
+
+## OS
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+## Test results
+**/TestResults/

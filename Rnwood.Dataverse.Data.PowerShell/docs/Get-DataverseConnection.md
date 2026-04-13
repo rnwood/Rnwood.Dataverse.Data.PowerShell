@@ -392,7 +392,6 @@ Certificate store location to search for the certificate. Default is CurrentUser
 Type: StoreLocation
 Parameter Sets: Authenticate with client certificate
 Aliases:
-Accepted values: CurrentUser, LocalMachine
 
 Required: False
 Position: Named
@@ -408,7 +407,6 @@ Certificate store name to search for the certificate. Default is My (Personal). 
 Type: StoreName
 Parameter Sets: Authenticate with client certificate
 Aliases:
-Accepted values: AddressBook, AuthRoot, CertificateAuthority, Disallowed, My, Root, TrustedPeople, TrustedPublisher
 
 Required: False
 Position: Named

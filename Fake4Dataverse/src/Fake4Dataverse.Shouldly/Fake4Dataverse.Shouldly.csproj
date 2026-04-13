@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net462;net10.0</TargetFrameworks>
+    <RootNamespace>Fake4Dataverse.Shouldly</RootNamespace>
+    <AssemblyName>Fake4Dataverse.Shouldly</AssemblyName>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+
+    <PackageId>Fake4Dataverse.Shouldly</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Fake4Dataverse Contributors</Authors>
+    <Description>Shouldly helper assertions for Fake4Dataverse operation log verification.</Description>
+    <PackageTags>dataverse;dynamics365;testing;fake;shouldly;xrm</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Shouldly" Version="4.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Fake4Dataverse\Fake4Dataverse.csproj" />
+  </ItemGroup>
+
+</Project>

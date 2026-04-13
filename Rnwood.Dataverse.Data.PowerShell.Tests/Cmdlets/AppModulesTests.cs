@@ -4,6 +4,7 @@ using System.Linq;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using FluentAssertions;
+using Microsoft.Crm.Sdk.Messages;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
 using Microsoft.Xrm.Sdk.Query;
@@ -49,8 +50,18 @@ public class AppModulesTests : TestBase
         return ps;
     }
 
+    // Helper: retrieve unpublished appmodule record (cmdlet-created records go to unpublished store)
+    private Entity RetrieveUnpublishedAppModule(Guid id)
+    {
+        var request = new RetrieveUnpublishedRequest
+        {
+            Target = new EntityReference("appmodule", id),
+            ColumnSet = new ColumnSet(true)
+        };
+        return ((RetrieveUnpublishedResponse)Connection!.Execute(request)).Entity;
+    }
+
     // Set-DataverseAppModule Tests
-    // Note: TestBase has interceptors for RetrieveUnpublishedMultiple/Request that delegate to regular CRUD
 
     [Fact]
     public void SetDataverseAppModule_CreatesAppModuleWithUniqueName()
@@ -74,8 +85,8 @@ public class AppModulesTests : TestBase
         var createdId = (Guid)results[0].BaseObject;
         createdId.Should().NotBe(Guid.Empty);
         
-        // Verify the record was created
-        var created = Context!.CreateQuery("appmodule").FirstOrDefault(e => e.Id == createdId);
+        // Verify the record was created (cmdlet creates to unpublished store)
+        var created = RetrieveUnpublishedAppModule(createdId);
         created.Should().NotBeNull();
         created!.GetAttributeValue<string>("uniquename").Should().Be("new_test_app");
         created.GetAttributeValue<string>("name").Should().Be("New Test App");
@@ -100,7 +111,7 @@ public class AppModulesTests : TestBase
         results.Should().HaveCount(1);
         var createdId = (Guid)results[0].BaseObject;
         
-        var created = Context!.CreateQuery("appmodule").FirstOrDefault(e => e.Id == createdId);
+        var created = RetrieveUnpublishedAppModule(createdId);
         created.Should().NotBeNull();
         created!.GetAttributeValue<string>("uniquename").Should().Be("minimal_app");
     }
@@ -131,7 +142,7 @@ public class AppModulesTests : TestBase
         results.Should().HaveCount(1);
         var createdId = (Guid)results[0].BaseObject;
         
-        var created = Context!.CreateQuery("appmodule").FirstOrDefault(e => e.Id == createdId);
+        var created = RetrieveUnpublishedAppModule(createdId);
         created.Should().NotBeNull();
         created!.GetAttributeValue<string>("uniquename").Should().Be("full_app");
         created.GetAttributeValue<string>("name").Should().Be("Full Test App");
@@ -164,7 +175,7 @@ public class AppModulesTests : TestBase
         var createdId = (Guid)results[0].BaseObject;
         createdId.Should().NotBe(Guid.Empty);
         
-        var created = Context!.CreateQuery("appmodule").FirstOrDefault(e => e.Id == createdId);
+        var created = RetrieveUnpublishedAppModule(createdId);
         created.Should().NotBeNull();
         created!.GetAttributeValue<string>("uniquename").Should().Be("auto_id_app");
     }
@@ -182,7 +193,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "existing_app",
             ["name"] = "Original Name"
         };
-        Context!.Initialize(new[] { existingApp });
+        Environment!.Seed(existingApp);
         
         // Act
         ps.AddCommand("Set-DataverseAppModule")
@@ -196,7 +207,8 @@ public class AppModulesTests : TestBase
         ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
         results.Should().HaveCount(1);
         
-        var updated = Context.CreateQuery("appmodule").FirstOrDefault(e => e.Id == existingApp.Id);
+        // Update routes to unpublished store
+        var updated = RetrieveUnpublishedAppModule(existingApp.Id);
         updated.Should().NotBeNull();
         updated!.GetAttributeValue<string>("name").Should().Be("Updated Name");
     }
@@ -214,7 +226,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "uniquename_update_app",
             ["name"] = "Original Name"
         };
-        Context!.Initialize(new[] { existingApp });
+        Environment!.Seed(existingApp);
         
         // Act - Find by UniqueName and update
         ps.AddCommand("Set-DataverseAppModule")
@@ -228,7 +240,8 @@ public class AppModulesTests : TestBase
         ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
         results.Should().HaveCount(1);
         
-        var updated = Context.CreateQuery("appmodule").FirstOrDefault(e => e.Id == existingApp.Id);
+        // Update routes to unpublished store
+        var updated = RetrieveUnpublishedAppModule(existingApp.Id);
         updated.Should().NotBeNull();
         updated!.GetAttributeValue<string>("name").Should().Be("Updated By UniqueName");
     }
@@ -246,7 +259,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "noupdate_app",
             ["name"] = "Original Name"
         };
-        Context!.Initialize(new[] { existingApp });
+        Environment!.Seed(existingApp);
         
         // Act - Try to update with NoUpdate flag
         ps.AddCommand("Set-DataverseAppModule")
@@ -262,7 +275,7 @@ public class AppModulesTests : TestBase
         results.Should().HaveCount(1);
         
         // Name should remain unchanged
-        var notUpdated = Context.CreateQuery("appmodule").FirstOrDefault(e => e.Id == existingApp.Id);
+        var notUpdated = Service!.Retrieve("appmodule", existingApp.Id, new ColumnSet(true));
         notUpdated.Should().NotBeNull();
         notUpdated!.GetAttributeValue<string>("name").Should().Be("Original Name");
     }
@@ -288,8 +301,9 @@ public class AppModulesTests : TestBase
         results.Should().BeEmpty();
         
         // No record should be created
-        var notCreated = Context!.CreateQuery("appmodule").FirstOrDefault(e => 
-            e.GetAttributeValue<string>("uniquename") == "nocreate_app");
+        var query = new QueryExpression("appmodule") { ColumnSet = new ColumnSet(true) };
+        query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, "nocreate_app");
+        var notCreated = Service!.RetrieveMultiple(query).Entities.FirstOrDefault();
         notCreated.Should().BeNull();
     }
 
@@ -311,8 +325,9 @@ public class AppModulesTests : TestBase
 
         // Assert - No record should be created
         ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
-        var notCreated = Context!.CreateQuery("appmodule").FirstOrDefault(e => 
-            e.GetAttributeValue<string>("uniquename") == "whatif_app");
+        var query = new QueryExpression("appmodule") { ColumnSet = new ColumnSet(true) };
+        query.Criteria.AddCondition("uniquename", ConditionOperator.Equal, "whatif_app");
+        var notCreated = Service!.RetrieveMultiple(query).Entities.FirstOrDefault();
         notCreated.Should().BeNull();
     }
 
@@ -351,7 +366,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "test_get_by_id",
             ["name"] = "Test App By ID"
         };
-        Context!.Initialize(new[] { appModule });
+        Environment!.Seed(appModule);
         
         // Act - Use Published flag to bypass unpublished query
         ps.AddCommand("Get-DataverseAppModule")
@@ -379,7 +394,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "unique_test_app",
             ["name"] = "Unique Test App"
         };
-        Context!.Initialize(new[] { appModule });
+        Environment!.Seed(appModule);
         
         // Act
         ps.AddCommand("Get-DataverseAppModule")
@@ -413,7 +428,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "hr_app",
             ["name"] = "HR Application"
         };
-        Context!.Initialize(new[] { appModule1, appModule2 });
+        Environment!.Seed(appModule1, appModule2);
         
         // Act - Search with wildcard
         ps.AddCommand("Get-DataverseAppModule")
@@ -446,7 +461,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "app2",
             ["name"] = "App 2"
         };
-        Context!.Initialize(new[] { appModule1, appModule2 });
+        Environment!.Seed(appModule1, appModule2);
         
         // Act - Get all without filters
         ps.AddCommand("Get-DataverseAppModule")
@@ -472,7 +487,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "raw_test_app",
             ["name"] = "Raw Test App"
         };
-        Context!.Initialize(new[] { appModule });
+        Environment!.Seed(appModule);
         
         // Act - Get with Raw flag
         ps.AddCommand("Get-DataverseAppModule")
@@ -504,7 +519,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "remove_by_id_app",
             ["name"] = "Remove By ID App"
         };
-        Context!.Initialize(new[] { existingApp });
+        Environment!.Seed(existingApp);
         
         // Act
         ps.AddCommand("Remove-DataverseAppModule")
@@ -515,7 +530,9 @@ public class AppModulesTests : TestBase
         // Assert
         ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
         
-        var deleted = Context.CreateQuery("appmodule").FirstOrDefault(e => e.Id == existingApp.Id);
+        var query = new QueryExpression("appmodule") { ColumnSet = new ColumnSet(true) };
+        query.Criteria.AddCondition("appmoduleid", ConditionOperator.Equal, existingApp.Id);
+        var deleted = Service!.RetrieveMultiple(query).Entities.FirstOrDefault();
         deleted.Should().BeNull();
     }
 
@@ -532,7 +549,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "remove_by_uniquename",
             ["name"] = "Remove By UniqueName"
         };
-        Context!.Initialize(new[] { existingApp });
+        Environment!.Seed(existingApp);
         
         // Act
         ps.AddCommand("Remove-DataverseAppModule")
@@ -543,7 +560,9 @@ public class AppModulesTests : TestBase
         // Assert
         ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
         
-        var deleted = Context.CreateQuery("appmodule").FirstOrDefault(e => e.Id == existingApp.Id);
+        var query = new QueryExpression("appmodule") { ColumnSet = new ColumnSet(true) };
+        query.Criteria.AddCondition("appmoduleid", ConditionOperator.Equal, existingApp.Id);
+        var deleted = Service!.RetrieveMultiple(query).Entities.FirstOrDefault();
         deleted.Should().BeNull();
     }
 
@@ -597,7 +616,7 @@ public class AppModulesTests : TestBase
             ["uniquename"] = "whatif_remove_app",
             ["name"] = "WhatIf Remove App"
         };
-        Context!.Initialize(new[] { existingApp });
+        Environment!.Seed(existingApp);
         
         // Act - Use WhatIf to prevent actual deletion
         ps.AddCommand("Remove-DataverseAppModule")
@@ -608,7 +627,9 @@ public class AppModulesTests : TestBase
 
         // Assert - Record should still exist
         ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
-        var notDeleted = Context.CreateQuery("appmodule").FirstOrDefault(e => e.Id == existingApp.Id);
+        var query = new QueryExpression("appmodule") { ColumnSet = new ColumnSet(true) };
+        query.Criteria.AddCondition("appmoduleid", ConditionOperator.Equal, existingApp.Id);
+        var notDeleted = Service!.RetrieveMultiple(query).Entities.FirstOrDefault();
         notDeleted.Should().NotBeNull();
     }
 
@@ -648,7 +669,7 @@ public class AppModulesTests : TestBase
             ["isdefault"] = false
         };
         
-        Context!.Initialize(new[] { appModule, component });
+        Environment!.Seed(appModule, component);
         
         // Act
         ps.AddCommand("Get-DataverseAppModuleComponent")
@@ -686,11 +707,10 @@ public class AppModulesTests : TestBase
                 var appId = (Guid?)appIdProp?.GetValue(request);
                 var components = componentsProp?.GetValue(request) as EntityReferenceCollection;
                 
-                if (appId.HasValue && components != null && Context != null)
+                if (appId.HasValue && components != null)
                 {
                     // Find the appmodule to get appmoduleidunique
-                    var appModule = Context.CreateQuery("appmodule")
-                        .FirstOrDefault(e => e.Id == appId.Value);
+                    var appModule = Service!.Retrieve("appmodule", appId.Value, new ColumnSet(true));
                     
                     if (appModule != null)
                     {
@@ -731,7 +751,7 @@ public class AppModulesTests : TestBase
             ["name"] = "Test View"
         };
         
-        Context!.Initialize(new[] { appModule, view });
+        Environment!.Seed(appModule, view);
         
         // Act - Add a view component to the app module
         ps.AddCommand("Set-DataverseAppModuleComponent")
@@ -749,8 +769,7 @@ public class AppModulesTests : TestBase
         createdComponentId.Should().NotBe(Guid.Empty);
         
         // Verify the component was created
-        var component = Context.CreateQuery("appmodulecomponent")
-            .FirstOrDefault(e => e.Id == createdComponentId);
+        var component = Service!.Retrieve("appmodulecomponent", createdComponentId, new ColumnSet(true));
         component.Should().NotBeNull();
         component!.GetAttributeValue<Guid>("objectid").Should().Be(viewId);
         component.GetAttributeValue<EntityReference>("appmoduleidunique").Id.Should().Be(appModuleIdUnique);
@@ -791,12 +810,12 @@ public class AppModulesTests : TestBase
             
             // Handle Retrieve for appmodulecomponent - add appmoduleidunique if needed
             if (request is RetrieveRequest retrieveRequest && 
-                retrieveRequest.Target?.LogicalName == "appmodulecomponent" &&
-                Context != null)
+                retrieveRequest.Target?.LogicalName == "appmodulecomponent")
             {
-                // Use LINQ query instead of Service.Retrieve to avoid recursion
-                var entity = Context.CreateQuery("appmodulecomponent")
-                    .FirstOrDefault(e => e.Id == retrieveRequest.Target.Id);
+                // Use RetrieveMultiple instead of Retrieve to avoid recursion
+                var rmQuery = new QueryExpression("appmodulecomponent") { ColumnSet = new ColumnSet(true) };
+                rmQuery.Criteria.AddCondition("appmodulecomponentid", ConditionOperator.Equal, retrieveRequest.Target.Id);
+                var entity = Service!.RetrieveMultiple(rmQuery).Entities.FirstOrDefault();
                     
                 if (entity != null)
                 {
@@ -828,11 +847,10 @@ public class AppModulesTests : TestBase
                 var appId = (Guid?)appIdProp?.GetValue(request);
                 var components = componentsProp?.GetValue(request) as EntityReferenceCollection;
                 
-                if (appId.HasValue && components != null && Context != null)
+                if (appId.HasValue && components != null)
                 {
                     // Find the appmodule to get appmoduleidunique
-                    var appModule = Context.CreateQuery("appmodule")
-                        .FirstOrDefault(e => e.Id == appId.Value);
+                    var appModule = Service!.Retrieve("appmodule", appId.Value, new ColumnSet(true));
                     
                     if (appModule != null)
                     {
@@ -841,15 +859,16 @@ public class AppModulesTests : TestBase
                         // Delete appmodulecomponent records matching the components
                         foreach (var component in components)
                         {
-                            var componentsToDelete = Context.CreateQuery("appmodulecomponent")
-                                .Where(e => e.GetAttributeValue<EntityReference>("appmoduleidunique").Id == appModuleIdUnique
-                                         && e.GetAttributeValue<Guid>("objectid") == component.Id)
+                            var rmQuery = new QueryExpression("appmodulecomponent") { ColumnSet = new ColumnSet(true) };
+                            rmQuery.Criteria.AddCondition("objectid", ConditionOperator.Equal, component.Id);
+                            var componentsToDelete = Service!.RetrieveMultiple(rmQuery).Entities
+                                .Where(e => e.GetAttributeValue<EntityReference>("appmoduleidunique")?.Id == appModuleIdUnique)
                                 .ToList();
                             
                             foreach (var compToDelete in componentsToDelete)
                             {
-                                // Delete using Context's delete method directly
-                                Context.DeleteEntity(new EntityReference(compToDelete.LogicalName, compToDelete.Id));
+                                // Delete using Service
+                                Service!.Delete(compToDelete.LogicalName, compToDelete.Id);
                             }
                         }
                     }
@@ -862,7 +881,7 @@ public class AppModulesTests : TestBase
             return null;
         }, "appmodule", "appmodulecomponent", "savedquery");
         
-        Context!.Initialize(new[] { appModule, component });
+        Environment!.Seed(appModule, component);
         
         // Act - Remove the component
         ps.AddCommand("Remove-DataverseAppModuleComponent")
@@ -874,8 +893,9 @@ public class AppModulesTests : TestBase
         ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
         
         // Verify the component was deleted
-        var deleted = Context.CreateQuery("appmodulecomponent")
-            .FirstOrDefault(e => e.Id == componentId);
+        var query = new QueryExpression("appmodulecomponent") { ColumnSet = new ColumnSet(true) };
+        query.Criteria.AddCondition("appmodulecomponentid", ConditionOperator.Equal, componentId);
+        var deleted = Service!.RetrieveMultiple(query).Entities.FirstOrDefault();
         deleted.Should().BeNull();
     }
 

@@ -81,7 +81,7 @@ Write-Output 'PASS'
     private static void EnsureModulePath()
     {
         // Check if TESTMODULEPATH is already set (e.g., by CI)
-        var existingPath = Environment.GetEnvironmentVariable("TESTMODULEPATH");
+        var existingPath = System.Environment.GetEnvironmentVariable("TESTMODULEPATH");
         if (!string.IsNullOrEmpty(existingPath))
         {
             if (!Directory.Exists(existingPath))
@@ -100,7 +100,7 @@ Write-Output 'PASS'
             throw new InvalidOperationException($"Expected module output at {defaultPath}. Build the module or set TESTMODULEPATH explicitly.");
         }
 
-        Environment.SetEnvironmentVariable("TESTMODULEPATH", defaultPath);
+        System.Environment.SetEnvironmentVariable("TESTMODULEPATH", defaultPath);
     }
 
     private static string FindSolutionRoot()
