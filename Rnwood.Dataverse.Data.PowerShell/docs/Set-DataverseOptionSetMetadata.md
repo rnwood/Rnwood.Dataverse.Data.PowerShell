@@ -21,7 +21,7 @@ Set-DataverseOptionSetMetadata [-Name] <String> [-DisplayName <String>] [-Descri
 
 ### EntityAttribute
 ```
-Set-DataverseOptionSetMetadata -EntityName <String> -AttributeName <String> [-DisplayName <String>]
+Set-DataverseOptionSetMetadata [-EntityName] <String> [-AttributeName] <String> [-DisplayName <String>]
  [-Description <String>] -Options <Hashtable[]> [-NoRemoveMissingOptions] [-PassThru] [-Publish]
  [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
@@ -110,7 +110,7 @@ Parameter Sets: EntityAttribute
 Aliases: ColumnName
 
 Required: True
-Position: Named
+Position: 1
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -170,7 +170,7 @@ Parameter Sets: EntityAttribute
 Aliases: TableName
 
 Required: True
-Position: Named
+Position: 0
 Default value: None
 Accept pipeline input: False
 Accept wildcard characters: False
@@ -306,9 +306,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### None
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+
 ## NOTES
 
 This cmdlet provides programmatic access to Dataverse metadata. For comprehensive documentation and examples, see the metadata concept guide at docs/core-concepts/metadata.md

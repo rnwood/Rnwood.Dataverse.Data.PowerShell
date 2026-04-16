@@ -222,10 +222,12 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.Management.Automation.PSObject
+### System.Object
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+
 ## NOTES
 This cmdlet has a high confirm impact and will prompt for confirmation by default. Use -Confirm:$false to suppress the prompt.
 

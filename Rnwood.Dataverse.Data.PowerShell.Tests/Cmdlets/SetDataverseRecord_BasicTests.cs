@@ -6,8 +6,10 @@ using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using FluentAssertions;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Metadata;
 using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
+using System.Reflection;
 using Xunit;
 using PS = System.Management.Automation.PowerShell;
 
@@ -387,7 +389,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
           public void SetDataverseRecord_NonReadableColumn_ThrowsHelpfulErrorMessage()
           {
             using var ps = CreatePowerShellWithCmdlets();
-            var mockConnection = CreateMockConnection("organization");
+            var mockConnection = CreateMockConnectionWithCustomMetadata(null, BuildOrganizationMetadataWithNonReadableColumn());
 
             var organizationId = Environment!.OrganizationId;
             var updateValues = new Hashtable
@@ -404,11 +406,73 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
 
             Action invoke = () => ps.Invoke();
 
-            invoke.Should().Throw<CmdletInvocationException>()
+            invoke.Should().Throw<ActionPreferenceStopException>()
               .WithMessage("*not valid for read*")
               .WithMessage("*telemetryinstrumentationkey*")
               .WithMessage("*organization*")
               .WithMessage("*-UpdateAllColumns*");
+          }
+
+          private static List<EntityMetadata> BuildOrganizationMetadataWithNonReadableColumn()
+          {
+            return new List<EntityMetadata>
+            {
+              BuildEntityMetadata(
+                logicalName: "organization",
+                schemaName: "Organization",
+                primaryIdAttribute: "organizationid",
+                primaryNameAttribute: "name",
+                objectTypeCode: 1,
+                BuildGuidAttribute("organizationid", "OrganizationId"),
+                BuildStringAttribute("name", "Name", isValidForRead: true),
+                BuildStringAttribute("telemetryinstrumentationkey", "TelemetryInstrumentationKey", isValidForRead: false))
+            };
+          }
+
+          private static EntityMetadata BuildEntityMetadata(
+            string logicalName,
+            string schemaName,
+            string primaryIdAttribute,
+            string primaryNameAttribute,
+            int objectTypeCode,
+            params AttributeMetadata[] attributes)
+          {
+            var metadata = new EntityMetadata();
+            SetMetadataProperty(metadata, nameof(EntityMetadata.LogicalName), logicalName);
+            SetMetadataProperty(metadata, nameof(EntityMetadata.SchemaName), schemaName);
+            SetMetadataProperty(metadata, nameof(EntityMetadata.PrimaryIdAttribute), primaryIdAttribute);
+            SetMetadataProperty(metadata, nameof(EntityMetadata.PrimaryNameAttribute), primaryNameAttribute);
+            SetMetadataProperty(metadata, nameof(EntityMetadata.ObjectTypeCode), objectTypeCode);
+            SetMetadataProperty(metadata, nameof(EntityMetadata.Attributes), attributes);
+            return metadata;
+          }
+
+          private static AttributeMetadata BuildGuidAttribute(string logicalName, string schemaName)
+          {
+            var attribute = new AttributeMetadata();
+            SetAttributeDefaults(attribute, logicalName, schemaName, AttributeTypeCode.Uniqueidentifier, isValidForRead: true);
+            return attribute;
+          }
+
+          private static StringAttributeMetadata BuildStringAttribute(string logicalName, string schemaName, bool isValidForRead)
+          {
+            var attribute = new StringAttributeMetadata { MaxLength = 1073741823 };
+            SetAttributeDefaults(attribute, logicalName, schemaName, AttributeTypeCode.String, isValidForRead);
+            return attribute;
+          }
+
+          private static void SetAttributeDefaults(AttributeMetadata attribute, string logicalName, string schemaName, AttributeTypeCode type, bool isValidForRead)
+          {
+            SetMetadataProperty(attribute, nameof(AttributeMetadata.LogicalName), logicalName);
+            SetMetadataProperty(attribute, nameof(AttributeMetadata.SchemaName), schemaName);
+            SetMetadataProperty(attribute, nameof(AttributeMetadata.AttributeType), type);
+            SetMetadataProperty(attribute, nameof(AttributeMetadata.IsValidForRead), isValidForRead);
+          }
+
+          private static void SetMetadataProperty(object target, string propertyName, object? value)
+          {
+            var property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            property?.SetValue(target, value);
           }
     }
 }

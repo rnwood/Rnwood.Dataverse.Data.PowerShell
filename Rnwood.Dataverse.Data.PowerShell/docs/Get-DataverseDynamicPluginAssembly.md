@@ -379,10 +379,14 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
+### System.Guid
+
 ### System.Byte[]
+
 ## OUTPUTS
 
 ### System.Management.Automation.PSObject
+
 ## NOTES
 
 **Output Properties:**
