@@ -332,5 +332,83 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             records[0].Properties["lastname"].Value.Should().Be("Doe");
             records[0].Properties["emailaddress1"].Value.Should().Be("john.doe@example.com");
         }
+
+          [Fact]
+          public void SetDataverseRecord_ValuesAliasInLoop_ReturnsCreatedRecords()
+          {
+            // Arrange
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection("contact");
+            var records = new[]
+            {
+              new Hashtable { ["firstname"] = "Alpha", ["lastname"] = "Loop" },
+              new Hashtable { ["firstname"] = "Beta", ["lastname"] = "Loop" },
+              new Hashtable { ["firstname"] = "Gamma", ["lastname"] = "Loop" },
+              new Hashtable { ["firstname"] = "Delta", ["lastname"] = "Loop" }
+            };
+
+            // Act
+            var results = new List<PSObject>();
+            foreach (var values in records)
+            {
+              ps.Commands.Clear();
+              ps.AddCommand("Set-DataverseRecord")
+                .AddParameter("Connection", mockConnection)
+                .AddParameter("TableName", "contact")
+                .AddParameter("Values", values)
+                .AddParameter("CreateOnly", true)
+                .AddParameter("PassThru", true);
+              results.AddRange(ps.Invoke());
+              ps.HadErrors.Should().BeFalse();
+            }
+
+            // Assert
+            results.Should().HaveCount(4);
+            results.Select(r => r.Properties["Id"].Value).Should().AllSatisfy(value =>
+            {
+              value.Should().BeOfType<Guid>();
+              ((Guid)value).Should().NotBe(Guid.Empty);
+            });
+
+            ps.Commands.Clear();
+            ps.AddCommand("Get-DataverseRecord")
+              .AddParameter("Connection", mockConnection)
+              .AddParameter("TableName", "contact")
+              .AddParameter("Columns", new[] { "firstname", "lastname" });
+            var createdRecords = ps.Invoke();
+
+            createdRecords.Should().Contain(r => r.Properties["firstname"].Value.Equals("Alpha") && r.Properties["lastname"].Value.Equals("Loop"));
+            createdRecords.Should().Contain(r => r.Properties["firstname"].Value.Equals("Beta") && r.Properties["lastname"].Value.Equals("Loop"));
+            createdRecords.Should().Contain(r => r.Properties["firstname"].Value.Equals("Gamma") && r.Properties["lastname"].Value.Equals("Loop"));
+            createdRecords.Should().Contain(r => r.Properties["firstname"].Value.Equals("Delta") && r.Properties["lastname"].Value.Equals("Loop"));
+          }
+
+          [Fact]
+          public void SetDataverseRecord_NonReadableColumn_ThrowsHelpfulErrorMessage()
+          {
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection("organization");
+
+            var organizationId = Environment!.OrganizationId;
+            var updateValues = new Hashtable
+            {
+              ["telemetryinstrumentationkey"] = "test-instrumentation-key-value"
+            };
+
+            ps.AddCommand("Set-DataverseRecord")
+              .AddParameter("Connection", mockConnection)
+              .AddParameter("TableName", "organization")
+              .AddParameter("Id", organizationId)
+              .AddParameter("InputObject", updateValues)
+              .AddParameter("ErrorAction", ActionPreference.Stop);
+
+            Action invoke = () => ps.Invoke();
+
+            invoke.Should().Throw<CmdletInvocationException>()
+              .WithMessage("*not valid for read*")
+              .WithMessage("*telemetryinstrumentationkey*")
+              .WithMessage("*organization*")
+              .WithMessage("*-UpdateAllColumns*");
+          }
     }
 }

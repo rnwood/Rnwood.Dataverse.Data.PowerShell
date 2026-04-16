@@ -96,6 +96,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             var uri = new Uri(instanceUri);
 
             // Set properties using the helper methods from MockServiceClientFactory
+            MockServiceClientFactory.TryConfigureConnectionService(client, uri);
             MockServiceClientFactory.SetPrivateProperty(client, "ConnectedOrgUniqueName", "fakeorg");
             MockServiceClientFactory.SetPrivateProperty(client, "ConnectedOrgFriendlyName", "Fake Organization");
             MockServiceClientFactory.SetPrivateProperty(client, "ConnectedOrgVersion", sdkVersion);

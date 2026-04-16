@@ -194,6 +194,7 @@ Specifies the types of business logic (for example plugins) to bypass
 Type: BusinessLogicTypes[]
 Parameter Sets: Request, NameAndInputs
 Aliases:
+Accepted values: CustomSync, CustomAsync
 
 Required: False
 Position: Named

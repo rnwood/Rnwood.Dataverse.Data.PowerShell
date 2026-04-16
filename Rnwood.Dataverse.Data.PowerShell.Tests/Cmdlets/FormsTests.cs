@@ -131,7 +131,7 @@ public class FormsTests : TestBase
         </events>
     </form>";
 
-    private PS CreatePowerShellWithCmdlets()
+    private new PS CreatePowerShellWithCmdlets()
     {
         var initialSessionState = InitialSessionState.CreateDefault();
         
@@ -146,6 +146,10 @@ public class FormsTests : TestBase
         initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseRecord", typeof(SetDataverseRecordCmdlet), null));
         
         // Register write operation cmdlets
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseForm", typeof(SetDataverseFormCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Remove-DataverseForm", typeof(RemoveDataverseFormCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseFormSection", typeof(SetDataverseFormSectionCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry("Remove-DataverseFormSection", typeof(RemoveDataverseFormSectionCmdlet), null));
         initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseFormControl", typeof(SetDataverseFormControlCmdlet), null));
         initialSessionState.Commands.Add(new SessionStateCmdletEntry("Remove-DataverseFormControl", typeof(RemoveDataverseFormControlCmdlet), null));
         initialSessionState.Commands.Add(new SessionStateCmdletEntry("Set-DataverseFormTab", typeof(SetDataverseFormTabCmdlet), null));
@@ -158,7 +162,7 @@ public class FormsTests : TestBase
         var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
         runspace.Open();
         
-        var ps = PS.Create();
+        var ps = PS.Create()!;
         ps.Runspace = runspace;
         return ps;
     }
@@ -182,6 +186,106 @@ public class FormsTests : TestBase
     }
 
     #region Get-DataverseForm Tests
+
+        [Fact]
+        public void SetDataverseForm_CreatesNewFormWithGeneratedFormXml()
+        {
+                using var ps = CreatePowerShellWithCmdlets();
+                var mockConnection = CreateMockConnection("systemform", "contact");
+
+                ps.AddCommand("Set-DataverseForm")
+                    .AddParameter("Connection", mockConnection)
+                    .AddParameter("Entity", "contact")
+                    .AddParameter("Name", "CreatedContactForm")
+                    .AddParameter("FormType", FormType.Main)
+                    .AddParameter("Description", "Created from standard test")
+                    .AddParameter("IsActive", true)
+                    .AddParameter("PassThru", true);
+                var results = ps.Invoke();
+
+                ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+                results.Should().HaveCount(1);
+
+                var createdFormId = (Guid)results[0].BaseObject;
+                var createdForm = Service!.Retrieve("systemform", createdFormId, new ColumnSet("name", "objecttypecode", "description", "type", "formxml", "formactivationstate"));
+                createdForm.GetAttributeValue<string>("name").Should().Be("CreatedContactForm");
+                createdForm.GetAttributeValue<string>("objecttypecode").Should().Be("contact");
+                createdForm.GetAttributeValue<string>("description").Should().Be("Created from standard test");
+                createdForm.GetAttributeValue<OptionSetValue>("type")!.Value.Should().Be((int)FormType.Main);
+                createdForm.GetAttributeValue<OptionSetValue>("formactivationstate")!.Value.Should().Be(1);
+                createdForm.GetAttributeValue<string>("formxml").Should().Contain("<tab");
+        }
+
+        [Fact]
+        public void SetDataverseForm_Publish_ExecutesPublishXmlRequestForEntity()
+        {
+                string publishXml = null;
+                var mockConnection = CreateMockConnection(request =>
+                {
+                        if (request.GetType().Name == "PublishXmlRequest")
+                        {
+                                publishXml = request.Parameters["ParameterXml"] as string;
+                                return new Microsoft.Crm.Sdk.Messages.PublishXmlResponse();
+                        }
+
+                        return null;
+                }, "systemform", "contact");
+
+                using var ps = CreatePowerShellWithCmdlets();
+                ps.AddCommand("Set-DataverseForm")
+                    .AddParameter("Connection", mockConnection)
+                    .AddParameter("Entity", "contact")
+                    .AddParameter("Name", "PublishedContactForm")
+                    .AddParameter("FormType", FormType.Main)
+                    .AddParameter("Publish", true)
+                    .AddParameter("PassThru", true);
+                var results = ps.Invoke();
+
+                ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+                results.Should().HaveCount(1);
+                publishXml.Should().Contain("<entity>contact</entity>");
+        }
+
+        [Fact]
+        public void RemoveDataverseForm_RemovesExistingFormById()
+        {
+                using var ps = CreatePowerShellWithCmdlets();
+                var mockConnection = CreateMockConnection("systemform", "contact");
+
+                var formId = Guid.NewGuid();
+                Service!.Create(CreateTestForm(formId, "DeleteMe", "contact"));
+
+                ps.AddCommand("Remove-DataverseForm")
+                    .AddParameter("Connection", mockConnection)
+                    .AddParameter("Id", formId)
+                    .AddParameter("Confirm", false);
+                ps.Invoke();
+
+                ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+
+                var results = Service.RetrieveMultiple(new QueryExpression("systemform")
+                {
+                        ColumnSet = new ColumnSet("formid")
+                }).Entities.Where(entity => entity.Id == formId).ToList();
+                results.Should().BeEmpty();
+        }
+
+        [Fact]
+        public void RemoveDataverseForm_IfExists_DoesNotErrorWhenFormIsMissing()
+        {
+                using var ps = CreatePowerShellWithCmdlets();
+                var mockConnection = CreateMockConnection("systemform", "contact");
+
+                ps.AddCommand("Remove-DataverseForm")
+                    .AddParameter("Connection", mockConnection)
+                    .AddParameter("Entity", "contact")
+                    .AddParameter("Name", "MissingForm")
+                    .AddParameter("IfExists", true)
+                    .AddParameter("Confirm", false);
+                ps.Invoke();
+
+                ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+        }
 
     [Fact]
     public void GetDataverseForm_RetrievesFormsByEntity()
@@ -1074,6 +1178,59 @@ public class FormsTests : TestBase
         var formXml = updatedForm.GetAttributeValue<string>("formxml");
         formXml.Should().NotContain("id=\"firstname\"");
     }
+
+        [Fact]
+        public void SetDataverseFormSection_CreatesSectionInTab()
+        {
+                using var ps = CreatePowerShellWithCmdlets();
+                var mockConnection = CreateMockConnection("systemform", "contact");
+
+                var formId = Guid.NewGuid();
+                Service!.Create(CreateTestForm(formId, "SectionForm", "contact"));
+
+                ps.AddCommand("Set-DataverseFormSection")
+                    .AddParameter("Connection", mockConnection)
+                    .AddParameter("FormId", formId)
+                    .AddParameter("TabName", "GeneralTab")
+                    .AddParameter("Name", "InsertedSection")
+                    .AddParameter("Label", "Inserted Section")
+                    .AddParameter("Columns", 2)
+                    .AddParameter("ShowBar", true)
+                    .AddParameter("PassThru", true);
+                var results = ps.Invoke();
+
+                ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+                results.Should().HaveCount(1);
+
+                var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+                var formXml = updatedForm.GetAttributeValue<string>("formxml");
+                formXml.Should().Contain("name=\"InsertedSection\"");
+                formXml.Should().Contain("description=\"Inserted Section\"");
+                formXml.Should().Contain("columns=\"2\"");
+        }
+
+        [Fact]
+        public void RemoveDataverseFormSection_RemovesSectionFromTab()
+        {
+                using var ps = CreatePowerShellWithCmdlets();
+                var mockConnection = CreateMockConnection("systemform", "contact");
+
+                var formId = Guid.NewGuid();
+                Service!.Create(CreateTestForm(formId, "SectionRemovalForm", "contact"));
+
+                ps.AddCommand("Remove-DataverseFormSection")
+                    .AddParameter("Connection", mockConnection)
+                    .AddParameter("FormId", formId)
+                    .AddParameter("TabName", "GeneralTab")
+                    .AddParameter("SectionName", "DetailsSection")
+                    .AddParameter("Confirm", false);
+                ps.Invoke();
+
+                ps.HadErrors.Should().BeFalse(string.Join(", ", ps.Streams.Error.Select(e => e.ToString())));
+
+                var updatedForm = Service.Retrieve("systemform", formId, new ColumnSet("formxml"));
+                updatedForm.GetAttributeValue<string>("formxml").Should().NotContain("name=\"DetailsSection\"");
+        }
 
     // Form Tab Layout Tests
 
