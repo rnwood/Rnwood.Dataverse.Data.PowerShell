@@ -132,7 +132,7 @@ finally {
             Write-Host ""Cleaned up form: $formId""
         }
         catch {
-            Write-Host ""Cleanup failed for form $formId: $($_.Exception.Message)""
+            Write-Host ""Cleanup failed for form ${formId}: $($_.Exception.Message)""
             throw
         }
     }
