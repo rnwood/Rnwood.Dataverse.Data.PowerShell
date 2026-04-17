@@ -10,6 +10,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
     {
         // Internal hook for test infrastructure to provide custom clone implementations
         internal static Func<ServiceClient, ICloneableServiceClient> GetCloneableWrapper { get; set; }
+        internal static Func<ServiceClient, IRestCapableServiceClient> GetRestCapableWrapper { get; set; }
 
         /// <summary>
         /// Attempts to clone a ServiceClient. If the connection implements ICloneableServiceClient,
@@ -59,6 +60,16 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 return null;
             }
+        }
+
+        internal static IRestCapableServiceClient TryGetRestCapableWrapper(ServiceClient serviceClient)
+        {
+            if (serviceClient is IRestCapableServiceClient restCapable)
+            {
+                return restCapable;
+            }
+
+            return GetRestCapableWrapper?.Invoke(serviceClient);
         }
     }
 }

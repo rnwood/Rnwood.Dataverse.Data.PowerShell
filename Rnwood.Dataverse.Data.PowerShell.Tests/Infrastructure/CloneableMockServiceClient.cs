@@ -13,7 +13,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
     /// A ServiceClient wrapper that supports cloning for mock connections.
     /// This allows parallel operations in tests to clone mock connections properly.
     /// </summary>
-    internal class CloneableMockServiceClient : ICloneableServiceClient
+    internal class CloneableMockServiceClient : ICloneableServiceClient, IRestCapableServiceClient
     {
         private static ConstructorInfo? _internalConstructor;
         private readonly ServiceClient _serviceClient;
@@ -89,6 +89,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             // Create a new ServiceClient instance with the same parameters
             // The underlying IOrganizationService is thread-safe, so we can share it
             return Create(_service, _httpClient, _instanceUri, _sdkVersion, _logger);
+        }
+
+        public HttpResponseMessage ExecuteWebRequest(HttpMethod method, string path, string body, System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<string>> headers, CancellationToken cancellationToken)
+        {
+            var requestUri = new Uri(new Uri(_instanceUri.TrimEnd('/') + "/api/data/v9.2/"), path);
+            using var request = new HttpRequestMessage(method, requestUri);
+
+            foreach (var header in headers)
+            {
+                request.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            }
+
+            if (!string.IsNullOrEmpty(body))
+            {
+                request.Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
+            }
+
+            return _httpClient.SendAsync(request, cancellationToken).GetAwaiter().GetResult();
         }
 
         private static void SetMockProperties(ServiceClient client, string instanceUri, Version sdkVersion)
