@@ -129,22 +129,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			if (ParameterSetName == "REST")
 			{
-				// Validate that the path does not start with /api/ or api/ which would indicate an absolute path
-				// The SDK does not support full absolute API paths like '/api/data/v9.2/accounts'
-				// However, we do allow navigation paths like 'entities(id)/Microsoft.Dynamics.CRM.action' for custom APIs
-				// Query strings (after '?') may contain '/' characters
-				string pathPortion = Path.Split('?')[0];
-				if (pathPortion.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) || 
-				    pathPortion.StartsWith("api/", StringComparison.OrdinalIgnoreCase))
-				{
-					throw new ArgumentException(
-						$"The Path parameter should not start with '/api/' or 'api/'. " +
-						$"Provide the resource name or navigation path (e.g., 'accounts', 'WhoAmI', or 'entities(id)/Microsoft.Dynamics.CRM.action') " +
-						$"rather than a full path like '/api/data/v9.2/accounts'. " +
-						$"The organization URL and API version are automatically added by the connection. " +
-						$"Current value: '{Path}'",
-						nameof(Path));
-				}
+				ValidateRestPath(Path);
 
 				var headers = new Dictionary<string, List<string>>();
 				foreach (DictionaryEntry kvp in CustomHeaders.Cast<DictionaryEntry>())
@@ -172,7 +157,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 					}
 				}
 
-				System.Net.Http.HttpResponseMessage response = Connection.ExecuteWebRequest(Method, Path, bodyString, headers);
+				System.Net.Http.HttpResponseMessage response = ExecuteRestRequest(Method, Path, bodyString, headers);
 				response.EnsureSuccessStatusCode();
 				string responseBody = response.Content.ReadAsStringAsync().Result;
 				
@@ -264,6 +249,40 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 			catch { }
 			base.StopProcessing();
+		}
+
+		private System.Net.Http.HttpResponseMessage ExecuteRestRequest(System.Net.Http.HttpMethod method, string path, string body, Dictionary<string, List<string>> headers)
+		{
+			var restCapableWrapper = DataverseConnectionExtensions.TryGetRestCapableWrapper(Connection)
+				?? DataverseConnectionExtensions.GetCloneableWrapper?.Invoke(Connection) as IRestCapableServiceClient;
+			if (restCapableWrapper != null)
+			{
+				return restCapableWrapper.ExecuteWebRequest(method, path, body, headers, _userCancellationCts?.Token ?? CancellationToken.None);
+			}
+
+			return Connection.ExecuteWebRequest(method, path, body, headers);
+		}
+
+		internal static void ValidateRestPath(string path)
+		{
+			if (path == null)
+			{
+				throw new ArgumentNullException(nameof(path));
+			}
+
+			// The SDK expects a relative resource/navigation path, not a fully-qualified Web API path.
+			var pathPortion = path.Split('?')[0];
+			if (pathPortion.StartsWith("/api/", StringComparison.OrdinalIgnoreCase) ||
+				pathPortion.StartsWith("api/", StringComparison.OrdinalIgnoreCase))
+			{
+				throw new ArgumentException(
+					$"The Path parameter should not start with '/api/' or 'api/'. " +
+					$"Provide the resource name or navigation path (e.g., 'accounts', 'WhoAmI', or 'entities(id)/Microsoft.Dynamics.CRM.action') " +
+					$"rather than a full path like '/api/data/v9.2/accounts'. " +
+					$"The organization URL and API version are automatically added by the connection. " +
+					$"Current value: '{path}'",
+					nameof(path));
+			}
 		}
 
 		/// <summary>

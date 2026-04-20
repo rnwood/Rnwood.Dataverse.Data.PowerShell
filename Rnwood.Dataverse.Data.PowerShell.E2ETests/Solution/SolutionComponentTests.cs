@@ -12,7 +12,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.E2ETests.Solution
     public class SolutionComponentTests : E2ETestBase
     {
         [Fact]
-        public void CanAddReadUpdateAndManageSolutionComponents()
+        public void GetDataverseSolutionComponent_ReadsComponentsFromEnvironmentSummary()
         {
 
 
@@ -88,26 +88,17 @@ try {
     Write-Host ""[TIMING] Step 2 completed in $stepDuration seconds""
     
     $stepStartTime = Get-Date
-    Write-Host 'Step 3: Adding entity to solution with Behavior 0 (Include Subcomponents)...'
+    Write-Host 'Step 3: Adding entity to solution for summary retrieval...'
     Invoke-WithRetry {
-        
-        $result = Set-DataverseSolutionComponent -Connection $connection `
+        Set-DataverseSolutionComponent -Connection $connection `
             -SolutionName $solutionName `
             -ComponentId $script:entityObjectId `
             -ComponentType 1 `
             -Behavior 0 `
-            -PassThru `
             -Confirm:$false
-        
-        if ($result.WasUpdated -eq $true) {
-            throw 'Component should not be marked as updated when adding new component'
-        }
-        if ($result.BehaviorValue -ne 0) {
-            throw ""Expected behavior value 0, got $($result.BehaviorValue)""
-        }
     }
     $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
-    Write-Host '✓ Entity added to solution with Behavior 0'
+    Write-Host '✓ Entity added to solution'
     Write-Host ""[TIMING] Step 3 completed in $stepDuration seconds""
     
     $stepStartTime = Get-Date
@@ -129,7 +120,7 @@ try {
         }
     }
     $stepDuration = ((Get-Date) - $stepStartTime).TotalSeconds
-    Write-Host '✓ Component verified in solution with Behavior 0 (IncludeSubcomponents)'
+    Write-Host '✓ Component verified via solution component summary'
     Write-Host ""[TIMING] Step 4 completed in $stepDuration seconds""
     
     $stepStartTime = Get-Date

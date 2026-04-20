@@ -201,7 +201,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     {
                         if (QueryHelpers.IsNotFoundException(ex))
                         {
-                            WriteVerbose($"View with ID {Id} not found");
+                            if (entityName == "savedquery")
+                            {
+                                WriteVerbose($"Published system view with ID {Id} not found, checking unpublished state");
+                                try
+                                {
+                                    var unpublishedResponse = (RetrieveUnpublishedResponse)Connection.Execute(new RetrieveUnpublishedRequest
+                                    {
+                                        Target = new EntityReference(entityName, Id),
+                                        ColumnSet = new ColumnSet(true)
+                                    });
+
+                                    if (unpublishedResponse.Entity != null)
+                                    {
+                                        viewEntity = unpublishedResponse.Entity;
+                                        isUpdate = true;
+                                        WriteVerbose($"Found existing unpublished system view with ID: {Id}");
+                                    }
+                                }
+                                catch (FaultException<OrganizationServiceFault> unpublishedEx) when (QueryHelpers.IsNotFoundException(unpublishedEx))
+                                {
+                                    WriteVerbose($"View with ID {Id} not found in published or unpublished state");
+                                }
+                            }
+                            else
+                            {
+                                WriteVerbose($"View with ID {Id} not found");
+                            }
                         }
                         else
                         {
@@ -219,11 +245,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                     };
                     query.Criteria.AddCondition("name", ConditionOperator.Equal, Name);
                     query.Criteria.AddCondition("returnedtypecode", ConditionOperator.Equal, TableName);
-                    
-                    var results = Connection.RetrieveMultiple(query);
-                    if (results.Entities.Count > 0)
+
+                    var existingViews = entityName == "savedquery"
+                        ? QueryHelpers.ExecuteQueryWithPublishedAndUnpublished(query, Connection, WriteVerbose).ToList()
+                        : QueryHelpers.ExecuteQueryWithPaging(query, Connection, WriteVerbose).ToList();
+
+                    if (existingViews.Count > 0)
                     {
-                        viewEntity = results.Entities[0];
+                        viewEntity = existingViews[0];
                         viewId = viewEntity.Id;
                         isUpdate = true;
                         WriteVerbose($"Found existing {(ViewType == "System" ? "system" : "personal")} view by name with ID: {viewId}");

@@ -4,6 +4,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Management.Automation;
 using System.Management.Automation.Runspaces;
+using System.Reflection;
 using System.Text;
 using System.Linq;
 using FluentAssertions;
@@ -11,6 +12,7 @@ using Microsoft.Crm.Sdk.Messages;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
 using Microsoft.Xrm.Sdk.Messages;
+using Microsoft.Xrm.Sdk.Metadata;
 using Microsoft.Xrm.Sdk.Query;
 using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
@@ -40,6 +42,10 @@ public class SolutionsTests : TestBase
             "Get-DataverseSolutionDependency", typeof(GetDataverseSolutionDependencyCmdlet), null));
         initialSessionState.Commands.Add(new SessionStateCmdletEntry(
             "Import-DataverseSolution", typeof(ImportDataverseSolutionCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+            "Set-DataverseSolutionComponent", typeof(SetDataverseSolutionComponentCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+            "Remove-DataverseSolutionComponent", typeof(RemoveDataverseSolutionComponentCmdlet), null));
 
         var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
         runspace.Open();
@@ -467,6 +473,195 @@ public class SolutionsTests : TestBase
         var results = ps.Invoke();
 
         // Assert
+        ps.HadErrors.Should().BeFalse();
+        results.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void SetDataverseSolutionComponent_AddsNewComponent_AndReturnsPassThruInfo()
+    {
+        using var ps = CreatePowerShellWithCmdlets();
+
+        var componentId = Guid.NewGuid();
+        AddSolutionComponentRequest capturedAddRequest = null;
+        var mockConnection = CreateMockConnectionWithCustomMetadata(
+            request =>
+            {
+                if (request is AddSolutionComponentRequest addRequest)
+                {
+                    capturedAddRequest = addRequest;
+                    var solutionId = GetSolutionIdByUniqueName(addRequest.SolutionUniqueName);
+                    Service!.Create(CreateSolutionComponentEntity(Guid.NewGuid(), solutionId, addRequest.ComponentId, addRequest.ComponentType, 0));
+                    return new OrganizationResponse();
+                }
+
+                return null;
+            },
+            BuildSolutionComponentMetadata());
+
+        CreateSolutionEntity("TestSolution", "Test Solution", "1.0.0.0", false);
+
+        ps.AddCommand("Set-DataverseSolutionComponent")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("SolutionName", "TestSolution")
+          .AddParameter("ComponentId", componentId)
+          .AddParameter("ComponentType", 1)
+          .AddParameter("Behavior", 0)
+          .AddParameter("PassThru", true)
+          .AddParameter("Confirm", false);
+        var results = ps.Invoke();
+
+        ps.HadErrors.Should().BeFalse();
+        capturedAddRequest.Should().NotBeNull();
+        capturedAddRequest!.DoNotIncludeSubcomponents.Should().BeFalse();
+        capturedAddRequest.IncludedComponentSettingsValues.Should().BeNull();
+        results.Should().HaveCount(1);
+        results[0].Properties["BehaviorValue"]?.Value.Should().Be(0);
+        results[0].Properties["Behavior"]?.Value.Should().Be("Include Subcomponents");
+        results[0].Properties["WasUpdated"]?.Value.Should().Be(false);
+
+        var storedComponent = GetSingleSolutionComponent(componentId, 1);
+        storedComponent.Should().NotBeNull();
+        storedComponent!.GetAttributeValue<OptionSetValue>("rootcomponentbehavior")!.Value.Should().Be(0);
+    }
+
+    [Fact]
+    public void SetDataverseSolutionComponent_ReaddsComponent_WhenBehaviorChanges()
+    {
+        using var ps = CreatePowerShellWithCmdlets();
+
+        var componentId = Guid.NewGuid();
+        int addCount = 0;
+        int removeCount = 0;
+        AddSolutionComponentRequest capturedAddRequest = null;
+        RemoveSolutionComponentRequest capturedRemoveRequest = null;
+        var mockConnection = CreateMockConnectionWithCustomMetadata(
+            request =>
+            {
+                if (request is AddSolutionComponentRequest addRequest)
+                {
+                    addCount++;
+                    capturedAddRequest = addRequest;
+                    var solutionId = GetSolutionIdByUniqueName(addRequest.SolutionUniqueName);
+                    var behavior = addRequest.IncludedComponentSettingsValues != null && addRequest.IncludedComponentSettingsValues.Length == 0
+                        ? 2
+                        : addRequest.DoNotIncludeSubcomponents ? 1 : 0;
+
+                    var existing = GetSingleSolutionComponent(addRequest.ComponentId, addRequest.ComponentType);
+                    if (existing != null)
+                    {
+                        Service!.Delete("solutioncomponent", existing.Id);
+                    }
+
+                    Service!.Create(CreateSolutionComponentEntity(Guid.NewGuid(), solutionId, addRequest.ComponentId, addRequest.ComponentType, behavior));
+                    return new OrganizationResponse();
+                }
+
+                if (request is RemoveSolutionComponentRequest removeRequest)
+                {
+                    removeCount++;
+                    capturedRemoveRequest = removeRequest;
+                    var existing = GetSingleSolutionComponent(removeRequest.ComponentId, removeRequest.ComponentType);
+                    if (existing != null)
+                    {
+                        Service!.Delete("solutioncomponent", existing.Id);
+                    }
+                    return new OrganizationResponse();
+                }
+
+                return null;
+            },
+            BuildSolutionComponentMetadata());
+
+        var solution = CreateSolutionEntity("TestSolution", "Test Solution", "1.0.0.0", false);
+        Service!.Create(CreateSolutionComponentEntity(Guid.NewGuid(), solution.Id, componentId, 1, 0));
+
+        ps.AddCommand("Set-DataverseSolutionComponent")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("SolutionName", "TestSolution")
+          .AddParameter("ComponentId", componentId)
+          .AddParameter("ComponentType", 1)
+          .AddParameter("Behavior", 2)
+          .AddParameter("PassThru", true)
+          .AddParameter("Confirm", false);
+        var results = ps.Invoke();
+
+        ps.HadErrors.Should().BeFalse();
+        removeCount.Should().Be(1);
+        addCount.Should().Be(1);
+        capturedRemoveRequest.Should().NotBeNull();
+        capturedAddRequest.Should().NotBeNull();
+        capturedAddRequest!.DoNotIncludeSubcomponents.Should().BeTrue();
+        capturedAddRequest.IncludedComponentSettingsValues.Should().NotBeNull();
+        capturedAddRequest.IncludedComponentSettingsValues.Should().BeEmpty();
+        results.Should().HaveCount(1);
+        results[0].Properties["BehaviorValue"]?.Value.Should().Be(2);
+        results[0].Properties["Behavior"]?.Value.Should().Be("Include As Shell");
+        results[0].Properties["WasUpdated"]?.Value.Should().Be(true);
+
+        var storedComponent = GetSingleSolutionComponent(componentId, 1);
+        storedComponent.Should().NotBeNull();
+        storedComponent!.GetAttributeValue<OptionSetValue>("rootcomponentbehavior")!.Value.Should().Be(2);
+    }
+
+    [Fact]
+    public void RemoveDataverseSolutionComponent_RemovesExistingComponent()
+    {
+        using var ps = CreatePowerShellWithCmdlets();
+
+        var componentId = Guid.NewGuid();
+        RemoveSolutionComponentRequest capturedRemoveRequest = null;
+        var mockConnection = CreateMockConnectionWithCustomMetadata(
+            request =>
+            {
+                if (request is RemoveSolutionComponentRequest removeRequest)
+                {
+                    capturedRemoveRequest = removeRequest;
+                    var existing = GetSingleSolutionComponent(removeRequest.ComponentId, removeRequest.ComponentType);
+                    if (existing != null)
+                    {
+                        Service!.Delete("solutioncomponent", existing.Id);
+                    }
+                    return new OrganizationResponse();
+                }
+
+                return null;
+            },
+            BuildSolutionComponentMetadata());
+
+        var solution = CreateSolutionEntity("TestSolution", "Test Solution", "1.0.0.0", false);
+        Service!.Create(CreateSolutionComponentEntity(Guid.NewGuid(), solution.Id, componentId, 1, 0));
+
+        ps.AddCommand("Remove-DataverseSolutionComponent")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("SolutionName", "TestSolution")
+          .AddParameter("ComponentId", componentId)
+          .AddParameter("ComponentType", 1)
+          .AddParameter("Confirm", false);
+        ps.Invoke();
+
+        ps.HadErrors.Should().BeFalse();
+        capturedRemoveRequest.Should().NotBeNull();
+        GetSingleSolutionComponent(componentId, 1).Should().BeNull();
+    }
+
+    [Fact]
+    public void RemoveDataverseSolutionComponent_IfExists_DoesNotError_WhenComponentIsMissing()
+    {
+        using var ps = CreatePowerShellWithCmdlets();
+
+        var mockConnection = CreateMockConnectionWithCustomMetadata(null, BuildSolutionComponentMetadata());
+        CreateSolutionEntity("TestSolution", "Test Solution", "1.0.0.0", false);
+
+        ps.AddCommand("Remove-DataverseSolutionComponent")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("SolutionName", "TestSolution")
+          .AddParameter("ComponentId", Guid.NewGuid())
+          .AddParameter("ComponentType", 1)
+          .AddParameter("IfExists", true)
+          .AddParameter("Confirm", false);
+        var results = ps.Invoke();
+
         ps.HadErrors.Should().BeFalse();
         results.Should().BeEmpty();
     }
@@ -1051,7 +1246,7 @@ public class SolutionsTests : TestBase
                     qe2.EntityName == "importjob")
                 {
                     // Extract the importjobid from the query
-                    string importJobId = null;
+                    string? importJobId = null;
                     foreach (var condition in qe2.Criteria.Conditions)
                     {
                         if (condition.AttributeName == "importjobid" &&
@@ -1113,8 +1308,8 @@ public class SolutionsTests : TestBase
     private class AsyncOperationState
     {
         public int StatusCode { get; set; }
-        public string Message { get; set; }
-        public string FriendlyMessage { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string FriendlyMessage { get; set; } = string.Empty;
     }
 
     /// <summary>
@@ -1123,6 +1318,171 @@ public class SolutionsTests : TestBase
     private class ImportJobState
     {
         public int Progress { get; set; }
+    }
+
+    private Guid GetSolutionIdByUniqueName(string uniqueName)
+    {
+        var query = new QueryExpression("solution")
+        {
+            ColumnSet = new ColumnSet("solutionid"),
+            Criteria = new FilterExpression
+            {
+                Conditions =
+                {
+                    new ConditionExpression("uniquename", ConditionOperator.Equal, uniqueName)
+                }
+            },
+            TopCount = 1
+        };
+
+        var result = Service!.RetrieveMultiple(query);
+        return result.Entities.Single().Id;
+    }
+
+    private Entity GetSingleSolutionComponent(Guid componentId, int componentType)
+    {
+        var query = new QueryExpression("solutioncomponent")
+        {
+            ColumnSet = new ColumnSet("solutioncomponentid", "objectid", "componenttype", "rootcomponentbehavior"),
+            Criteria = new FilterExpression
+            {
+                Conditions =
+                {
+                    new ConditionExpression("objectid", ConditionOperator.Equal, componentId),
+                    new ConditionExpression("componenttype", ConditionOperator.Equal, componentType)
+                }
+            },
+            TopCount = 1
+        };
+
+        return Service!.RetrieveMultiple(query).Entities.SingleOrDefault();
+    }
+
+    private static Entity CreateSolutionComponentEntity(Guid id, Guid solutionId, Guid componentId, int componentType, int behavior)
+    {
+        return new Entity("solutioncomponent", id)
+        {
+            ["solutionid"] = new EntityReference("solution", solutionId),
+            ["objectid"] = componentId,
+            ["componenttype"] = componentType,
+            ["rootcomponentbehavior"] = new OptionSetValue(behavior)
+        };
+    }
+
+    private static List<EntityMetadata> BuildSolutionComponentMetadata()
+    {
+        return new List<EntityMetadata>
+        {
+            BuildEntityMetadata(
+                logicalName: "publisher",
+                schemaName: "Publisher",
+                primaryIdAttribute: "publisherid",
+                primaryNameAttribute: "friendlyname",
+                objectTypeCode: 7100,
+                BuildGuidAttribute("publisherid", "PublisherId"),
+                BuildStringAttribute("friendlyname", "FriendlyName"),
+                BuildStringAttribute("uniquename", "UniqueName"),
+                BuildStringAttribute("customizationprefix", "CustomizationPrefix")),
+            BuildEntityMetadata(
+                logicalName: "solution",
+                schemaName: "Solution",
+                primaryIdAttribute: "solutionid",
+                primaryNameAttribute: "friendlyname",
+                objectTypeCode: 7101,
+                BuildGuidAttribute("solutionid", "SolutionId"),
+                BuildStringAttribute("friendlyname", "FriendlyName"),
+                BuildStringAttribute("uniquename", "UniqueName"),
+                BuildStringAttribute("version", "Version"),
+                BuildBooleanAttribute("ismanaged", "IsManaged"),
+                BuildStringAttribute("description", "Description"),
+                BuildLookupAttribute("publisherid", "PublisherId", "publisher")),
+            BuildEntityMetadata(
+                logicalName: "solutioncomponent",
+                schemaName: "SolutionComponent",
+                primaryIdAttribute: "solutioncomponentid",
+                primaryNameAttribute: "solutioncomponentid",
+                objectTypeCode: 7102,
+                BuildGuidAttribute("solutioncomponentid", "SolutionComponentId"),
+                BuildLookupAttribute("solutionid", "SolutionId", "solution"),
+                BuildGuidAttribute("objectid", "ObjectId"),
+                BuildIntegerAttribute("componenttype", "ComponentType"),
+                BuildPicklistAttribute("rootcomponentbehavior", "RootComponentBehavior"))
+        };
+    }
+
+    private static EntityMetadata BuildEntityMetadata(
+        string logicalName,
+        string schemaName,
+        string primaryIdAttribute,
+        string primaryNameAttribute,
+        int objectTypeCode,
+        params AttributeMetadata[] attributes)
+    {
+        var metadata = new EntityMetadata();
+        SetMetadataProperty(metadata, nameof(EntityMetadata.LogicalName), logicalName);
+        SetMetadataProperty(metadata, nameof(EntityMetadata.SchemaName), schemaName);
+        SetMetadataProperty(metadata, nameof(EntityMetadata.PrimaryIdAttribute), primaryIdAttribute);
+        SetMetadataProperty(metadata, nameof(EntityMetadata.PrimaryNameAttribute), primaryNameAttribute);
+        SetMetadataProperty(metadata, nameof(EntityMetadata.ObjectTypeCode), objectTypeCode);
+        SetMetadataProperty(metadata, nameof(EntityMetadata.Attributes), attributes);
+        return metadata;
+    }
+
+    private static AttributeMetadata BuildGuidAttribute(string logicalName, string schemaName)
+    {
+        var attribute = new AttributeMetadata();
+        SetAttributeDefaults(attribute, logicalName, schemaName, AttributeTypeCode.Uniqueidentifier);
+        return attribute;
+    }
+
+    private static StringAttributeMetadata BuildStringAttribute(string logicalName, string schemaName)
+    {
+        var attribute = new StringAttributeMetadata { MaxLength = 500 };
+        SetAttributeDefaults(attribute, logicalName, schemaName, AttributeTypeCode.String);
+        return attribute;
+    }
+
+    private static BooleanAttributeMetadata BuildBooleanAttribute(string logicalName, string schemaName)
+    {
+        var attribute = new BooleanAttributeMetadata();
+        SetAttributeDefaults(attribute, logicalName, schemaName, AttributeTypeCode.Boolean);
+        return attribute;
+    }
+
+    private static IntegerAttributeMetadata BuildIntegerAttribute(string logicalName, string schemaName)
+    {
+        var attribute = new IntegerAttributeMetadata();
+        SetAttributeDefaults(attribute, logicalName, schemaName, AttributeTypeCode.Integer);
+        return attribute;
+    }
+
+    private static PicklistAttributeMetadata BuildPicklistAttribute(string logicalName, string schemaName)
+    {
+        var attribute = new PicklistAttributeMetadata();
+        SetAttributeDefaults(attribute, logicalName, schemaName, AttributeTypeCode.Picklist);
+        return attribute;
+    }
+
+    private static LookupAttributeMetadata BuildLookupAttribute(string logicalName, string schemaName, params string[] targets)
+    {
+        var attribute = new LookupAttributeMetadata();
+        SetAttributeDefaults(attribute, logicalName, schemaName, AttributeTypeCode.Lookup);
+        SetMetadataProperty(attribute, nameof(LookupAttributeMetadata.Targets), targets);
+        return attribute;
+    }
+
+    private static void SetAttributeDefaults(AttributeMetadata attribute, string logicalName, string schemaName, AttributeTypeCode type)
+    {
+        SetMetadataProperty(attribute, nameof(AttributeMetadata.LogicalName), logicalName);
+        SetMetadataProperty(attribute, nameof(AttributeMetadata.SchemaName), schemaName);
+        SetMetadataProperty(attribute, nameof(AttributeMetadata.AttributeType), type);
+        SetMetadataProperty(attribute, nameof(AttributeMetadata.IsValidForRead), true);
+    }
+
+    private static void SetMetadataProperty(object target, string propertyName, object? value)
+    {
+        var property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        property?.SetValue(target, value);
     }
 
     /// <summary>

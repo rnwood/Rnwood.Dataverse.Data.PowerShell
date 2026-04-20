@@ -5,6 +5,7 @@ using System.Reflection;
 using Microsoft.Extensions.Logging;
 using Microsoft.PowerPlatform.Dataverse.Client;
 using Microsoft.Xrm.Sdk;
+using Microsoft.Xrm.Sdk.Discovery;
 
 namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
 {
@@ -31,6 +32,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
         
         internal static void TrySetUriField(ServiceClient client, Uri uri)
         {
+            TryConfigureConnectionService(client, uri);
+
+            if (client.ConnectedOrgUriActual != null && client.ConnectedOrgUriActual.Host == uri.Host)
+            {
+                return;
+            }
+
             // Try common field name patterns for storing the connected org URI
             var fieldNames = new[]
             {
@@ -89,6 +97,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
             
             // If we STILL haven't succeeded, the internal constructor may have set it already
             // or the field pattern has changed in a newer version of ServiceClient
+        }
+
+        internal static void TryConfigureConnectionService(ServiceClient client, Uri uri)
+        {
+            var flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            var connectionSvcField = client.GetType().GetField("_connectionSvc", flags);
+            var connectionSvc = connectionSvcField?.GetValue(client);
+
+            if (connectionSvc == null)
+            {
+                return;
+            }
+
+            var connectionSvcType = connectionSvc.GetType();
+
+            var actualUriField = connectionSvcType.GetField("_ActualDataverseOrgUri", flags);
+            actualUriField?.SetValue(connectionSvc, uri);
+
+            var orgDetail = new OrganizationDetail
+            {
+                FriendlyName = "Fake Organization",
+                UniqueName = "fakeorg",
+                OrganizationId = Guid.Empty
+            };
+
+            var connectedOrgDetailProperty = connectionSvcType.GetProperty("ConnectedOrganizationDetail", flags);
+            connectedOrgDetailProperty?.SetValue(connectionSvc, orgDetail);
         }
 
         internal static void SetPrivateProperty(object obj, string propertyName, object value)

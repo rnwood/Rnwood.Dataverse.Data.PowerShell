@@ -83,6 +83,49 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         }
 
         [Fact]
+        public void SetDataverseRecord_Parallel_WarnsWhenAffinityCookieEnabled()
+        {
+            // Arrange
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection("contact");
+
+            // Act
+            ps.AddScript(@"
+                param($conn)
+                @() | Set-DataverseRecord -Connection $conn -TableName contact -MaxDegreeOfParallelism 2
+            ");
+            ps.AddParameter("conn", mockConnection);
+            ps.Invoke();
+
+            // Assert
+            ps.HadErrors.Should().BeFalse();
+            ps.Streams.Warning.Should().Contain(w =>
+                w.Message.Contains("Using parallelization with affinity cookie enabled may reduce performance"));
+        }
+
+        [Fact]
+        public void SetDataverseRecord_Parallel_DoesNotWarnWhenAffinityCookieDisabled()
+        {
+            // Arrange
+            using var ps = CreatePowerShellWithCmdlets();
+            var mockConnection = CreateMockConnection("contact");
+            mockConnection.EnableAffinityCookie = false;
+
+            // Act
+            ps.AddScript(@"
+                param($conn)
+                @() | Set-DataverseRecord -Connection $conn -TableName contact -MaxDegreeOfParallelism 2
+            ");
+            ps.AddParameter("conn", mockConnection);
+            ps.Invoke();
+
+            // Assert
+            ps.HadErrors.Should().BeFalse();
+            ps.Streams.Warning.Should().NotContain(w =>
+                w.Message.Contains("Using parallelization with affinity cookie enabled may reduce performance"));
+        }
+
+        [Fact]
         public void SetDataverseRecord_Parallel_CombinesParallelProcessingWithBatching()
         {
             // Arrange

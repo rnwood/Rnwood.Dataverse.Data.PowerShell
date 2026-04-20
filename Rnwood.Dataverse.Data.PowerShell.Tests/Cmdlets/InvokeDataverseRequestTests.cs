@@ -327,157 +327,47 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
         [Fact]
         public void InvokeDataverseRequest_NavigationPathWithForwardSlash_IsAllowed()
         {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Invoke-DataverseRequest", typeof(InvokeDataverseRequestCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            var mockConnection = CreateMockConnection("contact");
-
             var id = "1d936fda-9076-ef11-a671-6045bd0ab99c";
 
-            // Act
-            ps.AddCommand("Invoke-DataverseRequest")
-                .AddParameter("Connection", mockConnection)
-                .AddParameter("Method", "POST")
-                .AddParameter("Path", $"sample_entities({id})/Microsoft.Dynamics.CRM.sample_MyCustomApi");
+            Action act = () => InvokeDataverseRequestCmdlet.ValidateRestPath($"sample_entities({id})/Microsoft.Dynamics.CRM.sample_MyCustomApi");
 
-            ps.Invoke();
-
-            // Assert - Should not throw validation error
-            if (ps.HadErrors)
-            {
-                ps.Streams.Error[0].Exception.Message.Should().NotContain("should not start with");
-            }
+            act.Should().NotThrow();
         }
 
         [Fact]
         public void InvokeDataverseRequest_NavigationPathWithMultipleForwardSlashes_IsAllowed()
         {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Invoke-DataverseRequest", typeof(InvokeDataverseRequestCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            var mockConnection = CreateMockConnection("contact");
-
             var id = "1d936fda-9076-ef11-a671-6045bd0ab99c";
 
-            // Act
-            ps.AddCommand("Invoke-DataverseRequest")
-                .AddParameter("Connection", mockConnection)
-                .AddParameter("Method", "POST")
-                .AddParameter("Path", $"entities({id})/Microsoft.Dynamics.CRM.Action/SubPath");
+            Action act = () => InvokeDataverseRequestCmdlet.ValidateRestPath($"entities({id})/Microsoft.Dynamics.CRM.Action/SubPath");
 
-            ps.Invoke();
-
-            // Assert - Should not throw validation error
-            if (ps.HadErrors)
-            {
-                ps.Streams.Error[0].Exception.Message.Should().NotContain("should not start with");
-            }
+            act.Should().NotThrow();
         }
 
         [Fact]
         public void InvokeDataverseRequest_SimpleResourceName_IsAllowed()
         {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Invoke-DataverseRequest", typeof(InvokeDataverseRequestCmdlet), null));
+            Action act = () => InvokeDataverseRequestCmdlet.ValidateRestPath("WhoAmI");
 
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            var mockConnection = CreateMockConnection("contact");
-
-            // Act
-            ps.AddCommand("Invoke-DataverseRequest")
-                .AddParameter("Connection", mockConnection)
-                .AddParameter("Method", "Get")
-                .AddParameter("Path", "WhoAmI");
-
-            ps.Invoke();
-
-            // Assert - Should not throw validation error
-            if (ps.HadErrors)
-            {
-                ps.Streams.Error[0].Exception.Message.Should().NotContain("should not start with");
-            }
+            act.Should().NotThrow();
         }
 
         [Fact]
         public void InvokeDataverseRequest_PathWithQueryStringContainingSlashes_IsAllowed()
         {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Invoke-DataverseRequest", typeof(InvokeDataverseRequestCmdlet), null));
+            Action act = () => InvokeDataverseRequestCmdlet.ValidateRestPath("WhoAmI?filter=value/with/slashes");
 
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            var mockConnection = CreateMockConnection("contact");
-
-            // Act
-            ps.AddCommand("Invoke-DataverseRequest")
-                .AddParameter("Connection", mockConnection)
-                .AddParameter("Method", "Get")
-                .AddParameter("Path", "WhoAmI?filter=value/with/slashes");
-
-            ps.Invoke();
-
-            // Assert - Should not throw validation error
-            if (ps.HadErrors)
-            {
-                ps.Streams.Error[0].Exception.Message.Should().NotContain("should not start with");
-            }
+            act.Should().NotThrow();
         }
 
         [Fact]
         public void InvokeDataverseRequest_NavigationPathWithQueryStringContainingSlashes_IsAllowed()
         {
-            // Arrange
-            var initialSessionState = InitialSessionState.CreateDefault();
-            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
-                "Invoke-DataverseRequest", typeof(InvokeDataverseRequestCmdlet), null));
-
-            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
-            runspace.Open();
-            using var ps = PS.Create();
-            ps.Runspace = runspace;
-
-            var mockConnection = CreateMockConnection("contact");
-
             var id = "1d936fda-9076-ef11-a671-6045bd0ab99c";
 
-            // Act
-            ps.AddCommand("Invoke-DataverseRequest")
-                .AddParameter("Connection", mockConnection)
-                .AddParameter("Method", "POST")
-                .AddParameter("Path", $"sample_entities({id})/Microsoft.Dynamics.CRM.Action?param=value/with/slash");
+            Action act = () => InvokeDataverseRequestCmdlet.ValidateRestPath($"sample_entities({id})/Microsoft.Dynamics.CRM.Action?param=value/with/slash");
 
-            ps.Invoke();
-
-            // Assert - Should not throw validation error
-            if (ps.HadErrors)
-            {
-                ps.Streams.Error[0].Exception.Message.Should().NotContain("should not start with");
-            }
+            act.Should().NotThrow();
         }
 
         // ===== PSObject Unwrapping Tests =====
@@ -812,5 +702,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             // Results are wrapped in PSObject - check BaseObject
             results.Should().AllSatisfy(r => r.BaseObject.Should().BeAssignableTo<WhoAmIResponse>());
         }
+
     }
 }

@@ -41,6 +41,15 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure
                     }
                     return null;
                 };
+
+            Rnwood.Dataverse.Data.PowerShell.Commands.DataverseConnectionExtensions.GetRestCapableWrapper = 
+                (serviceClient) => {
+                    if (WrapperRegistry.TryGetWrapper(serviceClient, out var wrapper))
+                    {
+                        return wrapper as Rnwood.Dataverse.Data.PowerShell.Commands.IRestCapableServiceClient;
+                    }
+                    return null;
+                };
         }
 
 

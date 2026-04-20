@@ -4,8 +4,10 @@ using Microsoft.Xrm.Sdk.Query;
 using Rnwood.Dataverse.Data.PowerShell.Commands;
 using Rnwood.Dataverse.Data.PowerShell.Tests.Infrastructure;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Management.Automation;
 using System.Management.Automation.Runspaces;
 using Xunit;
 using PS = System.Management.Automation.PowerShell;
@@ -175,6 +177,167 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             updated.GetAttributeValue<string>("firstname").Should().Be("NewName");
             updated.GetAttributeValue<string>("emailaddress1").Should().Be("new@example.com");
             updated.GetAttributeValue<string>("lastname").Should().Be("UpdateMe");
+        }
+
+        [Fact]
+        public void InvokeDataverseSql_DataSourceNameOverride_AllowsSelectingFromNamedPrimaryDatasource()
+        {
+            // Arrange
+            var initialSessionState = InitialSessionState.CreateDefault();
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Invoke-DataverseSql", typeof(InvokeDataverseSqlCmdlet), null));
+
+            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+            runspace.Open();
+            using var ps = PS.Create();
+            ps.Runspace = runspace;
+
+            CreateMockConnection("contact");
+            var sql4CdsConnection = MockSql4CdsServiceClientFactory.CreateForSql4Cds(Service!);
+
+            Service!.Create(new Entity("contact")
+            {
+                Id = Guid.NewGuid(),
+                ["firstname"] = "Named",
+                ["lastname"] = "Datasource"
+            });
+
+            // Act
+            ps.AddCommand("Invoke-DataverseSql")
+                .AddParameter("Connection", sql4CdsConnection)
+                .AddParameter("DataSourceName", "main")
+                .AddParameter("Sql", "SELECT TOP 1 firstname, lastname FROM main..contact");
+
+            var results = ps.Invoke();
+
+            // Assert
+            ps.HadErrors.Should().BeFalse();
+            results.Should().ContainSingle();
+            results[0].Properties["firstname"].Value.Should().Be("Named");
+            results[0].Properties["lastname"].Value.Should().Be("Datasource");
+        }
+
+        [Fact]
+        public void InvokeDataverseSql_AdditionalConnections_AllowsSelectingFromNamedAdditionalDatasource()
+        {
+            // Arrange
+            var initialSessionState = InitialSessionState.CreateDefault();
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Invoke-DataverseSql", typeof(InvokeDataverseSqlCmdlet), null));
+
+            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+            runspace.Open();
+            using var ps = PS.Create();
+            ps.Runspace = runspace;
+
+            CreateMockConnection("contact");
+            var primaryConnection = MockSql4CdsServiceClientFactory.CreateForSql4Cds(Service!);
+            var secondaryConnection = MockSql4CdsServiceClientFactory.CreateForSql4Cds(Service!);
+
+            Service!.Create(new Entity("contact")
+            {
+                Id = Guid.NewGuid(),
+                ["firstname"] = "Secondary",
+                ["lastname"] = "Datasource"
+            });
+
+            var additionalConnections = new Hashtable
+            {
+                ["secondary"] = secondaryConnection
+            };
+
+            // Act
+            ps.AddCommand("Invoke-DataverseSql")
+                .AddParameter("Connection", primaryConnection)
+                .AddParameter("AdditionalConnections", additionalConnections)
+                .AddParameter("Sql", "SELECT TOP 1 firstname, lastname FROM secondary..contact");
+
+            var results = ps.Invoke();
+
+            // Assert
+            ps.HadErrors.Should().BeFalse();
+            results.Should().ContainSingle();
+            results[0].Properties["firstname"].Value.Should().Be("Secondary");
+            results[0].Properties["lastname"].Value.Should().Be("Datasource");
+        }
+
+        [Fact]
+        public void InvokeDataverseSql_CrossDatasourceQueryWithAdditionalConnections_ReturnsResults()
+        {
+            // Arrange
+            var initialSessionState = InitialSessionState.CreateDefault();
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Invoke-DataverseSql", typeof(InvokeDataverseSqlCmdlet), null));
+
+            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+            runspace.Open();
+            using var ps = PS.Create();
+            ps.Runspace = runspace;
+
+            CreateMockConnection("contact");
+            var primaryConnection = MockSql4CdsServiceClientFactory.CreateForSql4Cds(Service!);
+            var secondaryConnection = MockSql4CdsServiceClientFactory.CreateForSql4Cds(Service!);
+
+            Service!.Create(new Entity("contact")
+            {
+                Id = Guid.NewGuid(),
+                ["firstname"] = "Cross",
+                ["lastname"] = "Datasource"
+            });
+
+            var additionalConnections = new Hashtable
+            {
+                ["secondary"] = secondaryConnection
+            };
+
+            // Act
+            ps.AddCommand("Invoke-DataverseSql")
+                .AddParameter("Connection", primaryConnection)
+                .AddParameter("DataSourceName", "main")
+                .AddParameter("AdditionalConnections", additionalConnections)
+                .AddParameter("Sql", "SELECT TOP 1 p.firstname AS primary_name, s.firstname AS secondary_name FROM main..contact p CROSS JOIN secondary..contact s");
+
+            var results = ps.Invoke();
+
+            // Assert
+            ps.HadErrors.Should().BeFalse();
+            results.Should().ContainSingle();
+            results[0].Properties["primary_name"].Value.Should().Be("Cross");
+            results[0].Properties["secondary_name"].Value.Should().Be("Cross");
+        }
+
+        [Fact]
+        public void InvokeDataverseSql_AdditionalConnections_InvalidValueType_ThrowsHelpfulError()
+        {
+            // Arrange
+            var initialSessionState = InitialSessionState.CreateDefault();
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Invoke-DataverseSql", typeof(InvokeDataverseSqlCmdlet), null));
+
+            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+            runspace.Open();
+            using var ps = PS.Create();
+            ps.Runspace = runspace;
+
+            CreateMockConnection("contact");
+            var primaryConnection = MockSql4CdsServiceClientFactory.CreateForSql4Cds(Service!);
+
+            var additionalConnections = new Hashtable
+            {
+                ["invalid"] = "not a connection"
+            };
+
+            // Act
+            ps.AddCommand("Invoke-DataverseSql")
+                .AddParameter("Connection", primaryConnection)
+                .AddParameter("AdditionalConnections", additionalConnections)
+                .AddParameter("Sql", "SELECT TOP 1 firstname FROM contact");
+
+            Action invoke = () => ps.Invoke();
+
+            // Assert
+            invoke.Should().Throw<CmdletInvocationException>()
+                .WithMessage("*must be a ServiceClient or IOrganizationService instance*");
         }
     }
 }

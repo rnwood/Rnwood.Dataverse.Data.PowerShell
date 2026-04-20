@@ -463,6 +463,106 @@ public class ViewsTests : TestBase
     }
 
     [Fact]
+    public void SetDataverseView_UpdatesExistingViewByNameAndTableNameWithoutCreatingDuplicate()
+    {
+        // Arrange
+        using var ps = CreatePowerShellWithViewCmdlets();
+        var mockConnection = CreateMockConnection("savedquery", "contact");
+
+        // Act - create with name/table only
+        ps.AddCommand("Set-DataverseView")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("Name", "No Duplicate View")
+          .AddParameter("TableName", "contact")
+          .AddParameter("Columns", new[] { "fullname", "emailaddress1" })
+          .AddParameter("QueryType", "MainApplicationView")
+          .AddParameter("Description", "First version")
+          .AddParameter("ViewType", "System")
+          .AddParameter("PassThru", true);
+        var firstResults = ps.Invoke();
+
+        ps.HadErrors.Should().BeFalse();
+        firstResults.Should().HaveCount(1);
+        var firstId = (Guid)firstResults[0].BaseObject;
+
+        // Act - update with the same logical identity but no explicit ID
+        ps.Commands.Clear();
+        ps.AddCommand("Set-DataverseView")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("Name", "No Duplicate View")
+          .AddParameter("TableName", "contact")
+          .AddParameter("Columns", new[] { "fullname", "emailaddress1", "telephone1" })
+          .AddParameter("QueryType", "MainApplicationView")
+          .AddParameter("Description", "Updated version")
+          .AddParameter("ViewType", "System")
+          .AddParameter("PassThru", true);
+        var secondResults = ps.Invoke();
+
+        // Assert - the second call should update, not create a duplicate
+        ps.HadErrors.Should().BeFalse();
+        secondResults.Should().HaveCount(1);
+        var secondId = (Guid)secondResults[0].BaseObject;
+        secondId.Should().Be(firstId);
+
+        ps.Commands.Clear();
+        ps.AddCommand("Get-DataverseView")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("Name", "No Duplicate View")
+          .AddParameter("TableName", "contact")
+          .AddParameter("ViewType", "System");
+        var checkResults = ps.Invoke();
+
+        checkResults.Should().HaveCount(1);
+        checkResults[0].Properties["Id"].Value.Should().Be(firstId);
+        checkResults[0].Properties["Description"].Value.Should().Be("Updated version");
+    }
+
+    [Fact]
+    public void SetDataverseView_UpdatesColumns_WhenExistingLayoutXmlIsEmpty()
+    {
+        // Arrange
+        using var ps = CreatePowerShellWithViewCmdlets();
+        var mockConnection = CreateMockConnection("savedquery", "contact");
+
+        var viewId = Guid.NewGuid();
+        var view = new Entity("savedquery")
+        {
+            Id = viewId,
+            ["savedqueryid"] = viewId,
+            ["name"] = "Empty Layout View",
+            ["returnedtypecode"] = "contact",
+            ["fetchxml"] = "<fetch><entity name='contact'><attribute name='fullname'/></entity></fetch>",
+            ["layoutxml"] = string.Empty,
+            ["querytype"] = 0
+        };
+        Service!.Create(view);
+
+        // Act
+        ps.AddCommand("Set-DataverseView")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("Id", viewId)
+          .AddParameter("ViewType", "System")
+          .AddParameter("Columns", new object[]
+          {
+              new Hashtable { ["name"] = "fullname", ["width"] = 200 },
+              new Hashtable { ["name"] = "emailaddress1", ["width"] = 150 },
+              new Hashtable { ["name"] = "telephone1", ["width"] = 100 }
+          })
+          .AddParameter("PassThru", true);
+        var results = ps.Invoke();
+
+        // Assert
+        ps.HadErrors.Should().BeFalse();
+        results.Should().HaveCount(1);
+        ((Guid)results[0].BaseObject).Should().Be(viewId);
+
+        var updated = Service.Retrieve("savedquery", viewId, new Microsoft.Xrm.Sdk.Query.ColumnSet(true));
+        updated.GetAttributeValue<string>("layoutxml").Should().Contain("fullname");
+        updated.GetAttributeValue<string>("layoutxml").Should().Contain("emailaddress1");
+        updated.GetAttributeValue<string>("layoutxml").Should().Contain("telephone1");
+    }
+
+    [Fact]
     public void SetDataverseView_NoUpdate_DoesNotModifyExistingView()
     {
         // Arrange
