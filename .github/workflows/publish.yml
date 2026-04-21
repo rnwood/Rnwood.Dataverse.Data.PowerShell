@@ -20,11 +20,11 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            powershell_version: "7.4.13"
+            powershell_version: "7.4.14"
             dotnet_tfm: "net8.0"
             test_set: e2e-minimal
           - os: windows-latest
-            powershell_version: "7.4.13"
+            powershell_version: "7.4.14"
             dotnet_tfm: "net8.0"
             test_set: e2e-full
           - os: windows-latest
@@ -32,20 +32,20 @@ jobs:
             dotnet_tfm: "net462"
             test_set: e2e-minimal
           - os: ubuntu-latest
-            powershell_version: "7.6.0-rc.1"
+            powershell_version: "7.6.0"
             dotnet_tfm: "net10.0"
             test_set: e2e-minimal
           - os: windows-latest
-            powershell_version: "7.6.0-rc.1"
+            powershell_version: "7.6.0"
             dotnet_tfm: "net10.0"
             test_set: e2e-minimal
           - os: ubuntu-latest
-            powershell_version: "7.5.4"
+            powershell_version: "7.5.5"
             dotnet_tfm: "net9.0"
             test_set: e2e-minimal
           # Infrastructure tests + E2E full (all tests)
           - os: windows-latest
-            powershell_version: "7.5.4"
+            powershell_version: "7.5.5"
             dotnet_tfm: "net9.0"
             test_set: e2e-minimal
     
