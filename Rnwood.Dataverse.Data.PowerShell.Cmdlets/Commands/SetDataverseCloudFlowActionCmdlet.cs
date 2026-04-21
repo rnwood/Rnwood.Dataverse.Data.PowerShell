@@ -10,7 +10,7 @@ using Newtonsoft.Json.Linq;
 namespace Rnwood.Dataverse.Data.PowerShell.Commands
 {
     /// <summary>
-    /// Updates an action within a cloud flow in Dataverse.
+    /// Creates or updates an action within a cloud flow in Dataverse. If the action already exists it is updated; otherwise a new action is created.
     /// </summary>
     [Cmdlet(VerbsCommon.Set, "DataverseCloudFlowAction", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
     public class SetDataverseCloudFlowActionCmdlet : OrganizationServiceCmdlet
@@ -30,22 +30,28 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public string FlowName { get; set; }
 
         /// <summary>
-        /// Gets or sets the ID/name of the action to update.
+        /// Gets or sets the ID/name of the action to create or update.
         /// </summary>
-        [Parameter(Mandatory = true, Position = 1, HelpMessage = "The ID/name of the action to update.")]
+        [Parameter(Mandatory = true, Position = 1, HelpMessage = "The ID/name of the action to create or update.")]
         [ValidateNotNullOrEmpty]
         public string ActionId { get; set; }
 
         /// <summary>
-        /// Gets or sets the new inputs for the action.
+        /// Gets or sets the type of the action. Required when creating a new action (e.g. 'Http', 'Response', 'Compose', 'InitializeVariable', 'Scope').
         /// </summary>
-        [Parameter(HelpMessage = "The new inputs for the action as a hashtable or JSON string.")]
+        [Parameter(HelpMessage = "The type of the action. Required when creating a new action (e.g. 'Http', 'Response', 'Compose', 'InitializeVariable', 'Scope').")]
+        public string Type { get; set; }
+
+        /// <summary>
+        /// Gets or sets the inputs for the action.
+        /// </summary>
+        [Parameter(HelpMessage = "The inputs for the action as a hashtable or JSON string.")]
         public object Inputs { get; set; }
 
         /// <summary>
-        /// Gets or sets the new description for the action.
+        /// Gets or sets the description for the action.
         /// </summary>
-        [Parameter(HelpMessage = "The new description for the action.")]
+        [Parameter(HelpMessage = "The description for the action.")]
         public string Description { get; set; }
 
         /// <summary>
@@ -104,11 +110,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
             }
 
-            if (!ShouldProcess($"Action '{ActionId}' in cloud flow '{flowName}'", "Update"))
-            {
-                return;
-            }
-
             WriteVerbose($"Retrieving cloud flow definition for '{flowName}'...");
 
             // Retrieve the flow with clientdata
@@ -157,22 +158,73 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 return;
             }
 
-            // Find the action
-            var actionPath = $"properties.definition.actions.{ActionId}";
-            var actionToken = flowDefinition.SelectToken(actionPath);
-
-            if (actionToken == null || actionToken.Type != JTokenType.Object)
+            // Ensure actions container exists
+            var definitionToken = flowDefinition.SelectToken("properties.definition");
+            if (definitionToken == null || definitionToken.Type != JTokenType.Object)
             {
                 ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Action '{ActionId}' not found in cloud flow '{flowName}'."),
-                    "ActionNotFound",
-                    ErrorCategory.ObjectNotFound,
-                    ActionId));
+                    new InvalidOperationException($"Cloud flow '{flowName}' definition structure is invalid (missing properties.definition)."),
+                    "InvalidFlowStructure",
+                    ErrorCategory.InvalidData,
+                    flowId));
                 return;
             }
 
+            var definitionObj = (JObject)definitionToken;
+            if (definitionObj["actions"] == null || definitionObj["actions"].Type != JTokenType.Object)
+            {
+                definitionObj["actions"] = new JObject();
+            }
+
+            var actionsObj = (JObject)definitionObj["actions"];
+
+            // Find or create the action
+            var actionToken = actionsObj[ActionId];
+            bool isCreate = actionToken == null || actionToken.Type != JTokenType.Object;
+
+            if (isCreate)
+            {
+                if (string.IsNullOrEmpty(Type))
+                {
+                    ThrowTerminatingError(new ErrorRecord(
+                        new ArgumentException($"Action '{ActionId}' not found in cloud flow '{flowName}'. The -Type parameter is required when creating a new action."),
+                        "TypeRequiredForCreate",
+                        ErrorCategory.InvalidArgument,
+                        ActionId));
+                    return;
+                }
+
+                if (!ShouldProcess($"Action '{ActionId}' in cloud flow '{flowName}'", "Create"))
+                {
+                    return;
+                }
+
+                WriteVerbose($"Action '{ActionId}' not found. Creating new action of type '{Type}'...");
+                var newAction = new JObject
+                {
+                    ["type"] = Type,
+                    ["runAfter"] = new JObject()
+                };
+                actionsObj[ActionId] = newAction;
+                actionToken = newAction;
+            }
+            else
+            {
+                if (!ShouldProcess($"Action '{ActionId}' in cloud flow '{flowName}'", "Update"))
+                {
+                    return;
+                }
+
+                WriteVerbose($"Updating existing action '{ActionId}'...");
+
+                if (!string.IsNullOrEmpty(Type))
+                {
+                    ((JObject)actionToken)["type"] = Type;
+                }
+            }
+
             var actionObj = (JObject)actionToken;
-            bool hasUpdates = false;
+            bool hasUpdates = isCreate;
 
             // Update inputs if provided
             if (Inputs != null)
@@ -182,7 +234,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
                 if (Inputs is string inputsString)
                 {
-                    // Parse JSON string
                     try
                     {
                         inputsToken = JToken.Parse(inputsString);
@@ -199,12 +250,10 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 else if (Inputs is Hashtable inputsHashtable)
                 {
-                    // Convert hashtable to JSON
                     inputsToken = JToken.FromObject(inputsHashtable);
                 }
                 else if (Inputs is PSObject inputsPSObject)
                 {
-                    // Convert PSObject to hashtable then to JSON
                     var hashtable = new Hashtable();
                     foreach (var property in inputsPSObject.Properties)
                     {
@@ -214,7 +263,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
                 }
                 else
                 {
-                    // Try to convert directly
                     try
                     {
                         inputsToken = JToken.FromObject(Inputs);
@@ -237,9 +285,8 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             // Update description if provided
             if (!string.IsNullOrEmpty(Description))
             {
-                WriteVerbose($"Updating action description to: {Description}");
+                WriteVerbose($"Setting action description to: {Description}");
 
-                // Ensure metadata object exists
                 if (actionObj["metadata"] == null || actionObj["metadata"].Type != JTokenType.Object)
                 {
                     actionObj["metadata"] = new JObject();
@@ -251,7 +298,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             if (!hasUpdates)
             {
-                WriteWarning("No updates to apply. Please specify at least one property to update (Inputs or Description).");
+                WriteWarning("No updates to apply. Please specify at least one property to update (Type, Inputs, or Description).");
                 return;
             }
 
@@ -264,13 +311,12 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             try
             {
                 Connection.Update(updateEntity);
-                WriteVerbose("Action updated successfully.");
-                WriteObject($"Action '{ActionId}' in cloud flow '{flowName}' updated successfully.");
+                WriteVerbose($"Action '{ActionId}' in cloud flow '{flowName}' saved successfully.");
             }
             catch (Exception ex)
             {
                 ThrowTerminatingError(new ErrorRecord(
-                    new InvalidOperationException($"Failed to update action: {ex.Message}", ex),
+                    new InvalidOperationException($"Failed to save action: {ex.Message}", ex),
                     "UpdateFailed",
                     ErrorCategory.OperationStopped,
                     ActionId));

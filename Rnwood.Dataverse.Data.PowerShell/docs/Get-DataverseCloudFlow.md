@@ -23,35 +23,35 @@ You can filter flows by name, ID, or state (activated/draft).
 
 ## EXAMPLES
 
-### Example 1 - Get all cloud flows
+### Example 1: Get all cloud flows
 ```powershell
 PS C:\> Get-DataverseCloudFlow
 ```
 
 Returns all cloud flows in the Dataverse environment.
 
-### Example 2 - Get a specific flow by name
+### Example 2: Get a specific flow by name
 ```powershell
 PS C:\> Get-DataverseCloudFlow -Name "My Flow"
 ```
 
 Returns the cloud flow with the exact name "My Flow".
 
-### Example 3 - Get flows with wildcard name filter
+### Example 3: Get flows with wildcard name filter
 ```powershell
 PS C:\> Get-DataverseCloudFlow -Name "Sales*"
 ```
 
 Returns all cloud flows whose names start with "Sales".
 
-### Example 4 - Get only activated flows
+### Example 4: Get only activated flows
 ```powershell
 PS C:\> Get-DataverseCloudFlow -Activated
 ```
 
 Returns only cloud flows that are currently activated (running).
 
-### Example 5 - Get flow definition with actions
+### Example 5: Get flow definition with actions
 ```powershell
 PS C:\> Get-DataverseCloudFlow -Name "My Flow" -IncludeClientData
 ```
