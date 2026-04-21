@@ -25,6 +25,10 @@ The `Exception.Message` contains full server response including ErrorCode, Messa
 
 To stop on first error instead, use `-BatchSize 1` with `-ErrorAction Stop`.
 
+### SQL query errors and TDS endpoint mode
+
+`Invoke-DataverseSql` runs in SQL4CDS compatibility mode by default. If you see SQL query errors such as "not a recognized built-in function name" (for example with `DATEFROMPARTS` or `EOMONTH`), retry with `-UseTdsEndpoint` when your connection supports TDS.
+
 
 
 
@@ -83,5 +87,4 @@ Get-DataverseRecord -Connection $connection -TableName contact -Top 1000 |
 ```
 
 Please read the full cmdlet documentation for more recommendations.
-
 

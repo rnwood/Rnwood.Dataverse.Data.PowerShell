@@ -20,6 +20,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	[Cmdlet("Invoke", "DataverseSql", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	public class InvokeDataverseSqlCmdlet : OrganizationServiceCmdlet
 	{
+		private static readonly string[] TdsEndpointSuggestionErrorFragments =
+		{
+			"not a recognized built-in function name",
+			"not a recognised built-in function name",
+			"cannot find either column"
+		};
+
 		private Sql4CdsConnection _sqlConnection;
 		private Sql4CdsCommand _command;
 		private bool _commandPrepared;
@@ -34,9 +41,9 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 		[Parameter(Mandatory = true, Position = 0, HelpMessage = "SQL to execute. Use @paramname for parameters. Use datasourcename..tablename syntax for cross-datasource queries.", ValueFromRemainingArguments = true)]
 		public string Sql { get; set; }
 		/// <summary>
-		/// Uses the TDS endpoint for supported queries. See Sql4Cds docs
+		/// Uses the TDS endpoint for supported queries. Disabled by default for predictable compatibility.
 		/// </summary>
-		[Parameter(HelpMessage = "Uses the TDS endpoint for supported queries. See Sql4Cds docs")]
+		[Parameter(HelpMessage = "Uses the TDS endpoint for supported queries. Disabled by default to keep SQL4CDS compatibility behavior consistent.")]
 		public SwitchParameter UseTdsEndpoint { get; set; }
 		/// <summary>
 		/// Sets the command timeout. See Sql4Cds docs
@@ -353,7 +360,14 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
 			if (!_commandPrepared)
 			{
-				_command.Prepare();
+				try
+				{
+					_command.Prepare();
+				}
+				catch (Exception ex) when (ShouldSuggestUseTdsEndpoint(ex))
+				{
+					throw AddTdsEndpointGuidance(ex);
+				}
 				_commandPrepared = true;
 			}
 
@@ -394,7 +408,17 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 				return;
 			}
 
-			using (DbDataReader reader = task.GetAwaiter().GetResult())
+			DbDataReader reader;
+			try
+			{
+				reader = task.GetAwaiter().GetResult();
+			}
+			catch (Exception ex) when (ShouldSuggestUseTdsEndpoint(ex))
+			{
+				throw AddTdsEndpointGuidance(ex);
+			}
+
+			using (reader)
 			{
 				if (reader.HasRows)
 				{
@@ -507,6 +531,24 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 
 			return null;
+		}
+
+		private bool ShouldSuggestUseTdsEndpoint(Exception exception)
+		{
+			if (UseTdsEndpoint || exception == null)
+			{
+				return false;
+			}
+
+			var message = exception.Message ?? string.Empty;
+			return TdsEndpointSuggestionErrorFragments.Any(fragment => message.IndexOf(fragment, StringComparison.OrdinalIgnoreCase) >= 0);
+		}
+
+		private Exception AddTdsEndpointGuidance(Exception exception)
+		{
+			var guidance = " This query may require SQL Server-specific function support available via the Dataverse TDS endpoint. " +
+				"Invoke-DataverseSql uses SQL4CDS mode by default; try adding -UseTdsEndpoint if your connection supports it.";
+			return new InvalidOperationException(exception.Message + guidance, exception);
 		}
 	}
 }

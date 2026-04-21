@@ -335,6 +335,7 @@ Key behaviors and options:
 - Result shape: each row is emitted as a `PSObject` where column names become properties.
 - DML and confirmations: the cmdlet supports `ShouldProcess` for DML operations and will prompt/obey `-WhatIf`/`-Confirm` when the SQL includes INSERT/UPDATE/DELETE operations. It also exposes verbose progress and informational messages during execution.
 - Performance and control: you can tune execution with `-Timeout` (seconds, default 600), `-BatchSize`, and `-MaxDegreeOfParallelism` for large or parallel workloads.
+- Execution mode: by default the cmdlet runs in SQL4CDS compatibility mode (without the TDS endpoint). Some SQL Server-specific functions (for example `DATEFROMPARTS` and `EOMONTH`) may require `-UseTdsEndpoint`.
 - Behavior toggles: `-BypassCustomPluginExecution`, `-UseBulkDelete`, `-ReturnEntityReferenceAsGuid`, and `-UseLocalTimezone` expose Sql4Cds-specific behaviors (see docs).
 
 Examples:
