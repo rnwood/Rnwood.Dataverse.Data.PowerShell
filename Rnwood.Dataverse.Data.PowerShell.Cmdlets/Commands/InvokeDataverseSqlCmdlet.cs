@@ -20,6 +20,13 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 	[Cmdlet("Invoke", "DataverseSql", SupportsShouldProcess = true, ConfirmImpact = ConfirmImpact.Medium)]
 	public class InvokeDataverseSqlCmdlet : OrganizationServiceCmdlet
 	{
+		private static readonly string[] TdsEndpointSuggestionErrorFragments =
+		{
+			"not a recognized built-in function name",
+			"not a recognised built-in function name",
+			"cannot find either column"
+		};
+
 		private Sql4CdsConnection _sqlConnection;
 		private Sql4CdsCommand _command;
 		private bool _commandPrepared;
@@ -534,9 +541,7 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 			}
 
 			var message = exception.Message ?? string.Empty;
-			return message.IndexOf("not a recognized built-in function name", StringComparison.OrdinalIgnoreCase) >= 0
-				|| message.IndexOf("not a recognised built-in function name", StringComparison.OrdinalIgnoreCase) >= 0
-				|| message.IndexOf("cannot find either column", StringComparison.OrdinalIgnoreCase) >= 0;
+			return TdsEndpointSuggestionErrorFragments.Any(fragment => message.IndexOf(fragment, StringComparison.OrdinalIgnoreCase) >= 0);
 		}
 
 		private Exception AddTdsEndpointGuidance(Exception exception)
