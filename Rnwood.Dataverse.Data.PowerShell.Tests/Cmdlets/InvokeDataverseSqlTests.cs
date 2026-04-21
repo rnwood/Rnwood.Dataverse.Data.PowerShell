@@ -339,5 +339,33 @@ namespace Rnwood.Dataverse.Data.PowerShell.Tests.Cmdlets
             invoke.Should().Throw<CmdletInvocationException>()
                 .WithMessage("*must be a ServiceClient or IOrganizationService instance*");
         }
+
+        [Fact]
+        public void InvokeDataverseSql_UnsupportedBuiltInFunction_WithoutTdsEndpoint_IncludesGuidance()
+        {
+            // Arrange
+            var initialSessionState = InitialSessionState.CreateDefault();
+            initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+                "Invoke-DataverseSql", typeof(InvokeDataverseSqlCmdlet), null));
+
+            using var runspace = RunspaceFactory.CreateRunspace(initialSessionState);
+            runspace.Open();
+            using var ps = PS.Create();
+            ps.Runspace = runspace;
+
+            CreateMockConnection("contact");
+            var sql4CdsConnection = MockSql4CdsServiceClientFactory.CreateForSql4Cds(Service!);
+
+            // Act
+            ps.AddCommand("Invoke-DataverseSql")
+                .AddParameter("Connection", sql4CdsConnection)
+                .AddParameter("Sql", "SELECT DATEFROMPARTS(2024, 1, 1) AS d");
+
+            Action invoke = () => ps.Invoke();
+
+            // Assert
+            invoke.Should().Throw<CmdletInvocationException>()
+                .WithMessage("*-UseTdsEndpoint*");
+        }
     }
 }

@@ -26,6 +26,8 @@ Sql4Cds is a powerfull engine which can translate many SELECT, INSERT, UPDATE an
 If the query returns a result set, it will output to the pipeline with an object per row having a property per column in the result set.
 If applicable (e.g. for UPDATE), the affected row count is written to verbose output.
 
+By default, queries run through SQL4CDS compatibility mode (`-UseTdsEndpoint` is off). Some SQL Server-specific functions (for example `DATEFROMPARTS` or `EOMONTH`) may not be available in that mode. If you need those functions and your connection supports it, use `-UseTdsEndpoint`.
+
 **SQL Parameters**
 
 The cmdlet supports parameterized queries using the `@paramname` syntax. Parameters help avoid SQL injection and improve query readability.
@@ -411,6 +413,7 @@ SQL to execute. See Sql4Cds docs for supported queries.
 - Standard SQL: SELECT, INSERT, UPDATE, DELETE
 - `@paramname` syntax for parameters (values from `-Parameters`)
 - `datasourcename..tablename` syntax for cross-datasource queries (requires `-AdditionalConnections`)
+- SQL4CDS compatibility mode by default; SQL Server-specific functions may require `-UseTdsEndpoint`
 
 The -Sql parameter is positional (position 0), allowing you to omit the parameter name:
 
@@ -475,7 +478,9 @@ Accept wildcard characters: False
 ```
 
 ### -UseTdsEndpoint
-Let Sql4Cds use the TDS endpoint or not for compatible queries. The default is to not use this.
+Lets Sql4Cds use the Dataverse TDS endpoint for compatible queries. By default this is off, so queries run in SQL4CDS compatibility mode for more predictable support across connections.
+
+If a query fails because a SQL Server-specific function is not recognized (for example `DATEFROMPARTS` or `EOMONTH`), retry with `-UseTdsEndpoint`.
 
 ```yaml
 Type: SwitchParameter
