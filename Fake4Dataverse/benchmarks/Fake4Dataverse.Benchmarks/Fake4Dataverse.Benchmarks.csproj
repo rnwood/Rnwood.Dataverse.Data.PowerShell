@@ -21,7 +21,7 @@
   </ItemGroup>
   <!-- FakeXrmEasy v3 — net8+ only -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageReference Include="FakeXrmEasy.Core.v9" Version="3.9.0" />
+    <PackageReference Include="FakeXrmEasy.Core.v9" Version="3.9.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Fake4Dataverse\Fake4Dataverse.csproj" />
