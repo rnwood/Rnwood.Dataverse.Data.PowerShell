@@ -587,7 +587,7 @@ jobs:
       # Comment on PR with test failures
       - name: Comment on PR with test failures
         if: failure() && github.event_name == 'pull_request'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -681,7 +681,7 @@ jobs:
           }
       
       - name: Update GitHub Release Description
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -750,7 +750,7 @@ jobs:
           Compress-Archive -Path out/Rnwood.Dataverse.Data.PowerShell -DestinationPath Rnwood.Dataverse.Data.PowerShell-CI.zip -Force
       
       - name: Create GitHub Release for CI Build
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
