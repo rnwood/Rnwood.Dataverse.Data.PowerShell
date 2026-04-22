@@ -37,7 +37,7 @@ jobs:
 
       - name: Upload coverage
         if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-${{ matrix.os }}
           path: '**/coverage.cobertura.xml'
@@ -59,7 +59,7 @@ jobs:
         run: dotnet pack src/Fake4Dataverse/Fake4Dataverse.csproj --configuration Release --output ./nupkg --include-symbols -p:SymbolPackageFormat=snupkg
 
       - name: Upload NuGet artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: nupkg
           path: ./nupkg/*.*nupkg
