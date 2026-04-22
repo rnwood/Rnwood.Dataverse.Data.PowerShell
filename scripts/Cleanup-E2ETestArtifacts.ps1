@@ -116,11 +116,11 @@ Write-CleanupSection "Cleaning up test forms"
 try {
     $testForms = Get-DataverseRecord -Connection $connection -TableName systemform -FilterValues @{
         'name:Like' = 'E2ETestForm-%'
-    } -Columns formid, name, createdon
+    } -Columns formid, name, publishedon
     
     if ($testForms) {
         $formsToDelete = $testForms | Where-Object { 
-            $_.createdon -and [DateTime]::Parse($_.createdon) -lt $cutoffTime 
+            $_.publishedon -and [DateTime]::Parse($_.publishedon) -lt $cutoffTime 
         }
         
         Write-Host "Found $($testForms.Count) total test forms"
@@ -128,8 +128,8 @@ try {
         Write-Host "  - $($testForms.Count - $formsToDelete.Count) are recent (will skip)"
         
         foreach ($form in $formsToDelete) {
-            $age = ([DateTime]::UtcNow - [DateTime]::Parse($form.createdon)).TotalHours
-            Write-Host "  Deleting form: $($form.name) (created $('{0:F1}' -f $age) hours ago)"
+            $age = ([DateTime]::UtcNow - [DateTime]::Parse($form.publishedon)).TotalHours
+            Write-Host "  Deleting form: $($form.name) (published $('{0:F1}' -f $age) hours ago)"
             
             if (-not $WhatIf) {
                 try {
@@ -174,7 +174,7 @@ try {
         $solutionsToDelete = $testSolutions | Where-Object {
             if ($_.uniquename -match 'e2esolcomp_(\d{12})_') {
                 $timestamp = $matches[1]
-                [int]$timestamp -lt [int]$cutoffTimestamp
+                $timestamp -lt $cutoffTimestamp
             }
             else {
                 # For other test solutions without timestamp, check created date if available
@@ -239,7 +239,7 @@ try {
         $entitiesToDelete = $testEntities | Where-Object {
             if ($_.LogicalName -match '(\d{12})_') {
                 $timestamp = $matches[1]
-                [int]$timestamp -lt [int]$cutoffTimestamp
+                $timestamp -lt $cutoffTimestamp
             }
             else {
                 # Without timestamp, be conservative and skip

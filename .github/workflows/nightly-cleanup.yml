@@ -26,7 +26,7 @@ jobs:
       - name: Build module
         shell: pwsh
         run: |
-          dotnet build -c Release
+          dotnet build ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj -c Release
       
       - name: Import module
         shell: pwsh
