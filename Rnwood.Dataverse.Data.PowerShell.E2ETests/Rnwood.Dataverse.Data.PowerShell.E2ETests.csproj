@@ -37,7 +37,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="AwesomeAssertions" Version="7.0.0" />
+    <PackageReference Include="AwesomeAssertions" Version="7.2.1" />
   </ItemGroup>
 
   <!-- Project References -->
