@@ -37,8 +37,8 @@ jobs:
       - name: Run cleanup script
         shell: pwsh
         env:
-          E2ETESTS_URL: ${{ secrets.E2ETESTS_URL }}
-          E2ETESTS_CLIENTID: ${{ secrets.E2ETESTS_CLIENTID }}
+          E2ETESTS_URL: ${{ vars.E2ETESTS_URL }}
+          E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
           E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
         run: |
           ./scripts/Cleanup-E2ETestArtifacts.ps1 `
