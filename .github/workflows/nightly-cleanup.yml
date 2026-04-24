@@ -28,12 +28,6 @@ jobs:
         run: |
           dotnet build ./Rnwood.Dataverse.Data.PowerShell/Rnwood.Dataverse.Data.PowerShell.csproj -c Release
       
-      - name: Import module
-        shell: pwsh
-        run: |
-          Import-Module ./Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/Rnwood.Dataverse.Data.PowerShell.psd1 -Force
-          Get-Module Rnwood.Dataverse.Data.PowerShell
-      
       - name: Run cleanup script
         shell: pwsh
         env:
@@ -41,6 +35,7 @@ jobs:
           E2ETESTS_CLIENTID: ${{ vars.E2ETESTS_CLIENTID }}
           E2ETESTS_CLIENTSECRET: ${{ secrets.E2ETESTS_CLIENTSECRET }}
         run: |
+          Import-Module ./Rnwood.Dataverse.Data.PowerShell/bin/Release/netstandard2.0/Rnwood.Dataverse.Data.PowerShell.psd1 -Force
           ./scripts/Cleanup-E2ETestArtifacts.ps1 `
             -Url $env:E2ETESTS_URL `
             -ClientId $env:E2ETESTS_CLIENTID `
