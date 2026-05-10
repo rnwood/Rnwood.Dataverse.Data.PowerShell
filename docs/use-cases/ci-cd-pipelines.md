@@ -305,7 +305,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
-          # The WIF action exports the Dataverse bearer token as $env:ACCESS_TOKEN
+          # The nicolonsky/WIF action stores the token in the ACCESS_TOKEN environment variable
           $c = Get-DataverseConnection `
             -Url $env:DATAVERSE_URL `
             -AccessToken { $env:ACCESS_TOKEN }
@@ -313,7 +313,9 @@ jobs:
           Get-DataverseRecord -Connection $c -TableName contact -Top 10
 ```
 
-If your login step exposes the standard Azure Identity workload federation environment variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`), prefer `Get-DataverseConnection -DefaultAzureCredential` because Azure.Identity can reacquire tokens automatically. Use `-AccessToken` when another workflow step already gives you the Dataverse token and you want to pass that token through explicitly.
+If your login step exposes the standard Azure Identity workload federation environment variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`), prefer `Get-DataverseConnection -DefaultAzureCredential`. Azure.Identity can reacquire tokens automatically in that flow.
+
+Use `-AccessToken` when another workflow step already gives you the Dataverse token and you want to pass that token through explicitly.
 
 **Setting up GitHub Secrets:**
 
