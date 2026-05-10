@@ -313,7 +313,7 @@ jobs:
           Get-DataverseRecord -Connection $c -TableName contact -Top 10
 ```
 
-If your login step exposes the standard Azure Identity workload federation environment variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`), you can also use `Get-DataverseConnection -DefaultAzureCredential` instead of `-AccessToken`.
+If your login step exposes the standard Azure Identity workload federation environment variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`), prefer `Get-DataverseConnection -DefaultAzureCredential` because Azure.Identity can reacquire tokens automatically. Use `-AccessToken` when another workflow step already gives you the Dataverse token and you want to pass that token through explicitly.
 
 **Setting up GitHub Secrets:**
 
