@@ -167,13 +167,6 @@ PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Defa
 
 Gets a connection to MYORG using DefaultAzureCredential, which automatically discovers credentials from the environment (environment variables, workload identity federation, managed identity, Visual Studio, Azure CLI, Azure PowerShell, or interactive browser). This is ideal for Azure-hosted applications and GitHub Actions/Azure DevOps jobs that expose Azure Identity workload federation variables.
 
-### Example 3b
-```powershell
-PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -AccessToken { $env:ACCESS_TOKEN }
-```
-
-Gets a connection to MYORG using an access token supplied by an external workload identity federation step, such as a GitHub Actions step that writes the token to `$env:ACCESS_TOKEN`. This is best when another step is already responsible for acquiring the Dataverse token.
-
 ### Example 4
 ```powershell
 PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -ManagedIdentity
@@ -201,6 +194,8 @@ PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -Acce
 ```
 
 Gets a connection to MYORG using a script block that returns an access token. The script block is called whenever a new access token is needed. This is useful for custom authentication scenarios where you manage token acquisition externally.
+
+This also works well with GitHub Actions workload identity federation steps that write a Dataverse access token to `$env:ACCESS_TOKEN`.
 
 ### Example 8
 ```powershell

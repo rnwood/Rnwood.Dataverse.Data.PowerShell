@@ -305,6 +305,7 @@ jobs:
         run: |
           $ErrorActionPreference = "Stop"
 
+          # The WIF action exports the Dataverse bearer token as $env:ACCESS_TOKEN
           $c = Get-DataverseConnection `
             -Url $env:DATAVERSE_URL `
             -AccessToken { $env:ACCESS_TOKEN }
