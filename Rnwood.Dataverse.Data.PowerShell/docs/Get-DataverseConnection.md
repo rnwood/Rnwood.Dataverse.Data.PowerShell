@@ -165,7 +165,14 @@ Authenticates with client ID and secret without specifying a URL. The cmdlet wil
 PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -DefaultAzureCredential
 ```
 
-Gets a connection to MYORG using DefaultAzureCredential, which automatically discovers credentials from the environment (environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, or interactive browser). This is ideal for Azure-hosted applications.
+Gets a connection to MYORG using DefaultAzureCredential, which automatically discovers credentials from the environment (environment variables, workload identity federation, managed identity, Visual Studio, Azure CLI, Azure PowerShell, or interactive browser). This is ideal for Azure-hosted applications and GitHub Actions/Azure DevOps jobs that expose Azure Identity workload federation variables.
+
+### Example 3b
+```powershell
+PS C:\> $c = Get-DataverseConnection -Url https://myorg.crm11.dynamics.com -AccessToken { $env:ACCESS_TOKEN }
+```
+
+Gets a connection to MYORG using an access token supplied by an external workload identity federation step, such as a GitHub Actions step that writes the token to `$env:ACCESS_TOKEN`. This is best when another step is already responsible for acquiring the Dataverse token.
 
 ### Example 4
 ```powershell
@@ -505,7 +512,7 @@ Accept wildcard characters: False
 ```
 
 ### -DefaultAzureCredential
-Use DefaultAzureCredential for authentication. This will try multiple authentication methods in order: environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser.
+Use DefaultAzureCredential for authentication. This will try multiple authentication methods in order, including environment variables, workload identity federation, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser.
 
 ```yaml
 Type: SwitchParameter

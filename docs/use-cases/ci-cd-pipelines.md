@@ -206,8 +206,8 @@ steps:
 
 **Prerequisites:**
 - Install the module in your workflow
-- Use service principal (client secret) authentication
-- Store credentials in GitHub Secrets or Environment Secrets
+- Use either service principal client secret authentication or workload identity federation
+- Store only the values required by your chosen authentication method in GitHub Secrets or Environment Secrets
 
 *Example: GitHub Actions workflow with secure secrets:*
 ```yaml
@@ -263,14 +263,65 @@ jobs:
           } | Set-DataverseRecord -Connection $c -WhatIf  # Remove -WhatIf when ready
 ```
 
+### Using Workload Identity Federation in GitHub Actions
+
+For passwordless authentication in GitHub Actions, configure a federated credential on your Entra ID app registration, grant the app access in Dataverse, and give the workflow `id-token: write` permission.
+
+*Example: GitHub Actions workload identity federation using an access token action:*
+```yaml
+name: Dataverse Operations
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Acquire federated Dataverse token
+        uses: nicolonsky/WIF@v0.0.1
+        with:
+          tenant_id: ${{ secrets.TENANT_ID }}
+          client_id: ${{ secrets.CLIENT_ID }}
+
+      - name: Install Dataverse Module
+        shell: pwsh
+        run: |
+          Install-Module -Name Rnwood.Dataverse.Data.PowerShell -Force -Scope CurrentUser
+
+      - name: Run Dataverse Operations
+        shell: pwsh
+        env:
+          DATAVERSE_URL: ${{ secrets.DATAVERSE_URL }}
+        run: |
+          $ErrorActionPreference = "Stop"
+
+          $c = Get-DataverseConnection `
+            -Url $env:DATAVERSE_URL `
+            -AccessToken { $env:ACCESS_TOKEN }
+
+          Get-DataverseRecord -Connection $c -TableName contact -Top 10
+```
+
+If your login step exposes the standard Azure Identity workload federation environment variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`), you can also use `Get-DataverseConnection -DefaultAzureCredential` instead of `-AccessToken`.
+
 **Setting up GitHub Secrets:**
 
 1. Go to your repository **Settings** > **Secrets and variables** > **Actions**
 2. Add **Repository secrets** or **Environment secrets**:
-   - `DATAVERSE_URL`: Your Dataverse URL (e.g., `https://myorg.crm.dynamics.com`)
-   - `CLIENT_ID`: Application (client) ID from Azure App Registration
-   - `CLIENT_SECRET`: Client secret from Azure App Registration
-   - `TENANT_ID`: Azure AD tenant ID
+    - `DATAVERSE_URL`: Your Dataverse URL (e.g., `https://myorg.crm.dynamics.com`)
+    - `CLIENT_ID`: Application (client) ID from Azure App Registration
+    - `TENANT_ID`: Azure AD tenant ID
+    - `CLIENT_SECRET`: Client secret from Azure App Registration (only for secret-based authentication)
 
 **Using Environments for multiple stages:**
 
@@ -298,17 +349,16 @@ jobs:
 
 ## Azure App Registration Setup
 
-Both Azure DevOps and GitHub Actions require an Azure App Registration for service principal authentication:
+Both Azure DevOps and GitHub Actions require an Azure App Registration. You can use either a client secret or federated credentials:
 
 1. **Create App Registration:**
    - Go to [Azure Portal](https://portal.azure.com) > **Azure Active Directory** > **App registrations**
    - Click **New registration**, give it a name (e.g., `Dataverse-CI-CD`)
    - Click **Register**
 
-2. **Create Client Secret:**
-   - In your app registration, go to **Certificates & secrets**
-   - Click **New client secret**, add a description, set expiration
-   - **Copy the secret value immediately** (you can't see it again)
+2. **Choose an authentication method:**
+   - **Client secret:** In **Certificates & secrets**, click **New client secret**, add a description, set expiration, and copy the secret value immediately
+   - **Workload identity federation:** In **Certificates & secrets** > **Federated credentials**, add a GitHub or Azure DevOps federated credential for the repository/pipeline that will run the workflow
 
 3. **Grant Permissions in Dataverse:**
    - Go to [Power Platform Admin Center](https://admin.powerplatform.microsoft.com/)
@@ -318,12 +368,13 @@ Both Azure DevOps and GitHub Actions require an Azure App Registration for servi
 
 4. **Note down:**
    - Application (client) ID
-   - Directory (tenant) ID  
-   - Client secret value
+   - Directory (tenant) ID
+   - Client secret value (if using secret-based auth)
 
 **Learn more:**
 - [Microsoft Docs: Register an application](https://learn.microsoft.com/power-apps/developer/data-platform/walkthrough-register-app-azure-active-directory)
 - [Microsoft Docs: Application user authentication](https://learn.microsoft.com/power-apps/developer/data-platform/use-single-tenant-server-server-authentication)
+- [Microsoft Docs: Workload identity federation](https://learn.microsoft.com/entra/workload-id/workload-identity-federation)
 
 ## See Also
 

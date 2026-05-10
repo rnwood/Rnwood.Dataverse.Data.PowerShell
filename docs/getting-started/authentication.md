@@ -82,12 +82,21 @@ $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -clientid "30
 
 ## DefaultAzureCredential
 
-Automatic credential discovery in Azure environments (tries environment variables, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser).
+Automatic credential discovery in Azure-compatible environments (tries environment variables, workload identity federation, managed identity, Visual Studio, Azure CLI, Azure PowerShell, and interactive browser).
 
 *Example: Using DefaultAzureCredential in Azure environments:*
 ```powershell
 $c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -DefaultAzureCredential
 ```
+
+This also works in GitHub Actions when your workflow sets up Azure workload identity federation and exposes the standard Azure Identity environment variables (for example `AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, and `AZURE_FEDERATED_TOKEN_FILE`).
+
+*Example: Using an access token provided by a GitHub Actions workload identity federation step:*
+```powershell
+$c = Get-DataverseConnection -url https://myorg.crm11.dynamics.com -AccessToken { $env:ACCESS_TOKEN }
+```
+
+Use `-DefaultAzureCredential` when your workflow exposes Azure Identity workload federation variables and you want Azure.Identity to reacquire tokens automatically. Use `-AccessToken` when another step already provides the Dataverse access token.
 
 ## ManagedIdentity
 
