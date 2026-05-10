@@ -277,7 +277,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  id-token: write
+  id-token: write  # Required so the workflow can request an OIDC token for workload identity federation
   contents: read
 
 jobs:
@@ -313,7 +313,7 @@ jobs:
           Get-DataverseRecord -Connection $c -TableName contact -Top 10
 ```
 
-If your login step exposes the standard Azure Identity workload federation environment variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`), prefer `Get-DataverseConnection -DefaultAzureCredential`. Azure.Identity can reacquire tokens automatically in that flow.
+If you use a different login step that exposes the standard Azure Identity workload federation environment variables (`AZURE_TENANT_ID`, `AZURE_CLIENT_ID`, `AZURE_FEDERATED_TOKEN_FILE`), prefer `Get-DataverseConnection -DefaultAzureCredential`. Azure.Identity can reacquire tokens automatically in that flow.
 
 Use `-AccessToken` when another workflow step already gives you the Dataverse token and you want to pass that token through explicitly.
 
