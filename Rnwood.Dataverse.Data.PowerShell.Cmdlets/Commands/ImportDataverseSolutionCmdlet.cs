@@ -177,6 +177,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public SwitchParameter SkipIfLowerVersion { get; set; }
 
         /// <summary>
+        /// Gets or sets the maximum time in seconds to wait for existing solution history operations to complete before checking solution state.
+        /// </summary>
+        [Parameter(HelpMessage = "Maximum time in seconds to wait for existing solution history operations to complete before checking solution state. Default is 30.")]
+        [ValidateRange(1, int.MaxValue)]
+        public int SolutionHistoryWaitSeconds { get; set; } = 30;
+
+        /// <summary>
+        /// Gets or sets whether to skip the solution history pre-check.
+        /// </summary>
+        [Parameter(HelpMessage = "Skip checking solution history for in-progress operations before checking existing solution state.")]
+        public SwitchParameter SkipSolutionHistoryCheck { get; set; }
+
+        /// <summary>
         /// Stores connection reference logical names extracted from the solution file with correct casing.
         /// Populated by ValidateSolutionComponents and used for case-insensitive matching against user-provided hashtable keys.
         /// </summary>
@@ -345,9 +358,6 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
 
             WriteVerbose($"Solution file size: {solutionBytes.Length} bytes");
 
-            // Validate solution components (connection references and environment variables)
-            ValidateSolutionComponents(solutionBytes);
-
             // Validate parameter combinations
             if (UseUpdateIfVersionMajorMinorMatches.IsPresent && Mode != ImportMode.Auto && Mode != ImportMode.HoldingSolution)
             {
@@ -371,6 +381,19 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
             {
                 WriteVerbose($"Source solution version: {sourceSolutionVersion}");
             }
+
+            if (!SkipSolutionHistoryCheck.IsPresent)
+            {
+                SolutionHistoryHelpers.WaitForSolutionOperationsToComplete(
+                    Connection,
+                    SolutionHistoryHelpers.GetSolutionNamesToCheck(solutionUniqueName),
+                    WriteVerbose,
+                    SolutionHistoryWaitSeconds,
+                    PollingIntervalSeconds);
+            }
+
+            // Validate solution components (connection references and environment variables)
+            ValidateSolutionComponents(solutionBytes);
 
             // Check if this is an upgrade scenario and if the solution already exists
             bool shouldUseStageAndUpgrade = false;

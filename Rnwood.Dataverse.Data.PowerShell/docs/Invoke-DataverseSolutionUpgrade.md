@@ -14,8 +14,8 @@ Applies a staged solution upgrade by deleting the original solution and promotin
 
 ```
 Invoke-DataverseSolutionUpgrade [-SolutionName] <String> [-IfExists] [-PollingIntervalSeconds <Int32>]
- [-TimeoutSeconds <Int32>] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf]
- [-Confirm] [<CommonParameters>]
+ [-TimeoutSeconds <Int32>] [-SolutionHistoryWaitSeconds <Int32>] [-SkipSolutionHistoryCheck]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -23,6 +23,8 @@ Invoke-DataverseSolutionUpgrade [-SolutionName] <String> [-IfExists] [-PollingIn
 This cmdlet completes a solution upgrade that was previously staged using Import-DataverseSolution with -Mode HoldingSolution or -Mode StageAndUpgrade. It deletes the original solution and promotes the holding solution (named SolutionName_Upgrade) to become the active solution using an asynchronous job with progress reporting.
 
 The cmdlet uses the Microsoft.Crm.Sdk.Messages.DeleteAndPromoteRequest wrapped in Microsoft.Xrm.Sdk.Messages.ExecuteAsyncRequest to perform the upgrade asynchronously. The cmdlet monitors the async operation and reports progress using PowerShell's progress bar.
+
+Before checking holding-solution state, the cmdlet waits briefly for any in-progress solution history operations for the solution or its holding solution to finish, unless skipped.
 
 **Typical upgrade workflow:**
 1. Import a new version of the solution using `Import-DataverseSolution -Mode HoldingSolution` or `-Mode StageAndUpgrade`. This creates a holding solution named `SolutionName_Upgrade`.
@@ -208,6 +210,36 @@ Aliases:
 Required: True
 Position: 0
 Default value: None
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SkipSolutionHistoryCheck
+Skip checking solution history for in-progress operations before checking existing solution state.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SolutionHistoryWaitSeconds
+Maximum time in seconds to wait for existing solution history operations to complete before checking solution state. Default is 30.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 30
 Accept pipeline input: False
 Accept wildcard characters: False
 ```
