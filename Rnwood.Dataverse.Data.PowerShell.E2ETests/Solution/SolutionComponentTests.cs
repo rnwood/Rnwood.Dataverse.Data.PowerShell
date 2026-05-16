@@ -149,5 +149,62 @@ catch {
             result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
             result.StandardOutput.Should().Contain("SUCCESS", because: result.GetFullOutput());
         }
+
+        [Fact]
+        public void SolutionCmdlets_AcceptSolutionHistoryPrecheckParameters()
+        {
+            var script = GetConnectionScript(@"
+$ErrorActionPreference = 'Stop'
+$ConfirmPreference = 'None'
+$VerbosePreference = 'Continue'
+
+$timestamp = [DateTime]::UtcNow.ToString('yyyyMMddHHmmss')
+$testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
+$solutionName = ""e2esolhist_${timestamp}_$testRunId""
+$solutionDisplayName = ""E2E Solution History Test $testRunId""
+$publisherPrefix = 'e2h'
+
+try {
+    $publisher = Get-DataverseRecord -Connection $connection -TableName publisher -FilterValues @{ 'customizationprefix' = $publisherPrefix } | Select-Object -First 1
+    if (-not $publisher) {
+        $publisher = @{
+            'uniquename' = ""e2ehistorypublisher_$testRunId""
+            'friendlyname' = 'E2E Solution History Publisher'
+            'customizationprefix' = $publisherPrefix
+        } | Set-DataverseRecord -Connection $connection -TableName publisher -PassThru
+    }
+
+    Set-DataverseSolution -Connection $connection `
+        -UniqueName $solutionName `
+        -Name $solutionDisplayName `
+        -Version '1.0.0.0' `
+        -PublisherUniqueName $publisher.uniquename `
+        -Confirm:$false
+
+    Remove-DataverseSolution -Connection $connection `
+        -UniqueName $solutionName `
+        -SolutionHistoryWaitSeconds 10 `
+        -Confirm:$false `
+        -Verbose
+
+    Invoke-DataverseSolutionUpgrade -Connection $connection `
+        -SolutionName $solutionName `
+        -IfExists `
+        -SkipSolutionHistoryCheck `
+        -Verbose
+
+    Write-Host 'SUCCESS: Solution history parameters executed successfully'
+}
+catch {
+    Write-Host ""ERROR: $($_ | Out-String)""
+    throw
+}
+");
+
+            var result = RunScript(script);
+
+            result.Success.Should().BeTrue($"Script should succeed. StdErr: {result.StandardError}\nStdOut: {result.StandardOutput}");
+            result.StandardOutput.Should().Contain("SUCCESS", because: result.GetFullOutput());
+        }
     }
 }

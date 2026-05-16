@@ -43,6 +43,10 @@ public class SolutionsTests : TestBase
         initialSessionState.Commands.Add(new SessionStateCmdletEntry(
             "Import-DataverseSolution", typeof(ImportDataverseSolutionCmdlet), null));
         initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+            "Remove-DataverseSolution", typeof(RemoveDataverseSolutionCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry(
+            "Invoke-DataverseSolutionUpgrade", typeof(InvokeDataverseSolutionUpgradeCmdlet), null));
+        initialSessionState.Commands.Add(new SessionStateCmdletEntry(
             "Set-DataverseSolutionComponent", typeof(SetDataverseSolutionComponentCmdlet), null));
         initialSessionState.Commands.Add(new SessionStateCmdletEntry(
             "Remove-DataverseSolutionComponent", typeof(RemoveDataverseSolutionComponentCmdlet), null));
@@ -969,6 +973,131 @@ public class SolutionsTests : TestBase
         result.Properties["ImportJobId"]?.Value.Should().NotBeNull();
     }
 
+    [Fact]
+    public void ImportDataverseSolution_WaitsForSolutionHistoryToClear_BeforeContinuing()
+    {
+        using var ps = CreatePowerShellWithCmdlets();
+        var solutionBytes = CreateSolutionZipBytes("TestSolution", "Test Solution", "1.0.0.0", true);
+        var statusesBySolution = new Dictionary<string, Queue<int?>>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["TestSolution"] = new Queue<int?>(new int?[] { 0, 1 })
+        };
+        var mockConnection = CreateMockConnectionWithAsyncImport(solutionName =>
+        {
+            if (!statusesBySolution.TryGetValue(solutionName, out var statuses))
+            {
+                return null;
+            }
+
+            var status = statuses.Peek();
+            if (statuses.Count > 1)
+            {
+                statuses.Dequeue();
+            }
+
+            return status;
+        });
+
+        ps.AddCommand("Import-DataverseSolution")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("SolutionFile", solutionBytes)
+          .AddParameter("PollingIntervalSeconds", 1)
+          .AddParameter("SolutionHistoryWaitSeconds", 3)
+          .AddParameter("TimeoutSeconds", 30)
+          .AddParameter("Verbose", true);
+        var results = ps.Invoke();
+
+        ps.HadErrors.Should().BeFalse();
+        results.Should().HaveCount(1);
+        ps.Streams.Verbose.Should().Contain(v => v.Message.Contains("Solution history operation still in progress"));
+    }
+
+    [Fact]
+    public void ImportDataverseSolution_FailsWhenSolutionHistoryDoesNotClear()
+    {
+        using var ps = CreatePowerShellWithCmdlets();
+        var solutionBytes = CreateSolutionZipBytes("TestSolution", "Test Solution", "1.0.0.0", true);
+        var mockConnection = CreateMockConnectionWithAsyncImport(solutionName =>
+            string.Equals(solutionName, "TestSolution", StringComparison.OrdinalIgnoreCase) ? 0 : null);
+
+        ps.AddCommand("Import-DataverseSolution")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("SolutionFile", solutionBytes)
+          .AddParameter("PollingIntervalSeconds", 1)
+          .AddParameter("SolutionHistoryWaitSeconds", 1)
+          .AddParameter("TimeoutSeconds", 30);
+
+        var exception = Assert.Throws<CmdletInvocationException>(() => ps.Invoke());
+        exception.InnerException.Should().BeOfType<TimeoutException>();
+        exception.InnerException!.Message.Should().Contain("Timed out after 1 seconds");
+    }
+
+    [Fact]
+    public void ImportDataverseSolution_CanSkipSolutionHistoryCheck()
+    {
+        using var ps = CreatePowerShellWithCmdlets();
+        var solutionBytes = CreateSolutionZipBytes("TestSolution", "Test Solution", "1.0.0.0", true);
+        var solutionHistoryQueryCount = 0;
+        var mockConnection = CreateMockConnectionWithAsyncImport(solutionName =>
+        {
+            solutionHistoryQueryCount++;
+            return string.Equals(solutionName, "TestSolution", StringComparison.OrdinalIgnoreCase) ? 0 : null;
+        });
+
+        ps.AddCommand("Import-DataverseSolution")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("SolutionFile", solutionBytes)
+          .AddParameter("SkipSolutionHistoryCheck", true)
+          .AddParameter("PollingIntervalSeconds", 1)
+          .AddParameter("TimeoutSeconds", 30);
+        var results = ps.Invoke();
+
+        ps.HadErrors.Should().BeFalse();
+        results.Should().HaveCount(1);
+        solutionHistoryQueryCount.Should().Be(0);
+    }
+
+    [Fact]
+    public void RemoveDataverseSolution_ChecksRelatedUpgradeSolutionHistory()
+    {
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnectionWithAsyncUninstall(solutionName =>
+            string.Equals(solutionName, "TestSolution_Upgrade", StringComparison.OrdinalIgnoreCase) ? 0 : null);
+        CreateSolutionEntity("TestSolution", "Test Solution", "1.0.0.0", true);
+
+        ps.AddCommand("Remove-DataverseSolution")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("UniqueName", "TestSolution")
+          .AddParameter("SolutionHistoryWaitSeconds", 1)
+          .AddParameter("PollingIntervalSeconds", 1)
+          .AddParameter("TimeoutSeconds", 30)
+          .AddParameter("Confirm", false);
+
+        var exception = Assert.Throws<CmdletInvocationException>(() => ps.Invoke());
+        exception.InnerException.Should().BeOfType<TimeoutException>();
+        exception.InnerException!.Message.Should().Contain("TestSolution_Upgrade");
+    }
+
+    [Fact]
+    public void InvokeDataverseSolutionUpgrade_ChecksHoldingSolutionHistory()
+    {
+        using var ps = CreatePowerShellWithCmdlets();
+        var mockConnection = CreateMockConnectionWithAsyncUpgrade(solutionName =>
+            string.Equals(solutionName, "TestSolution_Upgrade", StringComparison.OrdinalIgnoreCase) ? 0 : null);
+
+        ps.AddCommand("Invoke-DataverseSolutionUpgrade")
+          .AddParameter("Connection", mockConnection)
+          .AddParameter("SolutionName", "TestSolution")
+          .AddParameter("SolutionHistoryWaitSeconds", 1)
+          .AddParameter("PollingIntervalSeconds", 1)
+          .AddParameter("TimeoutSeconds", 30)
+          .AddParameter("Confirm", false);
+
+        var exception = Assert.Throws<CmdletInvocationException>(() => ps.Invoke());
+        exception.InnerException.Should().BeOfType<TimeoutException>();
+        exception.InnerException!.Message.Should().Contain("TestSolution_Upgrade");
+    }
+
     // Import-DataverseSolution Component Parameter Filtering Tests (Import-DataverseSolution-ComponentParameterFiltering.Tests.ps1 - 3 tests)
 
     [Fact]
@@ -1120,7 +1249,7 @@ public class SolutionsTests : TestBase
     /// The mock intercepts ImportSolutionAsyncRequest and StageAndUpgradeAsyncRequest,
     /// creates mock asyncoperation and importjob entities, and simulates job progression.
     /// </summary>
-    private ServiceClient CreateMockConnectionWithAsyncImport()
+    private ServiceClient CreateMockConnectionWithAsyncImport(Func<string, int?>? solutionHistoryStatusProvider = null)
     {
         // Track async operations and import jobs for multiple polling cycles
         var asyncOperations = new Dictionary<Guid, AsyncOperationState>();
@@ -1180,6 +1309,14 @@ public class SolutionsTests : TestBase
                     response.Results["ImportJobKey"] = importJobId;
                     response.Results["AsyncOperationId"] = asyncOperationId;
                     return response;
+                }
+
+                // Intercept queries for solution history table
+                if (request is RetrieveMultipleRequest solutionHistoryRequest &&
+                    solutionHistoryRequest.Query is QueryExpression solutionHistoryQuery &&
+                    solutionHistoryQuery.EntityName == "msdyn_solutionhistory")
+                {
+                    return CreateSolutionHistoryResponse(solutionHistoryQuery, solutionHistoryStatusProvider);
                 }
 
                 // Intercept queries for asyncoperation table
@@ -1302,11 +1439,148 @@ public class SolutionsTests : TestBase
         return mockConnection;
     }
 
+    private ServiceClient CreateMockConnectionWithAsyncUninstall(Func<string, int?>? solutionHistoryStatusProvider = null)
+    {
+        var asyncOperations = new Dictionary<Guid, AsyncOperationState>();
+
+        return CreateMockConnection(
+            request =>
+            {
+                if (request is RetrieveMultipleRequest solutionHistoryRequest &&
+                    solutionHistoryRequest.Query is QueryExpression solutionHistoryQuery &&
+                    solutionHistoryQuery.EntityName == "msdyn_solutionhistory")
+                {
+                    return CreateSolutionHistoryResponse(solutionHistoryQuery, solutionHistoryStatusProvider);
+                }
+
+                if (request is UninstallSolutionAsyncRequest)
+                {
+                    var asyncOperationId = Guid.NewGuid();
+                    asyncOperations[asyncOperationId] = new AsyncOperationState
+                    {
+                        StateCode = 3,
+                        StatusCode = 30,
+                        Message = "Uninstall completed"
+                    };
+
+                    var response = new UninstallSolutionAsyncResponse();
+                    response.Results["AsyncOperationId"] = asyncOperationId;
+                    return response;
+                }
+
+                if (request is RetrieveRequest retrieveRequest &&
+                    retrieveRequest.Target.LogicalName == "asyncoperation" &&
+                    asyncOperations.TryGetValue(retrieveRequest.Target.Id, out var state))
+                {
+                    var asyncOperation = new Entity("asyncoperation", retrieveRequest.Target.Id);
+                    asyncOperation["statecode"] = new OptionSetValue(state.StateCode);
+                    asyncOperation["statuscode"] = new OptionSetValue(state.StatusCode);
+                    asyncOperation["message"] = state.Message;
+
+                    var response = new RetrieveResponse();
+                    response.Results["Entity"] = asyncOperation;
+                    return response;
+                }
+
+                return null;
+            },
+            "contact");
+    }
+
+    private ServiceClient CreateMockConnectionWithAsyncUpgrade(Func<string, int?>? solutionHistoryStatusProvider = null)
+    {
+        var asyncOperations = new Dictionary<Guid, AsyncOperationState>();
+
+        return CreateMockConnection(
+            request =>
+            {
+                if (request is RetrieveMultipleRequest solutionHistoryRequest &&
+                    solutionHistoryRequest.Query is QueryExpression solutionHistoryQuery &&
+                    solutionHistoryQuery.EntityName == "msdyn_solutionhistory")
+                {
+                    return CreateSolutionHistoryResponse(solutionHistoryQuery, solutionHistoryStatusProvider);
+                }
+
+                if (request is ExecuteAsyncRequest executeAsyncRequest &&
+                    executeAsyncRequest.Request is DeleteAndPromoteRequest)
+                {
+                    var asyncOperationId = Guid.NewGuid();
+                    asyncOperations[asyncOperationId] = new AsyncOperationState
+                    {
+                        StateCode = 3,
+                        StatusCode = 30,
+                        Message = "Upgrade completed"
+                    };
+
+                    var response = new ExecuteAsyncResponse();
+                    response.Results["AsyncJobId"] = asyncOperationId;
+                    return response;
+                }
+
+                if (request is RetrieveRequest retrieveRequest &&
+                    retrieveRequest.Target.LogicalName == "asyncoperation" &&
+                    asyncOperations.TryGetValue(retrieveRequest.Target.Id, out var state))
+                {
+                    var asyncOperation = new Entity("asyncoperation", retrieveRequest.Target.Id);
+                    asyncOperation["statecode"] = new OptionSetValue(state.StateCode);
+                    asyncOperation["statuscode"] = new OptionSetValue(state.StatusCode);
+                    asyncOperation["message"] = state.Message;
+
+                    var response = new RetrieveResponse();
+                    response.Results["Entity"] = asyncOperation;
+                    return response;
+                }
+
+                return null;
+            },
+            "contact");
+    }
+
+    private static OrganizationResponse? CreateSolutionHistoryResponse(
+        QueryExpression query,
+        Func<string, int?>? solutionHistoryStatusProvider)
+    {
+        if (solutionHistoryStatusProvider == null)
+        {
+            return null;
+        }
+
+        var namesToQuery = query.Criteria.Conditions
+            .Where(condition => condition.AttributeName == "msdyn_name")
+            .SelectMany(condition => condition.Values.Cast<object>())
+            .Select(value => value?.ToString())
+            .Where(value => !string.IsNullOrWhiteSpace(value))
+            .Cast<string>()
+            .ToArray();
+
+        var entities = namesToQuery
+            .Select(name => new
+            {
+                Name = name,
+                Status = solutionHistoryStatusProvider(name)
+            })
+            .Where(result => result.Status.HasValue)
+            .Select(result =>
+            {
+                var entity = new Entity("msdyn_solutionhistory", Guid.NewGuid());
+                entity["msdyn_name"] = result.Name;
+                entity["msdyn_status"] = new OptionSetValue(result.Status.Value);
+                entity["msdyn_starttime"] = DateTime.UtcNow;
+                return entity;
+            })
+            .ToList();
+
+        var response = new RetrieveMultipleResponse();
+        response.Results["EntityCollection"] = new EntityCollection(entities);
+        return response;
+    }
+
     /// <summary>
     /// State tracker for async operation entities during mock import.
     /// </summary>
     private class AsyncOperationState
     {
+        public int StateCode { get; set; } = 3;
         public int StatusCode { get; set; }
         public string Message { get; set; } = string.Empty;
         public string FriendlyMessage { get; set; } = string.Empty;
@@ -1680,4 +1954,3 @@ public class SolutionsTests : TestBase
         return memoryStream.ToArray();
     }
 }
-

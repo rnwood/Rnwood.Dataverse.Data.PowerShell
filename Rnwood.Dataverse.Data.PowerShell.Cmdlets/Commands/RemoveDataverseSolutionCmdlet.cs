@@ -33,11 +33,34 @@ namespace Rnwood.Dataverse.Data.PowerShell.Commands
         public int TimeoutSeconds { get; set; } = 3600;
 
         /// <summary>
+        /// Gets or sets the maximum time in seconds to wait for existing solution history operations to complete before checking solution state.
+        /// </summary>
+        [Parameter(HelpMessage = "Maximum time in seconds to wait for existing solution history operations to complete before checking solution state. Default is 30.")]
+        [ValidateRange(1, int.MaxValue)]
+        public int SolutionHistoryWaitSeconds { get; set; } = 30;
+
+        /// <summary>
+        /// Gets or sets whether to skip the solution history pre-check.
+        /// </summary>
+        [Parameter(HelpMessage = "Skip checking solution history for in-progress operations before checking existing solution state.")]
+        public SwitchParameter SkipSolutionHistoryCheck { get; set; }
+
+        /// <summary>
         /// Processes the cmdlet request.
         /// </summary>
         protected override void ProcessRecord()
         {
             base.ProcessRecord();
+
+            if (!SkipSolutionHistoryCheck.IsPresent)
+            {
+                SolutionHistoryHelpers.WaitForSolutionOperationsToComplete(
+                    Connection,
+                    SolutionHistoryHelpers.GetSolutionNamesToCheck(UniqueName),
+                    WriteVerbose,
+                    SolutionHistoryWaitSeconds,
+                    PollingIntervalSeconds);
+            }
 
             if (!ShouldProcess($"Solution '{UniqueName}'", "Remove"))
             {

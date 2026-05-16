@@ -19,7 +19,8 @@ Import-DataverseSolution [-InFile] <String> [-OverwriteUnmanagedCustomizations] 
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfVersionMajorMinorMatches]
  [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
- [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] [-Connection <ServiceClient>]
+ [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion]
+ [-SolutionHistoryWaitSeconds <Int32>] [-SkipSolutionHistoryCheck] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -31,8 +32,8 @@ Import-DataverseSolution [-InFolder] <String> [-PackageType <ImportSolutionPacka
  [-SkipQueueRibbonJob] [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing]
  [-UseUpdateIfVersionMajorMinorMatches] [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>]
  [-SkipConnectionReferenceValidation] [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion]
- [-SkipIfLowerVersion] [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm]
- [<CommonParameters>]
+ [-SkipIfLowerVersion] [-SolutionHistoryWaitSeconds <Int32>] [-SkipSolutionHistoryCheck]
+ [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ### FromBytes
@@ -42,7 +43,8 @@ Import-DataverseSolution -SolutionFile <Byte[]> [-OverwriteUnmanagedCustomizatio
  [-EnvironmentVariables <Hashtable>] [-ConvertToManaged] [-SkipQueueRibbonJob]
  [-LayerDesiredOrder <LayerDesiredOrder>] [-AsyncRibbonProcessing] [-UseUpdateIfVersionMajorMinorMatches]
  [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>] [-SkipConnectionReferenceValidation]
- [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion] [-Connection <ServiceClient>]
+ [-SkipEnvironmentVariableValidation] [-SkipIfSameVersion] [-SkipIfLowerVersion]
+ [-SolutionHistoryWaitSeconds <Int32>] [-SkipSolutionHistoryCheck] [-Connection <ServiceClient>]
  [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
@@ -57,6 +59,7 @@ The cmdlet:
 4. Outputs the import job ID when complete
 5. Supports setting connection references via a hashtable
 6. Automatically determines the appropriate import method based on the -Mode parameter
+7. Waits briefly for any in-progress solution history operations for the solution or its related holding solution to finish before checking existing state, unless skipped
 
 **Import Modes:**
 - **Auto (default)**: Automatically determines the best import method based on solution existence and type. Uses StageAndUpgradeAsyncRequest if the solution exists and is managed, otherwise uses regular import.
@@ -507,6 +510,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -SkipSolutionHistoryCheck
+Skip checking solution history for in-progress operations before checking existing solution state.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SolutionHistoryWaitSeconds
+Maximum time in seconds to wait for existing solution history operations to complete before checking solution state. Default is 30.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 30
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -SkipIfSameVersion
 Skip import if the solution version in the file is the same as the installed version in the target environment.
 
@@ -635,6 +668,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.Byte[]
+
 ## OUTPUTS
 
 ### System.Object

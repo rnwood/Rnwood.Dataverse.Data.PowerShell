@@ -14,7 +14,8 @@ Removes (uninstalls) a solution from Dataverse.
 
 ```
 Remove-DataverseSolution [-UniqueName] <String> [-PollingIntervalSeconds <Int32>] [-TimeoutSeconds <Int32>]
- [-Connection <ServiceClient>] [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
+ [-SolutionHistoryWaitSeconds <Int32>] [-SkipSolutionHistoryCheck] [-Connection <ServiceClient>]
+ [-ProgressAction <ActionPreference>] [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## DESCRIPTION
@@ -26,6 +27,7 @@ When removing a solution:
 - Unmanaged solutions only remove the solution container, not the customizations
 - Dependencies must be resolved before removal (e.g., remove dependent solutions first)
 - The cmdlet monitors the uninstall operation and reports progress
+- Before checking solution state, the cmdlet waits briefly for any in-progress solution history operations for the solution or its related holding solution to finish, unless skipped
 
 ## EXAMPLES
 
@@ -130,6 +132,36 @@ Accept pipeline input: False
 Accept wildcard characters: False
 ```
 
+### -SkipSolutionHistoryCheck
+Skip checking solution history for in-progress operations before checking existing solution state.
+
+```yaml
+Type: SwitchParameter
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: False
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
+### -SolutionHistoryWaitSeconds
+Maximum time in seconds to wait for existing solution history operations to complete before checking solution state. Default is 30.
+
+```yaml
+Type: Int32
+Parameter Sets: (All)
+Aliases:
+
+Required: False
+Position: Named
+Default value: 30
+Accept pipeline input: False
+Accept wildcard characters: False
+```
+
 ### -TimeoutSeconds
 Timeout in seconds for the uninstall operation. Default is 3600 seconds (1 hour).
 
@@ -196,6 +228,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 ## INPUTS
 
 ### System.String
+
 ## OUTPUTS
 
 ### System.Object
