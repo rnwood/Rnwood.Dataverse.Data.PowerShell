@@ -74,6 +74,7 @@ Write-Host ""
 $totalDeleted = 0
 $totalSkipped = 0
 $totalErrors = 0
+$dependencyBlockedSkips = 0
 
 #region Helper Functions
 function Remove-WithRetry {
@@ -92,6 +93,10 @@ function Remove-WithRetry {
             return
         }
         catch {
+            if (Test-IsDependencyBlockedDeleteError $_) {
+                throw
+            }
+
             if ($attempt -eq $MaxRetries) {
                 throw
             }
@@ -107,6 +112,19 @@ function Write-CleanupSection {
     Write-Host "=============================================="
     Write-Host $Title
     Write-Host "=============================================="
+}
+
+function Test-IsDependencyBlockedDeleteError {
+    param(
+        [Parameter(Mandatory = $true)]
+        [object]$ErrorRecord
+    )
+
+    $errorText = $ErrorRecord.ToString()
+    return (
+        $errorText -like '*cannot be deleted because it is referenced by*' -or
+        $errorText -like '*RetrieveDependenciesForDeleteRequest*'
+    )
 }
 #endregion
 
@@ -312,8 +330,14 @@ try {
                     $totalDeleted++
                 }
                 catch {
-                    Write-Warning "    Failed to delete web resource $($wr.name): $_"
-                    $totalErrors++
+                    if (Test-IsDependencyBlockedDeleteError $_) {
+                        Write-Warning "    Skipping dependency-blocked web resource $($wr.name): $_"
+                        $dependencyBlockedSkips++
+                    }
+                    else {
+                        Write-Warning "    Failed to delete web resource $($wr.name): $_"
+                        $totalErrors++
+                    }
                 }
             }
             else {
@@ -441,6 +465,7 @@ Write-Host "Cleanup Summary"
 Write-Host "=============================================="
 Write-Host "Artifacts deleted: $totalDeleted"
 Write-Host "Artifacts skipped (recent): $totalSkipped"
+Write-Host "Artifacts skipped (dependency blocked): $dependencyBlockedSkips"
 Write-Host "Errors encountered: $totalErrors"
 Write-Host ""
 
