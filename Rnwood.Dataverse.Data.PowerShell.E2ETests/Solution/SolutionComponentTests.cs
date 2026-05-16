@@ -163,41 +163,70 @@ $testRunId = [guid]::NewGuid().ToString('N').Substring(0, 8)
 $solutionName = ""e2esolhist_${timestamp}_$testRunId""
 $solutionDisplayName = ""E2E Solution History Test $testRunId""
 $publisherPrefix = 'e2h'
+$solutionCreated = $false
 
 try {
-    $publisher = Get-DataverseRecord -Connection $connection -TableName publisher -FilterValues @{ 'customizationprefix' = $publisherPrefix } | Select-Object -First 1
-    if (-not $publisher) {
-        $publisher = @{
-            'uniquename' = ""e2ehistorypublisher_$testRunId""
-            'friendlyname' = 'E2E Solution History Publisher'
-            'customizationprefix' = $publisherPrefix
-        } | Set-DataverseRecord -Connection $connection -TableName publisher -PassThru
+    Invoke-WithRetry {
+        $script:publisher = Get-DataverseRecord -Connection $connection -TableName publisher -FilterValues @{ 'customizationprefix' = $publisherPrefix } | Select-Object -First 1
+        if (-not $script:publisher) {
+            $script:publisher = @{
+                'uniquename' = ""e2ehistorypublisher_$testRunId""
+                'friendlyname' = 'E2E Solution History Publisher'
+                'customizationprefix' = $publisherPrefix
+            } | Set-DataverseRecord -Connection $connection -TableName publisher -PassThru
+        }
     }
 
-    Set-DataverseSolution -Connection $connection `
-        -UniqueName $solutionName `
-        -Name $solutionDisplayName `
-        -Version '1.0.0.0' `
-        -PublisherUniqueName $publisher.uniquename `
-        -Confirm:$false
+    Invoke-WithRetry {
+        Set-DataverseSolution -Connection $connection `
+            -UniqueName $solutionName `
+            -Name $solutionDisplayName `
+            -Version '1.0.0.0' `
+            -PublisherUniqueName $script:publisher.uniquename `
+            -Confirm:$false
+        $script:solutionCreated = $true
+    }
 
-    Remove-DataverseSolution -Connection $connection `
-        -UniqueName $solutionName `
-        -SolutionHistoryWaitSeconds 10 `
-        -Confirm:$false `
-        -Verbose
+    Invoke-WithRetry {
+        Remove-DataverseSolution -Connection $connection `
+            -UniqueName $solutionName `
+            -SolutionHistoryWaitSeconds 10 `
+            -Confirm:$false `
+            -Verbose
+    }
 
-    Invoke-DataverseSolutionUpgrade -Connection $connection `
-        -SolutionName $solutionName `
-        -IfExists `
-        -SkipSolutionHistoryCheck `
-        -Verbose
+    Invoke-WithRetry {
+        Invoke-DataverseSolutionUpgrade -Connection $connection `
+            -SolutionName $solutionName `
+            -IfExists `
+            -SkipSolutionHistoryCheck `
+            -Verbose
+    }
 
     Write-Host 'SUCCESS: Solution history parameters executed successfully'
 }
 catch {
     Write-Host ""ERROR: $($_ | Out-String)""
     throw
+}
+finally {
+    if ($solutionCreated) {
+        try {
+            Invoke-WithRetry {
+                $existingSolution = Get-DataverseSolution -Connection $connection -UniqueName $solutionName -ErrorAction SilentlyContinue
+                if ($existingSolution) {
+                    Remove-DataverseSolution -Connection $connection `
+                        -UniqueName $solutionName `
+                        -SkipSolutionHistoryCheck `
+                        -Confirm:$false `
+                        -Verbose:$false
+                }
+            }
+        }
+        catch {
+            Write-Host ""CLEANUP WARNING: $($_ | Out-String)""
+        }
+    }
 }
 ");
 
